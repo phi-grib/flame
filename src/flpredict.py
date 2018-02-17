@@ -41,7 +41,6 @@ class flPredict:
 
         try:
             epd = '/home/mpastor/soft/Flame/src/'+self.iModel
-            print (epd)
             if os.path.isdir(epd):
                 sys.path.append(epd)
                 from iflinput import iflInput

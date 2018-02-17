@@ -1,6 +1,6 @@
 #! -*- coding: utf-8 -*-
 
-##    Description    Flame flOutput class
+##    Description    Flame flOutput internal class
 ##
 ##    Authors:       Manuel Pastor (manuel.pastor@upf.edu)
 ##

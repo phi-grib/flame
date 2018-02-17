@@ -1,6 +1,6 @@
 #! -*- coding: utf-8 -*-
 
-##    Description    Flame flInput class
+##    Description    Flame flInput internal class
 ##
 ##    Authors:       Manuel Pastor (manuel.pastor@upf.edu)
 ##

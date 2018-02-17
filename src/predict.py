@@ -24,7 +24,7 @@ from flpredict import flPredict
 
 # hardcoded stuff for testing
 
-inputFileName = 'test.sdf'
+inputFileName = 'test'
 modelName = 'CACO2'
 
 predict = flPredict (inputFileName, modelName)
