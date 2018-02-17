@@ -20,6 +20,9 @@
 ##    You should have received a copy of the GNU General Public License
 ##    along with Flame.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
+import sys
+
 class flPredict:
 
     def __init__ (self, iFile, iModel):
@@ -37,22 +40,29 @@ class flPredict:
         # use self.iModel to load path for flinput.py fllearn.py and flout.py
 
         try:
-            from flinput import flInput
-            from flapply import flApply
-            from floutput import flOutput
+            epd = '/home/mpastor/soft/Flame/src/'+self.iModel
+            print (epd)
+            if os.path.isdir(epd):
+                sys.path.append(epd)
+                from iflinput import iflInput
+                from iflapply import iflApply
+                from ifloutput import iflOutput
+            else:
+                success = False    
+
         except:
             success = False
 
         if success:
-            flinput = flInput(self.iFile)
+            flinput = iflInput(self.iFile)
             success, results = flinput.run ()
 
         if success :
-            flapply = flApply (results)
+            flapply = iflApply (results)
             success, results = flapply.run ()
 
         if success : 
-            floutput = flOutput (results)
+            floutput = iflOutput (results)
             success, results = floutput.run ()
 
         return success, results
