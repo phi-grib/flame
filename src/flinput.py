@@ -22,14 +22,15 @@
 
 class flInput:
 
-    def __init__ (self, iFile):
+    def __init__ (self, iflcontrol, ifile):
 
-        self.iFile = iFile
+        self.iflcontrol = iflcontrol
+        self.ifile = ifile
 
     def run (self):
 
         success = True
-        results = self.iFile + '_i'
+        results = self.ifile + '_i'
 
         return success, results
 

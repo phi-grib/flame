@@ -37,31 +37,36 @@ class flPredict:
         success = True
         results = 'Error'
 
-        # use self.iModel to load path for flinput.py fllearn.py and flout.py
-
+        # use self.iModel to load path for main classes
         try:
             epd = './'+self.iModel
             if os.path.isdir(epd):
                 sys.path.append(epd)
+                from iflcontrol import iflControl
                 from iflinput import iflInput
                 from iflapply import iflApply
                 from ifloutput import iflOutput
             else:
+                print ('unable to find specified model '+self.iModel)
                 success = False    
 
         except:
+            print ('unable to load main classes')
             success = False
 
+
         if success:
-            flinput = iflInput(self.iFile)
+            flcontrol = iflControl()
+
+            flinput = iflInput (flcontrol, self.iFile)
             success, results = flinput.run ()
 
         if success :
-            flapply = iflApply (results)
+            flapply = iflApply (flcontrol, results)
             success, results = flapply.run ()
 
         if success : 
-            floutput = iflOutput (results)
+            floutput = iflOutput (flcontrol, results)
             success, results = floutput.run ()
 
         return success, results

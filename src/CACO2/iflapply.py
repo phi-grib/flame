@@ -24,14 +24,14 @@ from flapply import flApply
 
 class iflApply:
 
-    def __init__ (self, iFile):
+    def __init__ (self, icontrol, results):
 
-        flApply.__init__(self, iFile)
+        flApply.__init__(self, icontrol, results)
 
     def run (self):
 
         success = True
-        results = self.iFile + '_b'
+        results = self.ifile + '_b'
 
         return success, results
 

@@ -22,14 +22,14 @@
 
 class flOutput:
 
-    def __init__ (self, iFile):
+    def __init__ (self, iflcontrol, results):
 
-        self.iFile = iFile
+        self.ifile = results
 
     def run (self):
 
         success = True
-        results = self.iFile + '_k'
+        results = self.ifile + '_k'
 
         return success, results
 

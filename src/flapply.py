@@ -22,14 +22,14 @@
 
 class flApply:
 
-    def __init__ (self, iFile):
+    def __init__ (self, iflcontrol, results):
 
-        self.iFile = iFile
+        self.ifile = results
 
     def run (self):
 
         success = True
-        results = self.iFile + '_j'
+        results = self.ifile + '_j'
 
         return success, results
 

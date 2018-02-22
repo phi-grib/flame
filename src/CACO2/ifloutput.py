@@ -24,14 +24,14 @@ from floutput import flOutput
 
 class iflOutput (flOutput):
 
-    def __init__ (self, iFile):
+    def __init__ (self, iflcontrol, results):
 
-        flOutput.__init__ (self, iFile)
+        flOutput.__init__ (self, iflcontrol, results)
 
     # def run (self):
 
     #     success = True
-    #     results = self.iFile + '_c'
+    #     results = self.ifile + '_c'
 
     #     return success, results
 
