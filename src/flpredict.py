@@ -40,7 +40,7 @@ class flPredict:
         # use self.iModel to load path for flinput.py fllearn.py and flout.py
 
         try:
-            epd = '/home/mpastor/soft/Flame/src/'+self.iModel
+            epd = './'+self.iModel
             if os.path.isdir(epd):
                 sys.path.append(epd)
                 from iflinput import iflInput

@@ -20,14 +20,44 @@
 ##    You should have received a copy of the GNU General Public License
 ##    along with Flame.  If not, see <http://www.gnu.org/licenses/>.
 
+import sys
+import getopt
 from flpredict import flPredict
 
-# hardcoded stuff for testing
+def predict (ifile, imodel):
+    predict = flPredict (ifile, imodel)
+    success, results = predict.run()
+    print (success, results)
 
-inputFileName = 'test'
-modelName = 'CACO2'
+def usage ():
+    print ('usage is predict -e modelname -f inputfilename.sdf')
+    sys.exit(1)
 
-predict = flPredict (inputFileName, modelName)
-success, results = predict.run()
+def main ():
+    ifile= 'test.sdf'
+    imodel = ''
 
-print (success, results)
+    try:
+       opts, args = getopt.getopt(sys.argv[1:],'f:e:')
+    except getopt.GetoptError:
+        print("Arguments not recognized")
+        usage()
+    
+    if not len(opts):
+        print("Arguments not recognized")
+        usage()
+
+    if len(opts)>0:
+        for opt, arg in opts:
+            if opt in '-f':
+                ifile = arg
+            elif opt in '-e':
+                imodel = arg
+
+    if imodel == '' : 
+        usage()
+    
+    predict (ifile, imodel)    
+
+if __name__ == '__main__':    
+    main()
