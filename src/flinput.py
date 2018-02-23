@@ -29,8 +29,33 @@ class flInput:
 
     def run (self):
 
+        # open file
+
+        # depending on control flags, process as molecule or as or data
+
+        # as molecule:
+
+        #   test and obtain dimensions
+        #   normalize chemical
+        #   ionize
+
+        #   generate MD
+
+        # as data
+
+        #   test and obtain dimensions
+        #   normalize data
+
+        # save and stamp
+
+        # runner class? will split in chunks and run every chunck in a thread, then reassembling the results
+        # at the end
+        # the same class will take care of situations where the loop execution fails and fallback to compound 
+        # per compound mode
+
         success = True
         results = self.ifile + '_i'
+
 
         return success, results
 

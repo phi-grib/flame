@@ -28,6 +28,9 @@ class flInput:
 
     def run (self):
 
+        # retrieve data and dimensions from results
+        
+        # get dimensions 
         success = True
         results = self.iFile + '_i'
 

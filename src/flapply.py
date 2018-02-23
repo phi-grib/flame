@@ -28,6 +28,11 @@ class flApply:
 
     def run (self):
 
+        # retrieve data and dimensions from results
+
+        # select prdiction tool from control
+
+        # 
         success = True
         results = self.ifile + '_j'
 
