@@ -31,8 +31,9 @@ class iflInput (flInput):
 
     def run (self):
 
-        success = True
-        results = self.ifile + '_a'
+        success, results = flInput.run (self)
+
+        results = 'xxx' + results
 
         return success, results
 

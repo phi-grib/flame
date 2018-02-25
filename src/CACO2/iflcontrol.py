@@ -25,6 +25,9 @@ from flcontrol import flControl
 class iflControl(flControl):
 
     def __init__ (self):
+
+        flControl.__init__ (self)
+
         self.model_name = 'CACO2'
         self.model_version = 0.1
 
