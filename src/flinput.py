@@ -79,6 +79,9 @@ class flInput:
 
     def run (self):
 
+        # check for presence of pickle file
+        # if true, extract MD5 stamp, compute control MD5 stamp and if both are coincident extract results and exit
+
         # open file
         if not os.path.isfile (self.ifile):
             return False, "input error: file not found"
