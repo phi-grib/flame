@@ -8,19 +8,20 @@
 ##
 ##    This file is part of Flame
 ##
-##    eTOXlab is free software: you can redistribute it and/or modify
+##    Flame is free software: you can redistribute it and/or modify
 ##    it under the terms of the GNU General Public License as published by
 ##    the Free Software Foundation version 3.
 ##
-##    eTOXlab is distributed in the hope that it will be useful,
+##    Flame is distributed in the hope that it will be useful,
 ##    but WITHOUT ANY WARRANTY; without even the implied warranty of
 ##    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ##    GNU General Public License for more details.
 ##
 ##    You should have received a copy of the GNU General Public License
-##    along with Flame.  If not, see <http://www.gnu.org/licenses/>.
+##    along with Flame. If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import hashlib
 from rdkit import Chem
 
 class flInput:
@@ -58,15 +59,23 @@ class flInput:
 
     def standardize (self, ifile):
 
-        return False, "debug dummy"
+        return True, "debug dummy"
 
     def ionize (self, ifile):
 
-        return False, "debug dummy"
+        return True, "debug dummy"
 
     def computeMD (self, ifile):
 
-        return False, "debug dummy"
+        return True, "debug dummy"
+
+    def save (self, results):
+
+        print (self.control.md5stamp())
+        # pickle results + stamp in ifile.pickle
+        # return True
+
+        return True
 
     def run (self):
 
@@ -122,15 +131,14 @@ class flInput:
 
 
         # save and stamp
+        success = self.save (results)
 
         # runner class? will split in chunks and run every chunck in a thread, then reassembling the results
         # at the end
         # the same class will take care of situations where the loop execution fails and fallback to compound 
         # per compound mode
 
-        success = True
         results = self.ifile + '_i'
-
 
         return success, results
 

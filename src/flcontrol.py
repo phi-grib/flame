@@ -20,6 +20,8 @@
 ##    You should have received a copy of the GNU General Public License
 ##    along with Flame.  If not, see <http://www.gnu.org/licenses/>.
 
+import hashlib
+
 class flControl:
 
     def __init__ (self):
@@ -32,5 +34,12 @@ class flControl:
 
         return
 
+    def md5stamp (self):
 
+        m = hashlib.md5()
+        for attr in dir(self):
+            val = getattr(self, attr)
+            if isinstance(val, (int, float, str)):
+                m.update (str(val).encode('utf-8'))
 
+        return (m.hexdigest())
