@@ -8,11 +8,11 @@
 ##
 ##    This file is part of Flame
 ##
-##    eTOXlab is free software: you can redistribute it and/or modify
+##    Flame is free software: you can redistribute it and/or modify
 ##    it under the terms of the GNU General Public License as published by
 ##    the Free Software Foundation version 3.
 ##
-##    eTOXlab is distributed in the hope that it will be useful,
+##    Flame is distributed in the hope that it will be useful,
 ##    but WITHOUT ANY WARRANTY; without even the implied warranty of
 ##    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ##    GNU General Public License for more details.
@@ -24,21 +24,23 @@ import sys
 import getopt
 from flpredict import flPredict
 
-def predict (ifile, imodel):
+def predict_cmd (ifile, imodel):
+    
     predict = flPredict (ifile, imodel)
     success, results = predict.run()
     print (success, results)
 
 def usage ():
-    print ('usage is predict -e modelname -f inputfilename.sdf')
+    print ('usage is flame -c predict -e modelname -f inputfilename.sdf')
     sys.exit(1)
 
 def main ():
-    ifile= 'test.sdf'
+    ifile= ''
     imodel = ''
+    command = None
 
     try:
-       opts, args = getopt.getopt(sys.argv[1:],'f:e:')
+       opts, args = getopt.getopt(sys.argv[1:],'c:f:e:')
     except getopt.GetoptError:
         print("Arguments not recognized")
         usage()
@@ -49,15 +51,24 @@ def main ():
 
     if len(opts)>0:
         for opt, arg in opts:
-            if opt in '-f':
+
+            if opt in '-c':
+                command = arg
+            elif opt in '-f':
                 ifile = arg
             elif opt in '-e':
                 imodel = arg
 
-    if imodel == '' : 
+    if ifile == '' or imodel == '' or command == None: 
         usage()
     
-    predict (ifile, imodel)    
+    if command == 'predict':
+        predict_cmd (ifile, imodel)
+    elif command == 'build':
+        print ('not enabled, please wait')
+        usage()
+    else:
+        usage()
 
 if __name__ == '__main__':    
     main()

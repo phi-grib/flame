@@ -53,41 +53,43 @@ class flInput:
             index = []
             chunksize = nmol//self.control.numCPUs
             for a in range (nmol):
-                j = a//chunksize
-                if j == self.control.numCPUs:
-                    j = self.control.numCPUs -1
-                index.append(j)
+                index.append(a//chunksize)
             
-            moli=0
-            filenum=0
+            moli=0      # molecule counter in next loop
+            chunki=0    # chunk counter in next toolp
 
             filename, file_extension = os.path.splitext(ifile)
-            filechunk = filename + '_%d' %filenum + file_extension
+            chunkname = filename + '_%d' %chunki + file_extension
             try:
                 with open (ifile,'r') as f:
-                    fo = open (filechunk,"w")
-                    molii=0 
+                    fo = open (chunkname,"w")
+                    moli_chunk=0 
                     for line in f:
                         fo.write(line)
+
+                        # end of molecule
                         if line.startswith('$$$$'):
                             moli+=1
-                            molii+=1
+                            moli_chunk+=1
+
+                            # if we reached the end of the file
                             if (moli>=nmol):
                                 fo.close()
-                                tfiles.append(filechunk)
-                                nobj.append(molii)
+                                tfiles.append(chunkname)
+                                nobj.append(moli_chunk)
 
-                            elif (index[moli]>filenum):
+                            # otherwyse
+                            elif (index[moli]>chunki):
                                 fo.close()
-                                tfiles.append(filechunk)
-                                nobj.append(molii)
+                                tfiles.append(chunkname)
+                                nobj.append(moli_chunk)
 
-                                filenum+=1
-                                filechunk = filename + '_%d' %filenum + file_extension
-                                molii=0
-                                fo = open (filechunk,"w")
+                                chunki+=1
+                                chunkname = filename + '_%d' %chunki + file_extension
+                                moli_chunk=0
+                                fo = open (chunkname,"w")
             except:
-                return False, "error opening: "+ifile
+                return False, "error splitting: "+ifile
 
         else :
             nobj.append(nmol)
