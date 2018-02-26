@@ -1,6 +1,6 @@
 #! -*- coding: utf-8 -*-
 
-##    Description    Flame flInput internal class
+##    Description    Flame flOutput class
 ##
 ##    Authors:       Manuel Pastor (manuel.pastor@upf.edu)
 ##
@@ -20,20 +20,16 @@
 ##    You should have received a copy of the GNU General Public License
 ##    along with Flame.  If not, see <http://www.gnu.org/licenses/>.
 
-from flinput import flInput
+class Odata:
 
-class iflInput (flInput):
+    def __init__ (self, control, results):
 
-    def __init__ (self, iflcontrol, ifile):
-
-        flInput.__init__ (self, iflcontrol, ifile)
-    
+        self.ifile = results
 
     def run (self):
 
-        success, results = flInput.run (self)
-
-        results = 'xxx' + results
+        success = True
+        results = self.ifile + '_k'
 
         return success, results
 

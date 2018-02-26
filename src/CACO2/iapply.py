@@ -1,6 +1,6 @@
 #! -*- coding: utf-8 -*-
 
-##    Description    Flame flApply class
+##    Description    Flame flApply internal class
 ##
 ##    Authors:       Manuel Pastor (manuel.pastor@upf.edu)
 ##
@@ -20,21 +20,18 @@
 ##    You should have received a copy of the GNU General Public License
 ##    along with Flame.  If not, see <http://www.gnu.org/licenses/>.
 
-class flApply:
+from apply import Apply
 
-    def __init__ (self, iflcontrol, results):
+class iApply:
 
-        self.ifile = results
+    def __init__ (self, control, results):
+
+        Apply.__init__(self, control, results)
 
     def run (self):
 
-        # retrieve data and dimensions from results
-
-        # select prdiction tool from control
-
-        # 
         success = True
-        results = self.ifile + '_j'
+        results = self.ifile + '_b'
 
         return success, results
 

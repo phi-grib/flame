@@ -22,11 +22,11 @@
 
 import sys
 import getopt
-from flpredict import flPredict
+from predict import Predict
 
 def predict_cmd (ifile, imodel):
     
-    predict = flPredict (ifile, imodel)
+    predict = Predict (ifile, imodel)
     success, results = predict.run()
     print (success, results)
 

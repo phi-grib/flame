@@ -1,6 +1,6 @@
 #! -*- coding: utf-8 -*-
 
-##    Description    Flame flOutput class
+##    Description    Flame flApply class
 ##
 ##    Authors:       Manuel Pastor (manuel.pastor@upf.edu)
 ##
@@ -20,16 +20,21 @@
 ##    You should have received a copy of the GNU General Public License
 ##    along with Flame.  If not, see <http://www.gnu.org/licenses/>.
 
-class flOutput:
+class Apply:
 
-    def __init__ (self, iflcontrol, results):
+    def __init__ (self, control, results):
 
         self.ifile = results
 
     def run (self):
 
+        # retrieve data and dimensions from results
+
+        # select prdiction tool from control
+
+        # 
         success = True
-        results = self.ifile + '_k'
+        results = self.ifile + '_j'
 
         return success, results
 

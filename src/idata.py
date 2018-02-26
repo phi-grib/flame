@@ -25,11 +25,11 @@ import hashlib
 from rdkit import Chem
 import multiprocessing as mp
 
-class flInput:
+class Idata:
 
-    def __init__ (self, iflcontrol, ifile):
+    def __init__ (self, control, ifile):
 
-        self.control = iflcontrol
+        self.control = control
         self.ifile = ifile
 
     def countmol (self, ifile):

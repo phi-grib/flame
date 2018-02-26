@@ -1,6 +1,6 @@
 #! -*- coding: utf-8 -*-
 
-##    Description    Flame flcontrol class
+##    Description    Flame flInput internal class
 ##
 ##    Authors:       Manuel Pastor (manuel.pastor@upf.edu)
 ##
@@ -8,11 +8,11 @@
 ##
 ##    This file is part of Flame
 ##
-##    Flame is free software: you can redistribute it and/or modify
+##    eTOXlab is free software: you can redistribute it and/or modify
 ##    it under the terms of the GNU General Public License as published by
 ##    the Free Software Foundation version 3.
 ##
-##    Flame is distributed in the hope that it will be useful,
+##    eTOXlab is distributed in the hope that it will be useful,
 ##    but WITHOUT ANY WARRANTY; without even the implied warranty of
 ##    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ##    GNU General Public License for more details.
@@ -20,20 +20,20 @@
 ##    You should have received a copy of the GNU General Public License
 ##    along with Flame.  If not, see <http://www.gnu.org/licenses/>.
 
-from flcontrol import flControl
+from idata import Idata
 
-class iflControl(flControl):
+class iIdata (Idata):
 
-    def __init__ (self):
+    def __init__ (self, control, ifile):
 
-        flControl.__init__ (self)
+        Idata.__init__ (self, control, ifile)
+    
 
-        self.model_name = 'CACO2'
-        self.model_version = 0.1
+    def run (self):
 
-        print (self.model_name, self.model_version)
+        success, results = Idata.run (self)
 
-        return
+        results = 'xxx' + results
 
-
+        return success, results
 

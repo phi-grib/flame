@@ -1,6 +1,6 @@
 #! -*- coding: utf-8 -*-
 
-##    Description    Flame flOutput internal class
+##    Description    Flame flInput class
 ##
 ##    Authors:       Manuel Pastor (manuel.pastor@upf.edu)
 ##
@@ -20,18 +20,19 @@
 ##    You should have received a copy of the GNU General Public License
 ##    along with Flame.  If not, see <http://www.gnu.org/licenses/>.
 
-from floutput import flOutput
+class Learn:
 
-class iflOutput (flOutput):
+    def __init__ (self, ifile):
 
-    def __init__ (self, iflcontrol, results):
+        self.ifile = ifile
 
-        flOutput.__init__ (self, iflcontrol, results)
+    def run (self):
 
-    # def run (self):
+        # retrieve data and dimensions from results
+        
+        # get dimensions 
+        success = True
+        results = self.ifile + '_i'
 
-    #     success = True
-    #     results = self.ifile + '_c'
-
-    #     return success, results
+        return success, results
 

@@ -23,12 +23,12 @@
 import os
 import sys
 
-class flPredict:
+class Predict:
 
-    def __init__ (self, iFile, iModel):
+    def __init__ (self, ifile, imodel):
 
-        self.iFile = iFile
-        self.iModel = iModel
+        self.ifile = ifile
+        self.imodel = imodel
 
         return
 
@@ -39,35 +39,34 @@ class flPredict:
 
         # use self.iModel to load path for main classes
         try:
-            epd = './'+self.iModel
+            epd = './'+self.imodel
             if os.path.isdir(epd):
                 sys.path.append(epd)
-                from iflcontrol import iflControl
-                from iflinput import iflInput
-                from iflapply import iflApply
-                from ifloutput import iflOutput
+                from icontrol import iControl
+                from iidata import iIdata
+                from iapply import iApply
+                from iodata import iOdata
             else:
-                print ('unable to find specified model '+self.iModel)
+                print ('unable to find specified model '+self.imodel)
                 success = False    
 
         except:
             print ('unable to load main classes')
             success = False
 
-
         if success:
-            flcontrol = iflControl()
+            control = iControl()
 
-            flinput = iflInput (flcontrol, self.iFile)
-            success, results = flinput.run ()
+            idata = iIdata (control, self.ifile)
+            success, results = idata.run ()
 
         if success :
-            flapply = iflApply (flcontrol, results)
-            success, results = flapply.run ()
+            apply = iApply (control, results)
+            success, results = apply.run ()
 
         if success : 
-            floutput = iflOutput (flcontrol, results)
-            success, results = floutput.run ()
+            odata = iOdata (control, results)
+            success, results = odata.run ()
 
         return success, results
 

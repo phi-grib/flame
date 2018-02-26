@@ -20,27 +20,17 @@
 ##    You should have received a copy of the GNU General Public License
 ##    along with Flame.  If not, see <http://www.gnu.org/licenses/>.
 
-import hashlib
+from control import Control
 
-class flControl:
+class iControl(Control):
 
     def __init__ (self):
-        self.model_name = ""
-        self.model_version = 0.0
 
-        self.input_type = 'molecule'                # 'molecule' | 'data'
-        self.normalize_method = 'standardize'       # None | 'standardize'
-        self.ionize_method = None                   # None | 'moka'
-        self.convert3D_method = None                # None | 'moka'
-        self.numCPUs = 2                            # (int)
+        Control.__init__ (self)
+
+        self.model_name = 'CACO2'
+        self.model_version = 0.1
+
+        print (self.model_name, self.model_version)
+
         return
-
-    def md5stamp (self):
-
-        m = hashlib.md5()
-        for attr in dir(self):
-            val = getattr(self, attr)
-            if isinstance(val, (int, float, str)):
-                m.update (str(val).encode('utf-8'))
-
-        return (m.hexdigest())
