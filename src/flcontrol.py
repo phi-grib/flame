@@ -32,7 +32,7 @@ class flControl:
         self.normalize_method = 'standardize'       # None | 'standardize'
         self.ionize_method = None                   # None | 'moka'
         self.convert3D_method = None                # None | 'moka'
-        self.numCPUs = 1                            # (int)
+        self.numCPUs = 2                            # (int)
         return
 
     def md5stamp (self):

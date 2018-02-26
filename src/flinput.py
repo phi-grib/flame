@@ -46,29 +46,54 @@ class flInput:
         
         nmol = len(suppl)
 
+        if nmol == 0:
+            return False, "no molecule found in file"+ifile
+
         if self.control.numCPUs > 1 :
-            #split the file
-            print ('multiple CPUs')
+            index = []
+            chunksize = nmol//self.control.numCPUs
+            for a in range (nmol):
+                j = a//chunksize
+                if j == self.control.numCPUs:
+                    j = self.control.numCPUs -1
+                index.append(j)
+            
+            moli=0
+            filenum=0
+
+            filename, file_extension = os.path.splitext(ifile)
+            filechunk = filename + '_%d' %filenum + file_extension
+            try:
+                with open (ifile,'r') as f:
+                    fo = open (filechunk,"w")
+                    molii=0 
+                    for line in f:
+                        fo.write(line)
+                        if line.startswith('$$$$'):
+                            moli+=1
+                            molii+=1
+                            if (moli>=nmol):
+                                fo.close()
+                                tfiles.append(filechunk)
+                                nobj.append(molii)
+
+                            elif (index[moli]>filenum):
+                                fo.close()
+                                tfiles.append(filechunk)
+                                nobj.append(molii)
+
+                                filenum+=1
+                                filechunk = filename + '_%d' %filenum + file_extension
+                                molii=0
+                                fo = open (filechunk,"w")
+            except:
+                return False, "error opening: "+ifile
+
         else :
             nobj.append(nmol)
             tfiles.append(ifile)
 
         return True, (nobj, tfiles)
-
-        # Trivial version
-        # nmol = 0
-        # try:
-        #     with open (ifile,'r') as f:
-        #         for line in f:
-        #             if line.startswith('$$$$'):
-        #                 nmol+=1
-        # except:
-        #     return False, "error opening"+ifile
-        
-        if nmol == 0:
-            return False, "no molecule found in file"+ifile
-        
-        return True, nmol
 
     def extractAnotations (self, ifile):
 
@@ -108,6 +133,10 @@ class flInput:
         return True
 
     def workflow (self, ifile):
+        ''' Executes in sequence methods required to generate MD, starting from a single molecular file
+            input : ifile, a molecular file in SDFile format
+            output: results is a numpy bidimensional array containing MD '''
+
         tfile = ifile
         # normalize chemical
         if self.control.normalize_method != None:
@@ -142,25 +171,24 @@ class flInput:
 
 
     def run (self):
+        ''' process input file to obtain metadata (size, type, number of objects, name of objects, etc.) as well
+            as for generating MD
+            
+            The results are saved in a MD5 stamped pickle, to avoid recomputing model input from the same input
+            file
+            
+            This methods supports multiprocessing, splitting original files in a chunck per CPU
+            '''
 
-        # check for presence of pickle file
+        # TODO: check for presence of pickle file
         # if true, extract MD5 stamp, compute control MD5 stamp and if both are coincident extract results and exit
 
         # open file
         if not os.path.isfile (self.ifile):
             return False, "input error: file not found"
         
+        # processing for diverse molecule type
         if (self.control.input_type == 'molecule'):
-
-            # count number of molecules and split in chuncks for multiprocessing if necessary
-            success, results = self.countmol (self.ifile)
-            if not success:
-                return False, "input error: no molecule recognized: "+str(results)
-            else:
-                nobj   = results[0]  # list with nobj of each piece
-                tfiles = results[1]  # list with filename of pieces
-
-            print (nobj, tfiles, tfiles[0])
 
             # extract useful information from file
             success, results = self.extractAnotations (self.ifile)
@@ -171,15 +199,28 @@ class flInput:
                 self.obj_bio = results[1]
                 self.obj_exp = results[2]
 
+            # count number of molecules and split in chuncks for multiprocessing if necessary
+            success, results = self.countmol (self.ifile)
+            if not success:
+                return False, "input error: no molecule recognized: "+str(results)
+            else:
+                nobj   = results[0]  # list with nobj of each piece
+                tfiles = results[1]  # list with filename of pieces
+
+            print (nobj, tfiles)
+
             # execute the workflow in 1 or n CPUs
             if len(tfiles) > 1 :
+                print ('multi CPU')
                 pool = mp.Pool(len(tfiles))
                 results = pool.map(self.workflow, tfiles)
             else:
+                print ('single CPU')
                 success, results = self.workflow (tfiles[0])
 
             # check the results and make sure there are no missing objects
             # reassemble results for parallel computing results
+
             success, results = self.consolidate(results,nobj) 
 
             if not success:
