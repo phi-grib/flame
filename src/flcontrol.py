@@ -31,7 +31,8 @@ class flControl:
         self.input_type = 'molecule'                # 'molecule' | 'data'
         self.normalize_method = 'standardize'       # None | 'standardize'
         self.ionize_method = None                   # None | 'moka'
-
+        self.convert3D_method = None                # None | 'moka'
+        self.numCPUs = 1                            # (int)
         return
 
     def md5stamp (self):

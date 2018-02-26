@@ -23,6 +23,7 @@
 import os
 import hashlib
 from rdkit import Chem
+import multiprocessing as mp
 
 class flInput:
 
@@ -34,6 +35,9 @@ class flInput:
     def countmol (self, ifile):
         # estimate number of molecules inside the SDFile
 
+        nobj = []
+        tfiles = []
+        
         # RdKit version
         try:
             suppl = Chem.SDMolSupplier(ifile)
@@ -41,6 +45,15 @@ class flInput:
             return False, 'unable to open molfile'
         
         nmol = len(suppl)
+
+        if self.control.numCPUs > 1 :
+            #split the file
+            print ('multiple CPUs')
+        else :
+            nobj.append(nmol)
+            tfiles.append(ifile)
+
+        return True, (nobj, tfiles)
 
         # Trivial version
         # nmol = 0
@@ -57,6 +70,15 @@ class flInput:
         
         return True, nmol
 
+    def extractAnotations (self, ifile):
+
+        # returns a list of names, biological anotations and experimental values
+        # TODO: make it more flexible
+        #  
+        results = [None, None, None]
+
+        return True, results
+
     def standardize (self, ifile):
 
         return True, "debug dummy"
@@ -65,7 +87,15 @@ class flInput:
 
         return True, "debug dummy"
 
+    def convert3D (self, ifile):
+
+        return True, "debug dummy"
+
     def computeMD (self, ifile):
+
+        return True, "debug dummy"
+
+    def consolidate (self, tfiles, tnames):
 
         return True, "debug dummy"
 
@@ -77,6 +107,40 @@ class flInput:
 
         return True
 
+    def workflow (self, ifile):
+        tfile = ifile
+        # normalize chemical
+        if self.control.normalize_method != None:
+            success, results = self.standardize (tfile)
+            if not success:
+                return False, "input error: chemical standardization failed: "+str(results)
+            else:
+                tfile = results
+
+        # ionize molecules
+        if self.control.ionize_method != None:
+            success, results = self.ionize (tfile)
+            if not success:
+                return False, "input error: molecule ionization error at position: "+str(results)
+            else:
+                tfile = results
+
+        # generate a 3D structure
+        if self.control.convert3D_method != None:
+            success, results = self.convert3D (tfile)
+            if not success:
+                return False, "input error: 3D conversion error at position: "+str(results)
+            else:
+                tfile = results
+
+        # compute MD
+        success, results = self.computeMD (tfile)
+        if not success:
+            return False, "input error: failed computing MD: "+str(results)
+
+        return success, results
+
+
     def run (self):
 
         # check for presence of pickle file
@@ -85,41 +149,42 @@ class flInput:
         # open file
         if not os.path.isfile (self.ifile):
             return False, "input error: file not found"
-
-        tfile = self.ifile
         
         if (self.control.input_type == 'molecule'):
 
-            # count number of molecules
-            success, results = self.countmol (tfile)
+            # count number of molecules and split in chuncks for multiprocessing if necessary
+            success, results = self.countmol (self.ifile)
             if not success:
                 return False, "input error: no molecule recognized: "+str(results)
             else:
-                nobj = results
+                nobj   = results[0]  # list with nobj of each piece
+                tfiles = results[1]  # list with filename of pieces
 
-                # debug
-                print (nobj)
+            print (nobj, tfiles, tfiles[0])
 
-            # normalize chemical
-            if self.control.normalize_method != None:
-                success, results = self.standardize (tfile)
-                if not success:
-                    return False, "input error: chemical standardization failed: "+str(results)
-                else:
-                    tfile = results
-
-            # ionize molecules
-            if self.control.ionize_method != None:
-                success, results = self.ionize (tfile)
-                if not success:
-                    return False, "input error: molecule ionization error at position: "+str(results)
-                else:
-                    tfile = results
-
-            # compute MD
-            success, results = self.computeMD (tfile)
+            # extract useful information from file
+            success, results = self.extractAnotations (self.ifile)
             if not success:
-                return False, "input error: failed computing MD: "+str(results)        
+                return False, "input error: annotation extraction failed: "+str(results)
+            else:
+                self.obj_nam = results[0]
+                self.obj_bio = results[1]
+                self.obj_exp = results[2]
+
+            # execute the workflow in 1 or n CPUs
+            if len(tfiles) > 1 :
+                pool = mp.Pool(len(tfiles))
+                results = pool.map(self.workflow, tfiles)
+            else:
+                success, results = self.workflow (tfiles[0])
+
+            # check the results and make sure there are no missing objects
+            # reassemble results for parallel computing results
+            success, results = self.consolidate(results,nobj) 
+
+            if not success:
+                return False, str(results)
+
 
         elif (self.control.input_type == 'data'):
 
