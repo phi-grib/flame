@@ -22,7 +22,7 @@
 
 from idata import Idata
 
-class iIdata (Idata):
+class IdataChild (Idata):
 
     def __init__ (self, control, ifile):
 

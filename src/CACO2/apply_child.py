@@ -1,6 +1,6 @@
 #! -*- coding: utf-8 -*-
 
-##    Description    Flame flOutput internal class
+##    Description    Flame flApply internal class
 ##
 ##    Authors:       Manuel Pastor (manuel.pastor@upf.edu)
 ##
@@ -20,18 +20,18 @@
 ##    You should have received a copy of the GNU General Public License
 ##    along with Flame.  If not, see <http://www.gnu.org/licenses/>.
 
-from odata import Odata
+from apply import Apply
 
-class iOdata (Odata):
+class ApplyChild (Apply):
 
     def __init__ (self, control, results):
 
-        Odata.__init__ (self, control, results)
+        Apply.__init__(self, control, results)
 
-    # def run (self):
+    def run (self):
 
-    #     success = True
-    #     results = self.ifile + '_c'
+        success = True
+        results = self.ifile + '_b'
 
-    #     return success, results
+        return success, results
 

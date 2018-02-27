@@ -22,7 +22,7 @@
 
 from control import Control
 
-class iControl(Control):
+class ControlChild (Control):
 
     def __init__ (self):
 

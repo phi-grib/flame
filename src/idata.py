@@ -36,7 +36,7 @@ class Idata:
         # estimate number of molecules inside the SDFile
 
         nobj = []
-        tfiles = []
+        temp_files = []
         
         # RdKit version
         try:
@@ -55,47 +55,47 @@ class Idata:
             for a in range (nmol):
                 index.append(a//chunksize)
             
-            moli=0      # molecule counter in next loop
-            chunki=0    # chunk counter in next toolp
+            moli = 0      # molecule counter in next loop
+            chunki = 0    # chunk counter in next toolp
 
-            filename, file_extension = os.path.splitext(ifile)
-            chunkname = filename + '_%d' %chunki + file_extension
+            filename, fileext = os.path.splitext(ifile)
+            chunkname = filename + '_%d' %chunki + fileext
             try:
-                with open (ifile,'r') as f:
-                    fo = open (chunkname,"w")
-                    moli_chunk=0 
-                    for line in f:
-                        fo.write(line)
+                with open (ifile,'r') as fi:
+                    ofile = open (chunkname,"w")
+                    moli_chunk = 0      # molecule counter inside the chunk
+                    for line in fi:
+                        ofile.write(line)
 
                         # end of molecule
                         if line.startswith('$$$$'):
-                            moli+=1
-                            moli_chunk+=1
+                            moli += 1
+                            moli_chunk += 1 
 
-                            # if we reached the end of the file
-                            if (moli>=nmol):
-                                fo.close()
-                                tfiles.append(chunkname)
+                            # if we reached the end of the file...
+                            if (moli >= nmol):
+                                ofile.close()
+                                temp_files.append(chunkname)
                                 nobj.append(moli_chunk)
 
-                            # otherwyse
-                            elif (index[moli]>chunki):
-                                fo.close()
-                                tfiles.append(chunkname)
+                            # ...otherwyse
+                            elif (index[moli] > chunki):
+                                ofile.close()
+                                temp_files.append(chunkname)
                                 nobj.append(moli_chunk)
 
                                 chunki+=1
-                                chunkname = filename + '_%d' %chunki + file_extension
+                                chunkname = filename + '_%d' %chunki + fileext
                                 moli_chunk=0
-                                fo = open (chunkname,"w")
+                                ofile = open (chunkname,"w")
             except:
                 return False, "error splitting: "+ifile
 
         else :
             nobj.append(nmol)
-            tfiles.append(ifile)
+            temp_files.append(ifile)
 
-        return True, (nobj, tfiles)
+        return True, (nobj, temp_files)
 
     def extractAnotations (self, ifile):
 

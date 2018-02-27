@@ -24,9 +24,9 @@ import sys
 import getopt
 from predict import Predict
 
-def predict_cmd (ifile, imodel):
+def predict_cmd (ifile, model):
     
-    predict = Predict (ifile, imodel)
+    predict = Predict (ifile, model)
     success, results = predict.run()
     print (success, results)
 
@@ -36,7 +36,7 @@ def usage ():
 
 def main ():
     ifile= ''
-    imodel = ''
+    model = ''
     command = None
 
     try:
@@ -57,13 +57,13 @@ def main ():
             elif opt in '-f':
                 ifile = arg
             elif opt in '-e':
-                imodel = arg
+                model = arg
 
-    if ifile == '' or imodel == '' or command == None: 
+    if ifile == '' or model == '' or command == None: 
         usage()
     
     if command == 'predict':
-        predict_cmd (ifile, imodel)
+        predict_cmd (ifile, model)
     elif command == 'build':
         print ('not enabled, please wait')
         usage()

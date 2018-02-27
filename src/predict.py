@@ -25,10 +25,10 @@ import sys
 
 class Predict:
 
-    def __init__ (self, ifile, imodel):
+    def __init__ (self, ifile, model):
 
         self.ifile = ifile
-        self.imodel = imodel
+        self.model = model
 
         return
 
@@ -39,15 +39,15 @@ class Predict:
 
         # use self.iModel to load path for main classes
         try:
-            epd = './'+self.imodel
+            epd = './'+self.model
             if os.path.isdir(epd):
                 sys.path.append(epd)
-                from icontrol import iControl
-                from iidata import iIdata
-                from iapply import iApply
-                from iodata import iOdata
+                from control_child import ControlChild
+                from idata_child import IdataChild
+                from apply_child import ApplyChild
+                from odata_child import OdataChild
             else:
-                print ('unable to find specified model '+self.imodel)
+                print ('unable to find specified model '+self.model)
                 success = False    
 
         except:
@@ -55,17 +55,17 @@ class Predict:
             success = False
 
         if success:
-            control = iControl()
+            control = ControlChild()
 
-            idata = iIdata (control, self.ifile)
+            idata = IdataChild (control, self.ifile)
             success, results = idata.run ()
 
         if success :
-            apply = iApply (control, results)
+            apply = ApplyChild (control, results)
             success, results = apply.run ()
 
         if success : 
-            odata = iOdata (control, results)
+            odata = OdataChild (control, results)
             success, results = odata.run ()
 
         return success, results
