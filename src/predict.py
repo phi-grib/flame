@@ -1,6 +1,6 @@
 #! -*- coding: utf-8 -*-
 
-##    Description    Flame flPredict class
+##    Description    Flame Predict class
 ##
 ##    Authors:       Manuel Pastor (manuel.pastor@upf.edu)
 ##
@@ -18,7 +18,7 @@
 ##    GNU General Public License for more details.
 ##
 ##    You should have received a copy of the GNU General Public License
-##    along with Flame.  If not, see <http://www.gnu.org/licenses/>.
+##    along with Flame. If not, see <http://www.gnu.org/licenses/>.
 
 import os
 import sys
@@ -32,12 +32,14 @@ class Predict:
 
         return
 
-    def run (self):    
+    def run (self):
+        ''' Executes a default predicton workflow '''
 
         success = True
         results = 'Error'
 
-        # use self.iModel to load path for main classes
+        # uses the child classes within the 'model' folder, to allow customization of
+        # the processing applied to each model
         try:
             epd = './'+self.model
             if os.path.isdir(epd):
@@ -47,11 +49,14 @@ class Predict:
                 from apply_child import ApplyChild
                 from odata_child import OdataChild
             else:
-                print ('unable to find specified model '+self.model)
+                print ('unable to find specified model: '+self.model)
                 success = False    
 
+        except OSError as err:
+            print ('Unable to load model classes: {0}'.format (err))
+            success = False
         except:
-            print ('unable to load main classes')
+            print ('Error loading model classes:', sys.exc_info()[0])
             success = False
 
         if success:

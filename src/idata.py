@@ -1,6 +1,6 @@
 #! -*- coding: utf-8 -*-
 
-##    Description    Flame flInput class
+##    Description    Flame Idata class
 ##
 ##    Authors:       Manuel Pastor (manuel.pastor@upf.edu)
 ##
@@ -24,16 +24,22 @@ import os
 import hashlib
 from rdkit import Chem
 import multiprocessing as mp
+from sdfileutils import splitSDFile
 
 class Idata:
 
     def __init__ (self, control, ifile):
 
-        self.control = control
-        self.ifile = ifile
+        self.control = control      # control object defining the processing
+        self.ifile = ifile          # input file
 
     def countmol (self, ifile):
-        # estimate number of molecules inside the SDFile
+        ''' 
+    
+        Counts number of molecules inside an SDFile given as argument. 
+        Additionaly splits it in chunks for multiprocessing.
+
+        '''
 
         nobj = []
         temp_files = []
@@ -47,48 +53,16 @@ class Idata:
         nmol = len(suppl)
 
         if nmol == 0:
-            return False, "no molecule found in file"+ifile
+            return False, "no molecule found in file: "+ifile
 
         if self.control.numCPUs > 1 :
-            index = []
-            chunksize = nmol//self.control.numCPUs
-            for a in range (nmol):
-                index.append(a//chunksize)
-            
-            moli = 0      # molecule counter in next loop
-            chunki = 0    # chunk counter in next toolp
 
-            filename, fileext = os.path.splitext(ifile)
-            chunkname = filename + '_%d' %chunki + fileext
-            try:
-                with open (ifile,'r') as fi:
-                    fo = open (chunkname,"w")
-                    moli_chunk = 0      # molecule counter inside the chunk
-                    for line in fi:
-                        fo.write(line)
+            success, results = splitSDFile(ifile, nmol, self.control.numCPUs)
 
-                        # end of molecule
-                        if line.startswith('$$$$'):
-                            moli += 1
-                            moli_chunk += 1 
-
-                            # if we reached the end of the file...
-                            if (moli >= nmol):
-                                fo.close()
-                                temp_files.append(chunkname)
-                                nobj.append(moli_chunk)
-
-                            # ...otherwyse
-                            elif (index[moli] > chunki):
-                                fo.close()
-                                temp_files.append(chunkname)
-                                nobj.append(moli_chunk)
-
-                                chunki+=1
-                                chunkname = filename + '_%d' %chunki + fileext
-                                moli_chunk=0
-                                fo = open (chunkname,"w")
-            except:
+            if success : 
+                nobj = results[0]
+                temp_files = results[1]
+            else:
                 return False, "error splitting: "+ifile
 
         else :
@@ -98,35 +72,50 @@ class Idata:
         return True, (nobj, temp_files)
 
     def extractAnotations (self, ifile):
+        ''' 
+        
+        Extracts from an SDFile molecule names, biological anotations and experimental values. 
+        Returns three lists of values.
+        
+        '''
 
-        # returns a list of names, biological anotations and experimental values
-        # TODO: make it more flexible
-        #  
+        # TODO: make it more flexible and extract other info
+          
         results = [None, None, None]
 
         return True, results
 
     def standardize (self, ifile):
+        ''' Standardizes molecular structure '''
 
         return True, "debug dummy"
 
     def ionize (self, ifile):
+        ''' Adjust the ionization status of the molecular strcuture, using a given pH.'''
 
         return True, "debug dummy"
 
     def convert3D (self, ifile):
+        ''' Assigns 3D structures to the molecular structures provided as input.'''
 
         return True, "debug dummy"
 
     def computeMD (self, ifile):
+        ''' Uses the molecular structures for computing an array of values (int or float) '''
 
         return True, "debug dummy"
 
-    def consolidate (self, tfiles, tnames):
+    def consolidate (self, results, nobj):
+        ''' Mix the results obtained by multiple CPUs into a single result file '''
 
         return True, "debug dummy"
 
     def save (self, results):
+        ''' 
+
+        Saves the results in serialized form, together with the MD5 stamp of the control class
+
+        '''
 
         print (self.control.md5stamp())
         # pickle results + stamp in ifile.pickle
@@ -250,7 +239,7 @@ class Idata:
         # save and stamp
         success = self.save (results)
 
+        # nonsense, only for debugging purposes in development
         results = self.ifile + '_i'
 
         return success, results
-

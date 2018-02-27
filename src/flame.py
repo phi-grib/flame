@@ -1,6 +1,6 @@
 #! -*- coding: utf-8 -*-
 
-##    Description    Flame predict command
+##    Description    Flame command
 ##
 ##    Authors:       Manuel Pastor (manuel.pastor@upf.edu)
 ##
@@ -18,19 +18,22 @@
 ##    GNU General Public License for more details.
 ##
 ##    You should have received a copy of the GNU General Public License
-##    along with Flame.  If not, see <http://www.gnu.org/licenses/>.
+##    along with Flame. If not, see <http://www.gnu.org/licenses/>.
 
 import sys
 import getopt
 from predict import Predict
 
 def predict_cmd (ifile, model):
+    ''' Instantiates a Predict object to run a prediction using the given input file and model '''
     
     predict = Predict (ifile, model)
     success, results = predict.run()
     print (success, results)
 
 def usage ():
+    ''' Usage instructions '''
+    
     print ('usage is flame -c predict -e modelname -f inputfilename.sdf')
     sys.exit(1)
 

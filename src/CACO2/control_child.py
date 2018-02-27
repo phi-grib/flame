@@ -1,6 +1,6 @@
 #! -*- coding: utf-8 -*-
 
-##    Description    Flame flcontrol class
+##    Description    Flame Control internal class
 ##
 ##    Authors:       Manuel Pastor (manuel.pastor@upf.edu)
 ##
@@ -18,7 +18,7 @@
 ##    GNU General Public License for more details.
 ##
 ##    You should have received a copy of the GNU General Public License
-##    along with Flame.  If not, see <http://www.gnu.org/licenses/>.
+##    along with Flame. If not, see <http://www.gnu.org/licenses/>.
 
 from control import Control
 

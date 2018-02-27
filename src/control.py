@@ -1,6 +1,6 @@
 #! -*- coding: utf-8 -*-
 
-##    Description    Flame flcontrol class
+##    Description    Flame Control class
 ##
 ##    Authors:       Manuel Pastor (manuel.pastor@upf.edu)
 ##

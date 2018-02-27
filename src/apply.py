@@ -1,6 +1,6 @@
 #! -*- coding: utf-8 -*-
 
-##    Description    Flame flApply class
+##    Description    Flame Apply class
 ##
 ##    Authors:       Manuel Pastor (manuel.pastor@upf.edu)
 ##
