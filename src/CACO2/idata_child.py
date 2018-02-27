@@ -33,7 +33,5 @@ class IdataChild (Idata):
 
         success, results = Idata.run (self)
 
-        results = 'xxx' + results
-
         return success, results
 

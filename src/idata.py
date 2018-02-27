@@ -21,10 +21,14 @@
 ##    along with Flame. If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import sys
 import hashlib
 from rdkit import Chem
 import multiprocessing as mp
 from sdfileutils import splitSDFile
+from sdfileutils import nummols
+from standardiser import standardise
+import numpy as np
 
 class Idata:
 
@@ -44,13 +48,11 @@ class Idata:
         nobj = []
         temp_files = []
         
-        # RdKit version
-        try:
-            suppl = Chem.SDMolSupplier(ifile)
-        except:
+        success, results = nummols (ifile)
+        if not success :
             return False, 'unable to open molfile'
-        
-        nmol = len(suppl)
+        else :
+            nmol = int(results)
 
         if nmol == 0:
             return False, "no molecule found in file: "+ifile
@@ -78,6 +80,23 @@ class Idata:
         Returns three lists of values.
         
         '''
+        # if self.SDFileActivity:
+        #     if m.HasProp(self.SDFileActivity):
+        #         activity = m.GetProp(self.SDFileActivity)
+        #         fo.write('>  <'+self.SDFileActivity+'>\n'+activity+'\n')
+
+        # if self.SDFileExperimental:
+        #     if m.HasProp(self.SDFileExperimental):
+        #         exp = m.GetProp(self.SDFileExperimental)
+        #         fo.write('>  <'+self.SDFileExperimental+'>\n'+exp+'\n')
+
+        # for prop in self.SDFileMetadata:
+        #     if m.HasProp(prop):
+        #         exp = m.GetProp(prop)
+        #         fo.write('>  <'+prop+'>\n'+exp+'\n')
+
+        # fo.write('\n$$$$')
+        # fo.close()
 
         # TODO: make it more flexible and extract other info
           
@@ -85,30 +104,73 @@ class Idata:
 
         return True, results
 
-    def standardize (self, ifile):
-        ''' Standardizes molecular structure '''
+    def standardize (self, ifile, clean=False):
+        '''
+        Applies a structure normalization protocol provided by Francis Atkinson (EBI)
 
-        return True, "debug dummy"
+        https://github.com/flatkinson/standardiser
+        
+        Returns a tuple containing the result of the method and (if True) the name of the 
+        output molecule and an error message otherwyse
+
+        '''
+
+        filename, fileext = os.path.splitext(ifile)
+        
+        ofile = filename + '_std' + fileext
+
+        try:
+            suppl=Chem.SDMolSupplier(ifile)
+        except:
+            return False, 'Error at processing input file for standardizing structures'
+
+        with open (ofile,'w') as fo:
+            for m in suppl:
+                try:
+                    parent = standardise.run (Chem.MolToMolBlock(m))
+                except standardise.StandardiseException as e:
+                    if e.name == "no_non_salt":
+                        parent = Chem.MolToMolBlock(m)
+                    else:
+                        return False, e.name
+
+                fo.write(parent)
+                fo.write('$$$$\n')
+
+        if clean:
+            removefile (moli)
+
+        return True, ofile
 
     def ionize (self, ifile):
         ''' Adjust the ionization status of the molecular strcuture, using a given pH.'''
 
-        return True, "debug dummy"
+        return True, ifile
 
     def convert3D (self, ifile):
         ''' Assigns 3D structures to the molecular structures provided as input.'''
 
-        return True, "debug dummy"
+        return True, ifile
 
     def computeMD (self, ifile):
         ''' Uses the molecular structures for computing an array of values (int or float) '''
 
-        return True, "debug dummy"
+        # return a numpy array with as many rows and nobj        
+         
+        success, results = nummols (ifile)
+        if not success :
+            return False, 'unable to open molfile'
+        else :
+            nmol = int(results)
+
+        xmatrix = np.zeros ((nmol,10),dtype=np.float64)
+
+        return True, xmatrix
 
     def consolidate (self, results, nobj):
         ''' Mix the results obtained by multiple CPUs into a single result file '''
 
-        return True, "debug dummy"
+        return True, "debug dummy consolidate"
 
     def save (self, results):
         ''' 
@@ -212,14 +274,13 @@ class Idata:
                 print ('multi CPU')
                 pool = mp.Pool(len(tfiles))
                 results = pool.map(self.workflow, tfiles)
+
+                # check the results and make sure there are no missing objects
+                # reassemble results for parallel computing results
+                success, results = self.consolidate(results,nobj) 
             else:
                 print ('single CPU')
                 success, results = self.workflow (tfiles[0])
-
-            # check the results and make sure there are no missing objects
-            # reassemble results for parallel computing results
-
-            success, results = self.consolidate(results,nobj) 
 
             if not success:
                 return False, str(results)
@@ -240,6 +301,6 @@ class Idata:
         success = self.save (results)
 
         # nonsense, only for debugging purposes in development
-        results = self.ifile + '_i'
+        #results = self.ifile + '_i'
 
         return success, results

@@ -65,13 +65,13 @@ class Predict:
             idata = IdataChild (control, self.ifile)
             success, results = idata.run ()
 
-        if success :
-            apply = ApplyChild (control, results)
-            success, results = apply.run ()
+        # if success :
+        #     apply = ApplyChild (control, results)
+        #     success, results = apply.run ()
 
-        if success : 
-            odata = OdataChild (control, results)
-            success, results = odata.run ()
+        # if success : 
+        #     odata = OdataChild (control, results)
+        #     success, results = odata.run ()
 
         return success, results
 

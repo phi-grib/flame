@@ -21,6 +21,15 @@
 ##    along with Flame. If not, see <http://www.gnu.org/licenses/>.            
             
 import os
+from rdkit import Chem
+
+def nummols (ifile):
+    try:
+        suppl = Chem.SDMolSupplier(ifile)
+    except:
+        return False, 'unable to open molfile'
+    
+    return True, len(suppl)
 
 def splitSDFile (ifile, num_mols, num_chunks):
     ''' 
