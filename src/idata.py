@@ -135,9 +135,14 @@ class Idata:
         return True
 
     def workflow (self, ifile):
-        ''' Executes in sequence methods required to generate MD, starting from a single molecular file
-            input : ifile, a molecular file in SDFile format
-            output: results is a numpy bidimensional array containing MD '''
+        ''' 
+        
+        Executes in sequence methods required to generate MD, starting from a single molecular file
+
+        input : ifile, a molecular file in SDFile format
+        output: results is a numpy bidimensional array containing MD 
+            
+        '''
 
         tfile = ifile
         # normalize chemical
@@ -171,16 +176,18 @@ class Idata:
 
         return success, results
 
-
     def run (self):
-        ''' process input file to obtain metadata (size, type, number of objects, name of objects, etc.) as well
-            as for generating MD
+        ''' 
+        
+        Process input file to obtain metadata (size, type, number of objects, name of objects, etc.) as well
+        as for generating MD
             
-            The results are saved in a MD5 stamped pickle, to avoid recomputing model input from the same input
-            file
+        The results are saved in a MD5 stamped pickle, to avoid recomputing model input from the same input
+        file
             
-            This methods supports multiprocessing, splitting original files in a chunck per CPU
-            '''
+        This methods supports multiprocessing, splitting original files in a chunck per CPU
+        
+        '''
 
         # TODO: check for presence of pickle file
         # if true, extract MD5 stamp, compute control MD5 stamp and if both are coincident extract results and exit
@@ -189,7 +196,7 @@ class Idata:
         if not os.path.isfile (self.ifile):
             return False, "input error: file not found"
         
-        # processing for diverse molecule type
+        # processing for molecular input (for now an SDFile)
         if (self.control.input_type == 'molecule'):
 
             # extract useful information from file
@@ -228,7 +235,7 @@ class Idata:
             if not success:
                 return False, str(results)
 
-
+        # processing for non-molecular input
         elif (self.control.input_type == 'data'):
 
             #   test and obtain dimensions
@@ -240,14 +247,8 @@ class Idata:
 
             print ("unknown input format")
 
-
         # save and stamp
         success = self.save (results)
-
-        # runner class? will split in chunks and run every chunck in a thread, then reassembling the results
-        # at the end
-        # the same class will take care of situations where the loop execution fails and fallback to compound 
-        # per compound mode
 
         results = self.ifile + '_i'
 
