@@ -62,10 +62,10 @@ class Idata:
             chunkname = filename + '_%d' %chunki + fileext
             try:
                 with open (ifile,'r') as fi:
-                    ofile = open (chunkname,"w")
+                    fo = open (chunkname,"w")
                     moli_chunk = 0      # molecule counter inside the chunk
                     for line in fi:
-                        ofile.write(line)
+                        fo.write(line)
 
                         # end of molecule
                         if line.startswith('$$$$'):
@@ -74,20 +74,20 @@ class Idata:
 
                             # if we reached the end of the file...
                             if (moli >= nmol):
-                                ofile.close()
+                                fo.close()
                                 temp_files.append(chunkname)
                                 nobj.append(moli_chunk)
 
                             # ...otherwyse
                             elif (index[moli] > chunki):
-                                ofile.close()
+                                fo.close()
                                 temp_files.append(chunkname)
                                 nobj.append(moli_chunk)
 
                                 chunki+=1
                                 chunkname = filename + '_%d' %chunki + fileext
                                 moli_chunk=0
-                                ofile = open (chunkname,"w")
+                                fo = open (chunkname,"w")
             except:
                 return False, "error splitting: "+ifile
 
