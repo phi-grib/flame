@@ -46,6 +46,10 @@ furosemide
  19 21  1  0
  20 21  2  0
 M  END
+>  <flameID>
+fl0000000000
+
+$$$$
 guanabenz
      RDKit          3D
 
@@ -79,6 +83,10 @@ guanabenz
  12 13  1  0
  12 14  2  0
 M  END
+>  <flameID>
+fl0000000001
+
+$$$$
 fleroxacin
      RDKit          3D
 
@@ -138,6 +146,10 @@ fleroxacin
  24 25  1  0
  25 26  1  0
 M  END
+>  <flameID>
+fl0000000002
+
+$$$$
 mibefradil
      RDKit          3D
 
@@ -218,6 +230,10 @@ mibefradil
  34 36  1  0
  35 36  2  0
 M  END
+>  <flameID>
+fl0000000003
+
+$$$$
 verapamil
      RDKit          3D
 
@@ -290,6 +306,10 @@ verapamil
  30 32  1  0
  31 33  1  0
 M  END
+>  <flameID>
+fl0000000004
+
+$$$$
 guanoxan
      RDKit          3D
 
@@ -326,6 +346,10 @@ guanoxan
  13 14  1  0
  13 15  2  0
 M  END
+>  <flameID>
+fl0000000005
+
+$$$$
 saquinavir
      RDKit          3D
 
@@ -433,6 +457,10 @@ saquinavir
  47 49  1  0
  48 49  2  0
 M  END
+>  <flameID>
+fl0000000006
+
+$$$$
 lidocaine
      RDKit          3D
 
@@ -472,6 +500,10 @@ lidocaine
  14 16  1  0
  15 17  1  0
 M  END
+>  <flameID>
+fl0000000007
+
+$$$$
 Enalapril
      RDKit          3D
 
@@ -532,6 +564,10 @@ Enalapril
  25 27  2  0
  26 27  1  0
 M  END
+>  <flameID>
+fl0000000008
+
+$$$$
 theophylline
      RDKit          3D
 
@@ -564,3 +600,7 @@ theophylline
   7 10  1  0
  10 13  2  0
 M  END
+>  <flameID>
+fl0000000009
+
+$$$$

@@ -80,38 +80,61 @@ class Idata:
         Returns three lists of values.
         
         '''
-        # if self.SDFileActivity:
-        #     if m.HasProp(self.SDFileActivity):
-        #         activity = m.GetProp(self.SDFileActivity)
-        #         fo.write('>  <'+self.SDFileActivity+'>\n'+activity+'\n')
 
-        # if self.SDFileExperimental:
-        #     if m.HasProp(self.SDFileExperimental):
-        #         exp = m.GetProp(self.SDFileExperimental)
-        #         fo.write('>  <'+self.SDFileExperimental+'>\n'+exp+'\n')
+        obj_nam = []
+        obj_bio = []
+        obj_exp = []
 
-        # for prop in self.SDFileMetadata:
-        #     if m.HasProp(prop):
-        #         exp = m.GetProp(prop)
-        #         fo.write('>  <'+prop+'>\n'+exp+'\n')
+        try:
+            suppl=Chem.SDMolSupplier(ifile)
+        except:
+            return False, 'Error at processing input file for extracting metadata'
 
-        # fo.write('\n$$$$')
-        # fo.close()
+        molcount = 0
 
-        # TODO: make it more flexible and extract other info
-          
-        results = [None, None, None]
+        for m in suppl:
+            
+            molname = ''
+            activity_num = None
+            exp = None
 
-        return True, results
+            if m.HasProp(self.control.SDFile_name):
+                molname = m.GetProp(self.control.SDFile_name)
+            else:
+                molname = 'fl%0.10d' % molcount
 
-    def standardize (self, ifile, clean=False):
+            molcount += 1
+
+            if m.HasProp(self.control.SDFile_activity):
+                activity_str = m.GetProp(self.control.SDFile_activity)
+
+                try:
+                    activity_num = float (activity_str)
+                except:
+                    activity_num = None
+
+            if m.HasProp(self.control.SDFile_experimental):
+                exp = m.GetProp(self.control.SDFile_experimental)
+
+            obj_nam.append(molname)
+            obj_bio.append(activity_num)
+            obj_exp.append(exp)
+
+        return True, (obj_nam, obj_bio, obj_exp)
+
+    def normalize (self, ifile, clean=False):
         '''
-        Applies a structure normalization protocol provided by Francis Atkinson (EBI)
+        Generates a simplified SDFile with MolBlock and an internal ID for further processing
 
-        https://github.com/flatkinson/standardiser
+        Also, when defined in control, applies chemical standardization protocols, like the 
+        one provided by Francis Atkinson (EBI), accessible from:
+
+            https://github.com/flatkinson/standardiser
         
         Returns a tuple containing the result of the method and (if True) the name of the 
         output molecule and an error message otherwyse
+
+        WARNING: if clean is set to True it will remove the original file
 
         '''
 
@@ -125,20 +148,35 @@ class Idata:
             return False, 'Error at processing input file for standardizing structures'
 
         with open (ofile,'w') as fo:
+            mcount = 0
             for m in suppl:
-                try:
-                    parent = standardise.run (Chem.MolToMolBlock(m))
-                except standardise.StandardiseException as e:
-                    if e.name == "no_non_salt":
-                        parent = Chem.MolToMolBlock(m)
-                    else:
-                        return False, e.name
 
+                # if standardize
+                if self.control.chemstand_method == 'standardize':
+                    try:
+                        parent = standardise.run (Chem.MolToMolBlock(m))
+                    except standardise.StandardiseException as e:
+                        if e.name == "no_non_salt":
+                            parent = Chem.MolToMolBlock(m)
+                        else:
+                            return False, e.name
+
+                # in any case, write parent plus internal ID (flameID)
                 fo.write(parent)
+
+                flameID = 'fl%0.10d' % mcount
+                fo.write('>  <flameID>\n'+flameID+'\n\n')
+
+                mcount += 1
+
+                # terminator
                 fo.write('$$$$\n')
 
         if clean:
-            removefile (moli)
+            try:
+                os.remove (ifile)
+            except OSError:
+                pass
 
         return True, ofile
 
@@ -195,14 +233,15 @@ class Idata:
             
         '''
 
-        tfile = ifile
-        # normalize chemical
-        if self.control.normalize_method != None:
-            success, results = self.standardize (tfile)
-            if not success:
-                return False, "input error: chemical standardization failed: "+str(results)
-            else:
-                tfile = results
+        # tfile is the name of the temporary molecular file and will change in the workflow
+        tfile = ifile  
+
+        # normalize chemical  
+        success, results = self.normalize (tfile)
+        if not success:
+            return False, "input error: chemical standardization failed: "+str(results)
+        else:
+            tfile = results
 
         # ionize molecules
         if self.control.ionize_method != None:
@@ -258,6 +297,10 @@ class Idata:
                 self.obj_nam = results[0]
                 self.obj_bio = results[1]
                 self.obj_exp = results[2]
+
+            print (self.obj_nam)
+            print (self.obj_bio)
+            print (self.obj_exp)
 
             # count number of molecules and split in chuncks for multiprocessing if necessary
             success, results = self.countmol (self.ifile)

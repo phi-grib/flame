@@ -29,11 +29,13 @@ class Control:
         self.model_version = 0.0
 
         self.input_type = 'molecule'                # 'molecule' | 'data'
-        self.normalize_method = 'standardize'       # None | 'standardize'
+        self.chemstand_method = 'standardize'       # None | 'standardize'
         self.ionize_method = None                   # None | 'moka'
         self.convert3D_method = None                # None | 'moka'
-        self.numCPUs = 1                            # (int)
-        return
+        self.numCPUs = 2                            # (int)
+        self.SDFile_name = 'name'                   # (str)
+        self.SDFile_activity = 'activity'           # (str)
+        self.SDFile_experimental = 'IC50'           # (str)
 
     def md5stamp (self):
 
