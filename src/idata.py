@@ -201,14 +201,35 @@ class Idata:
         else :
             nmol = int(results)
 
-        xmatrix = np.zeros ((nmol,10),dtype=np.float64)
+        xmatrix = np.zeros ((nmol,5),dtype=np.float64)
 
         return True, xmatrix
 
     def consolidate (self, results, nobj):
         ''' Mix the results obtained by multiple CPUs into a single result file '''
 
-        return True, "debug dummy consolidate"
+        first = True
+        nresults = None
+
+        for iresults in results:
+            if iresults[0] == False :
+                return False, "error in consolidation"
+
+            if type (iresults[1]).__module__ == np.__name__:
+
+                if first:
+                    nresults = iresults [1]
+                    first = False
+                else:
+                    nresults = np.vstack ((nresults, iresults[1]))
+
+                print ('merge arrays')
+            
+            else :
+
+                print ('unknown')
+
+        return True, nresults
 
     def save (self, results):
         ''' 
