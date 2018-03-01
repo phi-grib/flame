@@ -28,10 +28,4 @@ class LearnChild (Learn):
 
         Learn.__init__(self, control, results)
 
-    def run (self):
-
-        success = True
-        results = self.ifile + '_b'
-
-        return success, results
 
