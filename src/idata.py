@@ -319,9 +319,9 @@ class Idata:
                 self.obj_bio = results[1]
                 self.obj_exp = results[2]
 
-            print (self.obj_nam)
-            print (self.obj_bio)
-            print (self.obj_exp)
+            # print (self.obj_nam)
+            # print (self.obj_bio)
+            # print (self.obj_exp)
 
             # count number of molecules and split in chuncks for multiprocessing if necessary
             success, results = self.countmol (self.ifile)
@@ -331,7 +331,7 @@ class Idata:
                 nobj   = results[0]  # list with nobj of each piece
                 tfiles = results[1]  # list with filename of pieces
 
-            print (nobj, tfiles)
+            # print (nobj, tfiles)
 
             # execute the workflow in 1 or n CPUs
             if len(tfiles) > 1 :
@@ -341,7 +341,7 @@ class Idata:
 
                 # check the results and make sure there are no missing objects
                 # reassemble results for parallel computing results
-                success, results = self.consolidate(results,nobj) 
+                success, results = self.consolidate(results, nobj) 
             else:
                 print ('single CPU')
                 success, results = self.workflow (tfiles[0])
@@ -364,7 +364,11 @@ class Idata:
         # save and stamp
         success = self.save (results)
 
-        # nonsense, only for debugging purposes in development
-        #results = self.ifile + '_i'
+        # results is a tuple with:
+        # [0] X numpy
+        # [1] Y numpy
+        # [2] flameID       this is important for retrieving structure
+        # [2] objnames      for presenting results
+        # [3] expinfo       for prediction quality assessment      
 
-        return success, results
+        return success, (results, self.obj_bio, None, self.obj_nam, self.obj_exp)

@@ -28,10 +28,9 @@ class ApplyChild (Apply):
 
         Apply.__init__(self, control, results)
 
-    def run (self):
+    # def run (self):
 
-        success = True
-        results = self.ifile + '_b'
+    #     success, results = Apply.run (self)
 
-        return success, results
+    #     return success, results
 

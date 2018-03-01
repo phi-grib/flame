@@ -24,7 +24,8 @@ class Apply:
 
     def __init__ (self, control, results):
 
-        self.ifile = results
+        self.control = control
+        self.results = results
 
     def run (self):
 
@@ -33,8 +34,11 @@ class Apply:
         # select prdiction tool from control
 
         # 
+
+        print (self.results)
+
         success = True
-        results = self.ifile + '_j'
+        results = (2.28,5.96)   # fake results
 
         return success, results
 
