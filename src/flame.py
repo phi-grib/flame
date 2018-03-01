@@ -23,12 +23,20 @@
 import sys
 import getopt
 from predict import Predict
+from build import Build
 
-def predict_cmd (ifile, model):
+def predict_cmd(ifile, model):
     ''' Instantiates a Predict object to run a prediction using the given input file and model '''
     
     predict = Predict (ifile, model)
     success, results = predict.run()
+    print (success, results)
+
+def build_cmd(ifile, model):
+    ''' Instantiates a Build object to run a prediction using the given input file and model '''
+    
+    Build = Build (ifile, model)
+    success, results = build.run()
     print (success, results)
 
 def usage ():
@@ -66,10 +74,9 @@ def main ():
         usage()
     
     if command == 'predict':
-        predict_cmd (ifile, model)
+        predict_cmd(ifile, model)
     elif command == 'build':
-        print ('not enabled, please wait')
-        usage()
+        build_cmd(ifile, model)
     else:
         usage()
 
