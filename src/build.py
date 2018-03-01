@@ -65,9 +65,9 @@ class Build:
             idata = IdataChild (control, self.ifile)
             success, results = idata.run ()
 
-        # if success :
-        #     learn = ApplyChild (control, results)
-        #     success, results = learn.run ()
+        if success :
+            learn = LearnChild (control, results)
+            success, results = learn.run ()
 
         # if success : 
         #     odata = OdataChild (control, results)

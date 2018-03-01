@@ -33,9 +33,9 @@ def predict_cmd(ifile, model):
     print (success, results)
 
 def build_cmd(ifile, model):
-    ''' Instantiates a Build object to run a prediction using the given input file and model '''
+    ''' Instantiates a Build object to build a model using the given input file (training series) and model (name of endpoint, eg. 'CACO2') '''
     
-    Build = Build (ifile, model)
+    build = Build (ifile, model)
     success, results = build.run()
     print (success, results)
 

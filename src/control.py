@@ -32,10 +32,41 @@ class Control:
         self.chemstand_method = 'standardize'       # None | 'standardize'
         self.ionize_method = None                   # None | 'moka'
         self.convert3D_method = None                # None | 'moka'
+        
         self.numCPUs = 2                            # (int)
+
         self.SDFile_name = 'name'                   # (str)
         self.SDFile_activity = 'activity'           # (str)
         self.SDFile_experimental = 'IC50'           # (str)
+
+        # ##
+        # ## Modeling settings
+        # ##
+        self.model = 'RF'
+        self.modelAutoscaling = None
+        # self.modelLV = None
+        # self.modelCutoff = None
+
+        ## Random Forest        
+        self.RFestimators = None
+        self.RFfeatures = None
+        self.RFtune = False
+        self.RFclass_weight = None
+        self.RFrandom = False
+        
+        ## Model Validation Settings
+        self.ModelValidationCV = None
+        self.ModelValidationN = 0
+        self.ModelValidationP = 0
+        self.ModelValidationLC = False # Learning curve
+
+        # self.selVar = None
+        # #self.selVarMethod = None
+        # self.selVarLV = None
+        # #self.selVarCV = None
+        # self.selVarRun = None
+        # self.selVarMask = None
+
 
     def md5stamp (self):
 
