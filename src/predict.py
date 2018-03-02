@@ -21,11 +21,11 @@
 ##    along with Flame.  If not, see <http://www.gnu.org/licenses/>.
 
 import sys
-import getopt
+import argparse
 from flpredict import flPredict
 
-def predict (ifile, imodel):
-    predict = flPredict (ifile, imodel)
+def predict (args):
+    predict = flPredict (args.infile, args.model)
     success, results = predict.run()
     print (success, results)
 
@@ -34,30 +34,14 @@ def usage ():
     sys.exit(1)
 
 def main ():
-    ifile= 'test.sdf'
-    imodel = ''
 
-    try:
-       opts, args = getopt.getopt(sys.argv[1:],'f:e:')
-    except getopt.GetoptError:
-        print("Arguments not recognized")
-        usage()
+    parser = argparse.ArgumentParser(description='Flame command line script to apply a model to an input file.')
+    parser.add_argument('-f', '--infile', help='Input file.',
+                        default= 'test.sdf', required=True)
+    parser.add_argument('-e', '--model', help='Model file.', required=True)
+    args = parser.parse_args()
     
-    if not len(opts):
-        print("Arguments not recognized")
-        usage()
-
-    if len(opts)>0:
-        for opt, arg in opts:
-            if opt in '-f':
-                ifile = arg
-            elif opt in '-e':
-                imodel = arg
-
-    if imodel == '' : 
-        usage()
-    
-    predict (ifile, imodel)    
+    predict (args)    
 
 if __name__ == '__main__':    
     main()
