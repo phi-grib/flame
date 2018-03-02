@@ -1,6 +1,6 @@
 #! -*- coding: utf-8 -*-
 
-##    Description    Flame Predict class
+##    Description    Flame Build class
 ##
 ##    Authors:       Manuel Pastor (manuel.pastor@upf.edu)
 ##
@@ -23,7 +23,7 @@
 import os
 import sys
 
-class Predict:
+class Build:
 
     def __init__ (self, ifile, model):
 
@@ -46,7 +46,7 @@ class Predict:
                 sys.path.append(epd)
                 from control_child import ControlChild
                 from idata_child import IdataChild
-                from apply_child import ApplyChild
+                from learn_child import LearnChild
                 from odata_child import OdataChild
             else:
                 print ('unable to find specified model: '+self.model)
@@ -66,8 +66,8 @@ class Predict:
             success, results = idata.run ()
 
         if success :
-            apply = ApplyChild (control, results)
-            success, results = apply.run ()
+            learn = LearnChild (control, results)
+            success, results = learn.run ()
 
         # if success : 
         #     odata = OdataChild (control, results)

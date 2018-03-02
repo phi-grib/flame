@@ -1,6 +1,6 @@
 #! -*- coding: utf-8 -*-
 
-##    Description    Flame flApply internal class
+##    Description    Flame Apply internal class
 ##
 ##    Authors:       Manuel Pastor (manuel.pastor@upf.edu)
 ##
@@ -8,11 +8,11 @@
 ##
 ##    This file is part of Flame
 ##
-##    eTOXlab is free software: you can redistribute it and/or modify
+##    Flame is free software: you can redistribute it and/or modify
 ##    it under the terms of the GNU General Public License as published by
 ##    the Free Software Foundation version 3.
 ##
-##    eTOXlab is distributed in the hope that it will be useful,
+##    Flame is distributed in the hope that it will be useful,
 ##    but WITHOUT ANY WARRANTY; without even the implied warranty of
 ##    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ##    GNU General Public License for more details.
@@ -20,18 +20,17 @@
 ##    You should have received a copy of the GNU General Public License
 ##    along with Flame.  If not, see <http://www.gnu.org/licenses/>.
 
-from flapply import flApply
+from apply import Apply
 
-class iflApply:
+class ApplyChild (Apply):
 
-    def __init__ (self, icontrol, results):
+    def __init__ (self, control, results):
 
-        flApply.__init__(self, icontrol, results)
+        Apply.__init__(self, control, results)
 
-    def run (self):
+    # def run (self):
 
-        success = True
-        results = self.ifile + '_b'
+    #     success, results = Apply.run (self)
 
-        return success, results
+    #     return success, results
 

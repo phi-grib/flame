@@ -1,6 +1,6 @@
 #! -*- coding: utf-8 -*-
 
-##    Description    Flame flInput class
+##    Description    Flame Control internal class
 ##
 ##    Authors:       Manuel Pastor (manuel.pastor@upf.edu)
 ##
@@ -8,31 +8,29 @@
 ##
 ##    This file is part of Flame
 ##
-##    eTOXlab is free software: you can redistribute it and/or modify
+##    Flame is free software: you can redistribute it and/or modify
 ##    it under the terms of the GNU General Public License as published by
 ##    the Free Software Foundation version 3.
 ##
-##    eTOXlab is distributed in the hope that it will be useful,
+##    Flame is distributed in the hope that it will be useful,
 ##    but WITHOUT ANY WARRANTY; without even the implied warranty of
 ##    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ##    GNU General Public License for more details.
 ##
 ##    You should have received a copy of the GNU General Public License
-##    along with Flame.  If not, see <http://www.gnu.org/licenses/>.
+##    along with Flame. If not, see <http://www.gnu.org/licenses/>.
 
-class flInput:
+from control import Control
 
-    def __init__ (self, iFile):
+class ControlChild (Control):
 
-        self.iFile = iFile
+    def __init__ (self):
 
-    def run (self):
+        Control.__init__ (self)
 
-        # retrieve data and dimensions from results
-        
-        # get dimensions 
-        success = True
-        results = self.iFile + '_i'
+        self.model_name = 'CACO2'
+        self.model_version = 0.1
 
-        return success, results
+        print (self.model_name, self.model_version)
 
+        return

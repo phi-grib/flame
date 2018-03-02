@@ -50,6 +50,9 @@ coverage.xml
 *.mo
 *.pot
 
+# Doxigen documentation
+doc/
+
 # Django stuff:
 *.log
 local_settings.py
@@ -99,3 +102,6 @@ ENV/
 
 # mypy
 .mypy_cache/
+
+# VSCode settings files
+.vscode/

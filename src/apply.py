@@ -1,6 +1,6 @@
 #! -*- coding: utf-8 -*-
 
-##    Description    Flame flOutput internal class
+##    Description    Flame Apply class
 ##
 ##    Authors:       Manuel Pastor (manuel.pastor@upf.edu)
 ##
@@ -8,11 +8,11 @@
 ##
 ##    This file is part of Flame
 ##
-##    eTOXlab is free software: you can redistribute it and/or modify
+##    Flame is free software: you can redistribute it and/or modify
 ##    it under the terms of the GNU General Public License as published by
 ##    the Free Software Foundation version 3.
 ##
-##    eTOXlab is distributed in the hope that it will be useful,
+##    Flame is distributed in the hope that it will be useful,
 ##    but WITHOUT ANY WARRANTY; without even the implied warranty of
 ##    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ##    GNU General Public License for more details.
@@ -20,18 +20,25 @@
 ##    You should have received a copy of the GNU General Public License
 ##    along with Flame.  If not, see <http://www.gnu.org/licenses/>.
 
-from floutput import flOutput
+class Apply:
 
-class iflOutput (flOutput):
+    def __init__ (self, control, results):
 
-    def __init__ (self, iflcontrol, results):
+        self.control = control
+        self.results = results
 
-        flOutput.__init__ (self, iflcontrol, results)
+    def run (self):
 
-    # def run (self):
+        # retrieve data and dimensions from results
 
-    #     success = True
-    #     results = self.ifile + '_c'
+        # select prdiction tool from control
 
-    #     return success, results
+        # 
+
+        print (self.results)
+
+        success = True
+        results = (2.28,5.96)   # fake results
+
+        return success, results
 
