@@ -25,8 +25,7 @@ import sys
 import hashlib
 from rdkit import Chem
 import multiprocessing as mp
-from sdfileutils import splitSDFile
-from sdfileutils import nummols
+from sdfileutils import split_SDFile
 from standardiser import standardise
 import numpy as np
 
@@ -37,93 +36,57 @@ class Idata:
         self.control = control      # control object defining the processing
         self.ifile = ifile          # input file
 
-    def countmol (self, ifile):
-        ''' 
-    
-        Counts number of molecules inside an SDFile given as argument. 
-        Additionaly splits it in chunks for multiprocessing.
-
-        '''
-
-        nobj = []
-        temp_files = []
-        
-        success, results = nummols (ifile)
-        if not success :
-            return False, 'unable to open molfile'
-        else :
-            nmol = int(results)
-
-        if nmol == 0:
-            return False, "no molecule found in file: "+ifile
-
-        if self.control.numCPUs > 1 :
-
-            success, results = splitSDFile(ifile, nmol, self.control.numCPUs)
-
-            if success : 
-                nobj = results[0]
-                temp_files = results[1]
-            else:
-                return False, "error splitting: "+ifile
-
-        else :
-            nobj.append(nmol)
-            temp_files.append(ifile)
-
-        return True, (nobj, temp_files)
-
     def extractAnotations (self, ifile):
-        ''' 
-        
+        """         
         Extracts from an SDFile molecule names, biological anotations and experimental values. 
-        Returns three lists of values.
-        
-        '''
-
-        obj_nam = []
-        obj_bio = []
-        obj_exp = []
+        Returns three lists of values.        
+        """
 
         try:
             suppl=Chem.SDMolSupplier(ifile)
         except:
-            return False, 'Error at processing input file for extracting metadata'
+            success = False
+            result = 'Error at processing input file for extracting metadata'
+        else:
+            success = True
+            molcount = 0
+            obj_nam = []
+            obj_bio = []
+            obj_exp = []
 
-        molcount = 0
+            for m in suppl:                
+                molname = ''
+                activity_num = None
+                exp = None
 
-        for m in suppl:
-            
-            molname = ''
-            activity_num = None
-            exp = None
+                if m.HasProp(self.control.SDFile_name):
+                    molname = m.GetProp(self.control.SDFile_name)
+                else:
+                    molname = 'fl%0.10d' % molcount
 
-            if m.HasProp(self.control.SDFile_name):
-                molname = m.GetProp(self.control.SDFile_name)
-            else:
-                molname = 'fl%0.10d' % molcount
+                molcount += 1
 
-            molcount += 1
+                if m.HasProp(self.control.SDFile_activity):
+                    activity_str = m.GetProp(self.control.SDFile_activity)
 
-            if m.HasProp(self.control.SDFile_activity):
-                activity_str = m.GetProp(self.control.SDFile_activity)
+                    try:
+                        activity_num = float (activity_str)
+                    except:
+                        activity_num = None
 
-                try:
-                    activity_num = float (activity_str)
-                except:
-                    activity_num = None
+                if m.HasProp(self.control.SDFile_experimental):
+                    exp = m.GetProp(self.control.SDFile_experimental)
 
-            if m.HasProp(self.control.SDFile_experimental):
-                exp = m.GetProp(self.control.SDFile_experimental)
+                obj_nam.append(molname)
+                obj_bio.append(activity_num)
+                obj_exp.append(exp)
 
-            obj_nam.append(molname)
-            obj_bio.append(activity_num)
-            obj_exp.append(exp)
+            result = (obj_nam, obj_bio, obj_exp)
 
-        return True, (obj_nam, obj_bio, obj_exp)
+        return success, result
 
     def normalize (self, ifile, clean=False):
-        '''
+        """
         Generates a simplified SDFile with MolBlock and an internal ID for further processing
 
         Also, when defined in control, applies chemical standardization protocols, like the 
@@ -135,86 +98,93 @@ class Idata:
         output molecule and an error message otherwyse
 
         WARNING: if clean is set to True it will remove the original file
-
-        '''
-
-        filename, fileext = os.path.splitext(ifile)
-        
-        ofile = filename + '_std' + fileext
+        """
 
         try:
             suppl=Chem.SDMolSupplier(ifile)
         except:
-            return False, 'Error at processing input file for standardizing structures'
+            success = False
+            result = 'Error at processing input file for standardizing structures'
+        else:
+            success = True
+            filename, fileext = os.path.splitext(ifile)
+            ofile = filename + '_std' + fileext
+            with open (ofile,'w') as fo:
+                mcount = 0
+                for m in suppl:
 
-        with open (ofile,'w') as fo:
-            mcount = 0
-            for m in suppl:
+                    # if standardize
+                    if self.control.chemstand_method == 'standardize':
+                        try:
+                            parent = standardise.run (Chem.MolToMolBlock(m))
+                        except standardise.StandardiseException as e:
+                            if e.name == "no_non_salt":
+                                parent = Chem.MolToMolBlock(m)
+                            else:
+                                return False, e.name
 
-                # if standardize
-                if self.control.chemstand_method == 'standardize':
-                    try:
-                        parent = standardise.run (Chem.MolToMolBlock(m))
-                    except standardise.StandardiseException as e:
-                        if e.name == "no_non_salt":
-                            parent = Chem.MolToMolBlock(m)
-                        else:
-                            return False, e.name
+                    # in any case, write parent plus internal ID (flameID)
+                    fo.write(parent)
 
-                # in any case, write parent plus internal ID (flameID)
-                fo.write(parent)
+                    flameID = 'fl%0.10d' % mcount
+                    fo.write('>  <flameID>\n'+flameID+'\n\n')
 
-                flameID = 'fl%0.10d' % mcount
-                fo.write('>  <flameID>\n'+flameID+'\n\n')
+                    mcount += 1
 
-                mcount += 1
+                    # terminator
+                    fo.write('$$$$\n')
 
-                # terminator
-                fo.write('$$$$\n')
+            if clean:
+                try:
+                    os.remove (ifile)
+                except OSError:
+                    pass
 
-        if clean:
-            try:
-                os.remove (ifile)
-            except OSError:
-                pass
+            result = ofile
 
-        return True, ofile
+        return success, result
 
     def ionize (self, ifile):
-        ''' Adjust the ionization status of the molecular strcuture, using a given pH.'''
+        """ Adjust the ionization status of the molecular strcuture, using a given pH.
+        """
 
         return True, ifile
 
     def convert3D (self, ifile):
-        ''' Assigns 3D structures to the molecular structures provided as input.'''
+        """ Assigns 3D structures to the molecular structures provided as input.
+        """
 
         return True, ifile
 
     def computeMD (self, ifile):
-        ''' Uses the molecular structures for computing an array of values (int or float) '''
+        """ Uses the molecular structures for computing an array of values (int or float) 
+        """
 
         # return a numpy array with as many rows and nobj        
          
         success, results = nummols (ifile)
         if not success :
-            return False, 'unable to open molfile'
+            result = 'Unable to open molfile'
         else :
             nmol = int(results)
 
-        xmatrix = np.zeros ((nmol,5),dtype=np.float64)
+            xmatrix = np.zeros ((nmol,5),dtype=np.float64)
+            result = xmatrix
 
-        return True, xmatrix
+        return success, result
 
     def consolidate (self, results, nobj):
-        ''' Mix the results obtained by multiple CPUs into a single result file '''
+        """ Mix the results obtained by multiple CPUs into a single result file 
+        """
 
         first = True
         nresults = None
 
         for iresults in results:
             if iresults[0] == False :
-                return False, "error in consolidation"
-
+                success = False
+                break
+            
             if type (iresults[1]).__module__ == np.__name__:
 
                 if first:
@@ -226,17 +196,19 @@ class Idata:
                 print ('merge arrays')
             
             else :
-
                 print ('unknown')
 
-        return True, nresults
+        if success:
+            result = nresults
+        else:
+            result = 'Error in consolidation'
+
+        return True, result
 
     def save (self, results):
-        ''' 
-
+        """ 
         Saves the results in serialized form, together with the MD5 stamp of the control class
-
-        '''
+        """
 
         print (self.control.md5stamp())
         # pickle results + stamp in ifile.pickle
@@ -245,14 +217,12 @@ class Idata:
         return True
 
     def workflow (self, ifile):
-        ''' 
-        
+        """         
         Executes in sequence methods required to generate MD, starting from a single molecular file
 
         input : ifile, a molecular file in SDFile format
-        output: results is a numpy bidimensional array containing MD 
-            
-        '''
+        output: results is a numpy bidimensional array containing MD       
+        """
 
         # tfile is the name of the temporary molecular file and will change in the workflow
         tfile = ifile  
@@ -260,7 +230,7 @@ class Idata:
         # normalize chemical  
         success, results = self.normalize (tfile)
         if not success:
-            return False, "input error: chemical standardization failed: "+str(results)
+            result = 'Input error: chemical standardization failed: '+str(results)
         else:
             tfile = results
 
@@ -288,24 +258,18 @@ class Idata:
         return success, results
 
     def run (self):
-        ''' 
-        
+        """         
         Process input file to obtain metadata (size, type, number of objects, name of objects, etc.) as well
         as for generating MD
             
         The results are saved in a MD5 stamped pickle, to avoid recomputing model input from the same input
         file
             
-        This methods supports multiprocessing, splitting original files in a chunck per CPU
-        
-        '''
+        This methods supports multiprocessing, splitting original files in a chunck per CPU        
+        """
 
         # TODO: check for presence of pickle file
         # if true, extract MD5 stamp, compute control MD5 stamp and if both are coincident extract results and exit
-
-        # open file
-        if not os.path.isfile (self.ifile):
-            return False, "input error: file not found"
         
         # processing for molecular input (for now an SDFile)
         if (self.control.input_type == 'molecule'):
@@ -323,31 +287,20 @@ class Idata:
             # print (self.obj_bio)
             # print (self.obj_exp)
 
-            # count number of molecules and split in chuncks for multiprocessing if necessary
-            success, results = self.countmol (self.ifile)
-            if not success:
-                return False, "input error: no molecule recognized: "+str(results)
-            else:
-                nobj   = results[0]  # list with nobj of each piece
-                tfiles = results[1]  # list with filename of pieces
+            # Execute the workflow in 1 or n CPUs
+            if self.control.numCPUs > 1:
+                # Count number of molecules and split in chuncks 
+                # for multiprocessing 
+                split_files = split_SDFile (ifile, self.control.numCPUs)
+                pool = mp.Pool(self.control.numCPUs)
+                results = pool.map(self.workflow, split_files)
 
-            # print (nobj, tfiles)
-
-            # execute the workflow in 1 or n CPUs
-            if len(tfiles) > 1 :
-                print ('multi CPU')
-                pool = mp.Pool(len(tfiles))
-                results = pool.map(self.workflow, tfiles)
-
-                # check the results and make sure there are no missing objects
-                # reassemble results for parallel computing results
+                # Check the results and make sure there are 
+                # no missing objects.
+                # Reassemble results for parallel computing results
                 success, results = self.consolidate(results, nobj) 
             else:
-                print ('single CPU')
-                success, results = self.workflow (tfiles[0])
-
-            if not success:
-                return False, str(results)
+                success, results = self.workflow (ifile)
 
         # processing for non-molecular input
         elif (self.control.input_type == 'data'):
