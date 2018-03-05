@@ -107,7 +107,7 @@ class Idata:
                     # if standardize
                     if self.control.chemstand_method == 'standardize':
                         try:
-                            success, parent, error = standardise.run (Chem.MolToMolBlock(m))
+                            parent = standardise.run (Chem.MolToMolBlock(m))
                         except standardise.StandardiseException as e:
                             if e.name == "no_non_salt":
                                 parent = Chem.MolToMolBlock(m)
