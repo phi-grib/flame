@@ -51,7 +51,7 @@ class Idata:
         obj_bio = []
         obj_exp = []
 
-        for i in range(suppl):
+        for i in range(len(suppl)):
             mol = suppl[i]
             molname = getName(mol, count=i, field=self.control.SDFile_name, suppl= suppl)
 
@@ -266,13 +266,10 @@ class Idata:
         if (self.control.input_type == 'molecule'):
 
             # extract useful information from file
-            success, results = self.extractAnotations (self.ifile)
-            if not success:
-                return False, "input error: annotation extraction failed: "+str(results)
-            else:
-                self.obj_nam = results[0]
-                self.obj_bio = results[1]
-                self.obj_exp = results[2]
+            results = self.extractAnotations (self.ifile)
+            self.obj_nam = results[0]
+            self.obj_bio = results[1]
+            self.obj_exp = results[2]
 
             # print (self.obj_nam)
             # print (self.obj_bio)
