@@ -91,47 +91,40 @@ class Idata:
         WARNING: if clean is set to True it will remove the original file
         """
 
-        try:
-            suppl=Chem.SDMolSupplier(ifile)
-        except:
-            success = False
-            result = 'Error at processing input file for standardizing structures'
-        else:
-            success = True
-            filename, fileext = os.path.splitext(ifile)
-            ofile = filename + '_std' + fileext
-            with open (ofile,'w') as fo:
-                mcount = 0
-                for m in suppl:
+        filename, fileext = os.path.splitext(ifile)
+        ofile = filename + '_std' + fileext
+        with open (ofile,'w') as fo:
+            mcount = 0
+            for m in suppl:
 
-                    # if standardize
-                    if self.control.chemstand_method == 'standardize':
-                        try:
-                            success, parent, error = standardise.run (Chem.MolToMolBlock(m))
-                        except standardise.StandardiseException as e:
-                            if e.name == "no_non_salt":
-                                parent = Chem.MolToMolBlock(m)
-                            else:
-                                return False, e.name
+                # if standardize
+                if self.control.chemstand_method == 'standardize':
+                    try:
+                        parent = standardise.run (Chem.MolToMolBlock(m))
+                    except standardise.StandardiseException as e:
+                        if e.name == "no_non_salt":
+                            parent = Chem.MolToMolBlock(m)
+                        else:
+                            return False, e.name
 
-                    # in any case, write parent plus internal ID (flameID)
-                    fo.write(parent)
+                # in any case, write parent plus internal ID (flameID)
+                fo.write(parent)
 
-                    flameID = 'fl%0.10d' % mcount
-                    fo.write('>  <flameID>\n'+flameID+'\n\n')
+                flameID = 'fl%0.10d' % mcount
+                fo.write('>  <flameID>\n'+flameID+'\n\n')
 
-                    mcount += 1
+                mcount += 1
 
-                    # terminator
-                    fo.write('$$$$\n')
+                # terminator
+                fo.write('$$$$\n')
 
-            if clean:
-                try:
-                    os.remove (ifile)
-                except OSError:
-                    pass
+        if clean:
+            try:
+                os.remove (ifile)
+            except OSError:
+                pass
 
-            result = ofile
+        result = ofile
 
         return success, result
 
