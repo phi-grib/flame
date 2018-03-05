@@ -38,52 +38,43 @@ class Idata:
 
     def extractAnotations (self, ifile):
         """         
-        Extracts from an SDFile molecule names, biological anotations and experimental values. 
-        Returns three lists of values.        
+        Extracts molecule names, biological anotations and experimental values from an SDFile . 
+        Returns a tupple with three lists:
+            - Molecule names
+            - Molecule activity values
+            - Molecule activity type (i.e. IC50)        
         """
 
-        try:
-            suppl=Chem.SDMolSupplier(ifile)
-        except:
-            success = False
-            result = 'Error at processing input file for extracting metadata'
-        else:
-            success = True
-            molcount = 0
-            obj_nam = []
-            obj_bio = []
-            obj_exp = []
+        suppl = Chem.SDMolSupplier(ifile)
+        molcount = 0
+        obj_nam = []
+        obj_bio = []
+        obj_exp = []
 
-            for m in suppl:                
-                molname = ''
-                activity_num = None
-                exp = None
+        for i in range(suppl):
+            mol = suppl[i]
+            molname = getName(mol, count=i, field=self.control.SDFile_name, suppl= suppl)
 
-                if m.HasProp(self.control.SDFile_name):
-                    molname = m.GetProp(self.control.SDFile_name)
-                else:
-                    molname = 'fl%0.10d' % molcount
+            activity_num = None
+            exp = None
 
-                molcount += 1
+            if m.HasProp(self.control.SDFile_activity):
+                activity_str = m.GetProp(self.control.SDFile_activity)
+                try:
+                    activity_num = float (activity_str)
+                except:
+                    activity_num = None            
 
-                if m.HasProp(self.control.SDFile_activity):
-                    activity_str = m.GetProp(self.control.SDFile_activity)
+            if m.HasProp(self.control.SDFile_experimental):
+                exp = m.GetProp(self.control.SDFile_experimental)
 
-                    try:
-                        activity_num = float (activity_str)
-                    except:
-                        activity_num = None
+            obj_nam.append(molname)
+            obj_bio.append(activity_num)
+            obj_exp.append(exp)
 
-                if m.HasProp(self.control.SDFile_experimental):
-                    exp = m.GetProp(self.control.SDFile_experimental)
+        result = (obj_nam, obj_bio, obj_exp)
 
-                obj_nam.append(molname)
-                obj_bio.append(activity_num)
-                obj_exp.append(exp)
-
-            result = (obj_nam, obj_bio, obj_exp)
-
-        return success, result
+        return result
 
     def normalize (self, ifile, clean=False):
         """
