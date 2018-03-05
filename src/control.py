@@ -35,7 +35,7 @@ class Control:
         
         self.numCPUs = 2                            # (int)
 
-        self.SDFile_name = 'name'                   # (str)
+        self.SDFile_name = 'GENERIC_NAME'                   # (str)
         self.SDFile_activity = 'activity'           # (str)
         self.SDFile_experimental = 'IC50'           # (str)
 
