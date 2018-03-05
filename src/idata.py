@@ -237,6 +237,8 @@ class Idata:
         else:
             tfile = results
 
+        print ('normalize: '+tfile+' '+str(sdfu.count_mols(tfile)))
+
         # ionize molecules
         if self.control.ionize_method != None:
             success, results = self.ionize (tfile)

@@ -35,7 +35,7 @@ class Apply:
 
         # 
 
-        print (self.results)
+        #print (self.results)
 
         success = True
         results = (2.28,5.96)   # fake results
