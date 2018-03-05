@@ -107,7 +107,7 @@ class Idata:
                     # if standardize
                     if self.control.chemstand_method == 'standardize':
                         try:
-                            parent = standardise.run (Chem.MolToMolBlock(m))
+                            success, parent, error = standardise.run (Chem.MolToMolBlock(m))
                         except standardise.StandardiseException as e:
                             if e.name == "no_non_salt":
                                 parent = Chem.MolToMolBlock(m)
@@ -279,7 +279,7 @@ class Idata:
             if self.control.numCPUs > 1:
                 # Count number of molecules and split in chuncks 
                 # for multiprocessing 
-                split_files_sizes, split_files = split_SDFile (ifile, self.control.numCPUs)
+                split_files_sizes, split_files = split_SDFile (self.ifile, self.control.numCPUs)
                 pool = mp.Pool(self.control.numCPUs)
                 results = pool.map(self.workflow, split_files)
 
@@ -288,7 +288,7 @@ class Idata:
                 # Reassemble results for parallel computing results
                 success, results = self.consolidate(results, split_files_sizes) 
             else:
-                success, results = self.workflow (ifile)
+                success, results = self.workflow (self.ifile)
 
         # processing for non-molecular input
         elif (self.control.input_type == 'data'):
