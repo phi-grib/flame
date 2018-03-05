@@ -279,14 +279,14 @@ class Idata:
             if self.control.numCPUs > 1:
                 # Count number of molecules and split in chuncks 
                 # for multiprocessing 
-                split_files = split_SDFile (ifile, self.control.numCPUs)
+                split_files_sizes, split_files = split_SDFile (ifile, self.control.numCPUs)
                 pool = mp.Pool(self.control.numCPUs)
                 results = pool.map(self.workflow, split_files)
 
                 # Check the results and make sure there are 
                 # no missing objects.
                 # Reassemble results for parallel computing results
-                success, results = self.consolidate(results, nobj) 
+                success, results = self.consolidate(results, split_files_sizes) 
             else:
                 success, results = self.workflow (ifile)
 

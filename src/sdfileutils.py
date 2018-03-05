@@ -54,6 +54,7 @@ def split_SDFile (ifile, numCPUs):
 
         filename, fileext = os.path.splitext(ifile)
         temp_files = []
+        num_mols_in_temp_files = []
         mol_i = 0  # General counter of molecule within the input file
         for chunk_i in range(numCPUs-1):
             # Generate all the split files except the last one
@@ -62,6 +63,7 @@ def split_SDFile (ifile, numCPUs):
             # the last file separately
             chunk_name = '{}_{}{}'.format(filename, chunk_i, fileext)
             temp_files.append(chunk_name)
+            num_mols_in_temp_files.append(chunk_size)
             with open (chunk_name, 'w') as fo:
                 for i in range(chunk_size):
                     buffer = suppl.GetItemText(mol_i)
@@ -72,17 +74,21 @@ def split_SDFile (ifile, numCPUs):
         chunk_i += 1
         chunk_name = '{}_{}{}'.format(filename, chunk_i, fileext)
         temp_files.append(chunk_name)
+        num_mols_in_last_file = 0
         with open (chunk_name, 'w') as fo:
             for mol_i in range(mol_i, num_mols):
                 buffer = suppl.GetItemText(mol_i)
                 fo.write(buffer)
+                num_mols_in_last_file += 1
+        num_mols_in_temp_files.append(chunk_size)
 
     else:
         # If only one CPU, the output will be only the original file
         print ('single CPU')
         temp_files = [ifile]
+        num_mols_in_temp_files = [num_mols]
 
-    return temp_files
+    return (num_mols_in_temp_files, temp_files)
 
 def getNameFromEmpty(suppl, count=1, field=None):
 
