@@ -25,7 +25,7 @@ import sys
 import hashlib
 from rdkit import Chem
 import multiprocessing as mp
-from sdfileutils import split_SDFile
+from sdfileutils import split_SDFile, getName
 from standardiser import standardise
 import numpy as np
 
@@ -58,15 +58,15 @@ class Idata:
             activity_num = None
             exp = None
 
-            if m.HasProp(self.control.SDFile_activity):
-                activity_str = m.GetProp(self.control.SDFile_activity)
+            if mol.HasProp(self.control.SDFile_activity):
+                activity_str = mol.GetProp(self.control.SDFile_activity)
                 try:
                     activity_num = float (activity_str)
                 except:
                     activity_num = None            
 
-            if m.HasProp(self.control.SDFile_experimental):
-                exp = m.GetProp(self.control.SDFile_experimental)
+            if mol.HasProp(self.control.SDFile_experimental):
+                exp = mol.GetProp(self.control.SDFile_experimental)
 
             obj_nam.append(molname)
             obj_bio.append(activity_num)
@@ -255,7 +255,7 @@ class Idata:
             
         The results are saved in a MD5 stamped pickle, to avoid recomputing model input from the same input
         file
-            
+        
         This methods supports multiprocessing, splitting original files in a chunck per CPU        
         """
 
