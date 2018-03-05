@@ -25,7 +25,7 @@ import sys
 import hashlib
 from rdkit import Chem
 import multiprocessing as mp
-from sdfileutils import split_SDFile, getName
+import sdfileutils as sdfu
 from standardiser import standardise
 import numpy as np
 
@@ -53,7 +53,7 @@ class Idata:
 
         for i in range(len(suppl)):
             mol = suppl[i]
-            molname = getName(mol, count=i, field=self.control.SDFile_name, suppl= suppl)
+            molname = sdfu.getName(mol, count=i, field=self.control.SDFile_name, suppl= suppl)
 
             activity_num = None
             exp = None
@@ -153,16 +153,12 @@ class Idata:
 
         # return a numpy array with as many rows and nobj        
          
-        success, results = nummols (ifile)
-        if not success :
-            result = 'Unable to open molfile'
-        else :
-            nmol = int(results)
+        nmol = sdfu.count_mols (ifile)
 
-            xmatrix = np.zeros ((nmol,5),dtype=np.float64)
-            result = xmatrix
+        xmatrix = np.zeros ((nmol,5),dtype=np.float64)
+        result = xmatrix
 
-        return success, result
+        return True, result
 
     def consolidate (self, results, nobj):
         """ Mix the results obtained by multiple CPUs into a single result file 
@@ -279,7 +275,7 @@ class Idata:
             if self.control.numCPUs > 1:
                 # Count number of molecules and split in chuncks 
                 # for multiprocessing 
-                split_files_sizes, split_files = split_SDFile (self.ifile, self.control.numCPUs)
+                split_files_sizes, split_files = sdfu.split_SDFile (self.ifile, self.control.numCPUs)
                 pool = mp.Pool(self.control.numCPUs)
                 results = pool.map(self.workflow, split_files)
 
