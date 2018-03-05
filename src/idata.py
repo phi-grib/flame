@@ -164,6 +164,7 @@ class Idata:
         """ Mix the results obtained by multiple CPUs into a single result file 
         """
 
+        success = True
         first = True
         nresults = None
 
