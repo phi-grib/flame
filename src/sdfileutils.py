@@ -83,3 +83,50 @@ def split_SDFile (ifile, numCPUs):
         temp_files = [ifile]
 
     return temp_files
+
+def getNameFromEmpty(suppl, count=1, field=None):
+
+    molText = suppl.GetItemText(count)
+    name = ''
+    if field is not None:
+        fieldName = '> <%s>' %field
+        found = False
+        for line in molText.split('\n'):
+            if line.rstrip() == fieldName:
+                found = True
+                continue
+            if found:
+                name = line.rstrip()
+                break
+    else:
+        name = molText.split('\n')[0].rstrip()
+        
+    if name == '':
+        name = 'mol%0.10d'%(count)
+
+    if ' ' in name:
+        name = name.replace(' ','_')
+
+    return name
+
+def getName(mol, count=1, field=None, suppl= None):
+
+    if not mol and suppl:
+        # The molecule object is empty but it comes from an 
+        # SD file and the suppl is provided
+        name = getNameFromEmpty(suppl, count, field)
+    else:
+        name = ''
+
+        if field and mol.HasProp (field):
+            name = mol.GetProp(field)
+        else:
+            name = mol.GetProp('_Name')
+            
+        if name == '':
+            name = 'mol%0.10d'%count
+
+        if ' ' in name:
+            name = name.replace(' ','_')
+
+    return name
