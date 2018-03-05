@@ -20,76 +20,66 @@
 ##    You should have received a copy of the GNU General Public License
 ##    along with Flame. If not, see <http://www.gnu.org/licenses/>.            
             
-import os
+import os, math
 from rdkit import Chem
 
-def nummols (ifile):
-    try:
-        suppl = Chem.SDMolSupplier(ifile)
-    except:
-        return False, 'unable to open molfile'
+def count_mols (ifile):
+    suppl = Chem.SDMolSupplier(ifile)
     
-    return True, len(suppl)
+    return len(suppl)
 
-def splitSDFile (ifile, num_mols, num_chunks):
-    ''' 
-    
+def split_SDFile (ifile, numCPUs):
+    """     
     Splits the input SDfile in num_chunks SDfiles files of balanced size. Every file is named "filename_0.sdf", "filename_1.sdf", ...
     
     Argument:
         ifile       : input SDfile
-        num_mols    : number of molecules in ifile (warning! this methods does not check if this value is correct)
-        num_chunks  : number of pieces the SDfile is split into
+        numCPUs     : number of available CPUs
 
     Output:
+        list of split file names
+    """
 
-        success     : Boolean
-        results     : a tuple of two lists, nobj (the number of mols inside each chunk) and temp_files (the chunk filenames)
+    # Count number of molecules in input file
+    suppl = Chem.SDMolSupplier(ifile)
+    num_mols = len(suppl)
 
-    '''
-    
-    index = []
-    nobj = []
-    temp_files = []
+    if num_mols == 0:
+        raise Exception('No molecule found in file: '+ifile)
 
-    chunksize = num_mols // num_chunks
-    for a in range (num_mols):
-        index.append(a//chunksize)
-    
-    moli = 0      # molecule counter in next loop
-    chunki = 0    # chunk counter in next toolp
+    if numCPUs > 1 :
+        # Get number of molecules per split file
+        print ('multi CPU')
+        chunk_size = math.ceil(num_mols / numCPUs)
 
-    filename, fileext = os.path.splitext(ifile)
-    chunkname = filename + '_%d' %chunki + fileext
-    try:
-        with open (ifile,'r') as fi:
-            fo = open (chunkname,"w")
-            moli_chunk = 0      # molecule counter inside the chunk
-            for line in fi:
-                fo.write(line)
+        filename, fileext = os.path.splitext(ifile)
+        temp_files = []
+        mol_i = 0  # General counter of molecule within the input file
+        for chunk_i in range(numCPUs-1):
+            # Generate all the split files except the last one
+            # The last file will not contain 'chunk_size' molecules,
+            # but could contain less. Avoid checking end of fileby handling 
+            # the last file separately
+            chunk_name = '{}_{}{}'.format(filename, chunk_i, fileext)
+            temp_files.append(chunk_name)
+            with open (chunk_name, 'w') as fo:
+                for i in range(chunk_size):
+                    buffer = suppl.GetItemText(mol_i)
+                    fo.write(buffer)
+                    mol_i += 1
 
-                # end of molecule
-                if line.startswith('$$$$'):
-                    moli += 1
-                    moli_chunk += 1 
+        # Now put the remaining molecules into the last split file
+        chunk_i += 1
+        chunk_name = '{}_{}{}'.format(filename, chunk_i, fileext)
+        temp_files.append(chunk_name)
+        with open (chunk_name, 'w') as fo:
+            for mol_i in range(mol_i, num_mols):
+                buffer = suppl.GetItemText(mol_i)
+                fo.write(buffer)
 
-                    # if we reached the end of the file...
-                    if (moli >= num_mols):
-                        fo.close()
-                        temp_files.append(chunkname)
-                        nobj.append(moli_chunk)
+    else:
+        # If only one CPU, the output will be only the original file
+        print ('single CPU')
+        temp_files = [ifile]
 
-                    # ...otherwyse
-                    elif (index[moli] > chunki):
-                        fo.close()
-                        temp_files.append(chunkname)
-                        nobj.append(moli_chunk)
-
-                        chunki+=1
-                        chunkname = filename + '_%d' %chunki + fileext
-                        moli_chunk=0
-                        fo = open (chunkname,"w")
-    except:
-        return False, "error splitting: "+ifile
-
-    return True, (nobj, temp_files)
+    return temp_files
