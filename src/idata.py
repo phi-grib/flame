@@ -26,6 +26,9 @@ import hashlib
 
 import numpy as np
 from rdkit import Chem
+from rdkit.Chem import rdMolDescriptors
+#from rdkit.Chem import Descriptors
+
 import multiprocessing as mp
 
 import sdfileutils as sdfu
@@ -59,7 +62,7 @@ class Idata:
             if mol is None:
                 continue
                 
-            molname = sdfu.getName(mol, count=i, field=self.control.SDFile_name, suppl= suppl)
+            name = sdfu.getName(mol, count=i, field=self.control.SDFile_name, suppl= suppl)
 
             activity_num = None
             exp = None
@@ -74,7 +77,7 @@ class Idata:
             if mol.HasProp(self.control.SDFile_experimental):
                 exp = mol.GetProp(self.control.SDFile_experimental)
 
-            obj_nam.append(molname)
+            obj_nam.append(name)
             obj_bio.append(activity_num)
             obj_exp.append(exp)
 
@@ -162,18 +165,61 @@ class Idata:
 
         return True, ifile
 
+    def computeMD_custom (self, ifile):
+
+        # empty template, only for overriding by internal methods
+        
+        return False, 'not implemented'
+
+    # TODO: move to another module all "_computeMD" methods
+    def _computeMD_RDKit_properties (self, ifile):
+        try:
+            suppl=Chem.SDMolSupplier(ifile)
+        except:
+            return False, 'unable to compute RDKit MD'
+ 
+        properties = rdMolDescriptors.Properties()
+
+        md_nam = []
+        for name in properties.GetPropertyNames():
+            md_nam.append (name)
+
+        print (len(md_nam), md_nam)
+
+        xmatrix = np.zeros ((len(suppl),len(md_nam)),dtype=np.float64)
+
+        for i,mol in enumerate(suppl):      
+            xmatrix [i] = properties.ComputeProperties(mol)
+
+        return True, xmatrix
+    
+
     def computeMD (self, ifile):
         """ Uses the molecular structures for computing an array of values (int or float) 
         """
 
-        # return a numpy array with as many rows and nobj        
-         
-        nmol = sdfu.count_mols (ifile)
+        # any call to computeMD_[whatever] must return a numpy array with a value for
+        # each molecule in ifile       
+        
+        results_all = []
 
-        xmatrix = np.zeros ((nmol,5),dtype=np.float64)
-        result = xmatrix
+        if 'RDKit_properties' in self.control.MD :
+            success, results  = self._computeMD_RDKit_properties (ifile)
+            if success :
+                results_all.append(results)
+        
+        if 'custom' in self.control.MD :
+            success, results  = self.computeMD_custom (ifile)
+            if success :
+                results_all.append(results)
+        
+        if len(results_all) == 0:
+            success = False
+            results = 'undefined MD'
 
-        return True, result
+        # TODO: consolidate all results checking that the number of objects is the same for all the pieces
+
+        return success, results
 
     def consolidate (self, results, nobj):
         """ Mix the results obtained by multiple CPUs into a single result file 
@@ -233,11 +279,11 @@ class Idata:
         # normalize chemical  
         success, results = self.normalize (tfile)
         if not success:
-            result = 'Input error: chemical standardization failed: '+str(results)
+            results = 'Input error: chemical standardization failed: '+str(results)
         else:
             tfile = results
 
-        print ('normalize: '+tfile+' '+str(sdfu.count_mols(tfile)))
+        #print ('normalize: '+tfile+' '+str(sdfu.count_mols(tfile)))
 
         # ionize molecules
         if self.control.ionize_method != None:
@@ -287,6 +333,7 @@ class Idata:
                 os.dup2(stderr_fd.fileno(), stderr_fileno)
 
             # extract useful information from file
+
             results = self.extractAnotations (self.ifile)
             self.obj_nam = results[0]
             self.obj_bio = results[1]

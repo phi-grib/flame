@@ -105,3 +105,6 @@ ENV/
 
 # VSCode settings files
 .vscode/
+
+# Molecules
+.sdf
