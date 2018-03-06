@@ -39,7 +39,7 @@ class Control:
         self.SDFile_activity = 'activity'           # (str)
         self.SDFile_experimental = 'IC50'           # (str)
 
-        self.MD = ['RDKit_md']              # 'RDKit_properties'|'RDKit_md'|'custom'
+        self.MD = ['RDKit_md']                      # 'RDKit_properties'|'RDKit_md'|'custom'
 
         # ##
         # ## Modeling settings

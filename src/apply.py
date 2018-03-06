@@ -35,6 +35,9 @@ class Apply:
 
         # 
 
+        for i in self.results:
+            print (len (i), i[:3])
+
         #print (self.results)
 
         success = True

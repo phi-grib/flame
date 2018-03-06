@@ -45,11 +45,13 @@ class Idata:
 
     def extractAnotations (self, ifile):
         """         
-        Extracts molecule names, biological anotations and experimental values from an SDFile . 
+        Extracts molecule names, biological anotations and experimental values from an SDFile.
+
         Returns a tupple with three lists:
-            - Molecule names
-            - Molecule activity values
-            - Molecule activity type (i.e. IC50)        
+        [0] Molecule names
+        [1] Molecule activity values (as np.array(dtype=np.float64))
+        [2] Molecule activity type (i.e. IC50) (as np.array(dtype=np.float64))     
+        
         """
 
         suppl = Chem.SDMolSupplier(ifile)
@@ -83,7 +85,7 @@ class Idata:
             obj_bio.append(activity_num)
             obj_exp.append(exp)
 
-        result = (obj_nam, obj_bio, obj_exp)
+        result = (obj_nam, np.array(obj_bio, dtype=np.float64), np.array(obj_exp, dtype=np.float64))
 
         return result
 
@@ -193,8 +195,19 @@ class Idata:
         return success, results
 
     def computeMD_custom (self, ifile):
+        """ 
+        
+        Empty method for computing molecular descriptors
 
-        # empty template, only for overriding by internal methods
+        ifile is a molecular file in SDFile format
+
+        returns a boolean anda a tupla of two elements:
+        [0] xmatrix (nparray np.float64)
+        [1] list of variable names (str)
+
+        example:    return True, (xmatrix, md_nam)
+
+        """
         
         return False, 'not implemented'
 
@@ -212,14 +225,14 @@ class Idata:
         for nam in properties.GetPropertyNames():
             md_nam.append(nam)
 
-        print (len(md_nam), md_nam)
+        #print (len(md_nam), md_nam)
 
         xmatrix = np.zeros ((len(suppl),len(md_nam)),dtype=np.float64)
 
         for i,mol in enumerate(suppl):      
             xmatrix [i] = properties.ComputeProperties(mol)
 
-        return True, xmatrix
+        return True, (xmatrix, md_nam)
 
     def _computeMD_RDKit_md (self, ifile):
         try:
@@ -231,14 +244,14 @@ class Idata:
 
         md = MoleculeDescriptors.MolecularDescriptorCalculator(nms)
 
-        print(len(nms), nms)
+        #print(len(nms), nms)
 
         xmatrix = np.zeros ((len(suppl),len(nms)),dtype=np.float64)
 
         for i,mol in enumerate(suppl):      
             xmatrix [i] = md.CalcDescriptors(mol) 
 
-        return True, xmatrix
+        return True, (xmatrix, nms)
     
 
     def computeMD (self, ifile):
@@ -282,19 +295,28 @@ class Idata:
         success = True
         first = True
         nresults = None
+        nnames = []
 
         for iresults in results:
+            #iresults [0] = success
+            #iresults [1] = (xmatrix, var_name)
+
             if iresults[0] == False :
                 success = False
+                results = iresults [1]
                 break
             
-            if type (iresults[1]).__module__ == np.__name__:
+            internal = iresults [1]
+
+            if type (internal[0]).__module__ == np.__name__:
 
                 if first:
-                    nresults = iresults [1]
+                    nresults = internal[0]
+                    nnames = internal[1]
                     first = False
                 else:
-                    nresults = np.vstack ((nresults, iresults[1]))
+                    nresults = np.vstack ((nresults, internal[0]))
+                    nnames.append(internal[1])
 
                 print ('merge arrays')
             
@@ -302,9 +324,7 @@ class Idata:
                 print ('unknown')
 
         if success:
-            result = nresults
-        else:
-            result = 'Error in consolidation'
+            result = (nresults, nnames)
 
         return True, result
 
@@ -389,9 +409,9 @@ class Idata:
             # extract useful information from file
 
             results = self.extractAnotations (self.ifile)
-            self.obj_nam = results[0]
-            self.obj_bio = results[1]
-            self.obj_exp = results[2]
+            obj_nam = results[0]
+            ymatrix = results[1]
+            experim = results[2]
 
             # print (self.obj_nam)
             # print (self.obj_bio)
@@ -421,6 +441,9 @@ class Idata:
             else:
                 success, results = self.workflow (self.ifile)
 
+            if not success:
+                return False, results
+
             if not verbose_error:
                 stderr_fd.close()                     # close the RDKit log
                 os.dup2(stderr_save, stderr_fileno)   # restore old syserr
@@ -437,14 +460,21 @@ class Idata:
 
             print ("unknown input format")
 
+        # extract x matrix and variable names from results
+        xmatrix = results [0]
+        var_nam = None
+        if len(results) > 1:
+            var_nam = results [1]
+        
+
         # save and stamp
         success = self.save (results)
 
         # results is a tuple with:
-        # [0] X numpy
-        # [1] Y numpy
-        # [2] flameID       this is important for retrieving structure
-        # [2] objnames      for presenting results
-        # [3] expinfo       for prediction quality assessment      
+        # [0] xmatrix
+        # [1] ymatrix 
+        # [2] experim      for prediction quality assessment   
+        # [3] obj_nam      for presenting results
+        # [4] var_nam        
 
-        return success, (results, self.obj_bio, None, self.obj_nam, self.obj_exp)
+        return success, (xmatrix, ymatrix, experim, obj_nam, var_nam)
