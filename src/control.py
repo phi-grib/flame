@@ -31,7 +31,7 @@ class Control:
         self.input_type = 'molecule'                # 'molecule' | 'data'
         self.chemstand_method = 'standardize'       # None | 'standardize'
         self.ionize_method = None                   # None | 'moka'
-        self.convert3D_method = None                # None | 'moka'
+        self.convert3D_method = 'ETKDG'             # 'ETKDG' 
         
         self.numCPUs = 2                            # (int)
 
@@ -39,7 +39,7 @@ class Control:
         self.SDFile_activity = 'activity'           # (str)
         self.SDFile_experimental = 'IC50'           # (str)
 
-        self.MD = ['RDKit_properties']              # 'RDKit_properties'|'custom'
+        self.MD = ['RDKit_md']              # 'RDKit_properties'|'RDKit_md'|'custom'
 
         # ##
         # ## Modeling settings
