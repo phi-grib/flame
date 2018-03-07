@@ -23,6 +23,7 @@
 import os
 import sys
 import hashlib
+import pickle
 
 import numpy as np
 from rdkit import Chem
@@ -34,6 +35,8 @@ from standardiser import standardise
 
 import _compute_md as computeMD
 import _convert_3d as convert3D
+
+import utils as utils
 
 class Idata:
 
@@ -287,11 +290,52 @@ class Idata:
         Saves the results in serialized form, together with the MD5 stamp of the control class
         """
 
-        # print (self.control.md5stamp())
-        # pickle results + stamp in ifile.pickle
-        # return True
+        md5_control = self.control.md5stamp()
+
+        md5_input = utils.md5sum(self.ifile)  # run md5 in self.ifile
+
+        try:
+            with open ('./data.pkl', 'wb') as fo:
+                pickle.dump (md5_control, fo)
+                pickle.dump (md5_input, fo)
+                pickle.dump (results[0],fo)
+                pickle.dump (results[1],fo)
+                pickle.dump (results[2],fo)
+                pickle.dump (results[3],fo)
+                pickle.dump (results[4],fo)
+        except :
+            return False
 
         return True
+
+    def load (self):
+        """ 
+        Saves the results in serialized form, together with the MD5 stamp of the control class
+        """
+
+        try:
+            with open ('./data.pkl', 'rb') as fi:
+                md5_con = pickle.load(fi)
+                if md5_con != self.control.md5stamp():
+                    return False, 'md5 control'
+
+                md5_fil = pickle.load(fi)
+                if md5_fil != utils.md5sum(self.ifile):
+                    return False, 'md5 input file'
+
+                xmatrix = pickle.load(fi)
+                ymatrix = pickle.load(fi)
+                experim = pickle.load(fi)
+                obj_nam = pickle.load(fi)
+                var_nam = pickle.load(fi)
+        except :
+            return False, 'unable to open pickl file'
+    
+        results = (xmatrix, ymatrix, experim, obj_nam, var_nam)
+
+        print ('recycling!')
+
+        return True, results
 
     def workflow (self, ifile):
         """         
@@ -300,7 +344,6 @@ class Idata:
         input : ifile, a molecular file in SDFile format
         output: results is a numpy bidimensional array containing MD       
         """
-
 
         # normalize chemical  
         success, results = self.normalize (ifile, self.control.normalize_method)
@@ -322,7 +365,7 @@ class Idata:
 
         return success, results
 
-    def run (self, verbose_error=True):
+    def run (self):
         """         
         Process input file to obtain metadata (size, type, number of objects, name of objects, etc.) as well
         as for generating MD
@@ -333,14 +376,17 @@ class Idata:
         This methods supports multiprocessing, splitting original files in a chunck per CPU        
         """
 
-        # TODO: check for presence of pickle file
-        # if true, extract MD5 stamp, compute control MD5 stamp and if both are coincident extract results and exit
-        
+        # check for the presence of a valid pickle file
+        success, results = self.load()
+
+        if success:
+            return success, results
+
         # processing for molecular input (for now an SDFile)
         if (self.control.input_type == 'molecule'):
 
             # trick to avoid RDKit dumping warnings to the console
-            if not verbose_error:
+            if not self.control.verbose_error:
                 stderr_fileno = sys.stderr.fileno()       # saves current syserr
                 stderr_save = os.dup(stderr_fileno)
                 stderr_fd = open('errorRDKit.log', 'w')   # open a specific RDKit log file
@@ -384,7 +430,7 @@ class Idata:
             if not success:
                 return False, results
 
-            if not verbose_error:
+            if not self.control.verbose_error:
                 stderr_fd.close()                     # close the RDKit log
                 os.dup2(stderr_save, stderr_fileno)   # restore old syserr
 
@@ -405,15 +451,15 @@ class Idata:
         if len(results) > 1:
             var_nam = results [1]
         
-
-        # save and stamp
-        success = self.save (results)
-
         # results is a tuple with:
         # [0] xmatrix
         # [1] ymatrix 
         # [2] experim      for prediction quality assessment   
         # [3] obj_nam      for presenting results
         # [4] var_nam        
+        results = (xmatrix, ymatrix, experim, obj_nam, var_nam)
+        
+        # save and stamp
+        success = self.save (results)
 
-        return success, (xmatrix, ymatrix, experim, obj_nam, var_nam)
+        return success, results

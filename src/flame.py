@@ -28,22 +28,34 @@ from build import Build
 def predict_cmd(args):
     ''' Instantiates a Predict object to run a prediction using the given input file and model '''
     
-    predict = Predict (args.infile, args.endpoint)
+    predict = Predict(args.infile, args.endpoint)
     success, results = predict.run()
-    print ('flame : ', success, results)
+    print('flame : ', success, results)
 
 def build_cmd(args):
     ''' Instantiates a Build object to build a model using the given input file (training series) and model (name of endpoint, eg. 'CACO2') '''
     
-    build = Build (args.infile, args.endpoint)
+    build = Build(args.infile, args.endpoint)
     success, results = build.run()
-    print (success, results)
+    print('flame : ', success, results)
 
-def main ():
+def main():
     parser = argparse.ArgumentParser(description='Use Flame to either build a model from or apply a model to the input file.')
-    parser.add_argument('-f', '--infile', help='Input file.', required=True)
-    parser.add_argument('-e', '--endpoint', help='Endpoint model name.', required=True)
-    parser.add_argument('-c', '--command', action='store', choices=['predict', 'build'], help='Action type: \'predict\' or \'build\'', required=True)
+    
+    parser.add_argument('-f', '--infile', 
+        help='Input file.', 
+        required=True)
+
+    parser.add_argument('-e', '--endpoint', 
+        help='Endpoint model name.', 
+        required=True)
+
+    parser.add_argument('-c', '--command', 
+        action='store', 
+        choices=['predict', 'build'], 
+        help='Action type: \'predict\' or \'build\'', 
+        required=True)
+
     args = parser.parse_args()
     
     if args.command == 'predict':
