@@ -237,8 +237,7 @@ class Idata:
             success = False
             results = 'undefined MD'
 
-        # TODO: consolidate all results checking that the number of objects is the same for all the pieces
-        #for r in results:
+        # TODO: check that the number of objects is the same for all the pieces
 
         return success, results
 
@@ -286,7 +285,7 @@ class Idata:
 
     def save (self, results):
         """ 
-        Saves the results in serialized form, together with the MD5 stamp of the control class
+        Saves the results in serialized form, together with the MD5 signature of the control class and the input file
         """
 
         #md5_control = self.control.md5stamp()
@@ -309,7 +308,7 @@ class Idata:
 
     def load (self):
         """ 
-        Saves the results in serialized form, together with the MD5 stamp of the control class
+        Loads the results in serialized form, together with the MD5 signature of the control class and the input file
         """
 
         try:
