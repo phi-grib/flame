@@ -103,6 +103,9 @@ class Idata:
         WARNING: if clean is set to True it will remove the original file
         """
 
+        if not self.control.normalize_method :
+            return True, ifile
+
         try:
             suppl=Chem.SDMolSupplier(ifile)
         except:
@@ -124,7 +127,7 @@ class Idata:
                         continue
 
                     # if standardize
-                    if self.control.chemstand_method == 'standardize':
+                    if self.control.normalize_method == 'standardize':
                         try:
                             parent = standardise.run (Chem.MolToMolBlock(m))
                         except standardise.StandardiseException as e:
@@ -160,7 +163,15 @@ class Idata:
         """ Adjust the ionization status of the molecular strcuture, using a given pH.
         """
 
-        return True, ifile
+        if not self.control.ionize_method :
+            return True, ifile
+
+        success = False
+        results = 'not ionized'
+
+        # methods here
+
+        return success, results
 
     def convert3D (self, ifile):
         """ Assigns 3D structures to the molecular structures provided as input.
@@ -264,9 +275,9 @@ class Idata:
                 print ('unknown')
 
         if success:
-            result = (nresults, nnames)
+            results = (nresults, nnames)
 
-        return True, result
+        return True, results
 
     def save (self, results):
         """ 
@@ -287,38 +298,23 @@ class Idata:
         output: results is a numpy bidimensional array containing MD       
         """
 
-        # tfile is the name of the temporary molecular file and will change in the workflow
-        tfile = ifile  
-
         # normalize chemical  
-        success, results = self.normalize (tfile)
-        if not success:
-            results = 'Input error: chemical standardization failed: '+str(results)
-        else:
-            tfile = results
-
-        #print ('normalize: '+tfile+' '+str(sdfu.count_mols(tfile)))
+        success, results = self.normalize (ifile)
+        if not success :
+            return success, results
 
         # ionize molecules
-        if self.control.ionize_method != None:
-            success, results = self.ionize (tfile)
-            if not success:
-                return False, "input error: molecule ionization error at position: "+str(results)
-            else:
-                tfile = results
-
+        success, results = self.ionize (results)
+        if not success :
+            return success, results
+        
         # generate a 3D structure
-        if self.control.convert3D_method != None:
-            success, results = self.convert3D (tfile)
-            if not success:
-                return False, "input error: 3D conversion error at position: "+str(results)
-            else:
-                tfile = results
-
+        success, results = self.convert3D (results)
+        if not success :
+            return success, results
+        
         # compute MD
-        success, results = self.computeMD (tfile)
-        if not success:
-            return False, "input error: failed computing MD: "+str(results)
+        success, results = self.computeMD (results)
 
         return success, results
 
@@ -391,9 +387,9 @@ class Idata:
         # processing for non-molecular input
         elif (self.control.input_type == 'data'):
 
-            #   test and obtain dimensions
-            #   normalize data
-
+            # TODO: import csv
+            # test and obtain dimensions
+            
             print ("data")
 
         else:

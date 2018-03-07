@@ -29,9 +29,9 @@ class Control:
         self.model_version = 0.0
 
         self.input_type = 'molecule'                # 'molecule' | 'data'
-        self.chemstand_method = 'standardize'       # None | 'standardize'
+        self.normalize_method = 'standardize'       # None | 'standardize'
         self.ionize_method = None                   # None | 'moka'
-        self.convert3D_method = 'ETKDG'             # 'ETKDG' 
+        self.convert3D_method = None                # 'ETKDG' 
         
         self.numCPUs = 2                            # (int)
 
