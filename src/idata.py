@@ -88,7 +88,7 @@ class Idata:
 
         return result
 
-    def normalize (self, ifile, clean=False):
+    def normalize (self, ifile, method, clean=False):
         """
         Generates a simplified SDFile with MolBlock and an internal ID for further processing
 
@@ -103,7 +103,7 @@ class Idata:
         WARNING: if clean is set to True it will remove the original file
         """
 
-        if not self.control.normalize_method :
+        if not method :
             return True, ifile
 
         try:
@@ -127,7 +127,7 @@ class Idata:
                         continue
 
                     # if standardize
-                    if self.control.normalize_method == 'standardize':
+                    if method == 'standardize':
                         try:
                             parent = standardise.run (Chem.MolToMolBlock(m))
                         except standardise.StandardiseException as e:
@@ -159,11 +159,11 @@ class Idata:
 
         return success, result
 
-    def ionize (self, ifile):
+    def ionize (self, ifile, method):
         """ Adjust the ionization status of the molecular strcuture, using a given pH.
         """
 
-        if not self.control.ionize_method :
+        if not method :
             return True, ifile
 
         success = False
@@ -171,19 +171,21 @@ class Idata:
 
         # methods here
 
+        results = 'ionization method not recognised'
+
         return success, results
 
-    def convert3D (self, ifile):
+    def convert3D (self, ifile, method):
         """ Assigns 3D structures to the molecular structures provided as input.
         """
 
-        if not self.control.convert3D_method :
+        if not method :
             return True, ifile
             
         success = False
         results = 'not converted to 3D'
 
-        if 'ETKDG' in self.control.convert3D_method :
+        if 'ETKDG' in method :
             success, results  = convert3D._ETKDG(ifile)
             
         return success, results
@@ -205,7 +207,7 @@ class Idata:
         
         return False, 'not implemented'
 
-    def computeMD (self, ifile):
+    def computeMD (self, ifile, method):
         """ Uses the molecular structures for computing an array of values (int or float) 
         """
 
@@ -214,17 +216,17 @@ class Idata:
         
         results_all = []
 
-        if 'RDKit_properties' in self.control.MD :
+        if 'RDKit_properties' in method :
             success, results  = computeMD._RDKit_properties(ifile)
             if success :
                 results_all.append(results)
         
-        if 'RDKit_md' in self.control.MD :
+        if 'RDKit_md' in method :
             success, results  = computeMD._RDKit_descriptors(ifile)
             if success :
                 results_all.append(results)
         
-        if 'custom' in self.control.MD :
+        if 'custom' in method :
             success, results  = self.computeMD_custom(ifile)
             if success :
                 results_all.append(results)
@@ -235,7 +237,6 @@ class Idata:
 
         # TODO: consolidate all results checking that the number of objects is the same for all the pieces
         #for r in results:
-            
 
         return success, results
 
@@ -277,7 +278,7 @@ class Idata:
         if success:
             results = (nresults, nnames)
 
-        return True, results
+        return success, results
 
     def save (self, results):
         """ 
@@ -298,23 +299,24 @@ class Idata:
         output: results is a numpy bidimensional array containing MD       
         """
 
+
         # normalize chemical  
-        success, results = self.normalize (ifile)
+        success, results = self.normalize (ifile, self.control.normalize_method)
         if not success :
             return success, results
 
         # ionize molecules
-        success, results = self.ionize (results)
+        success, results = self.ionize (results, self.control.ionize_method)
         if not success :
             return success, results
         
         # generate a 3D structure
-        success, results = self.convert3D (results)
+        success, results = self.convert3D (results, self.control.convert3D_method)
         if not success :
             return success, results
         
         # compute MD
-        success, results = self.computeMD (results)
+        success, results = self.computeMD (results, self.control.computeMD_method)
 
         return success, results
 

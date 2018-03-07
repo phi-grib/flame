@@ -25,38 +25,47 @@ import hashlib
 class Control:
 
     def __init__ (self):
+
         self.model_name = ""
         self.model_version = 0.0
+
+        ###
+        ### system settings
+        ###
+
+        self.numCPUs = 2                            # (int)
+        
+        ###
+        ### input settings
+        ###
 
         self.input_type = 'molecule'                # 'molecule' | 'data'
         self.normalize_method = 'standardize'       # None | 'standardize'
         self.ionize_method = None                   # None | 'moka'
         self.convert3D_method = None                # 'ETKDG' 
+        self.computeMD_method = ['RDKit_md']        # 'RDKit_properties'|'RDKit_md'|'custom'
         
-        self.numCPUs = 2                            # (int)
-
         self.SDFile_name = 'GENERIC_NAME'           # (str)
         self.SDFile_activity = 'activity'           # (str)
         self.SDFile_experimental = 'IC50'           # (str)
 
-        self.MD = ['RDKit_md']                      # 'RDKit_properties'|'RDKit_md'|'custom'
+        ###
+        ### learn/apply settings
+        ###
 
-        # ##
-        # ## Modeling settings
-        # ##
         self.model = 'RF'
         self.modelAutoscaling = None
         # self.modelLV = None
         # self.modelCutoff = None
 
-        ## Random Forest        
+        ##      Random Forest        
         self.RFestimators = None
         self.RFfeatures = None
         self.RFtune = False
         self.RFclass_weight = None
         self.RFrandom = False
         
-        ## Model Validation Settings
+        ##      Model Validation Settings
         self.ModelValidationCV = None
         self.ModelValidationN = 0
         self.ModelValidationP = 0
