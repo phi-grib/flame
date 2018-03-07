@@ -26,15 +26,14 @@ import hashlib
 
 import numpy as np
 from rdkit import Chem
-from rdkit.Chem import rdMolDescriptors
-from rdkit.Chem import Descriptors
-from rdkit.ML.Descriptors import MoleculeDescriptors
-from rdkit.Chem import AllChem
 
 import multiprocessing as mp
 
 import sdfileutils as sdfu
 from standardiser import standardise
+
+import _compute_md as computeMD
+import _convert_3d as convert3D
 
 class Idata:
 
@@ -163,34 +162,18 @@ class Idata:
 
         return True, ifile
 
-    def _convert3D_ETKDG(self, ifile):
-        """ Assigns 3D structures to the molecular structures provided as input.
-        """
-        try:
-            suppl=Chem.SDMolSupplier(ifile)
-        except:
-            return False, 'unable to compute 3D structures'
-        
-        filename, fileext = os.path.splitext(ifile)
-        ofile = filename + '_3d' + fileext
-        with open (ofile,'w') as fo:
-            for mol in suppl:
-                mol3=Chem.AddHs(mol)
-                AllChem.EmbedMolecule(mol3, AllChem.ETKDG())
-
-                fo.write (Chem.MolToMolBlock(mol3))
-                fo.write('\n$$$$\n')
-
-        return True, ofile
-
     def convert3D (self, ifile):
         """ Assigns 3D structures to the molecular structures provided as input.
         """
+
+        if not self.control.convert3D_method :
+            return True, ifile
+            
         success = False
         results = 'not converted to 3D'
 
         if 'ETKDG' in self.control.convert3D_method :
-            success, results  = self._convert3D_ETKDG(ifile)
+            success, results  = convert3D._ETKDG(ifile)
             
         return success, results
 
@@ -211,49 +194,6 @@ class Idata:
         
         return False, 'not implemented'
 
-    # TODO: move to another module all "_computeMD" methods
-    def _computeMD_RDKit_properties (self, ifile):
-        try:
-            suppl=Chem.SDMolSupplier(ifile)
-        except:
-            return False, 'unable to compute RDKit properties'
- 
-        properties = rdMolDescriptors.Properties()
-
-        md_nam = []
-        
-        for nam in properties.GetPropertyNames():
-            md_nam.append(nam)
-
-        #print (len(md_nam), md_nam)
-
-        xmatrix = np.zeros ((len(suppl),len(md_nam)),dtype=np.float64)
-
-        for i,mol in enumerate(suppl):      
-            xmatrix [i] = properties.ComputeProperties(mol)
-
-        return True, (xmatrix, md_nam)
-
-    def _computeMD_RDKit_md (self, ifile):
-        try:
-            suppl=Chem.SDMolSupplier(ifile)
-        except:
-            return False, 'unable to compute RDKit MD'
- 
-        nms=[x[0] for x in Descriptors._descList]
-
-        md = MoleculeDescriptors.MolecularDescriptorCalculator(nms)
-
-        #print(len(nms), nms)
-
-        xmatrix = np.zeros ((len(suppl),len(nms)),dtype=np.float64)
-
-        for i,mol in enumerate(suppl):      
-            xmatrix [i] = md.CalcDescriptors(mol) 
-
-        return True, (xmatrix, nms)
-    
-
     def computeMD (self, ifile):
         """ Uses the molecular structures for computing an array of values (int or float) 
         """
@@ -264,12 +204,12 @@ class Idata:
         results_all = []
 
         if 'RDKit_properties' in self.control.MD :
-            success, results  = self._computeMD_RDKit_properties(ifile)
+            success, results  = computeMD._RDKit_properties(ifile)
             if success :
                 results_all.append(results)
         
         if 'RDKit_md' in self.control.MD :
-            success, results  = self._computeMD_RDKit_md(ifile)
+            success, results  = computeMD._RDKit_descriptors(ifile)
             if success :
                 results_all.append(results)
         
