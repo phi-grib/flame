@@ -22,7 +22,6 @@
 
 import os
 import sys
-import hashlib
 import pickle
 
 import numpy as np
@@ -290,8 +289,8 @@ class Idata:
         Saves the results in serialized form, together with the MD5 stamp of the control class
         """
 
-        md5_control = self.control.md5stamp()
-
+        #md5_control = self.control.md5stamp()
+        md5_control = utils.md5stamp (self.control)
         md5_input = utils.md5sum(self.ifile)  # run md5 in self.ifile
 
         try:
@@ -316,7 +315,7 @@ class Idata:
         try:
             with open ('./data.pkl', 'rb') as fi:
                 md5_con = pickle.load(fi)
-                if md5_con != self.control.md5stamp():
+                if md5_con != utils.md5stamp(self.control):
                     return False, 'md5 control'
 
                 md5_fil = pickle.load(fi)

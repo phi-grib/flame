@@ -78,14 +78,3 @@ class Control:
         # #self.selVarCV = None
         # self.selVarRun = None
         # self.selVarMask = None
-
-
-    def md5stamp (self):
-
-        m = hashlib.md5()
-        for attr in dir(self):
-            val = getattr(self, attr)
-            if isinstance(val, (int, float, str)):
-                m.update (str(val).encode('utf-8'))
-
-        return (m.hexdigest())

@@ -1,6 +1,6 @@
 #! -*- coding: utf-8 -*-
 
-##    Description    SDFile tools class
+##    Description    Misc tools 
 ##
 ##    Authors:       Manuel Pastor (manuel.pastor@upf.edu)
 ##
@@ -23,8 +23,22 @@
 import hashlib
 
 def md5sum(filename, blocksize=65536):
+
     hash = hashlib.md5()
+
     with open(filename, "rb") as f:
         for block in iter(lambda: f.read(blocksize), b""):
             hash.update(block)
+
+    return hash.hexdigest()
+
+def md5stamp(myclass):
+
+    hash = hashlib.md5()
+
+    for attr in dir(myclass):
+        val = getattr(myclass, attr)
+        if isinstance(val, (int, float, str)):
+            hash.update (str(val).encode('utf-8'))
+
     return hash.hexdigest()
