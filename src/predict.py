@@ -36,7 +36,6 @@ class Predict:
         ''' Executes a default predicton workflow '''
 
         success = True
-        results = 'Error'
 
         # uses the child classes within the 'model' folder, to allow customization of
         # the processing applied to each model
@@ -49,30 +48,39 @@ class Predict:
                 from apply_child import ApplyChild
                 from odata_child import OdataChild
             else:
-                print ('unable to find specified model: '+self.model)
-                success = False    
+                success = False
+                results = 'unable to find specified model: '+self.model
 
         except OSError as err:
-            print ('Unable to load model classes: {0}'.format (err))
             success = False
+            results = 'Unable to load model classes: {0}'.format (err)
         except:
-            print ('Error loading model classes:', sys.exc_info()[0])
             success = False
+            results = 'Error loading model classes:', sys.exc_info()[0]
 
-        if success:
-            control = ControlChild()
+        if not success:
+            return success, results
+        
+        # instance Control object
+        control = ControlChild()
 
-            idata = IdataChild (control, self.ifile)
-            success, results = idata.run ()
+        # run idata object, in charge of generate model data from input
+        idata = IdataChild (control, self.ifile)
+        success, results = idata.run ()
+        
+        if not success:
+            return success, results
 
-        if success :
-            apply = ApplyChild (control, results)
-            
-            success, results = apply.run ()
+        # run apply object, in charge of generate a prediction from idata
+        apply = ApplyChild (control, results)
+        success, results = apply.run ()
+        
+        if not success:
+            return success, results
 
-        # if success : 
-        #     odata = OdataChild (control, results)
-        #     success, results = odata.run ()
+        # run odata object, in charge of formatting the prediction results
+        odata = OdataChild (control, results)
+        success, results = odata.run ()
 
         return success, results
 

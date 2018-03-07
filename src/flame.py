@@ -30,7 +30,7 @@ def predict_cmd(args):
     
     predict = Predict (args.infile, args.endpoint)
     success, results = predict.run()
-    #print (success, results)
+    print ('flame : ', success, results)
 
 def build_cmd(args):
     ''' Instantiates a Build object to build a model using the given input file (training series) and model (name of endpoint, eg. 'CACO2') '''

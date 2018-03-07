@@ -24,12 +24,15 @@ class Odata:
 
     def __init__ (self, control, results):
 
-        self.ifile = results
+        self.results = results
+        self.control = control
 
     def run (self):
 
+        print ('odata : ', self.results)
+
         success = True
-        results = self.ifile + '_k'
+        results = 'Prediction completed OK'
 
         return success, results
 

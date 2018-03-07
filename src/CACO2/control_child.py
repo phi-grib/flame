@@ -31,6 +31,4 @@ class ControlChild (Control):
         self.model_name = 'CACO2'
         self.model_version = 0.1
 
-        print (self.model_name, self.model_version)
-
         return

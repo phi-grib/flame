@@ -270,10 +270,12 @@ class Idata:
                     nresults = np.vstack ((nresults, internal[0]))
                     nnames.append(internal[1])
 
-                print ('merge arrays')
+                #print ('merge arrays')
             
             else :
-                print ('unknown')
+                success = False
+                results = 'unknown results type in consolidate'
+                break
 
         if success:
             results = (nresults, nnames)
@@ -285,7 +287,7 @@ class Idata:
         Saves the results in serialized form, together with the MD5 stamp of the control class
         """
 
-        print (self.control.md5stamp())
+        # print (self.control.md5stamp())
         # pickle results + stamp in ifile.pickle
         # return True
 
@@ -367,7 +369,7 @@ class Idata:
                 split_files_names = results[0]
                 split_files_sizes = results[1]
 
-                print (split_files_names, split_files_sizes)
+                # print (split_files_names, split_files_sizes)
 
                 pool = mp.Pool(self.control.numCPUs)
                 results = pool.map(self.workflow, split_files_names)
@@ -395,8 +397,7 @@ class Idata:
             print ("data")
 
         else:
-
-            print ("unknown input format")
+            return False, 'unknown input data format'
 
         # extract x matrix and variable names from results
         xmatrix = results [0]

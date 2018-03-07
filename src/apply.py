@@ -20,6 +20,8 @@
 ##    You should have received a copy of the GNU General Public License
 ##    along with Flame.  If not, see <http://www.gnu.org/licenses/>.
 
+import numpy as np
+
 class Apply:
 
     def __init__ (self, control, results):
@@ -36,12 +38,12 @@ class Apply:
         # 
 
         for i in self.results:
-            print (len (i), i[:3])
+            print ('apply : ', len(i), i[:3])
 
-        #print (self.results)
+        nobj,nvarx = np.shape (self.results[0])
 
+        results = np.zeros(nobj,dtype=np.float64)
         success = True
-        results = (2.28,5.96)   # fake results
 
         return success, results
 
