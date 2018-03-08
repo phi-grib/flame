@@ -45,7 +45,8 @@ class Idata:
         self.ifile = ifile          # input file
 
     def extractAnotations (self, ifile):
-        """         
+        """  
+
         Extracts molecule names, biological anotations and experimental values from an SDFile.
 
         Returns a tupple with three lists:
@@ -90,8 +91,9 @@ class Idata:
 
         return result
 
-    def normalize (self, ifile, method, clean=False):
+    def normalize (self, ifile, method):
         """
+
         Generates a simplified SDFile with MolBlock and an internal ID for further processing
 
         Also, when defined in control, applies chemical standardization protocols, like the 
@@ -102,7 +104,6 @@ class Idata:
         Returns a tuple containing the result of the method and (if True) the name of the 
         output molecule and an error message otherwyse
 
-        WARNING: if clean is set to True it will remove the original file
         """
 
         if not method :
@@ -111,58 +112,51 @@ class Idata:
         try:
             suppl=Chem.SDMolSupplier(ifile)
         except:
-            success = False
-            result = 'Error at processing input file for standardizing structures'
-        else:
-            success = True
-            filename, fileext = os.path.splitext(ifile)
-            ofile = filename + '_std' + fileext
-            with open (ofile,'w') as fo:
-                mcount = 0
-                merror = 0
-                for m in suppl:
+            return False, 'Error at processing input file for standardizing structures'
 
-                    # molecule not recognised by RDKit
-                    if m is None:
-                        print ("ERROR: unable to process molecule #"+str(merror))
-                        merror+=1
-                        continue
+        success = True
+        filename, fileext = os.path.splitext(ifile)
+        ofile = filename + '_std' + fileext
 
-                    # if standardize
-                    if method == 'standardize':
-                        try:
-                            parent = standardise.run (Chem.MolToMolBlock(m))
-                        except standardise.StandardiseException as e:
-                            if e.name == "no_non_salt":
-                                parent = Chem.MolToMolBlock(m)
-                            else:
-                                return False, e.name
-                        except:
-                            return False, "Unknown standardiser error"
+        with open (ofile,'w') as fo:
+            mcount = 0
+            # merror = 0
+            for m in suppl:
 
-                    # in any case, write parent plus internal ID (flameID)
-                    fo.write(parent)
+                # molecule not recognised by RDKit
+                if m is None:
+                    # print ("ERROR: unable to process molecule #"+str(merror))
+                    # merror+=1
+                    continue
 
-                    flameID = 'fl%0.10d' % mcount
-                    fo.write('>  <flameID>\n'+flameID+'\n\n')
+                # if standardize
+                if method == 'standardize':
+                    try:
+                        parent = standardise.run (Chem.MolToMolBlock(m))
+                    except standardise.StandardiseException as e:
+                        if e.name == "no_non_salt":
+                            parent = Chem.MolToMolBlock(m)
+                        else:
+                            return False, e.name
+                    except:
+                        return False, "Unknown standardiser error"
 
-                    mcount += 1
+                # in any case, write parent plus internal ID (flameID)
+                fo.write(parent)
 
-                    # terminator
-                    fo.write('$$$$\n')
+                flameID = 'fl%0.10d' % mcount
+                fo.write('>  <flameID>\n'+flameID+'\n\n')
 
-            if clean:
-                try:
-                    os.remove (ifile)
-                except OSError:
-                    pass
+                mcount += 1
 
-            result = ofile
+                # terminator
+                fo.write('$$$$\n')
 
-        return success, result
+        return success, ofile
 
     def ionize (self, ifile, method):
-        """ Adjust the ionization status of the molecular strcuture, using a given pH.
+        """ 
+        Adjust the ionization status of the molecular strcuture, using a given pH.
         """
 
         if not method :
@@ -178,7 +172,8 @@ class Idata:
         return success, results
 
     def convert3D (self, ifile, method):
-        """ Assigns 3D structures to the molecular structures provided as input.
+        """ 
+        Assigns 3D structures to the molecular structures provided as input.
         """
 
         if not method :
@@ -210,7 +205,8 @@ class Idata:
         return False, 'not implemented'
 
     def computeMD (self, ifile, method):
-        """ Uses the molecular structures for computing an array of values (int or float) 
+        """ 
+        Uses the molecular structures for computing an array of values (int or float) 
         """
 
         # any call to computeMD_[whatever] must return a numpy array with a value for
@@ -242,7 +238,8 @@ class Idata:
         return success, results
 
     def consolidate (self, results, nobj):
-        """ Mix the results obtained by multiple CPUs into a single result file 
+        """ 
+        Mix the results obtained by multiple CPUs into a single result file 
         """
 
         success = True
@@ -336,11 +333,13 @@ class Idata:
         return True, results
 
     def workflow (self, ifile):
-        """         
+        """      
+
         Executes in sequence methods required to generate MD, starting from a single molecular file
 
         input : ifile, a molecular file in SDFile format
-        output: results is a numpy bidimensional array containing MD       
+        output: results is a numpy bidimensional array containing MD     
+
         """
 
         # normalize chemical  
@@ -363,6 +362,92 @@ class Idata:
 
         return success, results
 
+    def _run_molecule (self):
+        """
+        version of Run for molecular input
+        """
+
+        # trick to avoid RDKit dumping warnings to the console
+        if not self.control.verbose_error:
+            stderr_fileno = sys.stderr.fileno()       # saves current syserr
+            stderr_save = os.dup(stderr_fileno)
+            stderr_fd = open('errorRDKit.log', 'w')   # open a specific RDKit log file
+            os.dup2(stderr_fd.fileno(), stderr_fileno)
+
+        # extract useful information from file
+        results = self.extractAnotations (self.ifile)
+        obj_nam = results[0]
+        ymatrix = results[1]
+        experim = results[2]
+
+        # Execute the workflow in 1 or n CPUs
+        if self.control.numCPUs > 1:
+            # Count number of molecules and split in chuncks 
+            # for multiprocessing 
+            success, results = sdfu.split_SDFile(self.ifile, self.control.numCPUs)
+
+            if not success : 
+                return False, "error splitting: "+self.ifile
+
+            split_files_names = results[0]
+            split_files_sizes = results[1]
+
+            # print (split_files_names, split_files_sizes)
+
+            pool = mp.Pool(self.control.numCPUs)
+            results = pool.map(self.workflow, split_files_names)
+
+            # Check the results and make sure there are 
+            # no missing objects.
+            # Reassemble results for parallel computing results
+            success, results = self.consolidate(results, split_files_sizes) 
+        else:
+            success, results = self.workflow (self.ifile)
+
+        if not success:
+            return False, results
+
+        if not self.control.verbose_error:
+            stderr_fd.close()                     # close the RDKit log
+            os.dup2(stderr_save, stderr_fileno)   # restore old syserr
+
+        xmatrix = results [0]
+        var_nam = None
+        if len(results) > 1:
+            var_nam = results [1]
+        
+        # results is a tuple with:
+        # [0] xmatrix
+        # [1] ymatrix 
+        # [2] experim      for prediction quality assessment   
+        # [3] obj_nam      for presenting results
+        # [4] var_nam        
+        results = (xmatrix, ymatrix, experim, obj_nam, var_nam)
+
+        return success, results
+
+    def _run_data (self):
+        """
+        version of Run for data input (CSV tabular format)
+        """
+
+        success = False
+        results = 'not implemented'
+        #results = (xmatrix, ymatrix, experim, obj_nam, var_nam)
+
+        return success, results
+
+    def _run_process (self):
+        """
+        version of Run for inter-process input (calling another model to obtain input)
+        """
+        
+        success = False
+        results = 'not implemented'
+        #results = (xmatrix, ymatrix, experim, obj_nam, var_nam)
+
+        return success, results
+
     def run (self):
         """         
         Process input file to obtain metadata (size, type, number of objects, name of objects, etc.) as well
@@ -376,88 +461,21 @@ class Idata:
 
         # check for the presence of a valid pickle file
         success, results = self.load()
-
         if success:
             return success, results
 
         # processing for molecular input (for now an SDFile)
         if (self.control.input_type == 'molecule'):
-
-            # trick to avoid RDKit dumping warnings to the console
-            if not self.control.verbose_error:
-                stderr_fileno = sys.stderr.fileno()       # saves current syserr
-                stderr_save = os.dup(stderr_fileno)
-                stderr_fd = open('errorRDKit.log', 'w')   # open a specific RDKit log file
-                os.dup2(stderr_fd.fileno(), stderr_fileno)
-
-            # extract useful information from file
-
-            results = self.extractAnotations (self.ifile)
-            obj_nam = results[0]
-            ymatrix = results[1]
-            experim = results[2]
-
-            # print (self.obj_nam)
-            # print (self.obj_bio)
-            # print (self.obj_exp)
-
-            # Execute the workflow in 1 or n CPUs
-            if self.control.numCPUs > 1:
-                # Count number of molecules and split in chuncks 
-                # for multiprocessing 
-                success, results = sdfu.split_SDFile(self.ifile, self.control.numCPUs)
-
-                if not success : 
-                    return False, "error splitting: "+self.ifile
-
-                split_files_names = results[0]
-                split_files_sizes = results[1]
-
-                # print (split_files_names, split_files_sizes)
-
-                pool = mp.Pool(self.control.numCPUs)
-                results = pool.map(self.workflow, split_files_names)
-
-                # Check the results and make sure there are 
-                # no missing objects.
-                # Reassemble results for parallel computing results
-                success, results = self.consolidate(results, split_files_sizes) 
-            else:
-                success, results = self.workflow (self.ifile)
-
-            if not success:
-                return False, results
-
-            if not self.control.verbose_error:
-                stderr_fd.close()                     # close the RDKit log
-                os.dup2(stderr_save, stderr_fileno)   # restore old syserr
-
-        # processing for non-molecular input
+            success, results = self._run_molecule()
         elif (self.control.input_type == 'data'):
-
-            # TODO: import csv
-            # test and obtain dimensions
-            
-            print ("data")
-
+            success, results = self._run_data()
+        elif (self.control.input_type == 'process'):
+            success, results = self._run_process()
         else:
             return False, 'unknown input data format'
 
-        # extract x matrix and variable names from results
-        xmatrix = results [0]
-        var_nam = None
-        if len(results) > 1:
-            var_nam = results [1]
-        
-        # results is a tuple with:
-        # [0] xmatrix
-        # [1] ymatrix 
-        # [2] experim      for prediction quality assessment   
-        # [3] obj_nam      for presenting results
-        # [4] var_nam        
-        results = (xmatrix, ymatrix, experim, obj_nam, var_nam)
-        
-        # save and stamp
-        success = self.save (results)
+        # save in a pickle file stamped with MD5 hash of file and control
+        if success:
+            success = self.save (results)
 
         return success, results
