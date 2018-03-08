@@ -99,7 +99,7 @@ class Learn:
 
         # validate model
         
-        #model.validate()
+        model.validate()
             
         # save model
 

@@ -167,8 +167,8 @@ class BaseEstimator(object):
             # except:
             #     print "Error creating Predicted vs Experimental " + self.name + " model graph"
 
-            if self.conformal:
-                self.meanConformalInterval = CF_QuanVal(X, Y, copy.copy(self.estimator), self.conformalSignificance)
+            #if self.conformal:
+            #    self.meanConformalInterval = CF_QuanVal(X, Y, copy.copy(self.estimator), self.conformalSignificance)
 
 
         ######################################################################3
