@@ -34,7 +34,7 @@ class RF(BaseEstimator):
                         cv='loo', n=2, p=1, lc=True, conformalSignificance=0.05, vpath = '',
                         estimator_parameters={}, tune_parameters={}, conformal=False):
         if X is not None:
-            parent = super(RF,self).__init__(X, Y, quantitative, autoscale,
+            super(RF,self).__init__(X, Y, quantitative, autoscale,
                                 cv, n, p, lc, conformalSignificance, vpath 
                                 , estimator_parameters, conformal)
 

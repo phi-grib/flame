@@ -83,7 +83,7 @@ class Control:
         self.RF_parameters = {   "n_estimators" : 200, 
                             "max_features" : "sqrt",
                             "class_weight" : "balanced", 
-                            "random_state" : 1226,
+                            "random_state" : 46,
                             "oob_score"    : True, 
                             "n_jobs"       : -1, 
                             "max_depth" : None }
@@ -92,6 +92,7 @@ class Control:
                     'max_features': ['sqrt','log2'],
                     'class_weight' : [None, 'balanced'],
                     'oob_score' : [True],
+                    'random_state' : [46] ,
                     }  
 
         ## conformal predictor  settings

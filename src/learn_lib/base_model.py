@@ -360,8 +360,9 @@ class BaseEstimator(object):
             tune_parameters = [tune_parameters]
             print ("tune_parameters")
             print ("metric: " + str(metric))
-            tclf = GridSearchCV(estimator, tune_parameters, scoring=metric, cv=KFold(n_splits=5, shuffle=True,
-                random_state=46), n_jobs= -1)
+            tclf = GridSearchCV(estimator, tune_parameters, scoring=metric, cv=self.cv)
+            #n_splits=10, shuffle=False,
+             #   random_state=42), n_jobs= -1)
             tclf.fit(X, Y)
             self.estimator = tclf.best_estimator_
             print (tclf.best_params_)
