@@ -20,47 +20,51 @@
 ##    You should have received a copy of the GNU General Public License
 ##    along with Flame.  If not, see <http://www.gnu.org/licenses/>.
 
-import hashlib
-
 class Control:
 
     def __init__ (self):
+
         self.model_name = ""
         self.model_version = 0.0
+
+        ###
+        ### system settings
+        ###
+
+        self.verbose_error = True
+        self.numCPUs = 2                            # (int)
+        
+        ###
+        ### input settings
+        ###
 
         self.input_type = 'molecule'                # 'molecule' | 'data'
         self.normalize_method = 'standardize'       # None | 'standardize'
         self.ionize_method = None                   # None | 'moka'
-        self.convert3D_method = None                # 'ETKDG' 
+        self.convert3D_method = None                  # 'ETKDG' 
+        self.computeMD_method = ['RDKit_properties']        # 'RDKit_properties'|'RDKit_md'|'custom'
         
-        self.numCPUs = 2                            # (int)
-
         self.SDFile_name = 'GENERIC_NAME'           # (str)
         self.SDFile_activity = 'activity'           # (str)
         self.SDFile_experimental = 'IC50'           # (str)
 
-        self.MD = ['RDKit_md']                      # 'RDKit_properties'|'RDKit_md'|'custom'
+        ###
+        ### learn/apply settings
+        ###
 
-        # ##
-        # ## Modeling settings
-        # ##
         self.model = 'RF'
         self.modelAutoscaling = None
         # self.modelLV = None
         # self.modelCutoff = None
 
-        ## Random Forest
-        RF_parameters = {"n_estimators" : 200, "max_features" : "sqrt",
-                "class_weight" : "balanced", "random_state" : 1226,
-                 "oob_score" : True, "n_jobs" : -1, "max_depth" : None}
-
-        RF_optimize = {'n_estimators': range(50, 100, 200),
-                    'max_features': ['sqrt','log2'],
-                    'class_weight' : [None, 'balanced'],
-                    'oob_score' : [True],
-                    }  
+        ##      Random Forest        
+        self.RFestimators = None
+        self.RFfeatures = None
+        self.RFtune = False
+        self.RFclass_weight = None
+        self.RFrandom = False
         
-        ## Model Validation Settings
+        ##      Model Validation Settings
         self.ModelValidationCV = None
         self.ModelValidationN = 0
         self.ModelValidationP = 0
@@ -73,13 +77,18 @@ class Control:
         # self.selVarRun = None
         # self.selVarMask = None
 
+        ## Random Forest
+        RF_parameters = {   "n_estimators" : 200, 
+                            "max_features" : "sqrt",
+                            "class_weight" : "balanced", 
+                            "random_state" : 1226,
+                            "oob_score"    : True, 
+                            "n_jobs"       : -1, 
+                            "max_depth" : None }
 
-    def md5stamp (self):
+        RF_optimize = {'n_estimators': range(50, 100, 200),
+                    'max_features': ['sqrt','log2'],
+                    'class_weight' : [None, 'balanced'],
+                    'oob_score' : [True],
+                    }  
 
-        m = hashlib.md5()
-        for attr in dir(self):
-            val = getattr(self, attr)
-            if isinstance(val, (int, float, str)):
-                m.update (str(val).encode('utf-8'))
-
-        return (m.hexdigest())
