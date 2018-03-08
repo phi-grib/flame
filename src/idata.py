@@ -263,17 +263,20 @@ class Idata:
                 if first:
                     nresults = internal[0]
                     nnames = internal[1]
+                    first_nobj, first_nvar = np.shape(nresults)
                     first = False
                 else:
+                    nobj, nvar = np.shape(internal[0])
+                    if nvar != first_nvar :
+                        return False, "inconsistent number of variables"
+
                     nresults = np.vstack ((nresults, internal[0]))
                     nnames.append(internal[1])
 
                 #print ('merge arrays')
             
             else :
-                success = False
-                results = 'unknown results type in consolidate'
-                break
+                return False, "unknown results type in consolidate"
 
         if success:
             results = (nresults, nnames)
@@ -341,6 +344,10 @@ class Idata:
         output: results is a numpy bidimensional array containing MD     
 
         """
+
+        # TODO: implement control of object size, in case any of the steps removes molecules
+        # this would produce missmatch problems with object names and Y values and must be
+        # avoided, even at the cost of repeating the computation molecule-by-molecule
 
         # normalize chemical  
         success, results = self.normalize (ifile, self.control.normalize_method)
