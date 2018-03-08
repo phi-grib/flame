@@ -37,8 +37,8 @@ class Predict:
 
         success = True
 
-        # uses the child classes within the 'model' folder, to allow customization of
-        # the processing applied to each model
+        #uses the child classes within the 'model' folder, to allow customization of
+        #the processing applied to each model
         try:
             epd = './'+self.model
             if os.path.isdir(epd):
@@ -48,15 +48,17 @@ class Predict:
                 from apply_child import ApplyChild
                 from odata_child import OdataChild
             else:
-                success = False
-                results = 'unable to find specified model: '+self.model
+                raise
+                #success = False
+                #results = 'unable to find specified model: '+self.model
 
-        except OSError as err:
-            success = False
-            results = 'Unable to load model classes: {0}'.format (err)
+        #except OSError as err:
+        #    success = False
+        #    results = 'Unable to load model classes: {0}'.format (err)
         except:
-            success = False
-            results = 'Error loading model classes:', sys.exc_info()[0]
+            raise
+            #success = False
+            #results = 'Error loading model classes:', sys.exc_info()[0]
 
         if not success:
             return success, results
