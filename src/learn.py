@@ -67,34 +67,41 @@ class Learn:
         return True, 'debug RF results'
 
     def run (self):
+        X,Y = self.getMatrices ()
 
-        if self.control.model == 'RF':
-            X,Y = self.getMatrices ()
+        nobj, nvarx = np.shape(X)
 
-            nobj, nvarx = np.shape(X)
+        if (nobj==0) or (nvarx==0) :
+            return False, 'failed to extract activity or to generate MD'
 
-            if (nobj==0) or (nvarx==0) :
-                return False, 'failed to extract activity or to generate MD'
-
-            nobj = np.shape(Y)
-            if (nobj==0) :
-                return False, 'no activity found'
-
-            # build model
-            rfmodel = RF()
-            rfmodel.build (X,Y, self.control.quantitative, self.control.modelAutoscaling,
-                           self.control.RFestimators, self.RFfeatures, self.RFrandom, self.RFtune, self.RFclass_weight,
-                           self.ModelValidationCV, self.ModelValidationN, self.ModelValidationP, self.ModelValidationLC, self.vpath)
-            
-            # validate model
-            rfmodel.validate()
-            
-            # save model
-            rfmodel.saveModel(self.vpath+'/RFModel.npy')
+        nobj = np.shape(Y)
+        if (nobj==0) :
+            return False, 'no activity found'
         
+        model = ''
+        
+        # initilizate estimator
+       
+        if self.control.model == 'RF':
+            model = RF(X,Y, quantitative, modelAutoscaling, tune,
+                        ModelValidationCV, ModelValidationN, ModelValidationP, ModelValidationLC,
+                        conformalSignificance, vpath, RF_parameters, RF_optimize, conformal)
         else:
             return False, 'modeling method not recognised'
+            
+        # build model
+        
+        model.build()
 
+        # validate model
+        
+        model.validate()
+            
+        # save model
+
+        with open(self.vpath +  model.name + '.pickle', 'wb') as handle:
+            pickle.dump(model , handle, protocol=pickle.HIGHEST_PROTOCOL)
+        
         # compute AD (when applicable)
 
         success = True
