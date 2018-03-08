@@ -32,7 +32,7 @@ class Build:
 
         return
 
-def run (self):
+    def run (self):
         ''' Executes a default predicton workflow '''
 
         success = True
