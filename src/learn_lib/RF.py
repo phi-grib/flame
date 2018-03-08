@@ -22,7 +22,7 @@
 
 
 from base_model import BaseEstimator
-from base_model import *
+from base_model import getCrossVal
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.ensemble import RandomForestRegressor
 
@@ -43,6 +43,7 @@ class RF(BaseEstimator):
             self.tune_parameters = tune_parameters
             if self.quantitative:
                 self.name = "RF-R"
+                self.tune_parameters.pop("class_weight")
             else:
                 self.name = "RF-C"
                 

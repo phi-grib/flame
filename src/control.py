@@ -54,6 +54,8 @@ class Control:
 
         self.model = 'RF'
         self.modelAutoscaling = None
+        self.quantitative = True
+        self.tune = True
         # self.modelLV = None
         # self.modelCutoff = None
 
@@ -65,9 +67,9 @@ class Control:
         self.RFrandom = False
         
         ##      Model Validation Settings
-        self.ModelValidationCV = None
-        self.ModelValidationN = 0
-        self.ModelValidationP = 0
+        self.ModelValidationCV = 'loo'
+        self.ModelValidationN = 2
+        self.ModelValidationP = 1
         self.ModelValidationLC = False # Learning curve
 
         # self.selVar = None
@@ -78,7 +80,7 @@ class Control:
         # self.selVarMask = None
 
         ## Random Forest
-        RF_parameters = {   "n_estimators" : 200, 
+        self.RF_parameters = {   "n_estimators" : 200, 
                             "max_features" : "sqrt",
                             "class_weight" : "balanced", 
                             "random_state" : 1226,
@@ -86,9 +88,13 @@ class Control:
                             "n_jobs"       : -1, 
                             "max_depth" : None }
 
-        RF_optimize = {'n_estimators': range(50, 100, 200),
+        self.RF_optimize = {'n_estimators': range(50, 100, 200),
                     'max_features': ['sqrt','log2'],
                     'class_weight' : [None, 'balanced'],
                     'oob_score' : [True],
                     }  
 
+        ## conformal predictor  settings
+
+        self.conformal = True
+        self.conformalSignificance = 0.2

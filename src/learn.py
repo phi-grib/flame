@@ -20,8 +20,9 @@
 ##    You should have received a copy of the GNU General Public License
 ##    along with Flame.  If not, see <http://www.gnu.org/licenses/>.
 
-from RF import RF
+from learn_lib.RF import RF
 import numpy as np
+import pickle 
 
 class Learn:
 
@@ -38,27 +39,29 @@ class Learn:
         
         """
         
-        ncol = 0
-        xx = []
-        yy = []
+        # ncol = 0
+        # xx = []
+        # yy = []
 
-        # obtain X and Y from tuple elements 0 (MD) and 1 (Activity)
-        for i in self.results:
-            if len(i[0])>ncol: ncol = len(i[0])
-            xx.append(i[0])
-            yy.append(i[1])
+        # # obtain X and Y from tuple elements 0 (MD) and 1 (Activity)
+        # for i in self.results:
+        #     print (i)
+        #     if len(i[0])>ncol: ncol = len(i[0])
+        #     xx.append(i[0])
+        #     yy.append(i[1])
 
-        nrow = len (xx)
+        # nrow = len (xx)
 
-        Y = np.array (yy,dtype=np.float64)
-        X = np.empty ((nrow,ncol),dtype=np.float64)
+        # Y = np.array (yy,dtype=np.float64)
+        # X = np.empty ((nrow,ncol),dtype=np.float64)
 
-        i=0
-        for row in xx:
-            X[i,:]=np.array(row,dtype=np.float64)
-            i+=1
+        # i=0
+        # for row in xx:
+        #     X[i,:]=np.array(row,dtype=np.float64)
+        #     i+=1
+        print (self.results[0].shape)
 
-        return X, Y
+        return self.results[0], self.results[1]
 
     def runRF (self):
 
@@ -83,9 +86,10 @@ class Learn:
         # initilizate estimator
        
         if self.control.model == 'RF':
-            model = RF(X,Y, quantitative, modelAutoscaling, tune,
-                        ModelValidationCV, ModelValidationN, ModelValidationP, ModelValidationLC,
-                        conformalSignificance, vpath, RF_parameters, RF_optimize, conformal)
+            model = RF(X,Y, self.control.quantitative, self.control.modelAutoscaling, self.control.tune,
+                        self.control.ModelValidationCV, self.control.ModelValidationN, self.control.ModelValidationP, 
+                        self.control.ModelValidationLC ,self.control.conformalSignificance, self.vpath,
+                        self.control.RF_parameters, self.control.RF_optimize, self.control.conformal)
         else:
             return False, 'modeling method not recognised'
             
@@ -95,7 +99,7 @@ class Learn:
 
         # validate model
         
-        model.validate()
+        #model.validate()
             
         # save model
 
