@@ -20,7 +20,7 @@
 ##    You should have received a copy of the GNU General Public License
 ##    along with Flame.  If not, see <http://www.gnu.org/licenses/>.
 
-from learn_lib.RF import RF
+from RF import RF
 import numpy as np
 import pickle 
 
