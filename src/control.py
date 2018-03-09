@@ -81,11 +81,11 @@ class Control:
                             "n_jobs"       : -1, 
                             "max_depth" : None }
 
-        self.RF_optimize = {'n_estimators': range(50, 100, 200),
+        self.RF_optimize = {'n_estimators': range(50, 200, 50),
                     'max_features': ['sqrt','log2'],
                     'class_weight' : [None, 'balanced'],
                     'oob_score' : [True],
-                    'random_state' : [46] ,
+                    'random_state' : [46],
                     }  
         ## SVM
 
