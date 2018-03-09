@@ -52,10 +52,10 @@ class Control:
         ### learn/apply settings
         ###
 
-        self.model = 'RF'
+        self.model = 'SVM'
         self.modelAutoscaling = None
         self.quantitative = True
-        self.tune = True
+        self.tune = False
         # self.modelLV = None
         # self.modelCutoff = None
 
@@ -87,8 +87,31 @@ class Control:
                     'oob_score' : [True],
                     'random_state' : [46] ,
                     }  
+        ## SVM
+
+        self.SVM_parameters = {"kernel" : "rbf",
+                        "degree" : 3, 
+                        "gamma" : "auto",
+                        "coef0" : 0.0, 
+                        "probability" : False,
+                        "decision_function_shape" : "ovr",
+                        "class_weight" : "balanced",
+                        "tol" : 1e-3,
+                        "epsilon" : 0.1,
+                        "C" : 1.0,
+                        "shrinking" : True,
+                        "random_state" : 46}
+
+
+        self.SVM_optimize = {'kernel': ['rbf', ],
+                     'gamma': ['auto'],
+                     'coef0': [0.0, 0.8, 100.0],
+                     'C': [1, 10, 100] ,
+                     'degree': [1, 3, 5],
+                     'class_weight' : [None, 'balanced'],
+                     'random_state' : [46]
+                    }  # kernels: poly, sigmoid
 
         ## conformal predictor  settings
-
         self.conformal = False
         self.conformalSignificance = 0.2

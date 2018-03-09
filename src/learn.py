@@ -22,6 +22,7 @@
 ##    along with Flame.  If not, see <http://www.gnu.org/licenses/>.
 
 from RF import RF
+from SVM import SVM
 import numpy as np
 import pickle 
 
@@ -90,6 +91,12 @@ class Learn:
                         self.control.ModelValidationCV, self.control.ModelValidationN, self.control.ModelValidationP, 
                         self.control.ModelValidationLC ,self.control.conformalSignificance, self.vpath,
                         self.control.RF_parameters, self.control.RF_optimize, self.control.conformal)
+        elif self.control.model == 'SVM':
+            model = SVM(X,Y, self.control.quantitative, self.control.modelAutoscaling, self.control.tune,
+                        self.control.ModelValidationCV, self.control.ModelValidationN, self.control.ModelValidationP, 
+                        self.control.ModelValidationLC ,self.control.conformalSignificance, self.vpath,
+                        self.control.SVM_parameters, self.control.SVM_optimize, self.control.conformal)
+            
         else:
             return False, 'modeling method not recognised'
             

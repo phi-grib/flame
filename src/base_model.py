@@ -269,8 +269,6 @@ class BaseEstimator(object):
             self.conformal_pred = CF_QuanCal(X, Y, copy.copy(self.estimator))
 
 
-
-
     def optimize (self, X, Y, estimator, tune_parameters ):
             metric = ""
             if self.quantitative:
