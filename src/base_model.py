@@ -208,7 +208,7 @@ class BaseEstimator(object):
             return
 
         # Move this to an external module ****
-        
+
         # if self.learning_curve:
         #     print ('Building Learning Curves')
         #     title = "Learning Curves (RF)"
@@ -220,16 +220,15 @@ class BaseEstimator(object):
 
         # return (Yp)
 
-
+        
+    """ Uses the X matrix provided as argument to predict Y"""
     def project (self, Xb):
-        """ Uses the X matrix provided as argument to predict Y
-        """
 
-       if self.autoscale:
-           Xb = Xb-self.mux
-           Xb = Xb*self.wgx
-
-         # Xb = Xb.reshape(1,-1) # required by sklean, to avoid deprecation warning
+        if self.autoscale:
+            Xb = Xb-self.mux
+            Xb = Xb*self.wgx
+            
+        # Xb = Xb.reshape(1,-1) # required by sklean, to avoid deprecation warning
         Yp = self.estimator.predict(Xb)
 
         if self.estimator == None:
