@@ -32,11 +32,11 @@ import warnings
 #warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 from sklearn.model_selection import cross_val_predict
-from sklearn.model_selection import LeaveOneOut  # JC
-from sklearn.model_selection import cross_val_score  # JC
-from sklearn.model_selection import ShuffleSplit  # JC
-from sklearn.model_selection import KFold  # JC
-from sklearn.model_selection import GridSearchCV  # JC
+from sklearn.model_selection import LeaveOneOut  
+from sklearn.model_selection import cross_val_score  
+from sklearn.model_selection import ShuffleSplit  
+from sklearn.model_selection import KFold  
+from sklearn.model_selection import GridSearchCV  
 from sklearn.metrics import mean_squared_error, matthews_corrcoef as mcc
 from sklearn.metrics import f1_score
 from sklearn.metrics import make_scorer
@@ -123,7 +123,6 @@ class BaseEstimator(object):
         print ("pred  TP:%d TN:%d FP:%d FN:%d spec:%5.3f sens:%5.3f MCC:%5.3f" % \
                 (self.TP, self.TN, self.FP, self.FN, self.specificity, self.sensitivity, self.mcc))
 
-    
     def quantitativeValidation(self):
         
         nobj, nvarx = np.shape(self.X)
@@ -141,6 +140,8 @@ class BaseEstimator(object):
         Yp = self.estimator.predict(X)
         Ym = np.mean(Y)
 
+        ## Goodness of the fit
+
         SSY0 = np.sum (np.square(Ym-Y))
         SSY  = np.sum (np.square(Yp-Y))
 
@@ -149,10 +150,9 @@ class BaseEstimator(object):
         self.R2   = 1.00 - (SSY/SSY0)
 
         ## Cross-validation
+
         y_pred = cross_val_predict(copy.copy(self.estimator), copy.copy(X), 
                                              copy.copy(Y), cv=self.cv, n_jobs=-1)
-
-        # Mean Squared Error
         SSY0_out = np.sum(np.square(Ym - Y))
         SSY_out = np.sum(np.square(Y - y_pred))
         self.scoringP = mean_squared_error(Y, y_pred)
@@ -178,15 +178,17 @@ class BaseEstimator(object):
 
         if len(Yp) != len(Y):
             return
-        
+
+        ## Goodness of the fit
+
         print ('Goodness of the fit validation')
         self.TPpred, self.FPpred, self.FNpred, self.TNpred = confusion_matrix(Y,Yp).ravel()
         self.sensitivityPred = (self.TPpred / (self.TPpred + self.FNpred))
         self.specificityPred = (self.TNpred / (self.TNpred + self.FPpred))
         self.mccp  = mcc(Y, Yp)
 
+        ## Cross validation
 
-        # Cross validation
         print ('Cross validating')
         y_pred = cross_val_predict(self.estimator, X, Y, cv=self.cv, n_jobs=-1)
         self.TP, self.FP, self.FN, self.TN = confusion_matrix(Y,y_pred).ravel()
@@ -220,34 +222,39 @@ class BaseEstimator(object):
 
         # return (Yp)
 
-        
+    def regularProject(self, Xb):
+        Yp = self.estimator.predict(Xb)
+        return Yp
+
+    def conformalProject(self, Xb):
+        Yp = self.regularProject(Xb)
+        prediction = conformal_pred_pred(Xb, self.conformal_pred,
+                     self.conformalSignificance)
+
+        if self.quantitative:
+            predictionSize = abs(abs(prediction[0][0]) - abs(prediction[0][1]))
+            prediction = prediction.tolist() + [predictionSize, self.meanConformalInterval]
+            return ([Yp, prediction])         
+        else:
+            return ([Yp, prediction])
+               
+
     """ Uses the X matrix provided as argument to predict Y"""
     def project (self, Xb):
-
-        if self.autoscale:
-            Xb = Xb-self.mux
-            Xb = Xb*self.wgx
-            
-        # Xb = Xb.reshape(1,-1) # required by sklean, to avoid deprecation warning
-        Yp = self.estimator.predict(Xb)
-
+        
+        results = None
         if self.estimator == None:
             print ('failed to load clasifier')
             return
+        if self.autoscale:
+            Xb = Xb-self.mux
+            Xb = Xb*self.wgx
+
         if self.conformal:
-            predictionSize = 0
-
-            # self.conformal_calibration()
-            prediction = conformal_pred_pred(Xb, self.conformal_pred, self.conformalSignificance)
-
-            if self.quantitative:
-                predictionSize = abs(abs(prediction[0][0]) - abs(prediction[0][1]))
-                prediction = prediction.tolist() + [predictionSize, self.meanConformalInterval]
-                return ([Yp, prediction])
-            else:
-                return ([Yp, prediction])
+            results = self.conformalProject(Xb)
         else:
-            return Yp
+            results = self.regularProject(Xb)
+        return results
 
     def conformal_calibration(self,):
 
@@ -257,11 +264,8 @@ class BaseEstimator(object):
             X, self.mux = center(X)
             X, self.wgx = scale(X, self.autoscale)
         if not self.quantitative:
-            # self.features is a numpy array -> convert to string
-
             self.conformal_pred = CF_QualCal(X, Y, copy.copy(self.estimator))
         else:
-            # self.features is a numpy array -> convert to string
             self.conformal_pred = CF_QuanCal(X, Y, copy.copy(self.estimator))
 
 

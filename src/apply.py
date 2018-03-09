@@ -2,7 +2,7 @@
 
 ##    Description    Flame Apply class
 ##
-##    Authors:       Manuel Pastor (manuel.pastor@upf.edu)
+##    Authors:       Manuel Pastor (manuel.pastor@upf.edu), Jose Carlos Gómez (josecarlos.gomez@upf.edu)
 ##
 ##    Copyright 2018 Manuel Pastor
 ##
@@ -21,6 +21,7 @@
 ##    along with Flame.  If not, see <http://www.gnu.org/licenses/>.
 
 import numpy as np
+import pickle
 
 class Apply:
 
@@ -28,21 +29,33 @@ class Apply:
 
         self.control = control
         self.results = results
+        
+    def getMatrices (self):
+        return self.results[0]
 
     def run (self):
-
+       
+        X = self.getMatrices()
         # retrieve data and dimensions from results
+        nobj, nvarx = np.shape(X)
 
-        # select prdiction tool from control
+        if (nobj==0) or (nvarx==0) :
+            return False, 'failed to extract activity or to generate MD'
 
-        # 
 
-        for i in self.results:
-            print ('apply : ', len(i), i[:3])
+        # select prediction tool from control
+        with open("model.pickle", "rb") as input_file:
+            estimator = pickle.load(input_file)
+        results = estimator.project(X)
 
-        nobj,nvarx = np.shape (self.results[0])
+        print("Prediction results")
 
-        results = np.zeros(nobj,dtype=np.float64)
+        # for i in self.results:
+        #     print ('apply : ', len(i), i[:3])
+
+        # nobj,nvarx = np.shape (self.results[0])
+
+        # results = np.zeros(nobj,dtype=np.float64)
         success = True
 
         return success, results

@@ -2,7 +2,8 @@
 
 ##    Description    Flame Learn class
 ##
-##    Authors:       Manuel Pastor (manuel.pastor@upf.edu)
+##    Authors:       Manuel Pastor (manuel.pastor@upf.edu), Jose Carlos Gómez (josecarlos.gomez@upf.edu)
+##
 ##
 ##    Copyright 2018 Manuel Pastor
 ##
@@ -84,7 +85,6 @@ class Learn:
         model = ''
         
         # initilizate estimator
-       
         if self.control.model == 'RF':
             model = RF(X,Y, self.control.quantitative, self.control.modelAutoscaling, self.control.tune,
                         self.control.ModelValidationCV, self.control.ModelValidationN, self.control.ModelValidationP, 
@@ -103,7 +103,7 @@ class Learn:
             
         # save model
 
-        with open(self.vpath +  model.name + '.pickle', 'wb') as handle:
+        with open(self.vpath +  'model.pickle', 'wb') as handle:
             pickle.dump(model , handle, protocol=pickle.HIGHEST_PROTOCOL)
         
         # compute AD (when applicable)

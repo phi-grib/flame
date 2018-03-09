@@ -32,5 +32,6 @@ class ControlChild (Control):
         self.model_version = 0.1
         self.quantitative = False
         self.tune = False
+        self.conformal = False
 
         return

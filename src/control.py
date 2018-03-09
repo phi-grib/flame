@@ -59,14 +59,7 @@ class Control:
         # self.modelLV = None
         # self.modelCutoff = None
 
-        ##      Random Forest        
-        self.RFestimators = None
-        self.RFfeatures = None
-        self.RFtune = False
-        self.RFclass_weight = None
-        self.RFrandom = False
-        
-        ##      Model Validation Settings
+        ## Model Validation Settings
         self.ModelValidationCV = 'loo'
         self.ModelValidationN = 2
         self.ModelValidationP = 1
@@ -97,5 +90,5 @@ class Control:
 
         ## conformal predictor  settings
 
-        self.conformal = True
+        self.conformal = False
         self.conformalSignificance = 0.2
