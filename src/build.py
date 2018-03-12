@@ -22,6 +22,7 @@
 
 import os
 import sys
+import shutil
 
 class Build:
 
@@ -29,18 +30,27 @@ class Build:
 
         self.ifile = ifile
         self.model = model
+        self.lfile = None
 
         return
 
     def run (self):
         ''' Executes a default predicton workflow '''
 
+        # identify path to endpoint
+        wkd = os.path.dirname(os.path.abspath(__file__))
+        epd = wkd+'/'+self.model+'/dev'
+
+        # copy the input file to the model development directory of the endpoint
+        self.lfile = epd+'/'+os.path.basename(self.ifile)
+        shutil.copy (self.ifile,self.lfile)
+
         success = True
+        results = ''
 
         #uses the child classes within the 'model' folder, to allow customization of
         #the processing applied to each model
         try:
-            epd = './'+self.model
             if os.path.isdir(epd):
                 sys.path.append(epd)
                 from control_child import ControlChild
@@ -66,14 +76,14 @@ class Build:
         # instance Control object
         control = ControlChild()
 
-        # run idata object, in charge of generate model data from input
-        idata = IdataChild (control, self.ifile)
+        # run idata object, in charge of generate model data from local copy of input
+        idata = IdataChild (control, self.lfile)
         success, results = idata.run ()
         
         if not success:
             return success, results
 
-        # run apply object, in charge of generate a prediction from idata
+        # run learn object, in charge of generate a prediction from idata
         learn = LearnChild (control, results)
         success, results = learn.run ()
         

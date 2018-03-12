@@ -26,6 +26,7 @@ class Control:
 
         self.model_name = ""
         self.model_version = 0.0
+        self.vpath = None       
 
         ###
         ### system settings

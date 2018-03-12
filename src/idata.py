@@ -44,6 +44,12 @@ class Idata:
         self.control = control      # control object defining the processing
         self.ifile = ifile          # input file
 
+        self.vpath = os.path.dirname(ifile)
+        if self.vpath == '':
+            self.vpath = '.'
+
+        print ('vpath : ', self.vpath)
+
     def extractAnotations (self, ifile):
         """  
 
@@ -293,7 +299,7 @@ class Idata:
         md5_input = utils.md5sum(self.ifile)  # run md5 in self.ifile
 
         try:
-            with open ('./data.pkl', 'wb') as fo:
+            with open (self.vpath+'/data.pkl', 'wb') as fo:
                 pickle.dump (md5_control, fo)
                 pickle.dump (md5_input, fo)
                 pickle.dump (results[0],fo)
@@ -312,7 +318,7 @@ class Idata:
         """
 
         try:
-            with open ('./data.pkl', 'rb') as fi:
+            with open (self.vpath+'/data.pkl', 'rb') as fi:
                 md5_con = pickle.load(fi)
                 if md5_con != utils.md5stamp(self.control):
                     return False, 'md5 control'

@@ -32,7 +32,7 @@ class Learn:
 
         self.control = control # control object defining the processing
         self.results = results # results is a tuple with X, Y and ... (to be defined)
-        self.vpath = './'
+        self.vpath = self.control.vpath
 
     def getMatrices (self):
         """ 
@@ -110,7 +110,7 @@ class Learn:
             
         # save model
 
-        with open(self.vpath +  'model.pickle', 'wb') as handle:
+        with open(self.vpath +  '/model.pickle', 'wb') as handle:
             pickle.dump(model , handle, protocol=pickle.HIGHEST_PROTOCOL)
         
         # compute AD (when applicable)

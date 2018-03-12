@@ -43,10 +43,16 @@ class Apply:
             return False, 'failed to extract activity or to generate MD'
 
 
-        # select prediction tool from control
-        with open("model.pickle", "rb") as input_file:
-            estimator = pickle.load(input_file)
-        results = estimator.project(X)
+        try:
+            model_file = self.control.vpath + '/model.pickle'
+
+            print ("apply model : ", model_file)
+            # select prediction tool from control
+            with open(model_file, "rb") as input_file:
+                estimator = pickle.load(input_file)
+            results = estimator.project(X)
+        except:
+            raise
 
         print("Prediction results")
 

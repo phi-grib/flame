@@ -20,14 +20,17 @@
 ##    You should have received a copy of the GNU General Public License
 ##    along with Flame. If not, see <http://www.gnu.org/licenses/>.
 
+import os
 import sys
 import argparse
+import shutil
+
 from predict import Predict
 from build import Build
 
 def predict_cmd(args):
     ''' Instantiates a Predict object to run a prediction using the given input file and model '''
-    
+
     predict = Predict(args.infile, args.endpoint)
     success, results = predict.run()
     print('flame : ', success, results)
@@ -40,6 +43,7 @@ def build_cmd(args):
     print('flame : ', success, results)
 
 def main():
+
     parser = argparse.ArgumentParser(description='Use Flame to either build a model from or apply a model to the input file.')
     
     parser.add_argument('-f', '--infile', 

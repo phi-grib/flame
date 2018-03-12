@@ -20,6 +20,7 @@
 ##    You should have received a copy of the GNU General Public License
 ##    along with Flame. If not, see <http://www.gnu.org/licenses/>.
 
+import os
 from control import Control
 
 class ControlChild (Control):
@@ -30,5 +31,8 @@ class ControlChild (Control):
 
         self.model_name = 'CACO2'
         self.model_version = 0.1
+
+        # this is COMPULSORY and must by called by child class to setup
+        self.vpath = os.path.dirname(os.path.abspath(__file__))
 
         return

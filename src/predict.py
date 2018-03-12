@@ -35,12 +35,16 @@ class Predict:
     def run (self):
         ''' Executes a default predicton workflow '''
 
+        # identify path to endpoint
+        wkd = os.path.dirname(os.path.abspath(__file__))
+        epd = wkd+'/'+self.model+'/dev'
+
         success = True
+        results = ''
 
         #uses the child classes within the 'model' folder, to allow customization of
         #the processing applied to each model
         try:
-            epd = './'+self.model
             if os.path.isdir(epd):
                 sys.path.append(epd)
                 from control_child import ControlChild
