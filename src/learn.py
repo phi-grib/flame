@@ -32,7 +32,8 @@ class Learn:
 
         self.control = control # control object defining the processing
         self.results = results # results is a tuple with X, Y and ... (to be defined)
-        self.vpath = self.control.vpath
+        
+        self.model_path = self.control.model_path
 
     def getMatrices (self):
         """ 
@@ -89,12 +90,12 @@ class Learn:
         if self.control.model == 'RF':
             model = RF(X,Y, self.control.quantitative, self.control.modelAutoscaling, self.control.tune,
                         self.control.ModelValidationCV, self.control.ModelValidationN, self.control.ModelValidationP, 
-                        self.control.ModelValidationLC ,self.control.conformalSignificance, self.vpath,
+                        self.control.ModelValidationLC ,self.control.conformalSignificance, self.model_path,
                         self.control.RF_parameters, self.control.RF_optimize, self.control.conformal)
         elif self.control.model == 'SVM':
             model = SVM(X,Y, self.control.quantitative, self.control.modelAutoscaling, self.control.tune,
                         self.control.ModelValidationCV, self.control.ModelValidationN, self.control.ModelValidationP, 
-                        self.control.ModelValidationLC ,self.control.conformalSignificance, self.vpath,
+                        self.control.ModelValidationLC ,self.control.conformalSignificance, self.model_path,
                         self.control.SVM_parameters, self.control.SVM_optimize, self.control.conformal)
             
         else:
@@ -110,7 +111,7 @@ class Learn:
             
         # save model
 
-        with open(self.vpath +  '/model.pickle', 'wb') as handle:
+        with open(self.model_path +  '/model.pkl', 'wb') as handle:
             pickle.dump(model , handle, protocol=pickle.HIGHEST_PROTOCOL)
         
         # compute AD (when applicable)

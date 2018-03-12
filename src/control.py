@@ -24,9 +24,7 @@ class Control:
 
     def __init__ (self):
 
-        self.model_name = ""
-        self.model_version = 0.0
-        self.vpath = None       
+        self.model_path = None  # to be defined by the child class     
 
         ###
         ### system settings

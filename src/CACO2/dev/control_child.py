@@ -28,11 +28,8 @@ class ControlChild (Control):
     def __init__ (self):
 
         Control.__init__ (self)
-
-        self.model_name = 'CACO2'
-        self.model_version = 0.1
-
+        
         # this is COMPULSORY and must by called by child class to setup
-        self.vpath = os.path.dirname(os.path.abspath(__file__))
+        self.model_path = os.path.dirname(os.path.abspath(__file__))
 
         return
