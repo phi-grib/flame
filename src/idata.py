@@ -391,6 +391,17 @@ class Idata:
         ymatrix = results[1]
         experim = results[2]
 
+        nobj = len(obj_nam)
+        ncpu = self.control.numCPUs
+
+        # do not run multiprocess for small series, the overheads slow the overall computation time
+        if nobj < 10 :
+            ncpu = 1
+
+        # never run a single molecule in two CPUs!
+        if ncpu > nobj:
+            ncpu = nobj
+
         # Execute the workflow in 1 or n CPUs
         if self.control.numCPUs > 1:
             # Count number of molecules and split in chuncks 
