@@ -42,26 +42,16 @@ class Apply:
         if (nobj==0) or (nvarx==0) :
             return False, 'failed to extract activity or to generate MD'
 
-
+        results = {'origin':'apply'}
         try:
             model_file = self.control.model_path + '/model.pkl'
 
             # select prediction tool from control
             with open(model_file, "rb") as input_file:
                 estimator = pickle.load(input_file)
-            results = estimator.project(X)
+            results['projection'] = estimator.project(X)
         except:
-            raise
+            return False, 'projection error'
 
-        print("Prediction results")
-
-        # for i in self.results:
-        #     print ('apply : ', len(i), i[:3])
-
-        # nobj,nvarx = np.shape (self.results[0])
-
-        # results = np.zeros(nobj,dtype=np.float64)
-        success = True
-
-        return success, results
+        return True, results
 

@@ -103,6 +103,8 @@ class BaseEstimator(object):
         self.conformal_pred = None
         self.meanConformalInterval = 0.00
 
+        self.failed = False
+
     
     def printQuantitativeValidationResults(self):
 
@@ -127,8 +129,7 @@ class BaseEstimator(object):
         
         nobj, nvarx = np.shape(self.X)
         if self.X is None or self.estimator is None:
-            print ("no estimator")
-            return
+            return False, 'no estimator'
 
         X = self.X.copy()
         Y = self.Y.copy()
@@ -159,13 +160,14 @@ class BaseEstimator(object):
         self.SDEP = np.sqrt(SSY_out/(nobj))
         self.Q2   = 1.00 - (SSY_out/SSY0_out)
 
+        return True, 'ok'
+
 
     def qualitativeValidation(self):
         
         nobj, nvarx = np.shape(self.X)
         if self.X is None or self.estimator is None:
-            print ("no estimator")
-            return
+            return False, 'no estimator'
 
         X = self.X.copy()
         Y = self.Y.copy()
@@ -177,7 +179,7 @@ class BaseEstimator(object):
         Yp = self.estimator.predict(X)
 
         if len(Yp) != len(Y):
-            return
+            return False, 'lenght of prediction do not match'
 
         ## Goodness of the fit
 
@@ -196,18 +198,22 @@ class BaseEstimator(object):
         self.specificity = (self.TN / (self.TN + self.FP))
         self.mcc  = mcc(Y, y_pred)
 
+        return True, 'ok'
 
     """ Validates the models and completes suitable scoring values"""
 
     def validate(self):
         
         if self.quantitative:
-            self.quantitativeValidation()
-            self.printQuantitativeValidationResults()
+            success, results = self.quantitativeValidation()
+            if success :
+                self.printQuantitativeValidationResults()
         else:
-            self.qualitativeValidation()
-            self.printQualitativeValidationResults()
-            return
+            success, results = self.qualitativeValidation()
+            if success :
+                self.printQualitativeValidationResults()
+        
+        return success, results
 
         # Move this to an external module ****
 
@@ -293,6 +299,43 @@ class BaseEstimator(object):
             self.estimator = tclf.best_estimator_
             print (tclf.best_params_)
             #print self.estimator.get_params() 
+
+    def getResults (self, results):
+
+        # Goodness of the fit restults
+        
+        results ['TPpred'] = self.TPpred 
+        results ['TNpred'] = self.TNpred 
+        results ['FPpred'] = self.FPpred 
+        results ['FNpred'] = self.FNpred 
+
+        #self.sensitivityPred = 0.00
+        #self.specificityPred = 0.00
+        
+        results ['SDEC' ] = self.SDEC     # SD error of the calculations
+        results ['R2'] = self.R2     # determination coefficient
+        
+        #self.scoringR = 0.00
+        #self.mccp = 0
+
+        # Cross-val
+
+        results ['TP'] = self.TP 
+        results ['TN'] = self.TN 
+        results ['FP'] = self.FP 
+        results ['FN'] = self.FN 
+
+        #self.sensitivity = 0.00
+        #self.specificity = 0.00
+        #self.mcc = 0
+        
+        results ['SDEP'] = self.SDEP 
+        results ['Q2'] = self.Q2 
+
+        #self.scoringP = 0.00
+
+        return results
+
 
 
 

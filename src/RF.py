@@ -59,14 +59,19 @@ class RF(BaseEstimator):
                 self.tune_parameters.pop("class_weight")
             else:
                 self.name = "RF-C"
+
+            self.failed = False
                 
         else:
-            pass
+            self.failed = True
 
     
     """Build a new RF model with the X and Y numpy matrices """
 
     def build (self):
+
+        if self.failed:
+            return False
 
         X = self.X.copy()
         Y = self.Y.copy()
@@ -96,3 +101,5 @@ class RF(BaseEstimator):
                 self.estimator = RandomForestClassifier(**self.estimator_parameters)
 
         self.estimator.fit(X, Y)
+
+        return True

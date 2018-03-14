@@ -64,13 +64,16 @@ class SVM(BaseEstimator):
                 self.estimator_parameters.pop("epsilon", None)
                 self.name = "SVM-C"
 
+            self.failed = False
+
         else:
-            pass
-
-
+            self.failed = True
 
 
     def build (self):
+
+        if self.failed:
+            return False
 
         X = self.X.copy()
         Y = self.Y.copy()
@@ -98,6 +101,8 @@ class SVM(BaseEstimator):
                 self.estimator = svm.SVC(**self.estimator_parameters)
                 
         self.estimator.fit(X, Y)
+
+        return True
 
 
 
