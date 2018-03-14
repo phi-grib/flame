@@ -28,7 +28,6 @@ from sklearn.ensemble import RandomForestRegressor
 from scale import scale, center
 
 
-
 class RF(BaseEstimator):
 
     def __init__ (self, X=None,
