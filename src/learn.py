@@ -37,8 +37,12 @@ class Learn:
         # TODO: make use of other results items
         
         self.model_path = self.control.model_path
+    
+    def run_custom (self):
 
-    def run (self):
+        return False, 'not implemented'
+    
+    def run_internal (self):
 
         nobj, nvarx = np.shape(self.X)
 
@@ -77,12 +81,23 @@ class Learn:
         # save model
         with open(self.model_path +  '/model.pkl', 'wb') as handle:
             pickle.dump(model , handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+        # TODO: compute AD (when applicable)
         
         # copy any relevant information from the model building into a dictionary
         # what is relevant? to be defined...
         results = {'origin':'learn'}
         results = model.getResults(results)
 
-        # TODO: compute AD (when applicable)
-
         return True, results
+
+    def run (self):
+
+        if self.control.modelingToolkit == 'internal':
+            success, results = self.run_internal ()
+        elif self.control.modelingToolkit == 'custom':
+            success, results = self.run_custom ()
+        else:
+            return False, 'modeling Toolkit '+self.control.modelingToolkit+' is not supported yet'
+
+        return success, results

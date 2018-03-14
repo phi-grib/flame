@@ -51,7 +51,8 @@ class Control:
         ### learn/apply settings
         ###
 
-        self.model = 'SVM'
+        self.modelingToolkit = 'internal'           # 'internal' | 'R' | 'KNIME' | 'custom'
+        self.model = 'RF'
         self.modelAutoscaling = None
         self.quantitative = True
         self.tune = False
