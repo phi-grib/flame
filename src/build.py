@@ -39,7 +39,7 @@ class Build:
 
         # identify path to endpoint
         wkd = os.path.dirname(os.path.abspath(__file__))
-        epd = wkd+'/'+self.model+'/dev'
+        epd = wkd+'/models/'+self.model+'/dev'
 
         # copy the input file to the model development directory of the endpoint
         self.lfile = epd+'/'+os.path.basename(self.ifile)
@@ -50,21 +50,15 @@ class Build:
 
         #uses the child classes within the 'model' folder, to allow customization of
         #the processing applied to each model
-        try:
-            if os.path.isdir(epd):
-                sys.path.append(epd)
-                from control_child import ControlChild
-                from idata_child import IdataChild
-                from learn_child import LearnChild
-                from odata_child import OdataChild
-            else:
-                raise
-                #success = False
-                #results = 'unable to find specified model: '+self.model
+        if not os.path.isdir(epd):
+            return False, 'unable to find model: '+self.model
 
-        #except OSError as err:
-        #    success = False
-        #    results = 'Unable to load model classes: {0}'.format (err)
+        try:
+            sys.path.append(epd)
+            from control_child import ControlChild
+            from idata_child import IdataChild
+            from learn_child import LearnChild
+            from odata_child import OdataChild
         except:
             raise
             #success = False

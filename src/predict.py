@@ -25,11 +25,18 @@ import sys
 
 class Predict:
 
-    def __init__ (self, ifile, model):
+    def __init__ (self, ifile, model, version):
 
         self.ifile = ifile
         self.model = model
 
+        if version == None:
+            self.version = 0
+        else:
+            try:
+                self.version = int (version)
+            except:
+                self.version = 0
         return
 
     def run (self):
@@ -37,28 +44,30 @@ class Predict:
 
         # identify path to endpoint
         wkd = os.path.dirname(os.path.abspath(__file__))
-        epd = wkd+'/'+self.model+'/dev'
+        epd = wkd+'/models/'+self.model
+        if self.version == 0 :
+            epd += '/dev'
+        else:
+            epd += '/ver%0.6d'%(self.version)
+
+        print (epd)
 
         success = True
         results = ''
 
         #uses the child classes within the 'model' folder, to allow customization of
         #the processing applied to each model
+        
+        if not os.path.isdir(epd):
+            return False, 'unable to find model: '+self.model+' version: '+str(self.version)
+        
         try:
-            if os.path.isdir(epd):
-                sys.path.append(epd)
-                from control_child import ControlChild
-                from idata_child import IdataChild
-                from apply_child import ApplyChild
-                from odata_child import OdataChild
-            else:
-                raise
-                #success = False
-                #results = 'unable to find specified model: '+self.model
+            sys.path.append(epd)
+            from control_child import ControlChild
+            from idata_child import IdataChild
+            from apply_child import ApplyChild
+            from odata_child import OdataChild
 
-        #except OSError as err:
-        #    success = False
-        #    results = 'Unable to load model classes: {0}'.format (err)
         except:
             raise
             #success = False

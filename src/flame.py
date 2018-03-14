@@ -31,7 +31,7 @@ from build import Build
 def predict_cmd(args):
     ''' Instantiates a Predict object to run a prediction using the given input file and model '''
 
-    predict = Predict(args.infile, args.endpoint)
+    predict = Predict(args.infile, args.endpoint, args.version)
     success, results = predict.run()
     print('flame : ', success, results)
 
@@ -42,22 +42,34 @@ def build_cmd(args):
     success, results = build.run()
     print('flame : ', success, results)
 
+def manage_cmd(args):
+    ''' Instantiates a Build object to build a model using the given input file (training series) and model (name of endpoint, eg. 'CACO2') '''
+    
+    print (args)
+    #build = Build(args.infile, args.endpoint)
+    #success, results = build.run()
+    #print('flame : ', success, results)
+
 def main():
 
     parser = argparse.ArgumentParser(description='Use Flame to either build a model from or apply a model to the input file.')
     
     parser.add_argument('-f', '--infile', 
         help='Input file.', 
-        required=True)
+        required=False)
 
     parser.add_argument('-e', '--endpoint', 
         help='Endpoint model name.', 
         required=True)
 
+    parser.add_argument('-v', '--version', 
+        help='Endpoint model version.', 
+        required=False)
+
     parser.add_argument('-c', '--command', 
         action='store', 
-        choices=['predict', 'build'], 
-        help='Action type: \'predict\' or \'build\'', 
+        choices=['predict', 'build', 'manage'], 
+        help='Action type: \'predict\' or \'build\' or \'manage\'' , 
         required=True)
 
     args = parser.parse_args()
@@ -66,6 +78,8 @@ def main():
         predict_cmd(args)
     elif args.command == 'build':
         build_cmd(args)
+    elif args.command == 'manage':
+        manage_cmd(args)
 
 if __name__ == '__main__':    
     main()
