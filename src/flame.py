@@ -27,6 +27,7 @@ import shutil
 
 from predict import Predict
 from build import Build
+from manage import Manage
 
 def predict_cmd(args):
     ''' Instantiates a Predict object to run a prediction using the given input file and model '''
@@ -45,10 +46,9 @@ def build_cmd(args):
 def manage_cmd(args):
     ''' Instantiates a Build object to build a model using the given input file (training series) and model (name of endpoint, eg. 'CACO2') '''
     
-    print (args)
-    #build = Build(args.infile, args.endpoint)
-    #success, results = build.run()
-    #print('flame : ', success, results)
+    manage = Manage(args.endpoint, args.action)
+    success, results = manage.run()
+    print('flame : ', success, results)
 
 def main():
 
@@ -64,6 +64,10 @@ def main():
 
     parser.add_argument('-v', '--version', 
         help='Endpoint model version.', 
+        required=False)
+
+    parser.add_argument('-a', '--action', 
+        help='Manage action.', 
         required=False)
 
     parser.add_argument('-c', '--command', 
