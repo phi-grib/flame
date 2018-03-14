@@ -40,14 +40,18 @@ class Odata:
         print ('predicting OK!')        
         return True, 'ok'
 
+
     def run (self):
 
         if not 'origin' in self.results:
             return False, 'invalid result format'
+
         if self.results['origin'] == 'learn':
             success, results  = self.run_learn ()
+
         elif self.results['origin'] == 'apply':
             success, results  = self.run_apply ()
+
         else:
             return False, 'invalid result format'
 

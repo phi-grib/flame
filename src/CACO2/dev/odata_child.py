@@ -28,10 +28,4 @@ class OdataChild (Odata):
 
         Odata.__init__ (self, control, results)
 
-    # def run (self):
-
-    #     success = True
-    #     results = self.ifile + '_c'
-
-    #     return success, results
 
