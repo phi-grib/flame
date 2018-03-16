@@ -1,6 +1,6 @@
 #! -*- coding: utf-8 -*-
 
-##    Description    Flame Control class
+##    Description    Flame Odata internal class
 ##
 ##    Authors:       Manuel Pastor (manuel.pastor@upf.edu)
 ##
@@ -18,11 +18,20 @@
 ##    GNU General Public License for more details.
 ##
 ##    You should have received a copy of the GNU General Public License
-##    along with Flame.  If not, see <http://www.gnu.org/licenses/>.
+##    along with Flame. If not, see <http://www.gnu.org/licenses/>.
 
-class Control:
+from odata import Odata
 
-    def __init__ (self):
+class OdataChild (Odata):
 
-        self.model_path = None  # to be defined by the child class    
-                    
+    def __init__ (self, control, results):
+
+        Odata.__init__ (self, control, results)
+
+    def run (self):
+
+        success, results = Odata.run (self)
+
+        return success, results
+
+

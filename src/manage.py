@@ -54,10 +54,13 @@ class Manage:
             return False,'unable to create directory '+ndir
 
         # TODO: create templates directory with empty childs
-        # try:
-        #     shutil.copy(wkd+'/tmpl-imodel.py',ndir+'/imodel.py')
-        # except:
-        #     return (False,'unable to create imodel.py at '+ndir)
+        try:
+            wkd = os.path.dirname(os.path.abspath(__file__))
+            children_names = ['apply','control','idata','odata','learn']
+            for cname in children_names:
+                shutil.copy(wkd+'/children/'+cname+'_child.py',ndir+'/'+cname+'_child.py')
+        except:
+            return (False,'unable to create imodel.py at '+ndir)
 
         return True,'version created OK'
 

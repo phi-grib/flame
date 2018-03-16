@@ -1,6 +1,6 @@
 #! -*- coding: utf-8 -*-
 
-##    Description    Flame Control class
+##    Description    Flame Idata internal class
 ##
 ##    Authors:       Manuel Pastor (manuel.pastor@upf.edu)
 ##
@@ -20,9 +20,18 @@
 ##    You should have received a copy of the GNU General Public License
 ##    along with Flame.  If not, see <http://www.gnu.org/licenses/>.
 
-class Control:
+from idata import Idata
 
-    def __init__ (self):
+class IdataChild (Idata):
 
-        self.model_path = None  # to be defined by the child class    
-                    
+    def __init__ (self, control, ifile):
+
+        Idata.__init__ (self, control, ifile)
+    
+
+    def run (self):
+
+        success, results = Idata.run (self)
+
+        return success, results
+

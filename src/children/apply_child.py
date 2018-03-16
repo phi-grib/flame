@@ -1,6 +1,6 @@
 #! -*- coding: utf-8 -*-
 
-##    Description    Flame Control class
+##    Description    Flame Apply internal class
 ##
 ##    Authors:       Manuel Pastor (manuel.pastor@upf.edu)
 ##
@@ -20,9 +20,17 @@
 ##    You should have received a copy of the GNU General Public License
 ##    along with Flame.  If not, see <http://www.gnu.org/licenses/>.
 
-class Control:
+from apply import Apply
 
-    def __init__ (self):
+class ApplyChild (Apply):
 
-        self.model_path = None  # to be defined by the child class    
-                    
+    def __init__ (self, control, results):
+
+        Apply.__init__(self, control, results)
+
+    def run (self):
+
+        success, results = Apply.run (self)
+
+        return success, results
+
