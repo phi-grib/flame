@@ -21,6 +21,7 @@
 ##    along with Flame. If not, see <http://www.gnu.org/licenses/>.            
             
 import hashlib
+import os
 
 def md5sum(filename, blocksize=65536):
 
@@ -42,3 +43,23 @@ def md5stamp(myclass):
             hash.update (str(val).encode('utf-8'))
 
     return hash.hexdigest()
+
+def base_path (model):
+
+    wkd = os.path.dirname(os.path.abspath(__file__))
+    
+    epd = wkd+'/models/'+model
+
+    return epd
+
+def model_path (model, version):        
+    
+    wkd = os.path.dirname(os.path.abspath(__file__))
+    
+    epd = wkd+'/models/'+model
+    if version == 0 :
+        epd += '/dev'
+    else:
+        epd += '/ver%0.6d'%(version)
+    
+    return epd

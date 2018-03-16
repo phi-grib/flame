@@ -24,6 +24,8 @@ import os
 import sys
 import shutil
 
+import utils
+
 class Manage:
 
     def __init__ (self, model, action):
@@ -33,9 +35,31 @@ class Manage:
 
         return
 
-    def action_new (self):
-        print ('manage new')
-        return True, 'manage OK'
+    def action_new (self, model):
+
+        ndir = utils.base_path(model)
+        
+        # check if there is already a tree for this endpoint
+        if os.path.isdir (ndir):
+            return False, 'This endpoint already exists'
+        try:
+            os.mkdir (ndir)
+        except:
+            return False,'unable to create directory : '+ndir
+
+        ndir+='/dev'
+        try:
+            os.mkdir (ndir)
+        except:
+            return False,'unable to create directory '+ndir
+
+        # TODO: create templates directory with empty childs
+        # try:
+        #     shutil.copy(wkd+'/tmpl-imodel.py',ndir+'/imodel.py')
+        # except:
+        #     return (False,'unable to create imodel.py at '+ndir)
+
+        return True,'version created OK'
 
     def action_kill (self):
         print ('manage kill')
@@ -57,7 +81,7 @@ class Manage:
         ''' Executes a default predicton workflow '''
 
         if self.action == 'new':
-            success, results = self.action_new ()
+            success, results = self.action_new (self.model)
 
         elif self.action == 'kill':
             success, results = self.action_kill ()

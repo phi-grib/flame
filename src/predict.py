@@ -23,6 +23,8 @@
 import os
 import sys
 
+import utils
+
 class Predict:
 
     def __init__ (self, ifile, model, version):
@@ -42,15 +44,8 @@ class Predict:
     def run (self):
         ''' Executes a default predicton workflow '''
 
-        # identify path to endpoint
-        wkd = os.path.dirname(os.path.abspath(__file__))
-        epd = wkd+'/models/'+self.model
-        if self.version == 0 :
-            epd += '/dev'
-        else:
-            epd += '/ver%0.6d'%(self.version)
-
-        print (epd)
+        # path to endpoint
+        epd = utils.model_path(self.model, self.version)
 
         success = True
         results = ''

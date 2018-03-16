@@ -24,6 +24,8 @@ import os
 import sys
 import shutil
 
+import utils
+
 class Build:
 
     def __init__ (self, ifile, model):
@@ -37,9 +39,8 @@ class Build:
     def run (self):
         ''' Executes a default predicton workflow '''
 
-        # identify path to endpoint
-        wkd = os.path.dirname(os.path.abspath(__file__))
-        epd = wkd+'/models/'+self.model+'/dev'
+        # path to endpoint
+        epd = utils.model_path(self.model, 0)
 
         # copy the input file to the model development directory of the endpoint
         self.lfile = epd+'/'+os.path.basename(self.ifile)
