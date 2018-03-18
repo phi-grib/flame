@@ -63,7 +63,7 @@ class Manage:
         except:
             return False,'unable to copy children classes at '+ndir
 
-        return True,'version created OK'
+        return True,'new endpoint '+model+' created'
 
     def action_kill (self, model):
 
@@ -74,7 +74,7 @@ class Manage:
 
         shutil.rmtree(ndir, ignore_errors=True)
 
-        return True, 'manage OK'
+        return True, 'model '+model+' removed'
 
     def action_publish (self, model):
 
@@ -101,7 +101,7 @@ class Manage:
 
         shutil.copytree(bdir+'/dev', new_dir)
         
-        return True, 'manage OK'
+        return True, 'development version published as version '+str(max_version+1)
 
     def action_remove (self, model, version):
 
@@ -114,11 +114,21 @@ class Manage:
 
         shutil.rmtree(rdir, ignore_errors=True)
 
-        return True, 'manage OK'
+        return True, 'version '+str(version)+' of model '+model+' removed'
 
-    def action_list (self):
-        print ('manage list')
-        return True, 'manage OK'
+    def action_list (self, model):
+
+        # TODO: if no argument is provided, also list all models
+        
+        bdir = utils.base_path (model)
+
+        num_versions = 0
+        for x in os.listdir (bdir):
+            if x.startswith("ver"):
+                num_versions+=1
+                print (model,':',x)
+
+        return True, 'model '+model+' has '+str(num_versions)+' published versions'
 
     def run (self):
         ''' Executes a default predicton workflow '''
@@ -136,7 +146,7 @@ class Manage:
             success, results = self.action_publish (self.model)
 
         elif self.action == 'list':
-            success, results = self.action_list ()
+            success, results = self.action_list (self.model)
 
         return success, results
 
