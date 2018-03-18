@@ -160,7 +160,7 @@ class Idata:
 
     def ionize (self, ifile, method):
         """ 
-        Adjust the ionization status of the molecular strcuture, using a given pH.
+        Adjust the ionization status of the molecular structure, using a given pH.
         """
 
         if not method :

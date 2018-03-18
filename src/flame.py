@@ -45,8 +45,16 @@ def build_cmd(args):
 
 def manage_cmd(args):
     ''' Instantiates a Build object to build a model using the given input file (training series) and model (name of endpoint, eg. 'CACO2') '''
-    
-    manage = Manage(args.endpoint, args.action)
+
+    if args.version is None:
+        version = 0
+    else:
+        try:
+            version = int(args.version)
+        except:
+            version = 0
+
+    manage = Manage(args.endpoint, version, args.action)
     success, results = manage.run()
     print('flame : ', success, results)
 

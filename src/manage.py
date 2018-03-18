@@ -28,9 +28,10 @@ import utils
 
 class Manage:
 
-    def __init__ (self, model, action):
+    def __init__ (self, model, version, action):
 
         self.model = model
+        self.version = version
         self.action = action
 
         return
@@ -60,20 +61,59 @@ class Manage:
             for cname in children_names:
                 shutil.copy(wkd+'/children/'+cname+'_child.py',ndir+'/'+cname+'_child.py')
         except:
-            return (False,'unable to create imodel.py at '+ndir)
+            return False,'unable to copy children classes at '+ndir
 
         return True,'version created OK'
 
-    def action_kill (self):
-        print ('manage kill')
+    def action_kill (self, model):
+
+        ndir = utils.base_path(model)
+        
+        if not os.path.isdir (ndir):
+            return False, 'model not found'
+
+        shutil.rmtree(ndir, ignore_errors=True)
+
         return True, 'manage OK'
 
-    def action_publish (self):
-        print ('manage publish')
+    def action_publish (self, model):
+
+        bdir = utils.base_path(model)
+
+        if not os.path.isdir(bdir):
+            return False, 'model not found'
+    
+        v = None
+        try:
+            v = [int(x[-6:]) for x in os.listdir (bdir) if x.startswith("ver")]
+        except:
+            pass
+
+        if not v:
+            max_version = 0
+        else:
+            max_version = max(v)
+
+        new_dir = bdir+'/ver%0.6d'%(max_version+1)
+
+        if os.path.isdir(new_dir):
+            return False, 'version already exists'
+
+        shutil.copytree(bdir+'/dev', new_dir)
+        
         return True, 'manage OK'
 
-    def action_remove (self):
-        print ('manage remove')
+    def action_remove (self, model, version):
+
+        if version == 0:
+            return False, 'development version cannot be removed'
+
+        rdir = utils.model_path(model, version)
+        if not os.path.isdir(rdir):
+            return False, 'version not found'
+
+        shutil.rmtree(rdir, ignore_errors=True)
+
         return True, 'manage OK'
 
     def action_list (self):
@@ -87,13 +127,13 @@ class Manage:
             success, results = self.action_new (self.model)
 
         elif self.action == 'kill':
-            success, results = self.action_kill ()
+            success, results = self.action_kill (self.model)
 
         elif self.action == 'remove':
-            success, results = self.action_remove ()
+            success, results = self.action_remove (self.model, self.version)
 
         elif self.action == 'publish':
-            success, results = self.action_publish ()
+            success, results = self.action_publish (self.model)
 
         elif self.action == 'list':
             success, results = self.action_list ()
