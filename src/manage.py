@@ -24,7 +24,7 @@ import os
 import sys
 import shutil
 
-import utils
+import util.utils as utils
 
 class Manage:
 

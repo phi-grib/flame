@@ -29,13 +29,13 @@ from rdkit import Chem
 
 import multiprocessing as mp
 
-import sdfileutils as sdfu
 from standardiser import standardise
 
-import _compute_md as computeMD
-import _convert_3d as convert3D
+import chem.sdfileutils as sdfu
+import chem.compute_md as computeMD
+import chem.convert_3d as convert3D
 
-import utils as utils
+import util.utils as utils
 
 class Idata:
 

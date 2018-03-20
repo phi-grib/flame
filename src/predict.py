@@ -23,7 +23,7 @@
 import os
 import sys
 
-import utils
+import util.utils as utils
 
 class Predict:
 

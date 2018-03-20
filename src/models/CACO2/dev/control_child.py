@@ -21,6 +21,7 @@
 ##    along with Flame. If not, see <http://www.gnu.org/licenses/>.
 
 import os
+
 from control import Control
 
 class ControlChild (Control):
@@ -46,8 +47,8 @@ class ControlChild (Control):
         self.input_type = 'molecule'                # 'molecule' | 'data'
         self.normalize_method = 'standardize'       # None | 'standardize'
         self.ionize_method = None                   # None | 'moka'
-        self.convert3D_method = None                  # 'ETKDG' 
-        self.computeMD_method = ['RDKit_properties']        # 'RDKit_properties'|'RDKit_md'|'custom'
+        self.convert3D_method = 'ETKDG'                  # 'ETKDG' 
+        self.computeMD_method = ['RDKit_md']        # 'RDKit_properties'|'RDKit_md'|'custom'
         
         self.SDFile_name = 'GENERIC_NAME'           # (str)
         self.SDFile_activity = 'activity'           # (str)

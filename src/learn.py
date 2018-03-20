@@ -21,8 +21,8 @@
 ##    You should have received a copy of the GNU General Public License
 ##    along with Flame.  If not, see <http://www.gnu.org/licenses/>.
 
-from RF import RF
-from SVM import SVM
+from stats.RF import RF
+from stats.SVM import SVM
 import numpy as np
 import pickle 
 
