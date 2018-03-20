@@ -74,12 +74,6 @@ except:
 
 
 
-
-
-
-
-
-
 def plot_learning_curve(estimator, title, X, y, ylim=None, cv=None,
                         n_jobs=1, train_sizes=np.linspace(.1, 1.0, 5)):
     """
@@ -180,10 +174,9 @@ def getCrossVal(cv, rs, n, p):
     return cv
 
 
-
-
-# Qualitative conformal predictor validation
 def CF_QualVal(X, Y, estimator, conformalSignificance):
+    """ Qualitative conformal predictor validation"""
+
     print ("Starting qualitative conformal prediction validation")
     icp = AggregatedCp(IcpClassifier(ClassifierNc(ClassifierAdapter(estimator),
                              MarginErrFunc())), BootstrapSampler())
@@ -222,9 +215,6 @@ def CF_QualVal(X, Y, estimator, conformalSignificance):
     # print(scores.groupby(['significance']).mean())
 
 
-
-
-
 def CF_QuanVal(X, Y, estimator, conformalSignificance):
     print ("Starting quantitative conformal prediction validation")
 
@@ -253,15 +243,14 @@ def CF_QuanVal(X, Y, estimator, conformalSignificance):
 
 
 
-#  Qualitative conformal predictor calibration
 def CF_QualCal(X, Y, estimator):
+    """Qualitative conformal predictor calibration"""
 
     acp = AggregatedCp(IcpClassifier(ClassifierNc(ClassifierAdapter(estimator),
                              MarginErrFunc())), BootstrapSampler())
 
 
     acp.fit(X, Y)
-
 
     # X_train, X_test, y_train, y_test = train_test_split( X, Y, test_size=0.30, random_state=42)
     # icp = IcpClassifier(ClassifierNc(ClassifierAdapter(estimator),
@@ -271,6 +260,7 @@ def CF_QualCal(X, Y, estimator):
     # icp.calibrate(X_test, y_test)
     return acp
 
+
 def CF_QuanCal(X, Y, estimator):
     # X_train, X_test, y_train, y_test = train_test_split( X, Y, test_size=0.20, random_state=42)
     acp = AggregatedCp(IcpRegressor(RegressorNc(RegressorAdapter(estimator), AbsErrorErrFunc(),  RegressorNormalizer(estimator,
@@ -278,6 +268,7 @@ def CF_QuanCal(X, Y, estimator):
     acp.fit(X, Y)
     # icp.calibrate(X_test, y_test)
     return acp
+
 
 def conformal_pred_pred(xb, conformal_pred, significance):
     #xb = np.asarray([xb])

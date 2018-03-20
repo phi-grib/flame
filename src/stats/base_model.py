@@ -45,7 +45,7 @@ from sklearn.metrics import confusion_matrix
 from stats.model_validation import *
 from stats.scale import center, scale
 
-class BaseEstimator(object):
+class BaseEstimator:
     def __init__(self, X, Y, quantitative=False, autoscale=False,
                  cv='loo', n=2, p=1, lc=True,
                  conformalSignificance=0.05, vpath='',
@@ -66,9 +66,7 @@ class BaseEstimator(object):
         self.mux = None
         self.wgx = None
 
-
         # Cross-val
-
         self.TP = 0
         self.TN = 0
         self.FP = 0
@@ -80,9 +78,7 @@ class BaseEstimator(object):
         self.Q2 = 0.00
         self.scoringP = 0.00
 
-        
         # Goodness of the fit restults
-        
         self.TPpred = 0
         self.TNpred = 0
         self.FPpred = 0
@@ -103,7 +99,7 @@ class BaseEstimator(object):
 
         self.failed = False
 
-    
+
     def printQuantitativeValidationResults(self):
 
         print ("Recalculated results")
@@ -113,6 +109,7 @@ class BaseEstimator(object):
         print ('pred R2:%5.3f Q2:%5.3f SDEP:%5.3f mean_squared_error:%5.3f' % \
                 (self.R2,self.Q2,self.SDEP, self.scoringP))
     
+
     def printQualitativeValidationResults(self):
         print ("Recalculated results")
         print ("rec  TP:%d TN:%d FP:%d FN:%d spec:%5.3f sens:%5.3f MCC:%5.3f" % \
@@ -122,6 +119,7 @@ class BaseEstimator(object):
         print (str(self.cv)+" cross-validation results")
         print ("pred  TP:%d TN:%d FP:%d FN:%d spec:%5.3f sens:%5.3f MCC:%5.3f" % \
                 (self.TP, self.TN, self.FP, self.FN, self.specificity, self.sensitivity, self.mcc))
+
 
     def quantitativeValidation(self):
         
@@ -198,9 +196,9 @@ class BaseEstimator(object):
 
         return True, 'ok'
 
-    """ Validates the models and completes suitable scoring values"""
 
     def validate(self):
+        """ Validates the models and completes suitable scoring values"""
         
         if self.quantitative:
             success, results = self.quantitativeValidation()
@@ -226,9 +224,11 @@ class BaseEstimator(object):
 
         # return (Yp)
 
+
     def regularProject(self, Xb):
         Yp = self.estimator.predict(Xb)
         return Yp
+
 
     def conformalProject(self, Xb):
         Yp = self.regularProject(Xb)
@@ -243,8 +243,8 @@ class BaseEstimator(object):
             return ([Yp, prediction])
                
 
-    """ Uses the X matrix provided as argument to predict Y"""
     def project (self, Xb):
+        """ Uses the X matrix provided as argument to predict Y"""
         
         results = None
         if self.estimator == None:
@@ -260,6 +260,7 @@ class BaseEstimator(object):
             results = self.regularProject(Xb)
         return results
 
+
     def conformal_calibration(self,):
 
         X = copy.copy(self.X)
@@ -274,29 +275,30 @@ class BaseEstimator(object):
 
 
     def optimize (self, X, Y, estimator, tune_parameters ):
-            metric = ""
-            if self.quantitative:
-                metric = 'r2'
-            else:
-                #metric = make_scorer(mcc)
-                #metric = make_scorer(f1_score)
-                metric = "f1"
-           # if self.name == 'PLSR':  # Remember problems optimizing PLSR
-           #     metric = 'neg_mean_squared_error'
-           #     Y = np.asarray(pd.get_dummies(Y)).tolist() # Move this to a new PLS-DA ***
-           #     Y = np.asarray(Y)
+        metric = ""
+        if self.quantitative:
+            metric = 'r2'
+        else:
+            #metric = make_scorer(mcc)
+            #metric = make_scorer(f1_score)
+            metric = "f1"
+        # if self.name == 'PLSR':  # Remember problems optimizing PLSR
+        #     metric = 'neg_mean_squared_error'
+        #     Y = np.asarray(pd.get_dummies(Y)).tolist() # Move this to a new PLS-DA ***
+        #     Y = np.asarray(Y)
 
 
-            tune_parameters = [tune_parameters]
-            print ("tune_parameters")
-            print ("metric: " + str(metric))
-            tclf = GridSearchCV(estimator, tune_parameters, scoring=metric, cv=self.cv)
-            #n_splits=10, shuffle=False,
-             #   random_state=42), n_jobs= -1)
-            tclf.fit(X, Y)
-            self.estimator = tclf.best_estimator_
-            print (tclf.best_params_)
-            #print self.estimator.get_params() 
+        tune_parameters = [tune_parameters]
+        print ("tune_parameters")
+        print ("metric: " + str(metric))
+        tclf = GridSearchCV(estimator, tune_parameters, scoring=metric, cv=self.cv)
+        #n_splits=10, shuffle=False,
+            #   random_state=42), n_jobs= -1)
+        tclf.fit(X, Y)
+        self.estimator = tclf.best_estimator_
+        print (tclf.best_params_)
+        #print self.estimator.get_params() 
+
 
     def getResults (self, results):
 
