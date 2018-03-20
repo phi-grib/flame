@@ -23,6 +23,8 @@
 import os
 import sys
 import shutil
+import tarfile
+
 
 import util.utils as utils
 
@@ -130,6 +132,55 @@ class Manage:
 
         return True, 'model '+model+' has '+str(num_versions)+' published versions'
 
+    def action_import (self, model):
+
+        bdir = utils.base_path (model)
+        
+        if os.path.isdir (bdir) :
+            return False, 'endpoint already existing'
+
+        importfile = os.path.abspath(model+'.tgz')
+        
+        if not os.path.isfile (importfile):
+            return False, 'importing package '+importfile+' not found'
+        
+        try:
+            os.mkdir(bdir)
+            os.chdir(bdir)
+        except:
+            return False, 'error creating directory '+bdir
+            
+        with tarfile.open(importfile,'r:gz') as tar:
+            tar.extractall()
+        
+        return True,'endpoint '+model+' imported OK'
+
+    def action_export (self, model):
+
+        current_path = os.getcwd ()
+        exportfile = current_path+'/'+model+'.tgz'
+        
+        bdir = utils.base_path (model)
+
+        if not os.path.isdir(bdir):
+            return False, 'endpoint directory not found'
+
+        os.chdir(bdir)
+      
+        itemend = os.listdir()
+        itemend.sort()
+
+        with tarfile.open(exportfile, 'w:gz') as tar:
+            for iversion in itemend:
+                if not os.path.isdir(iversion):
+                    continue
+                tar.add(iversion)
+        
+        os.chdir(current_path)
+
+        return True,'endpoint '+model+' exported as '+model+'.tgz'
+
+
     def run (self):
         ''' Executes a default predicton workflow '''
 
@@ -147,6 +198,12 @@ class Manage:
 
         elif self.action == 'list':
             success, results = self.action_list (self.model)
+
+        elif self.action == 'import':
+            success, results = self.action_import (self.model)
+            
+        elif self.action == 'export':
+            success, results = self.action_export (self.model)
 
         return success, results
 
