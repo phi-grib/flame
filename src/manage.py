@@ -30,11 +30,12 @@ import util.utils as utils
 
 class Manage:
 
-    def __init__ (self, model, version, action):
+    def __init__ (self, model, version, action, file = None ):
 
         self.model = model
         self.version = version
         self.action = action
+        self.file = file
 
         return
 
@@ -137,7 +138,7 @@ class Manage:
         bdir = utils.base_path (model)
         
         if os.path.isdir (bdir) :
-            return False, 'endpoint already existing'
+            return False, 'endpoint already exists'
 
         importfile = os.path.abspath(model+'.tgz')
         
@@ -180,6 +181,12 @@ class Manage:
 
         return True,'endpoint '+model+' exported as '+model+'.tgz'
 
+    def action_refactoring (self, file):
+
+        print ('refactoring')
+
+        return True, 'OK'
+
 
     def run (self):
         ''' Executes a default predicton workflow '''
@@ -204,6 +211,9 @@ class Manage:
             
         elif self.action == 'export':
             success, results = self.action_export (self.model)
+
+        elif self.action == 'refactoring':
+            success, results = self.action_refactoring (self.file)
 
         return success, results
 

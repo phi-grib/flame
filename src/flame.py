@@ -54,7 +54,7 @@ def manage_cmd(args):
         except:
             version = 0
 
-    manage = Manage(args.endpoint, version, args.action)
+    manage = Manage(args.endpoint, version, args.action, args.infile)
     success, results = manage.run()
     print('flame : ', success, results)
 
