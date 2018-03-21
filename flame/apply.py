@@ -25,9 +25,9 @@ import pickle
 
 class Apply:
 
-    def __init__ (self, control, results):
+    def __init__ (self, parameters, results):
 
-        self.control = control
+        self.parameters = parameters
         self.results = results
         
     def getMatrices (self):
@@ -44,14 +44,17 @@ class Apply:
 
         results = {'origin':'apply'}
         try:
-            model_file = self.control.model_path + '/model.pkl'
+            model_file = self.parameters['model_path'] + '/model.pkl'
 
+            print (model_file, X)
             # select prediction tool from control
             with open(model_file, "rb") as input_file:
                 estimator = pickle.load(input_file)
+
             results['projection'] = estimator.project(X)
         except:
-            return False, 'projection error'
+            raise
+            #return False, 'projection error'
 
         return True, results
 

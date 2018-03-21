@@ -24,6 +24,7 @@ import os
 import sys
 
 import util.utils as utils
+from control import Control
 
 class Predict:
 
@@ -58,7 +59,6 @@ class Predict:
         
         try:
             sys.path.append(epd)
-            from control_child import ControlChild
             from idata_child import IdataChild
             from apply_child import ApplyChild
             from odata_child import OdataChild
@@ -72,24 +72,25 @@ class Predict:
             return success, results
         
         # instance Control object
-        control = ControlChild()
+        control = Control(self.model,self.version)
+        parameters = control.get_parameters()
 
         # run idata object, in charge of generate model data from input
-        idata = IdataChild (control, self.ifile)
+        idata = IdataChild (parameters, self.ifile)
         success, results = idata.run ()
         
         if not success:
             return success, results
 
         # run apply object, in charge of generate a prediction from idata
-        apply = ApplyChild (control, results)
+        apply = ApplyChild (parameters, results)
         success, results = apply.run ()
         
         if not success:
             return success, results
 
         # run odata object, in charge of formatting the prediction results
-        odata = OdataChild (control, results)
+        odata = OdataChild (parameters, results)
         success, results = odata.run ()
 
         return success, results

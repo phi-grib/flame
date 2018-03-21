@@ -39,9 +39,9 @@ import util.utils as utils
 
 class Idata:
 
-    def __init__ (self, control, ifile):
+    def __init__ (self, parameters, ifile):
 
-        self.control = control      # control object defining the processing
+        self.parameters = parameters      # control object defining the processing
         self.ifile = ifile          # input file
 
         self.dest_path = os.path.dirname(ifile)     # path where any temp file must be written
@@ -72,20 +72,20 @@ class Idata:
             if mol is None:
                 continue
                 
-            name = sdfu.getName(mol, count=i, field=self.control.SDFile_name, suppl= suppl)
+            name = sdfu.getName(mol, count=i, field=self.parameters['SDFile_name'], suppl= suppl)
 
             activity_num = None
             exp = None
 
-            if mol.HasProp(self.control.SDFile_activity):
-                activity_str = mol.GetProp(self.control.SDFile_activity)
+            if mol.HasProp(self.parameters['SDFile_activity']):
+                activity_str = mol.GetProp(self.parameters['SDFile_activity'])
                 try:
                     activity_num = float (activity_str)
                 except:
                     activity_num = None            
 
-            if mol.HasProp(self.control.SDFile_experimental):
-                exp = mol.GetProp(self.control.SDFile_experimental)
+            if mol.HasProp(self.parameters['SDFile_experimental']):
+                exp = mol.GetProp(self.parameters['SDFile_experimental'])
 
             obj_nam.append(name)
             obj_bio.append(activity_num)
@@ -292,8 +292,8 @@ class Idata:
         Saves the results in serialized form, together with the MD5 signature of the control class and the input file
         """
 
-        #md5_control = self.control.md5stamp()
-        md5_control = utils.md5stamp (self.control)
+        md5_control = self.parameters['md5']
+        #md5_control = utils.md5stamp (self.parameters)
         md5_input = utils.md5sum(self.ifile)  # run md5 in self.ifile
 
         try:
@@ -318,7 +318,7 @@ class Idata:
         try:
             with open (self.dest_path+'/data.pkl', 'rb') as fi:
                 md5_con = pickle.load(fi)
-                if md5_con != utils.md5stamp(self.control):
+                if md5_con != self.parameters['md5']:
                     return False, 'md5 control'
 
                 md5_fil = pickle.load(fi)
@@ -354,22 +354,22 @@ class Idata:
         # avoided, even at the cost of repeating the computation molecule-by-molecule
 
         # normalize chemical  
-        success, results = self.normalize (ifile, self.control.normalize_method)
+        success, results = self.normalize (ifile, self.parameters['normalize_method'])
         if not success :
             return success, results
 
         # ionize molecules
-        success, results = self.ionize (results, self.control.ionize_method)
+        success, results = self.ionize (results, self.parameters['ionize_method'])
         if not success :
             return success, results
         
         # generate a 3D structure
-        success, results = self.convert3D (results, self.control.convert3D_method)
+        success, results = self.convert3D (results, self.parameters['convert3D_method'])
         if not success :
             return success, results
         
         # compute MD
-        success, results = self.computeMD (results, self.control.computeMD_method)
+        success, results = self.computeMD (results, self.parameters['computeMD_method'])
 
         return success, results
 
@@ -379,7 +379,7 @@ class Idata:
         """
 
         # trick to avoid RDKit dumping warnings to the console
-        if not self.control.verbose_error:
+        if not self.parameters['verbose_error']:
             stderr_fileno = sys.stderr.fileno()       # saves current syserr
             stderr_save = os.dup(stderr_fileno)
             stderr_fd = open('errorRDKit.log', 'w')   # open a specific RDKit log file
@@ -392,7 +392,7 @@ class Idata:
         experim = results[2]
 
         nobj = len(obj_nam)
-        ncpu = self.control.numCPUs
+        ncpu = self.parameters['numCPUs']
 
         # do not run multiprocess for small series, the overheads slow the overall computation time
         if nobj < 10 :
@@ -403,10 +403,10 @@ class Idata:
             ncpu = nobj
 
         # Execute the workflow in 1 or n CPUs
-        if self.control.numCPUs > 1:
+        if ncpu > 1:
             # Count number of molecules and split in chuncks 
             # for multiprocessing 
-            success, results = sdfu.split_SDFile(self.ifile, self.control.numCPUs)
+            success, results = sdfu.split_SDFile(self.ifile, ncpu)
 
             if not success : 
                 return False, "error splitting: "+self.ifile
@@ -416,7 +416,7 @@ class Idata:
 
             # print (split_files_names, split_files_sizes)
 
-            pool = mp.Pool(self.control.numCPUs)
+            pool = mp.Pool(ncpu)
             results = pool.map(self.workflow, split_files_names)
 
             # Check the results and make sure there are 
@@ -429,7 +429,7 @@ class Idata:
         if not success:
             return False, results
 
-        if not self.control.verbose_error:
+        if not self.parameters['verbose_error']:
             stderr_fd.close()                     # close the RDKit log
             os.dup2(stderr_save, stderr_fileno)   # restore old syserr
 
@@ -486,12 +486,13 @@ class Idata:
         if success:
             return success, results
 
+        input_type = self.parameters['input_type'] 
         # processing for molecular input (for now an SDFile)
-        if (self.control.input_type == 'molecule'):
+        if (input_type== 'molecule'):
             success, results = self._run_molecule()
-        elif (self.control.input_type == 'data'):
+        elif (input_type == 'data'):
             success, results = self._run_data()
-        elif (self.control.input_type == 'process'):
+        elif (input_type == 'process'):
             success, results = self._run_process()
         else:
             return False, 'unknown input data format'

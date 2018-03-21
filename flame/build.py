@@ -25,6 +25,7 @@ import sys
 import shutil
 
 import util.utils as utils
+from control import Control
 
 class Build:
 
@@ -56,7 +57,6 @@ class Build:
 
         try:
             sys.path.append(epd)
-            from control_child import ControlChild
             from idata_child import IdataChild
             from learn_child import LearnChild
             from odata_child import OdataChild
@@ -69,24 +69,25 @@ class Build:
             return success, results
         
         # instance Control object
-        control = ControlChild()
+        control = Control(self.model,0)
+        parameters = control.get_parameters()
 
         # run idata object, in charge of generate model data from local copy of input
-        idata = IdataChild (control, self.lfile)
+        idata = IdataChild (parameters, self.lfile)
         success, results = idata.run ()
         
         if not success:
             return success, results
 
         # run learn object, in charge of generate a prediction from idata
-        learn = LearnChild (control, results)
+        learn = LearnChild (parameters, results)
         success, results = learn.run ()
         
         if not success:
             return success, results
 
         # run odata object, in charge of formatting the prediction results
-        odata = OdataChild (control, results)
+        odata = OdataChild (parameters, results)
         success, results = odata.run ()
 
         return success, results

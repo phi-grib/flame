@@ -22,10 +22,10 @@
 
 class Odata:
 
-    def __init__ (self, control, results):
+    def __init__ (self, parameters, results):
 
         self.results = results
-        self.control = control
+        self.parameters = parameters
 
     def run_learn (self):
 

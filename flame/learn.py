@@ -28,15 +28,15 @@ import pickle
 
 class Learn:
 
-    def __init__ (self, control, results):
+    def __init__ (self, parameters, results):
 
-        self.control = control # control object defining the processing
+        self.parameters = parameters 
 
         self.X = results[0]
         self.Y = results[1]
         # TODO: make use of other results items
         
-        self.model_path = self.control.model_path
+        self.model_path = self.parameters['model_path']
     
     def run_custom (self):
 
@@ -53,16 +53,18 @@ class Learn:
             return False, 'no activity found'
         
         # initilizate estimator
-        if self.control.model == 'RF':
-            model = RF(self.X,self.Y, self.control.quantitative, self.control.modelAutoscaling, self.control.tune,
-                        self.control.ModelValidationCV, self.control.ModelValidationN, self.control.ModelValidationP, 
-                        self.control.ModelValidationLC ,self.control.conformalSignificance, self.model_path,
-                        self.control.RF_parameters, self.control.RF_optimize, self.control.conformal)
-        elif self.control.model == 'SVM':
-            model = SVM(self.X,self.Y, self.control.quantitative, self.control.modelAutoscaling, self.control.tune,
-                        self.control.ModelValidationCV, self.control.ModelValidationN, self.control.ModelValidationP, 
-                        self.control.ModelValidationLC ,self.control.conformalSignificance, self.model_path,
-                        self.control.SVM_parameters, self.control.SVM_optimize, self.control.conformal)
+        model = self.parameters['model']
+        if  model == 'RF':
+            model = RF(self.X,self.Y, self.parameters['quantitative'], self.parameters['modelAutoscaling'], self.parameters['tune'],
+                        self.parameters['ModelValidationCV'], self.parameters['ModelValidationN'], self.parameters['ModelValidationP'], 
+                        self.parameters['ModelValidationLC'] ,self.parameters['conformalSignificance'], self.model_path,
+                        self.parameters['RF_parameters'], self.parameters['RF_optimize'], self.parameters['conformal'])
+        elif model == 'SVM':
+            model = SVM(self.X,self.Y, self.parameters['quantitative'], self.parameters['modelAutoscaling'], self.parameters['tune'],
+                        self.parameters['ModelValidationCV'], self.parameters['ModelValidationN'], self.parameters['ModelValidationP'], 
+                        self.parameters['ModelValidationLC'] ,self.parameters['conformalSignificance'], self.model_path,
+                        self.parameters['SVM_parameters'], self.parameters['SVM_optimize'], self.parameters['conformal'])
+
             
         else:
             return False, 'modeling method not recognised'
@@ -70,7 +72,7 @@ class Learn:
         # build model       
         success = model.build()
         if not success:
-            return success, 'error building '+self.control.model+' model'
+            return success, 'error building '+self.parameters['model']+' model'
 
         # validate model
         success, results = model.validate()
@@ -93,11 +95,12 @@ class Learn:
 
     def run (self):
 
-        if self.control.modelingToolkit == 'internal':
+        toolkit = self.parameters['modelingToolkit']
+        if toolkit == 'internal':
             success, results = self.run_internal ()
-        elif self.control.modelingToolkit == 'custom':
+        elif toolkit == 'custom':
             success, results = self.run_custom ()
         else:
-            return False, 'modeling Toolkit '+self.control.modelingToolkit+' is not supported yet'
+            return False, 'modeling Toolkit '+toolkit+' is not supported yet'
 
         return success, results
