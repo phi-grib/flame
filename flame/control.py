@@ -21,9 +21,7 @@
 ##    along with Flame.  If not, see <http://www.gnu.org/licenses/>.
 
 import util.utils as util
-import os
 import yaml
-from collections import OrderedDict
 
 class Control:
 
@@ -33,6 +31,7 @@ class Control:
 
         success, parameters = self.load_parameters(model)
 
+        #TODO: remove this code
         if not success:
             print ('CRITICAL ERROR: unable to load parameter file. Running with fallback defaults')
             parameters = self.get_defaults()
@@ -56,7 +55,6 @@ class Control:
         return True, parameters
 
     # def save_parameters (self, parameters):
-
     #     yaml.dump(open(self.yaml_file,'w'), parameters)
 
     def get_parameters (self):
@@ -71,7 +69,7 @@ class Control:
             'numCPUs' : 2,                                  # (int)
             
             ## input settings
-             'input_type' : 'molecule',                      # 'molecule' | 'data'
+            'input_type' : 'molecule',                     # 'molecule' | 'data'
             'normalize_method' : 'standardize',             # None | 'standardize'
             'ionize_method' : None,                         # None | 'moka'
             'convert3D_method' : None,                      # 'ETKDG' 

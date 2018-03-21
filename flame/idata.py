@@ -292,13 +292,12 @@ class Idata:
         Saves the results in serialized form, together with the MD5 signature of the control class and the input file
         """
 
-        md5_control = self.parameters['md5']
-        #md5_control = utils.md5stamp (self.parameters)
+        md5_parameters = self.parameters['md5']
         md5_input = utils.md5sum(self.ifile)  # run md5 in self.ifile
 
         try:
             with open (self.dest_path+'/data.pkl', 'wb') as fo:
-                pickle.dump (md5_control, fo)
+                pickle.dump (md5_parameters, fo)
                 pickle.dump (md5_input, fo)
                 pickle.dump (results[0],fo)
                 pickle.dump (results[1],fo)
@@ -317,12 +316,12 @@ class Idata:
 
         try:
             with open (self.dest_path+'/data.pkl', 'rb') as fi:
-                md5_con = pickle.load(fi)
-                if md5_con != self.parameters['md5']:
-                    return False, 'md5 control'
+                md5_parameters = pickle.load(fi)
+                if md5_parameters != self.parameters['md5']:
+                    return False, 'md5 parameters'
 
-                md5_fil = pickle.load(fi)
-                if md5_fil != utils.md5sum(self.ifile):
+                md5_input = pickle.load(fi)
+                if md5_input != utils.md5sum(self.ifile):
                     return False, 'md5 input file'
 
                 xmatrix = pickle.load(fi)

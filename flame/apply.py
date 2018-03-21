@@ -46,15 +46,13 @@ class Apply:
         try:
             model_file = self.parameters['model_path'] + '/model.pkl'
 
-            print (model_file, X)
             # select prediction tool from control
             with open(model_file, "rb") as input_file:
                 estimator = pickle.load(input_file)
 
             results['projection'] = estimator.project(X)
         except:
-            raise
-            #return False, 'projection error'
+            return False, 'projection error'
 
         return True, results
 

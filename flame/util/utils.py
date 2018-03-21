@@ -33,17 +33,6 @@ def md5sum(filename, blocksize=65536):
 
     return hash.hexdigest()
 
-def md5stamp(myclass):
-
-    hash = hashlib.md5()
-
-    for attr in dir(myclass):
-        val = getattr(myclass, attr)
-        if isinstance(val, (int, float, str)):
-            hash.update (str(val).encode('utf-8'))
-
-    return hash.hexdigest()
-
 def base_path (model):
 
     wkd = os.path.dirname(os.path.abspath(__file__))
