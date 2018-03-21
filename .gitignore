@@ -111,3 +111,4 @@ ENV/
 
 # Pickle files
 .pkl
+src/models/CACO2/dev/model.pkl
