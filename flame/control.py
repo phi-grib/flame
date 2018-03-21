@@ -21,6 +21,7 @@
 ##    along with Flame.  If not, see <http://www.gnu.org/licenses/>.
 
 import util.utils as util
+import os
 import yaml
 
 class Control:
