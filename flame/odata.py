@@ -20,14 +20,18 @@
 ##    You should have received a copy of the GNU General Public License
 ##    along with Flame.  If not, see <http://www.gnu.org/licenses/>.
 
+import json
+
 class Odata:
 
-    def __init__ (self, parameters, results):
+    def __init__ (self, parameters, results, out_format='JSON' ):
 
         self.results = results
         self.parameters = parameters
+        self.format = out_format
 
     def run_learn (self):
+
 
         print ('odata : ', self.results)
         print ('building OK!')
@@ -36,9 +40,18 @@ class Odata:
 
     def run_apply (self):
 
+        # names and structures
+        # JSON serialization (if out_format is JSON)
+
         print ('odata : ', self.results)
-        print ('predicting OK!')        
-        return True, 'ok'
+
+        results_string = []
+        for i in self.results['projection']:
+            results_string.append(i)
+        
+        jstring = json.dumps(results_string)
+
+        return True, jstring
 
 
     def run (self):

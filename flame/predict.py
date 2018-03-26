@@ -28,10 +28,11 @@ from control import Control
 
 class Predict:
 
-    def __init__ (self, ifile, model, version):
+    def __init__ (self, ifile, model, version, out_format='JSON'):
 
         self.ifile = ifile
         self.model = model
+        self.out_format = out_format
 
         if version == None:
             self.version = 0
@@ -90,7 +91,7 @@ class Predict:
             return success, results
 
         # run odata object, in charge of formatting the prediction results
-        odata = OdataChild (parameters, results)
+        odata = OdataChild (parameters, results, self.out_format)
         success, results = odata.run ()
 
         return success, results
