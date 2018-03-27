@@ -6,30 +6,31 @@
     <script type="text/javascript">
       $(document).ready(function() {
         $("#predict").click(function(e) {
-          $.post("/predictor", {"ifile": $("input[name='ifile']").val(), 
+          $.post("/predictor", {//"ifile": $("input[name='ifile']").files[0], 
+                                "ifile": document.getElementById("ifile").files[0].name,
                                 "model": $("#myselect option:selected").text(),
                                 "version": $("input[name='version']").val(),})
            .done(function(results) {
             document.getElementById("data-body").innerHTML = results;
 
-            // var text = '{ "employees" : [' +
-            //           '{ "firstName":"John" , "lastName":"Doe" },' +
-            //           '{ "firstName":"Anna" , "lastName":"Smith" },' +
-            //           '{ "firstName":"Peter" , "lastName":"Jones" } ]}'; 
+            var text = '{ "employees" : [' +
+                      '{ "firstName":"John" , "lastName":"Doe" },' +
+                      '{ "firstName":"Anna" , "lastName":"Smith" },' +
+                      '{ "firstName":"Peter" , "lastName":"Jones" } ]}'; 
 
-            // var myjson = JSON.parse(text);
-            // var tbl_body = "";
-            // var odd_even = false;
-            // $.each(myjson, function() {
-            //     var tbl_row = "";
-            //     $.each(this, function(k , v) {
-            //         tbl_row += "<td>"+v+"</td>";
-            //     })
-            //     tbl_body += "<tr class=\""+( odd_even ? "odd" : "even")+"\">"+tbl_row+"</tr>";
-            //     odd_even = !odd_even;               
-            // })
-            // //$("#newtable tbody").html(tbl_body);
-            // document.getElementById("newtable").innerHTML = tbl_body;
+            var myjson = JSON.parse(text);
+            var tbl_body = "";
+            var odd_even = false;
+            $.each(myjson, function() {
+                var tbl_row = "";
+                $.each(this, function(k , v) {
+                    tbl_row += "<td>"+this.val()+"</td>";
+                })
+                tbl_body += "<tr class=\""+( odd_even ? "odd" : "even")+"\">"+tbl_row+"</tr>";
+                odd_even = !odd_even;               
+            })
+            //$("#newtable tbody").html(tbl_body);
+            document.getElementById("newtable").innerHTML = tbl_body;
 
           });
 
@@ -55,8 +56,8 @@
               <div class="form-group">
                   <label class="col-sm-2 control-label" for="exampleInputFile">Input SDfile</label>
                   <div class="col-sm-8">
-                    <input class="form-control" type="text" value="minicaco.sdf" id="ifile" name="ifile">
-                    <!-- <input type="file" id="ifile" name="ifile"> -->
+                    <!-- <input class="form-control" type="text" value="minicaco.sdf" id="ifile" name="ifile"> -->
+                    <input type="file" id="ifile" name="ifile">
                   </div>
               </div>
 
