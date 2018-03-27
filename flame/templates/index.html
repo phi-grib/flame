@@ -12,6 +12,7 @@
                                 "version": $("input[name='version']").val(),})
            .done(function(results) {
             document.getElementById("data-body").innerHTML = results;
+            console.log(results)
 
             var text = '{ "employees" : [' +
                       '{ "firstName":"John" , "lastName":"Doe" },' +
@@ -23,13 +24,11 @@
             var odd_even = false;
             $.each(myjson, function() {
                 var tbl_row = "";
+                console.log(this)
                 $.each(this, function(k , v) {
-                    tbl_row += "<td>"+this.val()+"</td>";
-                })
-                tbl_body += "<tr class=\""+( odd_even ? "odd" : "even")+"\">"+tbl_row+"</tr>";
-                odd_even = !odd_even;               
+                  tbl_body += "<tr><td>"+v['firstName']+"</td><td>"+v['lastName']+"</td></tr>"; 
+                })          
             })
-            //$("#newtable tbody").html(tbl_body);
             document.getElementById("newtable").innerHTML = tbl_body;
 
           });
@@ -91,8 +90,7 @@
         <div>
           <h3>Results</h3>
           <pre id="data-body">[not run]</pre>
-          <table id="newtable" >
-            <tbody >hola</tbody>
+          <table class= "table table-bordered table-stripped" id="newtable" >
           </table>
         </div>
 

@@ -22,26 +22,24 @@
 
 import os
 import cherrypy
-from pathlib import Path
+from jinja2 import Environment 
+from jinja2 import FileSystemLoader
 
 from predict import Predict
-from jinja2 import Environment, FileSystemLoader
-env = Environment(loader=FileSystemLoader('templates'))
 
 class FlamePredict(object):
     @cherrypy.expose
     def index(self):
 
-        path = Path('workspace/')
-        files = path.glob('*.sdf')
-        files_list = [x.name for x in files]
+        # TODO: replace this hardcode list with one generated analysing the 
+        # model repoistory
         endpoint = ['CACO2','DIPL1','hERG4']
 
+        # env will setup the jinja2 template rendering
+        env = Environment(loader=FileSystemLoader('templates')) 
         tmpl = env.get_template('index.html')
-        return tmpl.render(files_list=files_list, model_list=endpoint)
 
-        # return render_template('form.html', files_list=files_list, model_list=endpoint)
-        #return open('index.html')
+        return tmpl.render(model_list=endpoint)
 
 
 @cherrypy.expose
@@ -87,4 +85,7 @@ if __name__ == '__main__':
     }
     webapp = FlamePredict()
     webapp.predictor = FlamePredictWS()
+    
+    cherrypy.config.update({'server.socket_host': '0.0.0.0'})
+
     cherrypy.quickstart(webapp, '/', conf)
