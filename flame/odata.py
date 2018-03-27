@@ -45,13 +45,14 @@ class Odata:
 
         print ('odata : ', self.results)
 
-        results_string = []
-        for i in self.results['projection']:
-            results_string.append(i)
+        num_results = [ float(x) for x in self.results['projection']]
         
-        jstring = json.dumps(results_string)
+        # for i in self.results['projection']:
+        #     results_string.append(i)
+        
+        # jstring = json.dumps(results_string)
 
-        return True, jstring
+        return True, json.dumps({'results' : num_results}) 
 
 
     def run (self):

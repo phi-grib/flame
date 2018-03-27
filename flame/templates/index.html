@@ -6,36 +6,46 @@
     <script type="text/javascript">
       $(document).ready(function() {
         $("#predict").click(function(e) {
-          $.post("/predictor", {//"ifile": $("input[name='ifile']").files[0], 
-                                "ifile": document.getElementById("ifile").files[0].name,
-                                "model": $("#myselect option:selected").text(),
-                                "version": $("input[name='version']").val(),})
+          $.post("/predictor", {"ifile"  : document.getElementById("ifile").files[0].name,
+                                "model"  : $("#myselect option:selected").text(),
+                                "version": $("input[name='version']").val()
+                               })
            .done(function(results) {
             document.getElementById("data-body").innerHTML = results;
             console.log(results)
 
-            var text = '{ "employees" : [' +
-                      '{ "firstName":"John" , "lastName":"Doe" },' +
-                      '{ "firstName":"Anna" , "lastName":"Smith" },' +
-                      '{ "firstName":"Peter" , "lastName":"Jones" } ]}'; 
+            // just for testing
+            // var text = '{ "employees" : [' +
+            //           '{ "firstName":"John" , "lastName":"Doe" },' +
+            //           '{ "firstName":"Anna" , "lastName":"Smith" },' +
+            //           '{ "firstName":"Peter" , "lastName":"Jones" } ]}'; 
 
-            var myjson = JSON.parse(text);
+            // var myjson = JSON.parse(text);
+            // var tbl_body = "";
+            // $.each(myjson, function() {
+            //     var tbl_row = "";
+            //     console.log(this)
+            //     $.each(this, function(k , v) {
+            //       tbl_body += "<tr><td>"+v['firstName']+"</td><td>"+v['lastName']+"</td></tr>"; 
+            //     })          
+            // })
+            // document.getElementById("newtable").innerHTML = tbl_body;
+
+            var myjson = JSON.parse(results);
             var tbl_body = "";
-            var odd_even = false;
             $.each(myjson, function() {
                 var tbl_row = "";
                 console.log(this)
                 $.each(this, function(k , v) {
-                  tbl_body += "<tr><td>"+v['firstName']+"</td><td>"+v['lastName']+"</td></tr>"; 
+                  console.log(k,v)
+                  tbl_body += "<tr><td>"+(k+1)+"</td><td>"+v+"</td></tr>"; 
                 })          
             })
             document.getElementById("newtable").innerHTML = tbl_body;
-
+            
           });
-
           e.preventDefault();
         });
-
       });
     </script>
   </head>
@@ -87,12 +97,16 @@
 
       </div>
 
-        <div>
-          <h3>Results</h3>
-          <pre id="data-body">[not run]</pre>
-          <table class= "table table-bordered table-stripped" id="newtable" >
-          </table>
-        </div>
+      <div>
+        <h3>Results</h3>
+
+        <table class= "table table-bordered table-striped" id="newtable" >
+        </table>
+        
+        <h3>Raw output</h3>
+        <pre id="data-body">[not run]</pre>
+        
+      </div>
 
     </div>  
   </body>
