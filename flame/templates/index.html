@@ -6,25 +6,33 @@
     <script type="text/javascript">
       $(document).ready(function() {
           $("#predict").click(function(e) {
-          $.post("/predictor", {"ifile"  : document.getElementById("ifile").files[0].name,
+
+            // clear GUI
+            document.getElementById("data-body").innerHTML = 'processing... please wait';
+            document.getElementById("newtable").innerHTML = '';
+
+            // send job
+            $.post("/predict", {"ifile"  : document.getElementById("ifile").files[0].name,
                                 "model"  : $("#myselect option:selected").text(),
                                 "version": $("input[name='version']").val()
                                })
-           .done(function(results) {
-            document.getElementById("data-body").innerHTML = results;
-            //console.log(results)
 
-            var myjson = JSON.parse(results);
-            var tbl_body = "";
-            $.each(myjson, function() {
+            // show results
+            .done(function(results) {
+              document.getElementById("data-body").innerHTML = results;
+              //console.log(results)
+
+              var myjson = JSON.parse(results);
+              var tbl_body = '<thead><tr><th>#mol</th><th>prediction</th></tr></thead>';
+              $.each(myjson, function() {
                 var tbl_row = "";
                 //console.log(this)
                 $.each(this, function(k , v) {
                   //console.log(k,v)
                   tbl_body += "<tr><td>"+(k+1)+"</td><td>"+v+"</td></tr>"; 
                 })          
-            })
-            document.getElementById("newtable").innerHTML = tbl_body;
+              })
+              document.getElementById("newtable").innerHTML = tbl_body;
             
           });
           e.preventDefault();
@@ -34,12 +42,15 @@
   </head>
   <body>
     <div class="container">
-        <div class="header">
-          <ul class="nav nav-pills pull-right">
-              <li><a href="http://phi.upf.edu">PharmacoInformatics group</a></li>
-          </ul>
-          <h2 >Flame predict interface</h2>
-        </div>
+      <div class="row">  
+          <div class="col-md-6">
+            <h2 >Flame predict interface</h2>
+          </div>
+          
+          <div class="col-md-6">
+            <img class="pull-right pull-top" src="/static/images/etransafe-logo.png"></image>
+          </div>
+      </div>  
 
         <div class="row">
           <div class ="col-md-8">
@@ -52,31 +63,32 @@
                     <input type="file" id="ifile" name="ifile">
                   </div>
               </div>
-
+              
               <div class="form-group">
-                  <label class="col-sm-2 control-label" for="model">model</label>
-                  <div class="col-sm-8">
-                      <select class="form-control" id="myselect" name="model">
-                          {% for m in model_list %}
-                          <option name="{{ m }}">{{m}}</option>
-                          {% endfor %}
-                      </select>
-                  </div>
+                <label class="col-sm-2 control-label" for="model">model</label>
+                <div class="col-sm-8">
+                  <select class="form-control" id="myselect" name="model">
+                    {% for m in model_list %}
+                    <option name="{{ m }}">{{m}}</option>
+                    {% endfor %}
+                  </select>
+                </div>
               </div>
-
+              
               <div class="form-group">
                 <label class="col-sm-2 control-label" for="version">version</label>
                 <div class="col-sm-8">
                   <input class="form-control" type="number" value=0 name="version">
                 </div>
               </div>
-
+              
             </form>
-        </div>
-
-        <div class="col-md-4">
-          <button class="btn btn-primary active" role="button" id="predict">Predict</button>
-        </div>
+            
+          </div>
+          
+          <div class="col-md-4 ">
+            <button class="btn btn-primary active" role="button" id="predict">Predict</button>
+          </div>
 
       </div>
 
@@ -84,9 +96,10 @@
         <h3>Results</h3>
 
         <table class= "table table-bordered table-striped" id="newtable" >
+
         </table>
         
-        <h3>Raw output</h3>
+        <h3>Console</h3>
         <pre id="data-body">[not run]</pre>
       </div>
 

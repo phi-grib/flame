@@ -26,14 +26,15 @@ from jinja2 import Environment
 from jinja2 import FileSystemLoader
 
 from predict import Predict
+import util.utils as utils
 
 class FlamePredict(object):
     @cherrypy.expose
     def index(self):
 
-        # TODO: replace this hardcode list with one generated analysing the 
-        # model repoistory
-        endpoint = ['CACO2','DIPL1','hERG4']
+        # analysing the model repoistory
+        rdir = utils.root_path()
+        endpoint = [x for x in os.listdir (rdir)]
 
         # env will setup the jinja2 template rendering
         env = Environment(loader=FileSystemLoader('templates')) 
@@ -78,20 +79,24 @@ if __name__ == '__main__':
             'tools.sessions.on': False,
             'tools.staticdir.root': os.path.abspath(os.getcwd())
         },
+        # '/favicon.ico': {
+        #     'tools.staticfile.on': True,
+        #     'tools.staticfile.filename': '/static/images/etransafe.ico'
+        # },
         '/info': {
             'request.dispatch': cherrypy.dispatch.MethodDispatcher(),
             'tools.response_headers.on': True,
-            'tools.response_headers.headers': [('Content-Type', 'text/plain')],
+            'tools.response_headers.headers': [('Content-Type', 'text/plain')]
         },
         '/dir': {
             'request.dispatch': cherrypy.dispatch.MethodDispatcher(),
             'tools.response_headers.on': True,
-            'tools.response_headers.headers': [('Content-Type', 'text/plain')],
+            'tools.response_headers.headers': [('Content-Type', 'text/plain')]
         },
-        '/predictor': {
+        '/predict': {
             'request.dispatch': cherrypy.dispatch.MethodDispatcher(),
             'tools.response_headers.on': True,
-            'tools.response_headers.headers': [('Content-Type', 'text/plain')],
+            'tools.response_headers.headers': [('Content-Type', 'text/plain')]
         },
         '/static': {
             'tools.staticdir.on': True,
@@ -101,7 +106,7 @@ if __name__ == '__main__':
     webapp = FlamePredict()
     webapp.info = FlameInfoWS()
     webapp.dir = FlameDirWS()
-    webapp.predictor = FlamePredictWS()
+    webapp.predict = FlamePredictWS()
     
     cherrypy.config.update({'server.socket_host': '0.0.0.0'})
 
