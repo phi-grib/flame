@@ -24,9 +24,17 @@ import os
 import cherrypy
 from jinja2 import Environment 
 from jinja2 import FileSystemLoader
+import json
+import shutil
 
 from predict import Predict
 import util.utils as utils
+
+PARTNER_ID = 'UPF'
+PARTNER_WEB ="http://phi.upf.edu"
+ADMIN_NAME = 'Manuel Pastor'
+ADMIN_EMAIL = 'manuel.pastor@upf.edu'
+BASE_DIR = '/var/tmp/'
 
 class FlamePredict(object):
     @cherrypy.expose
@@ -36,19 +44,32 @@ class FlamePredict(object):
         rdir = utils.root_path()
         endpoint = [x for x in os.listdir (rdir)]
 
-        # env will setup the jinja2 template rendering
+        # setup the jinja2 template rendering
         env = Environment(loader=FileSystemLoader('templates')) 
         tmpl = env.get_template('index.html')
 
         return tmpl.render(model_list=endpoint)
 
+    @cherrypy.expose
+    def upload(self):
+        filename    = os.path.basename(cherrypy.request.headers['x-filename'])
+        temp_dir    = os.path.basename(cherrypy.request.headers['temp-dir'])
+
+        path = BASE_DIR+temp_dir
+        os.mkdir (path)
+ 
+        destination = os.path.join(path, filename)
+        with open(destination, 'wb') as f:
+            shutil.copyfileobj(cherrypy.request.body, f)
 
 @cherrypy.expose
 class FlamePredictWS(object):
 
     @cherrypy.tools.accept(media='text/plain')
 
-    def POST(self, ifile, model, version ):
+    def POST(self, ifile, model, version, temp_dir):
+
+        ifile = BASE_DIR+temp_dir+'/'+ifile
 
         #TODO: check if changing models manages child classes correctly
         try:
@@ -64,14 +85,21 @@ class FlameInfoWS(object):
 
     @cherrypy.tools.accept(media='text/plain')
     def GET(self):
-        return 'GET info'
+        data = { "provider": PARTNER_ID,
+                 "homepage": PARTNER_WEB,
+                 "admin": ADMIN_NAME,
+                 "admin_email": ADMIN_EMAIL
+                 }
+        return json.dumps(data)
 
 @cherrypy.expose
 class FlameDirWS(object):
 
     @cherrypy.tools.accept(media='text/plain')
     def GET(self):
-        return 'GET dir'
+        rdir = utils.root_path()
+        endpoint = [x for x in os.listdir (rdir)]
+        return json.dumps(endpoint)
 
 if __name__ == '__main__':
     conf = {
@@ -100,14 +128,19 @@ if __name__ == '__main__':
         },
         '/static': {
             'tools.staticdir.on': True,
-            'tools.staticdir.dir': './public'
+            'tools.staticdir.dir': './public',
+        },
+        'global' : {
+            'server.socket_host' : '0.0.0.0',
+            'server.socket_port' : 8080,
+            'server.thread_pool' : 8,
         }
     }
     webapp = FlamePredict()
     webapp.info = FlameInfoWS()
     webapp.dir = FlameDirWS()
     webapp.predict = FlamePredictWS()
-    
-    cherrypy.config.update({'server.socket_host': '0.0.0.0'})
+
+    # cherrypy.config.update({'server.socket_host': '0.0.0.0'})
 
     cherrypy.quickstart(webapp, '/', conf)
