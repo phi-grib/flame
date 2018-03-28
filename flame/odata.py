@@ -45,6 +45,9 @@ class Odata:
 
         print ('odata : ', self.results)
 
+        if not 'projection' in self.results:
+            return False, self.results
+
         num_results = [ float(x) for x in self.results['projection']]
         
         # for i in self.results['projection']:
