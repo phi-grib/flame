@@ -46,32 +46,47 @@ class FlamePredict(object):
 class FlamePredictWS(object):
 
     @cherrypy.tools.accept(media='text/plain')
-    # def GET(self):
-    #     return cherrypy.session['mystring']
-
-    # def POST(self, length=8):
-    #     some_string = ''.join(random.sample(string.hexdigits, int(length)))
-    #     cherrypy.session['mystring'] = some_string
-    #     return some_string
 
     def POST(self, ifile, model, version ):
-        print (ifile, model, version)
-        predict = Predict(ifile, model, version)
-        success, results = predict.run()
+
+        #TODO: check if changing models manages child classes correctly
+        try:
+            predict = Predict(ifile, model, version)
+            success, results = predict.run()
+        except:
+            raise cherrypy.HTTPError(500)
+
         return results
 
-    # def PUT(self, another_string):
-    #     cherrypy.session['mystring'] = another_string
+@cherrypy.expose
+class FlameInfoWS(object):
 
-    # def DELETE(self):
-    #     cherrypy.session.pop('mystring', None)
+    @cherrypy.tools.accept(media='text/plain')
+    def GET(self):
+        return 'GET info'
 
+@cherrypy.expose
+class FlameDirWS(object):
+
+    @cherrypy.tools.accept(media='text/plain')
+    def GET(self):
+        return 'GET dir'
 
 if __name__ == '__main__':
     conf = {
         '/': {
-            'tools.sessions.on': True,
+            'tools.sessions.on': False,
             'tools.staticdir.root': os.path.abspath(os.getcwd())
+        },
+        '/info': {
+            'request.dispatch': cherrypy.dispatch.MethodDispatcher(),
+            'tools.response_headers.on': True,
+            'tools.response_headers.headers': [('Content-Type', 'text/plain')],
+        },
+        '/dir': {
+            'request.dispatch': cherrypy.dispatch.MethodDispatcher(),
+            'tools.response_headers.on': True,
+            'tools.response_headers.headers': [('Content-Type', 'text/plain')],
         },
         '/predictor': {
             'request.dispatch': cherrypy.dispatch.MethodDispatcher(),
@@ -84,6 +99,8 @@ if __name__ == '__main__':
         }
     }
     webapp = FlamePredict()
+    webapp.info = FlameInfoWS()
+    webapp.dir = FlameDirWS()
     webapp.predictor = FlamePredictWS()
     
     cherrypy.config.update({'server.socket_host': '0.0.0.0'})
