@@ -5,39 +5,22 @@
     <script src="http://code.jquery.com/jquery-2.0.3.min.js"></script>
     <script type="text/javascript">
       $(document).ready(function() {
-        $("#predict").click(function(e) {
+          $("#predict").click(function(e) {
           $.post("/predictor", {"ifile"  : document.getElementById("ifile").files[0].name,
                                 "model"  : $("#myselect option:selected").text(),
                                 "version": $("input[name='version']").val()
                                })
            .done(function(results) {
             document.getElementById("data-body").innerHTML = results;
-            console.log(results)
-
-            // just for testing
-            // var text = '{ "employees" : [' +
-            //           '{ "firstName":"John" , "lastName":"Doe" },' +
-            //           '{ "firstName":"Anna" , "lastName":"Smith" },' +
-            //           '{ "firstName":"Peter" , "lastName":"Jones" } ]}'; 
-
-            // var myjson = JSON.parse(text);
-            // var tbl_body = "";
-            // $.each(myjson, function() {
-            //     var tbl_row = "";
-            //     console.log(this)
-            //     $.each(this, function(k , v) {
-            //       tbl_body += "<tr><td>"+v['firstName']+"</td><td>"+v['lastName']+"</td></tr>"; 
-            //     })          
-            // })
-            // document.getElementById("newtable").innerHTML = tbl_body;
+            //console.log(results)
 
             var myjson = JSON.parse(results);
             var tbl_body = "";
             $.each(myjson, function() {
                 var tbl_row = "";
-                console.log(this)
+                //console.log(this)
                 $.each(this, function(k , v) {
-                  console.log(k,v)
+                  //console.log(k,v)
                   tbl_body += "<tr><td>"+(k+1)+"</td><td>"+v+"</td></tr>"; 
                 })          
             })
