@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <!-- <link href="/static/css/bootstrap.min.css" rel="stylesheet"> -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <!-- <script src="/static/scripts/utils.js"></script> -->
+    <script type="text/javascript">
+
+      $(document).ready(function() {
+          $("#predict").click(function(e) {
+
+            // create a random name for the temp dir
+            //let temp_dir = randomDir()
+            var temp_dir = "ASFG56";
+            console.log(temp_dir)
+            
+            // clear GUI
+            $("#data-body").text('processing... please wait');
+            $("#newtable").html('');
+            
+            // make sure the browser can upload XMLHTTP requests
+            if (!window.XMLHttpRequest) {
+              $("#data-body").text("this browser does not support file upload");
+              return;
+            }
+
+            // upload file to server
+            let file = document.getElementById("ifile").files[0];
+
+            // if (upload(file, temp_dir)==false) {
+            //   $("#data-body").text("upload timed out, aborted...");
+            //   return;
+            // }
+
+            var version = $("#version option:selected").text();
+            if (version=='dev') {
+              version = '0';
+            }
+
+            console.log(version)
+
+            // send job
+            $.post("/predict", {"ifile"   : file.name,
+                                "model"   : $("#myselect option:selected").text(),
+                                "version" : version,
+                                "temp_dir": temp_dir
+                               })
+
+            // show results
+            .done(function(results) {
+              $("#data-body").text(results);
+              
+              //console.log(results)
+        
+              var myjson = JSON.parse(results);
+
+              var tbl_body = '<thead><tr><th>#mol</th><th>prediction</th></tr></thead>';
+              $.each(myjson, function() {
+                var tbl_row = "";
+                //console.log(this)
+                $.each(this, function(k , v) {
+                  //console.log(k,v)
+                  tbl_body += "<tr><td>"+(k+1)+"</td><td>"+v+"</td></tr>"; 
+                })          
+              })
+              $("#newtable").html(tbl_body);            
+          });
+          e.preventDefault();
+        });
+      });
+    </script>
+  </head>
+
+  <body>
+    <div class="container-fluid" >
+      <div class="row">  
+          <div class="col-6">
+            <h2 >Flame predict interface</h2>
+          </div>
+          
+          <div class="col-6">
+            <img class="pull-right pull-top" src="/static/images/etransafe-logo.png"></image>
+          </div>
+      </div>  
+
+        <div class="row">
+          <div class ="col-8">
+
+            <form class="form">
+
+              <div class="form-group row">
+                  <label class="col-sm-2 control-label" for="ifile">Input </label>
+                  <!-- <div class="col-sm-10">
+                    <input type="file" id="ifile" name="ifile">
+                  </div> -->
+                  <div class="col-sm-10">                  
+                    <div class="custom-file" >
+                      <input type="file" class="custom-file-input" id="ifile">
+                      <label class="custom-file-label" for="ifile">Choose file</label>
+                    </div>
+                  </div>
+                </div>
+              
+              <div class="form-group row">
+                <label class="col-sm-2 control-label" for="model">model</label>
+                <div class="col-sm-10">
+                  <select class="form-control" id="myselect" name="model">
+                    <option name="caco">CACO2</option>
+                    <option name="caco2">HERG</option>
+                    <option name="caco3">DIPL2</option>
+                  </select>
+                </div>
+              </div>
+              
+              <div class="form-group row">
+                <label class="col-sm-2 control-label" for="version">version</label>
+                <div class="col-sm-10">
+                  <select class="form-control" id="version" name="version">
+                      <option >dev</option>
+                      <option >1</option>
+                      <option >2</option>
+                      <option >3</option>
+                      <option >4</option>
+                      <option >5</option>
+                      <option >6</option>
+                      <option >7</option>
+                      <option >8</option>
+                      <option >9</option>
+                      <option >10</option>
+                  </select>               
+                </div>
+              </div>
+              
+            </form>
+            
+          </div>
+          
+          <div class="col-4 ">
+            <button class="btn btn-outline-primary" role="button" id="predict">Predict</button>
+          </div>
+
+      </div>
+
+      <div class="row">
+
+        <div class="col-12">
+          <h3>Results</h3>
+          <table class= "table table-bordered table-striped" id="newtable"></table>
+        </div>
+        
+        <div class="col-12">
+          <h3>Console</h3>
+          <pre id="data-body">[not run]</pre>
+        </div>
+
+      </div>
+
+  </body>
+</html>
