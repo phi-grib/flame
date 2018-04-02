@@ -7,38 +7,41 @@
 
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
     <script src="/static/scripts/utils.js"></script>
+
     <script type="text/javascript">
 
       $(document).ready(function() {
+
+        $("#predict").prop('disabled', true);
 
         // show file value after file select 
         $("#ifile").on('change',function(){
             file = document.getElementById("ifile").files[0];
             $("#ifile-label").html( file.name ); 
+            $("#predict").prop('disabled', false);
         })
 
         // pushing the "predict" button
         $("#predict").click(function(e) {
 
-          // create a random name for the temp dir
-          var temp_dir = randomDir()
-          console.log(temp_dir)
-          
-          // clear GUI
-          $("#data-body").text('processing... please wait');
-          $("#newtable").html('');
-          
           // make sure the browser can upload XMLHTTP requests
           if (!window.XMLHttpRequest) {
             $("#data-body").text("this browser does not support file upload");
             return;
           }
+    
+          // clear GUI
+          $("#data-body").text('processing... please wait');
+          $("#data-table").html('')
+          
+          // create a random name for the temp dir
+          var temp_dir = randomDir()
 
           // upload file to server
           var file = document.getElementById("ifile").files[0];
 
           if (upload(file, temp_dir)==false) {
-            $("#data-body").text("upload timed out, aborted...");
+            $("#data-body").text("upload failed, aborted...");
             return;
           }
 
@@ -46,8 +49,6 @@
           if (version=='dev') {
             version = '0';
           }
-
-          console.log(version)
 
           // send job
           $.post("/predict", {"ifile"   : file.name,
@@ -59,33 +60,34 @@
           // show results
           .done(function(results) {
             $("#data-body").text(results);
-            
-            //console.log(results)
       
             var myjson = JSON.parse(results);
 
             var tbl_body = '<thead><tr><th>#mol</th><th>prediction</th></tr></thead>';
             $.each(myjson, function() {
               var tbl_row = "";
-              //console.log(this)
+
               $.each(this, function(k , v) {
-                //console.log(k,v)
                 tbl_body += "<tr><td>"+(k+1)+"</td><td>"+v+"</td></tr>"; 
-              })          
+              })         
+
             })
-            $("#newtable").html(tbl_body);            
+            $("#data-table").html(tbl_body);   
         });
-        e.preventDefault();
+
+        e.preventDefault(); // from predict click function
       });
+
     });
     </script>
   </head>
 
   <body>
     <div class="container-fluid" >
+
       <div class="row">  
           <div class="col-8">
-            <h2 >Flame predict interface</h2>
+            <h1>Flame predict interface</h1>
           </div>
           
           <div class="col-4">
@@ -95,7 +97,7 @@
           <div>&nbsp;</div>
       </div>  
 
-        <div class="row">
+      <div class="row">
           <div class ="col-8">
 
             <form class="form">
@@ -140,7 +142,7 @@
           </div>
           
           <div class="col-4 ">
-            <button class="btn btn-outline-primary" role="button" id="predict">Predict</button>
+            <button class="btn btn-outline-primary" role="button" id="predict" disabled="true">Predict</button>
           </div>
 
       </div>
@@ -148,16 +150,18 @@
       <div class="row">
 
         <div class="col-12">
-          <h3>Results</h3>
-          <table class= "table table-bordered table-striped" id="newtable"></table>
+          <h4>Console</h4>
+          <p id="data-body" class="bg-light border rounded" >[not run]</p>
         </div>
         
         <div class="col-12">
-          <h3>Console</h3>
-          <pre id="data-body">[not run]</pre>
+          <h4>Results</h4>
+          <table class= "table table-bordered table-striped" id="data-table"></table>
         </div>
 
       </div>
+
+    </div>
 
   </body>
 </html>
