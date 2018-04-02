@@ -46,7 +46,7 @@ class FlamePredict(object):
 
         # setup the jinja2 template rendering
         env = Environment(loader=FileSystemLoader('templates')) 
-        tmpl = env.get_template('index.html')
+        tmpl = env.get_template('index-new.html')
 
         return tmpl.render(model_list=endpoint)
 
