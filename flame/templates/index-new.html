@@ -64,8 +64,9 @@
             var myjson = JSON.parse(results);
 
             var tbl_body = '<thead><tr><th>#mol</th><th>prediction</th></tr></thead>';
+            var tbl_row;
             $.each(myjson, function() {
-              var tbl_row = "";
+              tbl_row = "";
 
               $.each(this, function(k , v) {
                 tbl_body += "<tr><td>"+(k+1)+"</td><td>"+v+"</td></tr>"; 

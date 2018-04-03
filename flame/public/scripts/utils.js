@@ -1,5 +1,5 @@
 function randomDir() {
-    let text = "flame-";
+    var text = "flame-";
     const possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 
     for (var i = 0; i < 10; i++)
@@ -17,10 +17,10 @@ function upload(file, temp_dir) {
 
     xhr.addEventListener('readystatechange', function(event) {
         console.log(
-        'ready state', 
-        file.name, 
-        xhr.readyState, 
-        xhr.readyState == 4 && xhr.status
+            'ready state', 
+            file.name, 
+            xhr.readyState, 
+            xhr.readyState == 4 && xhr.status
         );
     });
 
