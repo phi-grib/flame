@@ -1,3 +1,5 @@
+
+// generates a random path for saving prediction results
 function randomDir() {
     var text = "flame-";
     const possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -8,6 +10,7 @@ function randomDir() {
     return text;
 }
 
+// AJAX upload function
 function upload(file, temp_dir) {
     var xhr = new XMLHttpRequest();
 
@@ -34,7 +37,7 @@ function upload(file, temp_dir) {
     xhr.setRequestHeader('X-Filename', file.name);
     xhr.setRequestHeader('Temp-Dir', temp_dir);
 
-    //console.log('sending', file.name, file);
+    console.log('sending', file.name, file);
     xhr.send(file);
 
     return true;
