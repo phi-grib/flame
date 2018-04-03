@@ -46,12 +46,13 @@ class FlamePredict(object):
 
         # setup the jinja2 template rendering
         env = Environment(loader=FileSystemLoader('templates')) 
-        tmpl = env.get_template('index-new.html')
+        tmpl = env.get_template('index.html')
 
         return tmpl.render(model_list=endpoint)
 
     @cherrypy.expose
     def upload(self):
+
         filename    = os.path.basename(cherrypy.request.headers['x-filename'])
         temp_dir    = os.path.basename(cherrypy.request.headers['temp-dir'])
 
@@ -107,10 +108,10 @@ if __name__ == '__main__':
             'tools.sessions.on': False,
             'tools.staticdir.root': os.path.abspath(os.getcwd())
         },
-        # '/favicon.ico': {
-        #     'tools.staticfile.on': True,
-        #     'tools.staticfile.filename': '/static/images/etransafe.ico'
-        # },
+        '/favicon.ico': {
+            'tools.staticfile.on': True,
+            'tools.staticfile.filename': '/static/images/etransafe.ico'
+        },
         '/info': {
             'request.dispatch': cherrypy.dispatch.MethodDispatcher(),
             'tools.response_headers.on': True,
@@ -140,7 +141,5 @@ if __name__ == '__main__':
     webapp.info = FlameInfoWS()
     webapp.dir = FlameDirWS()
     webapp.predict = FlamePredictWS()
-
-    # cherrypy.config.update({'server.socket_host': '0.0.0.0'})
 
     cherrypy.quickstart(webapp, '/', conf)
