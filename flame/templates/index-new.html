@@ -40,41 +40,46 @@
           // upload file to server
           var file = document.getElementById("ifile").files[0];
 
+          console.log('upload starting...')
           if (upload(file, temp_dir)==false) {
             $("#data-body").text("upload failed, aborted...");
             return;
           }
+          console.log('upload finished...')
 
-          var version = $("#version option:selected").text();
-          if (version=='dev') {
-            version = '0';
-          }
+          // var version = $("#version option:selected").text();
+          // if (version=='dev') {
+          //   version = '0';
+          // }
 
-          // send job
-          $.post("/predict", {"ifile"   : file.name,
-                              "model"   : $("#myselect option:selected").text(),
-                              "version" : version,
-                              "temp_dir": temp_dir
-                              })
+          // console.log('predict POST ...')
 
-          // show results
-          .done(function(results) {
-            $("#data-body").text(results);
+          // // send job
+          // $.post("/predict", {"ifile"   : file.name,
+          //                     "model"   : $("#myselect option:selected").text(),
+          //                     "version" : version,
+          //                     "temp_dir": temp_dir
+          //                     })
+
+          // // show results
+          // .done(function(results) {
+          //   console.log('predict completed, parsing results')
+          //   $("#data-body").text(results);
       
-            var myjson = JSON.parse(results);
+          //   var myjson = JSON.parse(results);
 
-            var tbl_body = '<thead><tr><th>#mol</th><th>prediction</th></tr></thead>';
-            var tbl_row;
-            $.each(myjson, function() {
-              tbl_row = "";
+          //   var tbl_body = '<thead><tr><th>#mol</th><th>prediction</th></tr></thead>';
+          //   var tbl_row;
+          //   $.each(myjson, function() {
+          //     tbl_row = "";
 
-              $.each(this, function(k , v) {
-                tbl_body += "<tr><td>"+(k+1)+"</td><td>"+v+"</td></tr>"; 
-              })         
+          //     $.each(this, function(k , v) {
+          //       tbl_body += "<tr><td>"+(k+1)+"</td><td>"+v+"</td></tr>"; 
+          //     })         
 
-            })
-            $("#data-table").html(tbl_body);   
-        });
+          //   })
+          //   $("#data-table").html(tbl_body);   
+          //});
 
         e.preventDefault(); // from predict click function
       });

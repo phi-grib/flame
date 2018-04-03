@@ -10,6 +10,25 @@ function randomDir() {
     return text;
 }
 
+function parseResults (results) {
+    console.log('predict completed, parsing results')
+    $("#data-body").text(results);
+
+    var myjson = JSON.parse(results);
+
+    var tbl_body = '<thead><tr><th>#mol</th><th>prediction</th></tr></thead>';
+    var tbl_row;
+    $.each(myjson, function() {
+      tbl_row = "";
+
+      $.each(this, function(k , v) {
+        tbl_body += "<tr><td>"+(k+1)+"</td><td>"+v+"</td></tr>"; 
+      })         
+
+    })
+    $("#data-table").html(tbl_body);   
+}
+
 // AJAX upload function
 function upload(file, temp_dir) {
     var xhr = new XMLHttpRequest();
@@ -27,12 +46,32 @@ function upload(file, temp_dir) {
         );
     });
 
-    xhr.ontimeout = function (e) {
+    xhr.ontimeout = function () {
         console.log('WARNING! timed out. File can be incomplete');
         return false;
     };
 
-    xhr.open('POST', '/upload', true);
+    xhr.onload = function () {
+        
+        var version = $("#version option:selected").text();
+        if (version=='dev') {
+          version = '0';
+        }
+
+        // send job
+        $.post("/predict", {"ifile"   : file.name,
+                            "model"   : $("#myselect option:selected").text(),
+                            "version" : version,
+                            "temp_dir": temp_dir
+                            })
+
+        // show results
+        .done(function(results) {
+            parseResults (results);
+        });
+    }
+
+    xhr.open('POST', '/upload', true); 
     xhr.timeout = 600000;
     xhr.setRequestHeader('X-Filename', file.name);
     xhr.setRequestHeader('Temp-Dir', temp_dir);
