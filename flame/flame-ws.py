@@ -108,10 +108,6 @@ if __name__ == '__main__':
             'tools.sessions.on': False,
             'tools.staticdir.root': os.path.abspath(os.getcwd())
         },
-        '/favicon.ico': {
-            'tools.staticfile.on': True,
-            'tools.staticfile.filename': '/static/images/etransafe.ico'
-        },
         '/info': {
             'request.dispatch': cherrypy.dispatch.MethodDispatcher(),
             'tools.response_headers.on': True,
