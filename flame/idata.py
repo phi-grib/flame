@@ -297,13 +297,14 @@ class Idata:
 
         try:
             with open (self.dest_path+'/data.pkl', 'wb') as fo:
+
                 pickle.dump (md5_parameters, fo)
                 pickle.dump (md5_input, fo)
-                pickle.dump (results[0],fo)
-                pickle.dump (results[1],fo)
-                pickle.dump (results[2],fo)
-                pickle.dump (results[3],fo)
-                pickle.dump (results[4],fo)
+                pickle.dump (results["xmatrix"],fo)
+                pickle.dump (results["ymatrix"],fo)
+                pickle.dump (results["experim"],fo)
+                pickle.dump (results["obj_nam"],fo)
+                pickle.dump (results["var_nam"],fo)
         except :
             return False
 
@@ -324,15 +325,16 @@ class Idata:
                 if md5_input != utils.md5sum(self.ifile):
                     return False, 'md5 input file'
 
-                xmatrix = pickle.load(fi)
-                ymatrix = pickle.load(fi)
-                experim = pickle.load(fi)
-                obj_nam = pickle.load(fi)
-                var_nam = pickle.load(fi)
+                results = {}
+                results["xmatrix"] = pickle.load(fi)
+                results["ymatrix"] = pickle.load(fi)
+                results["experim"] = pickle.load(fi)
+                results["obj_nam"] = pickle.load(fi)
+                results["var_nam"] = pickle.load(fi)
         except :
             return False, 'unable to open pickl file'
     
-        results = (xmatrix, ymatrix, experim, obj_nam, var_nam)
+        #results = (xmatrix, ymatrix, experim, obj_nam, var_nam)
 
         print ('recycling!')
 
@@ -443,7 +445,12 @@ class Idata:
         # [2] experim      for prediction quality assessment   
         # [3] obj_nam      for presenting results
         # [4] var_nam        
-        results = (xmatrix, ymatrix, experim, obj_nam, var_nam)
+        #results = (xmatrix, ymatrix, experim, obj_nam, var_nam)
+        results = {"xmatrix": xmatrix,
+                   "ymatrix": ymatrix,
+                   "experim": experim,
+                   "obj_nam": obj_nam,
+                   "var_nam": var_nam}
 
         return success, results
 

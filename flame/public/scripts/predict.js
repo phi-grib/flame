@@ -23,17 +23,17 @@ function parseResults (results) {
     $("#data-body").text(results);
 
     var myjson = JSON.parse(results);
+    console.log(myjson)
 
-    var tbl_body = '<thead><tr><th>#mol</th><th>prediction</th></tr></thead>';
-    var tbl_row;
-    $.each(myjson, function() {
-      tbl_row = "";
+    var tbl_body = '<thead><tr><th>#</th><th>object name</th><th>prediction</th></tr></thead>';
 
-      $.each(this, function(k , v) {
-        tbl_body += "<tr><td>"+(k+1)+"</td><td>"+v+"</td></tr>"; 
-      })         
+    for (i in myjson['projection']){
+        tbl_body += "<tr><td>"+(parseInt(i)+1)+
+                    "</td><td>"+myjson['obj_nam'][i]+
+                    "</td><td>"+myjson['projection'][i].toFixed(4)+
+                    "</td></tr>";
+    }
 
-    })
     $("#data-table").html(tbl_body);   
 };
 
