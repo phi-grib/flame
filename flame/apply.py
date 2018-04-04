@@ -49,8 +49,12 @@ class Apply:
             with open(model_file, "rb") as input_file:
                 estimator = pickle.load(input_file)
 
+            zero_array = np.zeros(nobj, dtype=np.float64)
+
             self.results['origin'] = 'apply'
             self.results['projection'] = estimator.project(X)
+            self.results['CI'] = zero_array
+            self.results['RI'] = zero_array
         except:
             return False, 'projection error'
 

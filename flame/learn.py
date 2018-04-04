@@ -32,8 +32,8 @@ class Learn:
 
         self.parameters = parameters 
 
-        self.X = results[0]
-        self.Y = results[1]
+        self.X = results['xmatrix']
+        self.Y = results['ymatrix']
         # TODO: make use of other results items
         
         self.model_path = self.parameters['model_path']

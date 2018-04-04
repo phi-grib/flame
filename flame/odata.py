@@ -47,11 +47,14 @@ class Odata:
 
         if not 'projection' in self.results:
             return False, self.results
-
-        num_results = [ float(x) for x in self.results['projection']]
         
-        temp_json = {'projection': self.results['projection'].tolist(),
-                     'obj_nam': self.results['obj_nam']}
+        # numpy arrays must be converted to lists before they
+        # can be serialized by json.dumps
+        temp_json = {
+            'obj_nam': self.results['obj_nam'],
+            'projection': self.results['projection'].tolist(),
+            'CI': self.results['CI'].tolist(),
+            'RI': self.results['RI'].tolist()}
 
         return True, json.dumps(temp_json) 
 

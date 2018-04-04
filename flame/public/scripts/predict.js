@@ -22,15 +22,21 @@
 function parseResults (results) {
     $("#data-body").text(results);
 
+    const headers = ['#','name','prediction','CI','RI']
+    var tbl_body = '<thead><tr>'
+    for (i in headers){
+        tbl_body += '<th>'+headers[i]+'</th>'
+    }
+    tbl_body+='</tr></thead>'
+    
     var myjson = JSON.parse(results);
-    console.log(myjson)
-
-    var tbl_body = '<thead><tr><th>#</th><th>object name</th><th>prediction</th></tr></thead>';
 
     for (i in myjson['projection']){
         tbl_body += "<tr><td>"+(parseInt(i)+1)+
                     "</td><td>"+myjson['obj_nam'][i]+
                     "</td><td>"+myjson['projection'][i].toFixed(4)+
+                    "</td><td>"+myjson['CI'][i]+
+                    "</td><td>"+myjson['RI'][i]+
                     "</td></tr>";
     }
 
@@ -76,7 +82,7 @@ $(document).ready(function() {
 
         // make sure the browser can upload XMLHTTP requests
         if (!window.XMLHttpRequest) {
-        $("#data-body").text("this browser does not support file upload");
+            $("#data-body").text("this browser does not support file upload");
             return;
         };
 
