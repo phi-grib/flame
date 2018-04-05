@@ -73,7 +73,7 @@ And then the model is immediately operative and able to produce exactly the same
 | -e/--endpoint | Name of the model which will be used by the command. This name is defined when the model is created for the fist time with the command *-c manage -a new* |
 | -v/--version | Version of the model, typically an integer. Version 0 makes reference to the model development "sandbox" which is created automatically uppon model creation |
 | -a/--action | Management action to be carried out. Acceptable values are *new*, *kill*, *publish*, *remove*, *export* and *import*. The meaning of these actions and examples of use are provided below   |
-| -f/--infile | Name of the input file used by the command. This file can correspond to the training data (*build*), the query (*predict*) or a model to import (*manage*) |
+| -f/--infile | Name of the input file used by the command. This file can correspond to the training data (*build*) or the query compounds (*predict*) |
 | -h/--help | Shows a help message in the screen |
 
 
@@ -83,10 +83,10 @@ And then the model is immediately operative and able to produce exactly the same
 | new | *python -c manage -a new -e NEWMODEL* | Creates a new entry in the model repository named NEWMODEL  |
 | kill | *python -c manage -a kill -e NEWMODEL* | Removes NEWMODEL from the model repository. Use with extreme care, since the program will not ask confirmation and the removal will be permanent and irreversible  |
 | publish | *python -c manage -a publish -e NEWMODEL* | Clones the development version, creating a new version in the model repository. Versions are assigned sequential numbers |
-| remove | *python -c manage -a remove -e NEWMODEL* | Creates a new entry in the model repository named NEWMODEL  |
-| list | *python -c manage -a remove -e NEWMODEL* | Creates a new entry in the model repository named NEWMODEL  |
-| import | *python -c manage -a remove -e NEWMODEL* | Creates a new entry in the model repository named NEWMODEL  |
-| export | *python -c manage -a remove -e NEWMODEL* | Creates a new entry in the model repository named NEWMODEL  |
+| remove | *python -c manage -a remove -e NEWMODEL -v 2* | Removes the version specified from the NEWMODEL model repository |
+| list | *python -c manage -a list* | Lists the models present in the repository and the published version for each one. If the name of a model is provided, lists only the the published versions for this model  |
+| export | *python -c manage -a export -e NEWMODEL* | Exports the model entry NEWMODE, creating a tar compressed file *NEWMODEL.tgz* which contains all the versions. This file can be imported by another flame instance (installed in a different host or company) with the *-c manage import* command |
+| import | *python -c manage -a import -e NEWMODEL* | Imports file *NEWMODEL.tgz*, typically generated using command *-c manage -a export* creating model NEWMODEL in the local model repository |
 
 
 ## Flame-app
@@ -100,11 +100,29 @@ To access the web graphical interface, open a web browers and enter the address 
 
 ![Alt text](images/flame-gui.png?raw=true "web GUI")
 
-The 
+Web API services available:
 
-| Command | Example | Description |
-| --- | --- | ---|
+| URL | HTTP verb | Input data | Return data | HTTP status codes |
+| --- | --- | --- | --- | --- |
+| /info | GET | | application/json: info_message response | 200 |
+| /dir | GET | | application/json: available_services response | 200 |
+| /predict | GET | | multipart/form-data encoding: - model - filename | application/json: predict_call response | 200 or 500 for malformed POST message |
 
 ## Technical details
 
-## Examples of use with Jupyter Notebooks
+### Using Flame
+
+Flame can be used in several ways:
+- Using the web-GUI, starting the flame-ws.py web-service
+- Using the flame command descrived above
+- As a Python package, making direct calls to the high-level objects *predict*, *build* or *manage*
+- As a Python package, making calls to the lower level objects *idata*, *apply*, *learn*, *odata*
+
+Typically, Flame models are developed by modeling engineers, importing an appropriate training series and tunning the parameters defined in *parameters.yaml* file, either with and editor or with the model GUI, and then running the flame build command until optimum results are obtained. This task can also be carried out making calls to the objects from an interactive Python environment, like a Jupyter notebook
+
+Advanced users can customize the models by editting the objects *idata_child*, *appl_child*, *learn_child* and *odata_child* present at the *model/dev* folder. These empty objects are childs of the corresponding objects called by flame, and it is possible to override any of the parents' method simply by copying and editing these whitin the files
+
+### Flame models
+
+* parameter.yaml and child objects *
+
