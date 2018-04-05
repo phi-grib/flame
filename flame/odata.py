@@ -43,19 +43,20 @@ class Odata:
         # names and structures
         # JSON serialization (if out_format is JSON)
 
-        print ('odata : ', self.results)
+        #print ('odata : ', self.results)
 
         if not 'projection' in self.results:
             return False, self.results
-
-        num_results = [ float(x) for x in self.results['projection']]
         
-        # for i in self.results['projection']:
-        #     results_string.append(i)
-        
-        # jstring = json.dumps(results_string)
+        # numpy arrays must be converted to lists before they
+        # can be serialized by json.dumps
+        temp_json = {
+            'obj_nam': self.results['obj_nam'],
+            'projection': self.results['projection'].tolist(),
+            'CI': self.results['CI'].tolist(),
+            'RI': self.results['RI'].tolist()}
 
-        return True, json.dumps({'results' : num_results}) 
+        return True, json.dumps(temp_json) 
 
 
     def run (self):

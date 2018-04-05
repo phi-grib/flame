@@ -23,6 +23,27 @@
 import hashlib
 import os
 
+working_dir = os.path.dirname(os.path.abspath(__file__))[:-5] #removing '/utils'
+
+root_dir = working_dir + '/models' 
+
+def root_path ():
+    return root_dir
+
+def base_path (model):
+    return root_dir+'/'+model
+
+def model_path (model, version):        
+       
+    epd = base_path(model)
+    
+    if version == 0 :
+        epd += '/dev'
+    else:
+        epd += '/ver%0.6d'%(version)
+    
+    return epd
+
 def md5sum(filename, blocksize=65536):
 
     hash = hashlib.md5()
@@ -32,25 +53,3 @@ def md5sum(filename, blocksize=65536):
             hash.update(block)
 
     return hash.hexdigest()
-
-def base_path (model):
-
-    wkd = os.path.dirname(os.path.abspath(__file__))
-    wkd = wkd[:-5] # remove '/utils'
-    
-    epd = wkd+'/models/'+model
-
-    return epd
-
-def model_path (model, version):        
-    
-    wkd = os.path.dirname(os.path.abspath(__file__))
-    wkd = wkd[:-5] # remove '/utils'
-    
-    epd = wkd+'/models/'+model
-    if version == 0 :
-        epd += '/dev'
-    else:
-        epd += '/ver%0.6d'%(version)
-    
-    return epd

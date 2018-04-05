@@ -123,7 +123,15 @@ class Manage:
     def action_list (self, model):
 
         # TODO: if no argument is provided, also list all models
-        
+        if not model:
+            rdir = utils.root_path()
+            num_models=0
+            for x in os.listdir (rdir):
+                num_models+=1
+                print (x)
+
+            return True, str(num_models)+' models found in the repository'
+
         bdir = utils.base_path (model)
 
         num_versions = 0

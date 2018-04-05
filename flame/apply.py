@@ -31,7 +31,7 @@ class Apply:
         self.results = results
         
     def getMatrices (self):
-        return self.results[0]
+        return self.results["xmatrix"]
 
     def run (self):
        
@@ -42,7 +42,6 @@ class Apply:
         if (nobj==0) or (nvarx==0) :
             return False, 'failed to extract activity or to generate MD'
 
-        results = {'origin':'apply'}
         try:
             model_file = self.parameters['model_path'] + '/model.pkl'
 
@@ -50,9 +49,14 @@ class Apply:
             with open(model_file, "rb") as input_file:
                 estimator = pickle.load(input_file)
 
-            results['projection'] = estimator.project(X)
+            zero_array = np.zeros(nobj, dtype=np.float64)
+
+            self.results['origin'] = 'apply'
+            self.results['projection'] = estimator.project(X)
+            self.results['CI'] = zero_array
+            self.results['RI'] = zero_array
         except:
             return False, 'projection error'
 
-        return True, results
+        return True, self.results
 

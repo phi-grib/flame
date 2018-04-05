@@ -22,6 +22,7 @@
 
 import os
 import sys
+import time # only to simulate long runs
 
 import util.utils as utils
 from control import Control
@@ -93,6 +94,8 @@ class Predict:
         # run odata object, in charge of formatting the prediction results
         odata = OdataChild (parameters, results, self.out_format)
         success, results = odata.run ()
+
+        time.sleep(3)
 
         return success, results
 

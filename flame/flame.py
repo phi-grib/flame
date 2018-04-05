@@ -68,7 +68,7 @@ def main():
 
     parser.add_argument('-e', '--endpoint', 
         help='Endpoint model name.', 
-        required=True)
+        required=False)
 
     parser.add_argument('-v', '--version', 
         help='Endpoint model version.', 
