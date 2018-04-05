@@ -1,6 +1,6 @@
 # system settings
 verbose_error: true
-numCPUs: 2
+numCPUs: 1
 
 # input settings
 input_type: molecule                  # molecule | data
@@ -11,7 +11,7 @@ computeMD_method:                     # RDKit_properties | RDKit_md | custom
 - RDKit_properties
 
 # SDFile settings
-SDFile_activity: activity             # str
+SDFile_activity: activity             # str s
 SDFile_experimental: IC50             # str
 SDFile_name: GENERIC_NAME             # str
 
