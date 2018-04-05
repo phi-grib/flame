@@ -22,14 +22,14 @@ Flame provides a simple command-line interface (Flame), which is useful for acce
 Let's start creating a new model:
 
 ```sh
-flame -c manage -a new -e MyModel
+python flame.py -c manage -a new -e MyModel
 ```
 
 This creates a new entry in the model repository, and the development version of the model, populating these entries with default options.
 The contents of the model repository are shown using the command
 
 ```sh
-flame -c manage -a list
+python flame.py -c manage -a list
 ```
 
 Building a model only requires entering an input file formatted for training one of the supported machine-learning methods. In the case of QSAR models, the input file can be a SDFile, where the biological property is annotated in one of the fields. 
@@ -37,44 +37,73 @@ Building a model only requires entering an input file formatted for training one
 The details of how Flame normalizes the structures, obtains molecular descriptors and applies the machine-learning algorithm are defined in a text file which now contains default options. These can be changed as we will describe latter, but for now let's use the defaults to obtain a RF model on a series of 100 compounds annotated with a biological property in the field <activity> 
 	
 ```sh
-flame -c build -e MyModel -f series.sdf
+python flame.py -c build -e MyModel -f series.sdf
 ```	
 After a few seconds the model is built, and a summary of the model quality is presented in the screen.
 This model is immediately accessible for predicting the properties of new compounds. This can be done locally using the command:
 ```sh
-flame -c predict -e MyModel -v 0 -f query.sdf
+python flame.py -c predict -e MyModel -v 0 -f query.sdf
 ```	
 And this will show the properties predicted for the compounds in the query SDFile 
 
 In the above command we specified the model version used for the prediction. So far we only have a model in the development folder (version 0). This version will be overwritten every time we develop a new model for this endpoint. Let's imagine that we are very satisfied with our model and want to store it for future use. We can "publish" it with the command
 ```sh
-flame -c manage -a publish -e MyModel
+python flame.py -c manage -a publish -e MyModel
 ```	
 This will create model version 1. We can list existing version for a given endpoint using the list command mentioned before
 ```sh
-flame -c manage -a list
+python flame.py -c manage -a list
 ```	
 Now, the output says we have a published version of model MyModel. 
 
 Imagine that the model is so good you want to send to a company, so they can run predictions for confidential compounds that they cannot disclose to you. The model can be exported using the command
 ```sh
-flame -c manage -a export -e MyModel
+python flame.py -c manage -a export -e MyModel
 ```	
 This creates a very compact file with the extension .tgz in the local directory. It can be sent by e-mail or uploaded to a repository in the cloud from where the company can download it. In order to use it, the company can easily install the new model using the command
 ```sh
-flame -c manage -a import -f MyModel.tgz
+python flame.py -c manage -a import -f MyModel.tgz
 ```	
 And then the model is immediately operative and able to produce exactly the same predictions we obtain at the development environment  
 ## Flame commands
 
-### Building a model
+| Command | Description |
+| --- | --- |
+| -c/--command | Action to be performed. Acceptable values are *build*, *predict* and *manage* |
+| -e/--endpoint | Name of the model which will be used by the command. This name is defined when the model is created for the fist time with the command *-c manage -a new* |
+| -v/--version | Version of the model, typically an integer. Version 0 makes reference to the model development "sandbox" which is created automatically uppon model creation |
+| -a/--action | Management action to be carried out. Acceptable values are *new*, *kill*, *publish*, *remove*, *export* and *import*. The meaning of these actions and examples of use are provided below   |
+| -f/--infile | Name of the input file used by the command. This file can correspond to the training data (*build*), the query (*predict*) or a model to import (*manage*) |
+| -h/--help | Shows a help message in the screen |
+
 
 ### Management commands
+| Command | Example | Description |
+| --- | --- | ---|
+| new | *python -c manage -a new -e NEWMODEL* | Creates a new entry in the model repository named NEWMODEL  |
+| kill | *python -c manage -a kill -e NEWMODEL* | Removes NEWMODEL from the model repository. Use with extreme care, since the program will not ask confirmation and the removal will be permanent and irreversible  |
+| publish | *python -c manage -a publish -e NEWMODEL* | Clones the development version, creating a new version in the model repository. Versions are assigned sequential numbers |
+| remove | *python -c manage -a remove -e NEWMODEL* | Creates a new entry in the model repository named NEWMODEL  |
+| list | *python -c manage -a remove -e NEWMODEL* | Creates a new entry in the model repository named NEWMODEL  |
+| import | *python -c manage -a remove -e NEWMODEL* | Creates a new entry in the model repository named NEWMODEL  |
+| export | *python -c manage -a remove -e NEWMODEL* | Creates a new entry in the model repository named NEWMODEL  |
 
-### Prediction commands
 
 ## Flame-app
-Flame-app is a simple prediction web server, accessible using a web interface
+Flame-app starts a simple prediction web server, 
+
+```sh
+python flame-ws.py 
+```	
+
+To access the web graphical interface, open a web browers and enter the address *http://localhost:8080*
+
+![Alt text](images/flame-gui.png?raw=true "web GUI")
+
+The 
+
+| Command | Example | Description |
+| --- | --- | ---|
 
 ## Technical details
 
