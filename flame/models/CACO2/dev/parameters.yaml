@@ -1,6 +1,6 @@
 # system settings
-verbose_error: true
-numCPUs: 1
+verbose_error: false
+numCPUs: 2
 
 # input settings
 input_type: molecule                  # molecule | data
