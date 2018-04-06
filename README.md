@@ -41,17 +41,6 @@ source activate flame
 
 to activate the environment.
 
-Now install flame package with:
-
-```bash
-python setup.py install
-```
-
-or
-
-```bash
-pip install -e .
-```
 
 ## Main features
 
