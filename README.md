@@ -27,7 +27,7 @@ Go to the repository directory
 cd flame
 ```
 
-and create the **conda environment** with all the dependencies and extra packages (jupyter, matplotlib...):
+and create the **conda environment** with all the dependencies and extra packages (numpy, RDKit...):
 
 ```bash
 conda env create -f environment.yml
