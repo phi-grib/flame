@@ -1,12 +1,13 @@
 # Flame
 
-Flame is a flexible framework supporting predictive modeling within eTRANSAFE (http://etransafe.eu) project. 
+Flame is a flexible framework supporting predictive modeling within the eTRANSAFE (http://etransafe.eu) project. 
+
 
 Flame allows to:
-- Develop easily machine-learning models, for example, QSAR-like models starting from annotated collections of chemical compounds stored in standard formats (SDFiles)
-- Transfer new models into a production environment where they can be used by web services to predict the properties of new compounds
+- Easily develop machine-learning models, for example QSAR-like models, starting from annotated collections of chemical compounds stored in standard formats (i.e. SDFiles).
+- Transfer new models into a production environment where they can be used by web services to predict the properties of new compounds.
 
-Flame is in active development and **no stable release has been produced so far**. Even this README is under construction, so please excuse errors and inaccuracies
+Flame is in active development and **no stable release has been produced so far**. Even this README is under construction, so please excuse errors and inaccuracies.
 
 ## Installation
 
@@ -55,13 +56,13 @@ pip install -e .
 
 ## Main features
 
-- Native support of most common machine-learning algorithms, including rich configuration options and facilitating the model optimization 
+- Native support of most common machine-learning algorithms, including rich configuration options and facilitating the model optimization. 
 - Support for any standard formatted input: from a tsv table to a collection of compounds in SMILES or SDFile format. 
-- Multiple interfaces adapted to the needs of different users: as a web service, for end-user prediction, a full featured GUI for model development, command line, integration in Jupyter notebooks, etc.
-- Support for parallel processing
-- Integration of models developed using other tools (e.g. R, KNIME)
-- Support for inter-model communication: the output of a model can be used as input for other models
-- Integrated model version management
+- Multiple interfaces adapted to the needs of different users: as a web service, for end-user prediction, as a full featured GUI for model development, as command line, integration in Jupyter notebooks, etc.
+- Support for parallel processing.
+- Integration of models developed using other tools (e.g. R, KNIME).
+- Support for inter-model communication: the output of a model can be used as input for other models.
+- Integrated model version management.
 
 ## Quickstarting
 
@@ -73,38 +74,38 @@ Let's start creating a new model:
 python flame.py -c manage -a new -e MyModel
 ```
 
-This creates a new entry in the model repository, and the development version of the model, populating these entries with default options.
-The contents of the model repository are shown using the command
+This creates a new entry in the model repository and the development version of the model, populating these entries with default options.
+The contents of the model repository are shown using the command.
 
 ```sh
 python flame.py -c manage -a list
 ```
 
-Building a model only requires entering an input file formatted for training one of the supported machine-learning methods. In the case of QSAR models, the input file can be a SDFile, where the biological property is annotated in one of the fields. 
+Building a model only requires entering an input file formatted for training one of the supported machine-learning methods. In the case of QSAR models, the input file can be an SDFile, where the biological property is annotated in one of the fields. 
 
-The details of how Flame normalizes the structures, obtains molecular descriptors and applies the machine-learning algorithm are defined in a parameter file (*parameter.yaml*) which now contains default options. These can be changed as we will describe latter, but for now let's use the defaults to obtain a Random Forest model on a series of 100 compounds annotated with a biological property in the field <activity> 
+The details of how Flame normalizes the structures, obtains molecular descriptors and applies the machine-learning algorithm are defined in a parameters file (*parameter.yaml*) which now contains default options. These can be changed as we will describe later, but for now let's use the defaults to obtain a Random Forest model on a series of 100 compounds annotated with a biological property in the field <activity>: 
 	
 ```sh
 python flame.py -c build -e MyModel -f series.sdf
 ```	
-After a few seconds the model is built, and a summary of the model quality is presented in the screen.
+After a few seconds, the model is built and a summary of the model quality is presented in the screen.
 This model is immediately accessible for predicting the properties of new compounds. This can be done locally using the command:
 ```sh
 python flame.py -c predict -e MyModel -v 0 -f query.sdf
 ```	
-And this will show the properties predicted for the compounds in the query SDFile 
+And this will show the properties predicted for the compounds in the query SDFile. 
 
 In the above command we specified the model version used for the prediction. So far we only have a model in the development folder (version 0). This version will be overwritten every time we develop a new model for this endpoint. Let's imagine that we are very satisfied with our model and want to store it for future use. We can obtain a persistent copy of it with the command
 ```sh
 python flame.py -c manage -a publish -e MyModel
 ```	
-This will create model version 1. We can list existing version for a given endpoint using the list command mentioned before
+This will create model version 1. We can list existing versions for a given endpoint using the list command mentioned below
 ```sh
 python flame.py -c manage -a list
 ```	
 Now, the output says we have a published version of model MyModel. 
 
-Imagine that the model is so good you want to send it elsewhere, for example, a company which wants to obtain predictions for confidential compounds in their own computing facilities. The model can be exported using the command
+Imagine that the model is so good you want to send it elsewhere, for example a company that wants to obtain predictions for confidential compounds in their own computing facilities. The model can be exported using the command
 ```sh
 python flame.py -c manage -a export -e MyModel
 ```	
@@ -112,18 +113,18 @@ This creates a very compact file with the extension .tgz in the local directory.
 ```sh
 python flame.py -c manage -a import -e MyModel
 ```	
-And then the model is immediately operative and able to produce exactly the same predictions we obtain at the development environment  
+And then the model is immediately operative and able to produce exactly the same predictions we obtain in the development environment  
 
 ## Flame commands
 
 | Command | Description |
 | --- | --- |
-| -c/--command | Action to be performed. Acceptable values are *build*, *predict* and *manage* |
-| -e/--endpoint | Name of the model which will be used by the command. This name is defined when the model is created for the fist time with the command *-c manage -a new* |
-| -v/--version | Version of the model, typically an integer. Version 0 makes reference to the model development "sandbox" which is created automatically uppon model creation |
-| -a/--action | Management action to be carried out. Acceptable values are *new*, *kill*, *publish*, *remove*, *export* and *import*. The meaning of these actions and examples of use are provided below   |
-| -f/--infile | Name of the input file used by the command. This file can correspond to the training data (*build*) or the query compounds (*predict*) |
-| -h/--help | Shows a help message in the screen |
+| -c/ --command | Action to be performed. Acceptable values are *build*, *predict* and *manage* |
+| -e/ --endpoint | Name of the model which will be used by the command. This name is defined when the model is created for the fist time with the command *-c manage -a new* |
+| -v/ --version | Version of the model, typically an integer. Version 0 refers to the model development "sandbox" which is created automatically uppon model creation |
+| -a/ --action | Management action to be carried out. Acceptable values are *new*, *kill*, *publish*, *remove*, *export* and *import*. The meaning of these actions and examples of use are provided below   |
+| -f/ --infile | Name of the input file used by the command. This file can correspond to the training data (*build*) or the query compounds (*predict*) |
+| -h/ --help | Shows a help message on the screen |
 
 Management commands deserve further description:
 
@@ -174,7 +175,7 @@ Flame was designed to be used in different ways, using diverse interfaces. For e
 - As a Python package, making direct calls to the high-level objects *predict*, *build* or *manage*
 - As a Python package, making calls to the lower level objects *idata*, *apply*, *learn*, *odata*
 
-The two main modeling tasks that must be supported by Flame are the *model development* and the use of the models for *prediction*. These are typically carried out by people with different expertise and in different environments. Flame was designed around this concept and allow to decouple completelly both tasks. Somebody can develop a model in a research environment which can be easily exported to be installed in a production environment to serve prediction services. Flame implements interfaces designed specifically for each task, even if they share exactly the same code, to guarantee compatibility and consistency. 
+The two main modeling tasks that must be supported by Flame are the *model development* and the use of the models for *prediction*. These are typically carried out by people with different expertise and in different environments. Flame was designed around this concept and allows to decouple both tasks completelly. Somebody can develop a model in a research environment which can be easily exported to be installed in a production environment to serve prediction services. Flame implements interfaces designed specifically for each task, even if they share exactly the same code, to guarantee compatibility and consistency. 
 
 ### Developing models
 
@@ -182,7 +183,7 @@ Typically, Flame models are developed by modeling engineers. This task requires 
 
 Model building can be easily customized by editing the parameters defined in a command file (called *parameters.yaml*), either with a text editor or with the Flame modeling GUI (**in development**). Then, the model can be built using the `flame.py` build command, and its quality can be assessed in an iterative process which is repeated until optimum results are obtained. This task can also be carried out making calls to the objects mentioned above from an interactive Python environment, like a Jupyter notebook. A full documentation of the library can be obtained running Doxygen on the root directory.
 
-Advanced users can customize the models by editting the objects *idata_child*, *appl_child*, *learn_child* and *odata_child* present at the *model/dev* folder. These empty objects are childs of the corresponding objects called by flame, and it is possible to override any of the parents' method simply by copying and editing these whitin the childs code files.
+Advanced users can customize the models by editting the objects *idata_child*, *appl_child*, *learn_child* and *odata_child* present at the *model/dev* folder. These empty objects are childs of the corresponding objects called by flame, and it is possible to override any of the parents' methods simply by copying and editing these whitin the childs' code files.
 
 Models can be published to obtain persistent versions, usable for predicton in the same environment, or exported for using them in external production environments, as described above.
 
@@ -195,7 +196,7 @@ python flame.py -c predict -m MyModel -v 1 -f query.sdf
 ```
 This allows to integate the prediction in scripts, or workflow tools like KNIME and Pipeline Pilot.
 
-Also, the models can run as prediction web-services, using the provided flame-ws interface. These services can be consumed by the stand-alone web GUI provided and described above or connected to a more complex platform, like the one currently in development in eTRANSAFE project.
+Also, the models can run as prediction web-services, using the provided flame-ws interface. These services can be consumed by the stand-alone web GUI provided and described above or connected to a more complex platform, like the one currently in development in the eTRANSAFE project.
 
 
 ## Licensing
