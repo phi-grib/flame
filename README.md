@@ -11,8 +11,7 @@ Flame is in active development and **no stable release has been produced so far*
 
 ## Installation
 
-It is required to **install Anaconda** to use the Conda package and environment manager. Download Anaconda from [here](https://www.anaconda.com/distribution/).
-Flame also needs the 3rd party module Standardiser. Please follow **install standardiser** instrucctions.
+Flame can be used in most Windows, Linux or macOS configurations, provided that a suitable execution environment is set up. We recommend, as a fist step, installing the Conda package and environment manager. Download a suitable Anaconda anaconda distribution for your operative system from [here](https://www.anaconda.com/distribution/). 
 
 
 Download the repository:
@@ -64,9 +63,10 @@ pip install -e .
 - Support for inter-model communication: the output of a model can be used as input for other models.
 - Integrated model version management.
 
+
 ## Quickstarting
 
-Flame provides a simple command-line interface (`flame.py`), which is useful for accessing its functionality and getting acquainted with its use.
+Flame provides a simple command-line interface `flame.py`, which is useful for accessing its functionality and getting acquainted with its use.
 
 Let's start creating a new model:
 
@@ -128,6 +128,7 @@ And then the model is immediately operative and able to produce exactly the same
 
 Management commands deserve further description:
 
+
 ### Management commands
 
 | Command | Example | Description |
@@ -141,12 +142,12 @@ Management commands deserve further description:
 | import | *python -c manage -a import -e NEWMODEL* | Imports file *NEWMODEL.tgz*, typically generated using command *-c manage -a export* creating model NEWMODEL in the local model repository |
 
 
-## Flame-app
+## Flame web-app
 
 Flame includes a simple prediction web server.
 
 ```sh
-python flame-ws.py 
+python predict-ws.py 
 ```	
 
 To access the web graphical interface, open a web brower and enter the address *http://localhost:8080*
@@ -165,17 +166,20 @@ Web API services available:
 
 The exact synthax of the JSON object returned by predict will be documented in detail elsewhere.
 
+
 ## Technical details
+
 
 ### Using Flame
 
 Flame was designed to be used in different ways, using diverse interfaces. For example:
-- Using the web-GUI, starting the `flame-ws.py` web-service
+- Using the web-GUI, starting the `predict-ws.py` web-service
 - Using the `flame.py` command described above
 - As a Python package, making direct calls to the high-level objects *predict*, *build* or *manage*
 - As a Python package, making calls to the lower level objects *idata*, *apply*, *learn*, *odata*
 
 The two main modeling tasks that must be supported by Flame are the *model development* and the use of the models for *prediction*. These are typically carried out by people with different expertise and in different environments. Flame was designed around this concept and allows to decouple both tasks completelly. Somebody can develop a model in a research environment which can be easily exported to be installed in a production environment to serve prediction services. Flame implements interfaces designed specifically for each task, even if they share exactly the same code, to guarantee compatibility and consistency. 
+
 
 ### Developing models
 
