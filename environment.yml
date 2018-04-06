@@ -19,5 +19,7 @@ dependencies:
   - statsmodels=0.8.0
   - rdkit=2017.09.3.0
   - pyyaml
+  - pip:
+     - "https://github.com/flatkinson/standardiser/archive/master.zip"
 
 
