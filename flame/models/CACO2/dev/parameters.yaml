@@ -1,5 +1,5 @@
 # system settings
-verbose_error: false
+verbose_error: true
 numCPUs: 2
 
 # input settings
@@ -8,7 +8,7 @@ normalize_method: standardize         # null | standardize
 ionize_method: null                   # null | moka
 convert3D_method: null                # null | ETKDG
 computeMD_method:                     # RDKit_properties | RDKit_md | custom
-- RDKit_properties
+- RDKit_md
 
 # SDFile settings
 SDFile_activity: activity             # str s
