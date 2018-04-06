@@ -1,5 +1,7 @@
 # Flame
+
 Flame is a flexible framework supporting predictive modeling within the eTRANSAFE (http://etransafe.eu) project. 
+
 
 Flame allows to:
 - Easily develop machine-learning models, for example QSAR-like models, starting from annotated collections of chemical compounds stored in standard formats (i.e. SDFiles).
@@ -7,7 +9,53 @@ Flame allows to:
 
 Flame is in active development and **no stable release has been produced so far**. Even this README is under construction, so please excuse errors and inaccuracies.
 
+## Installation
+
+It is required to **install Anaconda** to use the Conda package and environment manager. Download Anaconda from [here](https://www.anaconda.com/distribution/).
+Flame also needs the 3rd party module Standardiser. Please follow **install standardiser** instrucctions.
+
+
+Download the repository:
+
+```bash
+git clone https://github.com/phi-grib/flame.git
+
+```
+
+Go to the repository directory 
+
+```bash
+cd flame
+```
+
+and create the **conda environment** with all the dependencies and extra packages (jupyter, matplotlib...):
+
+```bash
+conda env create -f environment.yml
+```
+
+Once the environment is created do:
+
+```bash
+source activate flame
+```
+
+to activate the environment.
+
+Now install flame package with:
+
+```bash
+python setup.py install
+```
+
+or
+
+```bash
+pip install -e .
+```
+
 ## Main features
+
 - Native support of most common machine-learning algorithms, including rich configuration options and facilitating the model optimization. 
 - Support for any standard formatted input: from a tsv table to a collection of compounds in SMILES or SDFile format. 
 - Multiple interfaces adapted to the needs of different users: as a web service, for end-user prediction, as a full featured GUI for model development, as command line, integration in Jupyter notebooks, etc.
@@ -17,6 +65,7 @@ Flame is in active development and **no stable release has been produced so far*
 - Integrated model version management.
 
 ## Quickstarting
+
 Flame provides a simple command-line interface (`flame.py`), which is useful for accessing its functionality and getting acquainted with its use.
 
 Let's start creating a new model:
@@ -80,6 +129,7 @@ And then the model is immediately operative and able to produce exactly the same
 Management commands deserve further description:
 
 ### Management commands
+
 | Command | Example | Description |
 | --- | --- | ---|
 | new | *python -c manage -a new -e NEWMODEL* | Creates a new entry in the model repository named NEWMODEL  |
@@ -92,6 +142,7 @@ Management commands deserve further description:
 
 
 ## Flame-app
+
 Flame includes a simple prediction web server.
 
 ```sh
