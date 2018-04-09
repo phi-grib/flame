@@ -4,7 +4,7 @@ Flame is a flexible framework supporting predictive modeling within the eTRANSAF
 
 
 Flame allows to:
-- Easily develop machine-learning models, for example QSAR-like models, starting from annotated collections of chemical compounds stored in standard formats (i.e. SDFiles).
+- Easily develop machine-learning models, for example QSAR-like models, starting from annotated collections of chemical compounds stored in standard formats (i.e. SDFiles)
 - Transfer new models into a production environment where they can be used by web services to predict the properties of new compounds.
 
 Flame is in active development and **no stable release has been produced so far**. Even this README is under construction, so please excuse errors and inaccuracies.
