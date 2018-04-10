@@ -28,6 +28,7 @@ import json
 import shutil
 
 from predict import Predict
+from manage import Manage
 import util.utils as utils
 
 PARTNER_ID = 'UPF'
@@ -98,9 +99,12 @@ class FlameDirWS(object):
 
     @cherrypy.tools.accept(media='text/plain')
     def GET(self):
-        rdir = utils.root_path()
-        endpoint = [x for x in os.listdir (rdir)]
-        return json.dumps(endpoint)
+        manage = Manage (None, 0, "dir")
+        success, results = manage.run()
+        
+        if not success:
+            return "no model found"
+        return results
 
 if __name__ == '__main__':
     conf = {

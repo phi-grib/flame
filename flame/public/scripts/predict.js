@@ -76,6 +76,24 @@ $(document).ready(function() {
         $("#predict").prop('disabled', false);
     })
 
+    // TODO: send a GET dir for completing the list of models
+    // in a second step, complete get to return also the versions and include these too
+
+
+    $.get('/dir')
+    .done(function(results) {
+        var versions = JSON.parse(results);
+        for (vi in versions) {
+            console.log(versions[vi])
+            imodel = versions[vi][0];
+            console.log(imodel);
+            vmodel = versions[vi][1];
+            for (vj in vmodel) {
+                console.log (vmodel[vj]);
+            }
+        }
+        
+    });
 
     // "predict" button
     $("#predict").click(function(e) {

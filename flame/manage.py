@@ -24,13 +24,15 @@ import os
 import sys
 import shutil
 import tarfile
-
+import json
 
 import util.utils as utils
 
+## TODO: replace run calls by a simpler constructor and direct calls to the methods
+
 class Manage:
 
-    def __init__ (self, model, version, action, file = None ):
+    def __init__ (self, model=None, version=0, action=None, file = None ):
 
         self.model = model
         self.version = version
@@ -196,6 +198,22 @@ class Manage:
 
         return True, 'OK'
 
+    def action_dir (self, model):
+        """ return a JSON with the list of models and versions """
+
+        results = []
+        rdir = utils.root_path()
+
+        for imodel in os.listdir (rdir):
+            versions = ['dev']
+
+            for iversion in os.listdir (utils.base_path(imodel)):
+                if iversion.startswith("ver"):
+                    versions.append (iversion)
+                   
+            results.append ((imodel,versions))
+
+        return True, json.dumps(results)
 
     def run (self):
         ''' Executes a default predicton workflow '''
@@ -223,6 +241,9 @@ class Manage:
 
         elif self.action == 'refactoring':
             success, results = self.action_refactoring (self.file)
+
+        elif self.action == 'dir':
+            success, results = self.action_dir (self.model)
 
         return success, results
 
