@@ -22,8 +22,8 @@
 
 import os
 import cherrypy
-from jinja2 import Environment 
-from jinja2 import FileSystemLoader
+# from jinja2 import Environment 
+# from jinja2 import FileSystemLoader
 import json
 import shutil
 
@@ -41,15 +41,16 @@ class FlamePredict(object):
     @cherrypy.expose
     def index(self):
 
-        # analysing the model repoistory
-        rdir = utils.root_path()
-        endpoint = [x for x in os.listdir (rdir)]
+        # # analysing the model repoistory
+        # rdir = utils.root_path()
+        # endpoint = [x for x in os.listdir (rdir)]
 
-        # setup the jinja2 template rendering
-        env = Environment(loader=FileSystemLoader('templates')) 
-        tmpl = env.get_template('index.html')
+        # # setup the jinja2 template rendering
+        # env = Environment(loader=FileSystemLoader('templates')) 
+        # tmpl = env.get_template('index.html')
 
-        return tmpl.render(model_list=endpoint)
+        # return tmpl.render(model_list=endpoint)
+        return open('./templates/index.html')
 
     @cherrypy.expose
     def upload(self):
@@ -101,7 +102,7 @@ class FlameDirWS(object):
     def GET(self):
         manage = Manage (None, 0, "dir")
         success, results = manage.run()
-        
+
         if not success:
             return "no model found"
         return results
