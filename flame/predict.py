@@ -32,17 +32,18 @@ class Predict:
 
         self.ifile = ifile
         self.model = model
+        self.version = version
         self.out_format = out_format
 
-        if version == None:
-            self.version = 0
-        elif version == "dev":
-            self.version = 0
-        else :
-            try:
-                self.version = int (version)
-            except:
-                self.version = 0
+        # if version == None:
+        #     self.version = 0
+        # elif version == "dev":
+        #     self.version = 0
+        # else :
+        #     try:
+        #         self.version = int (version)
+        #     except:
+        #         self.version = 0
 
         return
 

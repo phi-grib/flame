@@ -27,12 +27,15 @@ import shutil
 
 from predict import Predict
 from build import Build
+import util.utils as utils 
 import manage 
 
 def predict_cmd(args):
     ''' Instantiates a Predict object to run a prediction using the given input file and model '''
 
-    predict = Predict(args.infile, args.endpoint, args.version)
+    version = utils.intver(args.version)
+
+    predict = Predict(args.infile, args.endpoint, version)
     success, results = predict.run()
     print('flame : ', success, results)
 
@@ -46,15 +49,7 @@ def build_cmd(args):
 def manage_cmd(args):
     ''' Instantiates a Build object to build a model using the given input file (training series) and model (name of endpoint, eg. 'CACO2') '''
     
-    ## no version is interpreted as dev 
-    if args.version is None:
-        version = 0
-    else:
-        ## version is converted to int
-        try:
-            version = int(args.version)
-        except:
-            version = 0
+    version = utils.intver(args.version)
 
     if args.action == 'new':
         success, results = manage.action_new(args.endpoint)

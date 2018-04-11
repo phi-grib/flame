@@ -55,7 +55,6 @@ def module_path (model, version):
 
     return modpath
 
-
 def md5sum(filename, blocksize=65536):
 
     hash = hashlib.md5()
@@ -65,3 +64,14 @@ def md5sum(filename, blocksize=65536):
             hash.update(block)
 
     return hash.hexdigest()
+
+def intver(raw_version):
+    if raw_version is None:
+        return 0
+    
+    try:
+        version = int(raw_version)
+    except:
+        version = 0
+
+    return version

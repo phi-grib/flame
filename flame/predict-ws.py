@@ -64,9 +64,10 @@ class FlamePredictWS(object):
         ifile = tempfile.gettempdir()+'/'+temp_dir+'/'+ifile
         
         if version[:3]=='ver': 
-            version = version[-6:] ## get the numbers
+            version = int(version[-6:]) ## get the numbers
 
-        #TODO: check if changing models manages child classes correctly
+        version = utils.intver(version)
+
         # try:
         #     predict = Predict(ifile, model, version)
         #     success, results = predict.run()
