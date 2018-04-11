@@ -53,7 +53,7 @@ function postPredict (temp_dir, ifile) {
     };
 
     $.post('/predict', {"ifile"   : ifile,
-                        "model"   : $("#myselect option:selected").text(),
+                        "model"   : $("#model option:selected").text(),
                         "version" : version,
                         "temp_dir": temp_dir
                         })
@@ -86,7 +86,7 @@ $(document).ready(function() {
         versions = JSON.parse(results);
         
         // set model selector
-        var model_select = $("#myselect")[0];
+        var model_select = $("#model")[0];
         for (vi in versions) {
             imodel = versions[vi][0];
             model_select.options[vi] = new Option(imodel, +vi+1)
@@ -102,11 +102,11 @@ $(document).ready(function() {
     });
 
     // define available versions for this endpoint
-    $("#myselect").on('change', function (e) {
+    $("#model").on('change', function (e) {
         $("#version").empty();
         var var_select = $("#version")[0];
         for (vi in versions) {
-            if (versions[vi][0] == $("#myselect option:selected").text()){
+            if (versions[vi][0] == $("#model option:selected").text()){
 
                 for (vj in versions[vi][1]) {
                     var_select.options[vj] = new Option(vmodel[vj],+vj+1);

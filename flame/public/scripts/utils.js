@@ -33,9 +33,9 @@ function randomDir() {
 function upload(file, temp_dir, postPredict) {
     var xhr = new XMLHttpRequest();
 
-    xhr.upload.addEventListener('progress', function(event) {          
-        console.log('progess', file.name, event.loaded, event.total);
-    });
+    // xhr.upload.addEventListener('progress', function(event) {          
+    //     console.log('progess', file.name, event.loaded, event.total);
+    // });
 
     // xhr.addEventListener('readystatechange', function(event) {
     //     console.log(
