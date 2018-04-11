@@ -44,6 +44,18 @@ def model_path (model, version):
     
     return epd
 
+def module_path (model, version):
+
+    modpath = 'models'+'.'+model
+
+    if version == 0 :
+        modpath += '.dev'
+    else:
+        modpath += '.ver%0.6d'%(version)
+
+    return modpath
+
+
 def md5sum(filename, blocksize=65536):
 
     hash = hashlib.md5()

@@ -62,6 +62,9 @@ class FlamePredictWS(object):
     def POST(self, ifile, model, version, temp_dir):
 
         ifile = tempfile.gettempdir()+'/'+temp_dir+'/'+ifile
+        
+        if version[:3]=='ver': 
+            version = version[-6:] ## get the numbers
 
         #TODO: check if changing models manages child classes correctly
         # try:
@@ -69,7 +72,7 @@ class FlamePredictWS(object):
         #     success, results = predict.run()
         # except:
         #     raise cherrypy.HTTPError(500)
-        
+            
         predict = Predict(ifile, model, version)
         success, results = predict.run()
 
