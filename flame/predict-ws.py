@@ -27,7 +27,7 @@ import shutil
 import tempfile
 
 from predict import Predict
-from manage import Manage
+import manage
 import util.utils as utils
 
 PARTNER_ID = 'UPF'
@@ -89,8 +89,8 @@ class FlameDirWS(object):
 
     @cherrypy.tools.accept(media='text/plain')
     def GET(self):
-        manage = Manage (None, 0, "dir")
-        success, results = manage.run()
+
+        success, results = manage.action_dir()
 
         if not success:
             return "no model found"

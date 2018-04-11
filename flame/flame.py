@@ -27,7 +27,7 @@ import shutil
 
 from predict import Predict
 from build import Build
-from manage import Manage
+import manage 
 
 def predict_cmd(args):
     ''' Instantiates a Predict object to run a prediction using the given input file and model '''
@@ -45,17 +45,36 @@ def build_cmd(args):
 
 def manage_cmd(args):
     ''' Instantiates a Build object to build a model using the given input file (training series) and model (name of endpoint, eg. 'CACO2') '''
-
+    
+    ## no version is interpreted as dev 
     if args.version is None:
         version = 0
     else:
+        ## version is converted to int
         try:
             version = int(args.version)
         except:
             version = 0
 
-    manage = Manage(args.endpoint, version, args.action, args.infile)
-    success, results = manage.run()
+    if args.action == 'new':
+        success, results = manage.action_new(args.endpoint)
+    elif args.action == 'kill':
+        success, results = manage.action_kill(args.endpoint)
+    elif args.action == 'remove':
+        success, results = manage.action_remove(args.endpoint, version)
+    elif args.action == 'publish':
+        success, results = manage.action_publish(args.endpoint)
+    elif args.action == 'list':
+        success, results = manage.action_list (args.endpoint)
+    elif args.action == 'import':
+        success, results = manage.action_import (args.endpoint)
+    elif args.action == 'export':
+        success, results = manage.action_export (args.endpoint)
+    elif args.action == 'refactoring':
+        success, results = manage.action_refactoring (args.file)
+    elif args.action == 'dir':
+        success, results = manage.action_dir (args.endpoint)
+
     print('flame : ', success, results)
 
 def main():
