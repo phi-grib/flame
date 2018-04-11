@@ -64,11 +64,14 @@ class FlamePredictWS(object):
         ifile = tempfile.gettempdir()+'/'+temp_dir+'/'+ifile
 
         #TODO: check if changing models manages child classes correctly
-        try:
-            predict = Predict(ifile, model, version)
-            success, results = predict.run()
-        except:
-            raise cherrypy.HTTPError(500)
+        # try:
+        #     predict = Predict(ifile, model, version)
+        #     success, results = predict.run()
+        # except:
+        #     raise cherrypy.HTTPError(500)
+        
+        predict = Predict(ifile, model, version)
+        success, results = predict.run()
 
         return results
 
