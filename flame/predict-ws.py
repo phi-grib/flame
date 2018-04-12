@@ -22,34 +22,24 @@
 
 import os
 import cherrypy
-from jinja2 import Environment 
-from jinja2 import FileSystemLoader
 import json
 import shutil
+import tempfile
 
 from predict import Predict
-from manage import Manage
+import manage
 import util.utils as utils
 
 PARTNER_ID = 'UPF'
 PARTNER_WEB ="http://phi.upf.edu"
 ADMIN_NAME = 'Manuel Pastor'
 ADMIN_EMAIL = 'manuel.pastor@upf.edu'
-BASE_DIR = '/var/tmp/'
+
 
 class FlamePredict(object):
     @cherrypy.expose
     def index(self):
-
-        # analysing the model repoistory
-        rdir = utils.root_path()
-        endpoint = [x for x in os.listdir (rdir)]
-
-        # setup the jinja2 template rendering
-        env = Environment(loader=FileSystemLoader('templates')) 
-        tmpl = env.get_template('index.html')
-
-        return tmpl.render(model_list=endpoint)
+        return open('./templates/index.html')
 
     @cherrypy.expose
     def upload(self):
@@ -57,7 +47,7 @@ class FlamePredict(object):
         filename    = os.path.basename(cherrypy.request.headers['x-filename'])
         temp_dir    = os.path.basename(cherrypy.request.headers['temp-dir'])
 
-        path = BASE_DIR+temp_dir
+        path = tempfile.gettempdir()+'/'+temp_dir
         os.mkdir (path)
  
         destination = os.path.join(path, filename)
@@ -71,14 +61,21 @@ class FlamePredictWS(object):
 
     def POST(self, ifile, model, version, temp_dir):
 
-        ifile = BASE_DIR+temp_dir+'/'+ifile
+        ifile = tempfile.gettempdir()+'/'+temp_dir+'/'+ifile
+        
+        if version[:3]=='ver': 
+            version = int(version[-6:]) ## get the numbers
 
-        #TODO: check if changing models manages child classes correctly
-        try:
-            predict = Predict(ifile, model, version)
-            success, results = predict.run()
-        except:
-            raise cherrypy.HTTPError(500)
+        version = utils.intver(version)
+
+        # try:
+        #     predict = Predict(ifile, model, version)
+        #     success, results = predict.run()
+        # except:
+        #     raise cherrypy.HTTPError(500)
+            
+        predict = Predict(ifile, model, version)
+        success, results = predict.run()
 
         return results
 
@@ -99,9 +96,9 @@ class FlameDirWS(object):
 
     @cherrypy.tools.accept(media='text/plain')
     def GET(self):
-        manage = Manage (None, 0, "dir")
-        success, results = manage.run()
-        
+
+        success, results = manage.action_dir()
+
         if not success:
             return "no model found"
         return results
@@ -137,6 +134,7 @@ if __name__ == '__main__':
             'server.thread_pool' : 8,
         }
     }
+
     webapp = FlamePredict()
     webapp.info = FlameInfoWS()
     webapp.dir = FlameDirWS()

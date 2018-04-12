@@ -53,7 +53,7 @@ function postPredict (temp_dir, ifile) {
     };
 
     $.post('/predict', {"ifile"   : ifile,
-                        "model"   : $("#myselect option:selected").text(),
+                        "model"   : $("#model option:selected").text(),
                         "version" : version,
                         "temp_dir": temp_dir
                         })
@@ -65,34 +65,55 @@ function postPredict (temp_dir, ifile) {
 // main
 $(document).ready(function() {
 
+    
     // initialize button status to disabled on reload
     $("#predict").prop('disabled', true);
-
-
+    
+    
     // show file value after file select 
     $("#ifile").on('change',function(){
         file = document.getElementById("ifile").files[0];
         $("#ifile-label").html( file.name ); 
         $("#predict").prop('disabled', false);
     })
-
-    // TODO: send a GET dir for completing the list of models
-    // in a second step, complete get to return also the versions and include these too
-
-
+    
+    var versions; // object where model name and versions are stored
+    
+    // ask the server about available models and versions
     $.get('/dir')
     .done(function(results) {
-        var versions = JSON.parse(results);
+        
+        versions = JSON.parse(results);
+        
+        // set model selector
+        var model_select = $("#model")[0];
         for (vi in versions) {
-            console.log(versions[vi])
             imodel = versions[vi][0];
-            console.log(imodel);
-            vmodel = versions[vi][1];
-            for (vj in vmodel) {
-                console.log (vmodel[vj]);
+            model_select.options[vi] = new Option(imodel, +vi+1)
+        }
+
+        // set version selector
+        var var_select = $("#version")[0];
+        vmodel = versions[0][1];
+        for (vj in vmodel) {
+            var_select.options[vj] = new Option(vmodel[vj],+vj+1);
+        }
+
+    });
+
+    // define available versions for this endpoint
+    $("#model").on('change', function (e) {
+        $("#version").empty();
+        var var_select = $("#version")[0];
+        for (vi in versions) {
+            if (versions[vi][0] == $("#model option:selected").text()){
+
+                for (vj in versions[vi][1]) {
+                    var_select.options[vj] = new Option(vmodel[vj],+vj+1);
+                }
+                return;
             }
         }
-        
     });
 
     // "predict" button

@@ -21,7 +21,7 @@
 ##    along with Flame. If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import sys
+import importlib
 import shutil
 
 import util.utils as utils
@@ -42,52 +42,40 @@ class Build:
 
         # path to endpoint
         epd = utils.model_path(self.model, 0)
-
-        # copy the input file to the model development directory of the endpoint
+        if not os.path.isdir(epd):
+            return False, 'unable to find model: '+self.model
+        
         self.lfile = epd+'/'+os.path.basename(self.ifile)
         shutil.copy (self.ifile,self.lfile)
 
-        success = True
-        results = ''
-
         #uses the child classes within the 'model' folder, to allow customization of
         #the processing applied to each model
-        if not os.path.isdir(epd):
-            return False, 'unable to find model: '+self.model
-
-        try:
-            sys.path.append(epd)
-            from idata_child import IdataChild
-            from learn_child import LearnChild
-            from odata_child import OdataChild
-        except:
-            raise
-            #success = False
-            #results = 'Error loading model classes:', sys.exc_info()[0]
-
-        if not success:
-            return success, results
+        modpath = utils.module_path(self.model, 0)
+     
+        idata_child = importlib.import_module (modpath+".idata_child")
+        learn_child = importlib.import_module (modpath+".learn_child")
+        odata_child = importlib.import_module (modpath+".odata_child")
         
         # instance Control object
         control = Control(self.model,0)
         parameters = control.get_parameters()
 
         # run idata object, in charge of generate model data from local copy of input
-        idata = IdataChild (parameters, self.lfile)
+        idata = idata_child.IdataChild (parameters, self.lfile)
         success, results = idata.run ()
         
         if not success:
             return success, results
 
         # run learn object, in charge of generate a prediction from idata
-        learn = LearnChild (parameters, results)
+        learn = learn_child.LearnChild (parameters, results)
         success, results = learn.run ()
         
         if not success:
             return success, results
 
         # run odata object, in charge of formatting the prediction results
-        odata = OdataChild (parameters, results)
+        odata = odata_child.OdataChild (parameters, results)
         success, results = odata.run ()
 
         return success, results

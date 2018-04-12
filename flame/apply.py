@@ -42,21 +42,34 @@ class Apply:
         if (nobj==0) or (nvarx==0) :
             return False, 'failed to extract activity or to generate MD'
 
-        try:
-            model_file = self.parameters['model_path'] + '/model.pkl'
+        # try:
+        #     model_file = self.parameters['model_path'] + '/model.pkl'
 
-            # select prediction tool from control
-            with open(model_file, "rb") as input_file:
-                estimator = pickle.load(input_file)
+        #     # select prediction tool from control
+        #     with open(model_file, "rb") as input_file:
+        #         estimator = pickle.load(input_file)
 
-            zero_array = np.zeros(nobj, dtype=np.float64)
+        #     zero_array = np.zeros(nobj, dtype=np.float64)
 
-            self.results['origin'] = 'apply'
-            self.results['projection'] = estimator.project(X)
-            self.results['CI'] = zero_array
-            self.results['RI'] = zero_array
-        except:
-            return False, 'projection error'
+        #     self.results['origin'] = 'apply'
+        #     self.results['projection'] = estimator.project(X)
+        #     self.results['CI'] = zero_array
+        #     self.results['RI'] = zero_array
+        # except:
+        #     return False, 'projection error'
+
+        model_file = self.parameters['model_path'] + '/model.pkl'
+
+        # select prediction tool from control
+        with open(model_file, "rb") as input_file:
+            estimator = pickle.load(input_file)
+
+        zero_array = np.zeros(nobj, dtype=np.float64)
+
+        self.results['origin'] = 'apply'
+        self.results['projection'] = estimator.project(X)
+        self.results['CI'] = zero_array
+        self.results['RI'] = zero_array
 
         return True, self.results
 
