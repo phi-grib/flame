@@ -219,7 +219,7 @@ class BaseEstimator:
             c0_correct_all.append(c0_correct)
             c0_incorrect_all.append(c0_incorrect)
             c1_correct_all.append(c1_correct)
-            c1_incorrect_all.append(c1_incorrect)3
+            c1_incorrect_all.append(c1_incorrect)
             not_predicted_all.append(not_predicted)
 
         
