@@ -35,7 +35,6 @@ PARTNER_WEB ="http://phi.upf.edu"
 ADMIN_NAME = 'Manuel Pastor'
 ADMIN_EMAIL = 'manuel.pastor@upf.edu'
 
-
 class FlamePredict(object):
     @cherrypy.expose
     def index(self):

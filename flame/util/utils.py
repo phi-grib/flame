@@ -23,26 +23,36 @@
 import hashlib
 import os
 
-working_dir = os.path.dirname(os.path.abspath(__file__))[:-5] #removing '/utils'
 
-root_dir = working_dir + '/models' 
+def read_configuration ():
 
-def root_path ():
-    return root_dir
+    source_dir = os.path.dirname(os.path.abspath(__file__))[:-5] #removing '/utils'
 
-def base_path (model):
-    return root_dir+'/'+model
+    conf = {}
+    print ('*********************reading the configuration file ***********************')
+    conf ['model_repository_path'] = source_dir + '/models'
+
+    return conf
+    
+
+configuration = read_configuration ()
+
+def model_repository_path ():
+    return configuration ['model_repository_path']
+
+def model_tree_path (model):
+    return model_repository_path()+'/'+model
 
 def model_path (model, version):        
        
-    epd = base_path(model)
+    modpath = model_tree_path(model)
     
     if version == 0 :
-        epd += '/dev'
+       modpath += '/dev'
     else:
-        epd += '/ver%0.6d'%(version)
+       modpath += '/ver%0.6d'%(version)
     
-    return epd
+    return modpath
 
 def module_path (model, version):
 
