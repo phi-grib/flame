@@ -27,7 +27,7 @@ from stats.base_model import getCrossVal
 from stats.scale import scale, center
 from stats.model_validation import CF_QuanVal
 
-from base_model import *
+from stats.base_model import *
 
 
 
