@@ -4,7 +4,7 @@ Flame is a flexible framework supporting predictive modeling within the eTRANSAF
 
 
 Flame allows to:
-- Easily develop machine-learning models, for example QSAR-like models, starting from annotated collections of chemical compounds stored in standard formats (i.e. SDFiles).
+- Easily develop machine-learning models, for example QSAR-like models, starting from annotated collections of chemical compounds stored in standard formats (i.e. SDFiles)
 - Transfer new models into a production environment where they can be used by web services to predict the properties of new compounds.
 
 Flame is in active development and **no stable release has been produced so far**. Even this README is under construction, so please excuse errors and inaccuracies.
@@ -33,7 +33,7 @@ and create the **conda environment** with all the dependencies and extra package
 conda env create -f environment.yml
 ```
 
-Once the environment is created do:
+Once the environment is created type:
 
 ```bash
 source activate flame
@@ -57,6 +57,8 @@ to activate the environment.
 
 Flame provides a simple command-line interface `flame.py`, which is useful for accessing its functionality and getting acquainted with its use.
 
+You can run the following commands from any terminal, in a computer where flame has been installed and the environment (flame) was activated (`source activate flame` in Linux, `activate flame` in Windows)
+
 Let's start creating a new model:
 
 ```sh
@@ -72,7 +74,7 @@ python flame.py -c manage -a list
 
 Building a model only requires entering an input file formatted for training one of the supported machine-learning methods. In the case of QSAR models, the input file can be an SDFile, where the biological property is annotated in one of the fields. 
 
-The details of how Flame normalizes the structures, obtains molecular descriptors and applies the machine-learning algorithm are defined in a parameters file (*parameter.yaml*) which now contains default options. These can be changed as we will describe later, but for now let's use the defaults to obtain a Random Forest model on a series of 100 compounds annotated with a biological property in the field <activity>: 
+The details of how Flame normalizes the structures, obtains molecular descriptors and applies the machine-learning algorithm are defined in a parameters file (*parameter.yaml*) which now contains default options. These can be changed as we will describe later, but for now let's use the defaults to obtain a Random Forest model on a series of 100 compounds annotated with a biological property in the field \<activity\>: 
 	
 ```sh
 python flame.py -c build -e MyModel -f series.sdf
@@ -90,7 +92,7 @@ python flame.py -c manage -a publish -e MyModel
 ```	
 This will create model version 1. We can list existing versions for a given endpoint using the list command mentioned below
 ```sh
-python flame.py -c manage -a list
+python flame.py -c manage -e MyModel -a list
 ```	
 Now, the output says we have a published version of model MyModel. 
 
@@ -111,7 +113,7 @@ And then the model is immediately operative and able to produce exactly the same
 | -c/ --command | Action to be performed. Acceptable values are *build*, *predict* and *manage* |
 | -e/ --endpoint | Name of the model which will be used by the command. This name is defined when the model is created for the fist time with the command *-c manage -a new* |
 | -v/ --version | Version of the model, typically an integer. Version 0 refers to the model development "sandbox" which is created automatically uppon model creation |
-| -a/ --action | Management action to be carried out. Acceptable values are *new*, *kill*, *publish*, *remove*, *export* and *import*. The meaning of these actions and examples of use are provided below   |
+| -a/ --action | Management action to be carried out. Acceptable values are *list*, *new*, *kill*, *publish*, *remove*, *export* and *import*. The meaning of these actions and examples of use are provided below   |
 | -f/ --infile | Name of the input file used by the command. This file can correspond to the training data (*build*) or the query compounds (*predict*) |
 | -h/ --help | Shows a help message on the screen |
 

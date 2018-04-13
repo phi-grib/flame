@@ -22,7 +22,7 @@
 
 import json
 
-class Odata:
+class Odata():
 
     def __init__ (self, parameters, results, out_format='JSON' ):
 
@@ -30,8 +30,8 @@ class Odata:
         self.parameters = parameters
         self.format = out_format
 
-    def run_learn (self):
 
+    def run_learn (self):
 
         print ('odata : ', self.results)
         print ('building OK!')
@@ -102,4 +102,6 @@ class Odata:
             return False, 'invalid result format'
 
         return success, results
+
+        
 

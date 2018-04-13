@@ -24,205 +24,195 @@ import os
 import sys
 import shutil
 import tarfile
-
-
+import json
 import util.utils as utils
 
-class Manage:
+def action_new (model):
+    """ create a new model tree, using the given name. This creates the development version "dev", copying inside default child classes """
 
-    def __init__ (self, model, version, action, file = None ):
-
-        self.model = model
-        self.version = version
-        self.action = action
-        self.file = file
-
-        return
-
-    def action_new (self, model):
-
-        ndir = utils.base_path(model)
-        
-        # check if there is already a tree for this endpoint
-        if os.path.isdir (ndir):
-            return False, 'This endpoint already exists'
-        try:
-            os.mkdir (ndir)
-        except:
-            return False,'unable to create directory : '+ndir
-
-        ndir+='/dev'
-        try:
-            os.mkdir (ndir)
-        except:
-            return False,'unable to create directory '+ndir
-
-        # TODO: create templates directory with empty childs
-        try:
-            wkd = os.path.dirname(os.path.abspath(__file__))
-            children_names = ['apply','idata','odata','learn']
-            for cname in children_names:
-                shutil.copy(wkd+'/children/'+cname+'_child.py',ndir+'/'+cname+'_child.py')
-            shutil.copy(wkd+'/children/parameters.yaml',ndir)
-        except:
-            return False,'unable to copy children classes at '+ndir
-
-        return True,'new endpoint '+model+' created'
-
-    def action_kill (self, model):
-
-        ndir = utils.base_path(model)
-        
-        if not os.path.isdir (ndir):
-            return False, 'model not found'
-
-        shutil.rmtree(ndir, ignore_errors=True)
-
-        return True, 'model '+model+' removed'
-
-    def action_publish (self, model):
-
-        bdir = utils.base_path(model)
-
-        if not os.path.isdir(bdir):
-            return False, 'model not found'
+    ndir = utils.base_path(model)
     
-        v = None
-        try:
-            v = [int(x[-6:]) for x in os.listdir (bdir) if x.startswith("ver")]
-        except:
-            pass
+    # check if there is already a tree for this endpoint
+    if os.path.isdir (ndir):
+        return False, 'This endpoint already exists'
+    try:
+        os.mkdir (ndir)
+    except:
+        return False,'unable to create directory : '+ndir
 
-        if not v:
-            max_version = 0
-        else:
-            max_version = max(v)
+    ndir+='/dev'
+    try:
+        os.mkdir (ndir)
+    except:
+        return False,'unable to create directory '+ndir
 
-        new_dir = bdir+'/ver%0.6d'%(max_version+1)
+    try:
+        wkd = os.path.dirname(os.path.abspath(__file__))
+        children_names = ['apply','idata','odata','learn']
+        for cname in children_names:
+            shutil.copy(wkd+'/children/'+cname+'_child.py',ndir+'/'+cname+'_child.py')
+        shutil.copy(wkd+'/children/parameters.yaml',ndir)
+    except:
+        return False,'unable to copy children classes at '+ndir
 
-        if os.path.isdir(new_dir):
-            return False, 'version already exists'
+    return True,'new endpoint '+model+' created'
 
-        shutil.copytree(bdir+'/dev', new_dir)
-        
-        return True, 'development version published as version '+str(max_version+1)
 
-    def action_remove (self, model, version):
+def action_kill (model):
+    """ removes the model tree described by the argument """
 
-        if version == 0:
-            return False, 'development version cannot be removed'
+    ndir = utils.base_path(model)
+    
+    if not os.path.isdir (ndir):
+        return False, 'model not found'
 
-        rdir = utils.model_path(model, version)
-        if not os.path.isdir(rdir):
-            return False, 'version not found'
+    shutil.rmtree(ndir, ignore_errors=True)
 
-        shutil.rmtree(rdir, ignore_errors=True)
+    return True, 'model '+model+' removed'
 
-        return True, 'version '+str(version)+' of model '+model+' removed'
 
-    def action_list (self, model):
+def action_publish (model):
+    """ clone the development "dev" version as a new model version, assigning a sequential version number """
 
-        # TODO: if no argument is provided, also list all models
-        if not model:
-            rdir = utils.root_path()
-            num_models=0
-            for x in os.listdir (rdir):
-                num_models+=1
-                print (x)
+    bdir = utils.base_path(model)
 
-            return True, str(num_models)+' models found in the repository'
+    if not os.path.isdir(bdir):
+        return False, 'model not found'
 
-        bdir = utils.base_path (model)
+    v = None
+    try:
+        v = [int(x[-6:]) for x in os.listdir (bdir) if x.startswith("ver")]
+    except:
+        pass
 
-        num_versions = 0
-        for x in os.listdir (bdir):
-            if x.startswith("ver"):
-                num_versions+=1
-                print (model,':',x)
+    if not v:
+        max_version = 0
+    else:
+        max_version = max(v)
 
-        return True, 'model '+model+' has '+str(num_versions)+' published versions'
+    new_dir = bdir+'/ver%0.6d'%(max_version+1)
 
-    def action_import (self, model):
+    if os.path.isdir(new_dir):
+        return False, 'version already exists'
 
-        bdir = utils.base_path (model)
-        
-        if os.path.isdir (bdir) :
-            return False, 'endpoint already exists'
+    shutil.copytree(bdir+'/dev', new_dir)
+    
+    return True, 'development version published as version '+str(max_version+1)
 
-        importfile = os.path.abspath(model+'.tgz')
-        
-        if not os.path.isfile (importfile):
-            return False, 'importing package '+importfile+' not found'
-        
-        try:
-            os.mkdir(bdir)
-            os.chdir(bdir)
-        except:
-            return False, 'error creating directory '+bdir
-            
-        with tarfile.open(importfile,'r:gz') as tar:
-            tar.extractall()
-        
-        return True,'endpoint '+model+' imported OK'
 
-    def action_export (self, model):
+def action_remove (model, version):
+    """ remove the version indicated as argument from the model tree indicated as argument """
 
-        current_path = os.getcwd ()
-        exportfile = current_path+'/'+model+'.tgz'
-        
-        bdir = utils.base_path (model)
+    if version == 0:
+        return False, 'development version cannot be removed'
 
-        if not os.path.isdir(bdir):
-            return False, 'endpoint directory not found'
+    rdir = utils.model_path(model, version)
+    if not os.path.isdir(rdir):
+        return False, 'version not found'
 
+    shutil.rmtree(rdir, ignore_errors=True)
+
+    return True, 'version '+str(version)+' of model '+model+' removed'
+
+
+def action_list (model):
+    """ list available models (if no argument is provided) and model versions (if "model" is provided as argument) """
+
+    # TODO: if no argument is provided, also list all models
+    if not model:
+        rdir = utils.root_path()
+        num_models=0
+        for x in os.listdir (rdir):
+            num_models+=1
+            print (x)
+
+        return True, str(num_models)+' models found in the repository'
+
+    bdir = utils.base_path (model)
+
+    num_versions = 0
+    for x in os.listdir (bdir):
+        if x.startswith("ver"):
+            num_versions+=1
+            print (model,':',x)
+
+    return True, 'model '+model+' has '+str(num_versions)+' published versions'
+
+
+def action_import (model):
+    """ create a new model tree from a tarbal file with the name "model.tgz" """
+
+    bdir = utils.base_path (model)
+    
+    if os.path.isdir (bdir) :
+        return False, 'endpoint already exists'
+
+    importfile = os.path.abspath(model+'.tgz')
+    
+    if not os.path.isfile (importfile):
+        return False, 'importing package '+importfile+' not found'
+    
+    try:
+        os.mkdir(bdir)
         os.chdir(bdir)
-      
-        itemend = os.listdir()
-        itemend.sort()
-
-        with tarfile.open(exportfile, 'w:gz') as tar:
-            for iversion in itemend:
-                if not os.path.isdir(iversion):
-                    continue
-                tar.add(iversion)
+    except:
+        return False, 'error creating directory '+bdir
         
-        os.chdir(current_path)
-
-        return True,'endpoint '+model+' exported as '+model+'.tgz'
-
-    def action_refactoring (self, file):
-
-        print ('refactoring')
-
-        return True, 'OK'
+    with tarfile.open(importfile,'r:gz') as tar:
+        tar.extractall()
+    
+    return True,'endpoint '+model+' imported OK'
 
 
-    def run (self):
-        ''' Executes a default predicton workflow '''
+def action_export (model):
+    """ export the whole model tree indicated in the argument as a single tarball file with the same name """
 
-        if self.action == 'new':
-            success, results = self.action_new (self.model)
+    current_path = os.getcwd ()
+    exportfile = current_path+'/'+model+'.tgz'
+    
+    bdir = utils.base_path (model)
 
-        elif self.action == 'kill':
-            success, results = self.action_kill (self.model)
+    if not os.path.isdir(bdir):
+        return False, 'endpoint directory not found'
 
-        elif self.action == 'remove':
-            success, results = self.action_remove (self.model, self.version)
+    os.chdir(bdir)
+    
+    itemend = os.listdir()
+    itemend.sort()
 
-        elif self.action == 'publish':
-            success, results = self.action_publish (self.model)
+    with tarfile.open(exportfile, 'w:gz') as tar:
+        for iversion in itemend:
+            if not os.path.isdir(iversion):
+                continue
+            tar.add(iversion)
+    
+    os.chdir(current_path)
 
-        elif self.action == 'list':
-            success, results = self.action_list (self.model)
+    return True,'endpoint '+model+' exported as '+model+'.tgz'
 
-        elif self.action == 'import':
-            success, results = self.action_import (self.model)
-            
-        elif self.action == 'export':
-            success, results = self.action_export (self.model)
 
-        elif self.action == 'refactoring':
-            success, results = self.action_refactoring (self.file)
+## TODO: implement refactoring, starting with simple methods
+def action_refactoring (file):
+    """ not implemented, call to import externally generated models (eg. in KNIME or R) """
 
-        return success, results
+    print ('refactoring')
 
+    return True, 'OK'
+
+
+def action_dir ():
+    """ return a JSON with the list of models and versions """
+
+    results = []
+    rdir = utils.root_path()
+
+    for imodel in os.listdir (rdir):
+        versions = ['dev']
+
+        for iversion in os.listdir (utils.base_path(imodel)):
+            if iversion.startswith('ver'):
+                versions.append (iversion)
+                
+        results.append ((imodel,versions))
+
+    return True, json.dumps(results)
