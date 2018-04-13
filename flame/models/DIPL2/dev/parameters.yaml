@@ -19,7 +19,7 @@ SDFile_name: GENERIC_NAME             # str
 modelingToolkit: internal             # internal | R | KNIME
 model: RF                             # RF | SVM
 modelAutoscaling: false               # true | false
-quantitative: true
+quantitative: false
 tune: false
 
 ModelValidationCV: loo
@@ -93,4 +93,4 @@ RF_optimize:
 
 # conformal predictor settings
 conformal: true
-conformalSignificance: 0.15
+conformalSignificance: 0.1

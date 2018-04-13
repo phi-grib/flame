@@ -50,7 +50,6 @@ class Apply:
         #         estimator = pickle.load(input_file)
 
         #     zero_array = np.zeros(nobj, dtype=np.float64)
-
         #     self.results['origin'] = 'apply'
         #     self.results['projection'] = estimator.project(X)
         #     self.results['CI'] = zero_array

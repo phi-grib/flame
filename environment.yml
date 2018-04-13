@@ -16,3 +16,4 @@ dependencies:
   - pyyaml
   - pip:
      - "https://github.com/phi-grib/standardiser/archive/master.zip"
+     - "https://github.com/josecarlosgomezt/nonconformist/archive/master.zip"

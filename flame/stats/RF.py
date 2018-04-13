@@ -22,10 +22,13 @@
 
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.ensemble import RandomForestRegressor
-
 from stats.base_model import BaseEstimator
 from stats.base_model import getCrossVal
 from stats.scale import scale, center
+from stats.model_validation import CF_QuanVal
+
+from base_model import *
+
 
 
 class RF(BaseEstimator):
@@ -44,7 +47,6 @@ class RF(BaseEstimator):
                         estimator_parameters={},
                         tune_parameters={}, 
                         conformal=False):
-       
         if X is not None:
             super(RF,self).__init__(X, Y, quantitative, autoscale,
                                 cv, n, p, lc, conformalSignificance, vpath 
@@ -98,6 +100,18 @@ class RF(BaseEstimator):
             else:
                 print ("Building Qualitative RF_model")
                 self.estimator = RandomForestClassifier(**self.estimator_parameters)
+
+        if self.conformal:
+            if self.quantitative:
+                self.conformal_pred = AggregatedCp(IcpRegressor(RegressorNc(RegressorAdapter(self.estimator))),
+                BootstrapSampler())
+                self.conformal_pred.fit(X, Y)
+            else:
+                self.conformal_pred = AggregatedCp(IcpClassifier(ClassifierNc(ClassifierAdapter(self.estimator),
+                MarginErrFunc())), BootstrapSampler())
+                self.conformal_pred.fit(X, Y)
+            
+            
 
         self.estimator.fit(X, Y)
 
