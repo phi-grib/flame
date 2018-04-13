@@ -56,7 +56,8 @@ class Apply:
             self.results['CI'] = zero_array
             self.results['RI'] = zero_array
         except:
-            return False, 'projection error'
+            raise
+            #return False, 'projection error'
 
         return True, self.results
 

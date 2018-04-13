@@ -22,5 +22,6 @@ dependencies:
   - pyyaml
   - pip:
      - "https://github.com/flatkinson/standardiser/archive/master.zip"
-
+  - pip:
+     - "https://github.com/josecarlosgomezt/nonconformist/archive/master.zip"
 
