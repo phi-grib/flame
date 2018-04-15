@@ -83,11 +83,16 @@ class FlameInfoWS(object):
 
     @cherrypy.tools.accept(media='text/plain')
     def GET(self):
-        data = { "provider": PARTNER_ID,
-                 "homepage": PARTNER_WEB,
-                 "admin": ADMIN_NAME,
-                 "admin_email": ADMIN_EMAIL
-                 }
+        data = { "provider": utils.configuration['provider'],
+                 "homepage": utils.configuration['homepage'],
+                 "admin_name": utils.configuration['admin_name'],
+                 "admin_email": utils.configuration['admin_email']
+                 }   
+        # data = { "provider": PARTNER_ID,
+        #          "homepage": PARTNER_WEB,
+        #          "admin": ADMIN_NAME,
+        #          "admin_email": ADMIN_EMAIL
+        #          }
         return json.dumps(data)
 
 @cherrypy.expose

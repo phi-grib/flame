@@ -22,19 +22,28 @@
             
 import hashlib
 import os
-
+import sys
+import yaml
 
 def read_configuration ():
-
+    conf = {}
     source_dir = os.path.dirname(os.path.abspath(__file__))[:-5] #removing '/utils'
 
-    conf = {}
-    print ('*********************reading the configuration file ***********************')
-    conf ['model_repository_path'] = source_dir + '/models'
+    with open (source_dir+'/config.yaml', 'r') as config_file:
+        conf = yaml.load(config_file)
 
+    ## if the name of a path starts with '.' we will prepend the path with the source dir
+    if conf ['model_repository_path'][0] =='.' :
+        conf ['model_repository_path']=source_dir+conf ['model_repository_path'][1:]
+
+    print (conf)
+
+    #conf ['model_repository_path'] = source_dir + '/models'
+    #conf ['model_repository_path'] = 'C:/flame/models'
     return conf
     
-
+## read configuraton file and store in a variable to prevent reading files more
+## than strictly necessary
 configuration = read_configuration ()
 
 def model_repository_path ():
@@ -56,7 +65,14 @@ def model_path (model, version):
 
 def module_path (model, version):
 
-    modpath = 'models'+'.'+model
+    modreppath = model_repository_path()
+    if not modreppath in sys.path:
+        sys.path.insert(0,modreppath)
+
+    print (sys.path)
+
+    ##modpath = 'models'+'.'+model
+    modpath = model
 
     if version == 0 :
         modpath += '.dev'
