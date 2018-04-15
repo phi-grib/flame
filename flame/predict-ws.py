@@ -30,10 +30,10 @@ from predict import Predict
 import manage
 import util.utils as utils
 
-PARTNER_ID = 'UPF'
-PARTNER_WEB ="http://phi.upf.edu"
-ADMIN_NAME = 'Manuel Pastor'
-ADMIN_EMAIL = 'manuel.pastor@upf.edu'
+# PARTNER_ID = 'UPF'
+# PARTNER_WEB ="http://phi.upf.edu"
+# ADMIN_NAME = 'Manuel Pastor'
+# ADMIN_EMAIL = 'manuel.pastor@upf.edu'
 
 class FlamePredict(object):
     @cherrypy.expose
@@ -43,10 +43,10 @@ class FlamePredict(object):
     @cherrypy.expose
     def upload(self):
 
-        filename    = os.path.basename(cherrypy.request.headers['x-filename'])
-        temp_dir    = os.path.basename(cherrypy.request.headers['temp-dir'])
+        filename = os.path.basename(cherrypy.request.headers['x-filename'])
+        temp_dir = os.path.basename(cherrypy.request.headers['temp-dir'])
 
-        path = tempfile.gettempdir()+'/'+temp_dir
+        path = os.path.join(tempfile.gettempdir(),temp_dir)
         os.mkdir (path)
  
         destination = os.path.join(path, filename)
@@ -60,7 +60,7 @@ class FlamePredictWS(object):
 
     def POST(self, ifile, model, version, temp_dir):
 
-        ifile = tempfile.gettempdir()+'/'+temp_dir+'/'+ifile
+        ifile = os.path.join(tempfile.gettempdir(),temp_dir,ifile)
         
         if version[:3]=='ver': 
             version = int(version[-6:]) ## get the numbers
