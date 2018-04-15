@@ -31,10 +31,10 @@ function parseResults (results) {
     
     var myjson = JSON.parse(results);
 
-    for (i in myjson['projection']){
+    for (i in myjson['values']){
         tbl_body += "<tr><td>"+(parseInt(i)+1)+
                     "</td><td>"+myjson['obj_nam'][i]+
-                    "</td><td>"+myjson['projection'][i].toFixed(4)+
+                    "</td><td>"+myjson['values'][i].toFixed(4)+
                     "</td><td>"+myjson['CI'][i]+
                     "</td><td>"+myjson['RI'][i]+
                     "</td></tr>";

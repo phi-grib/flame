@@ -66,9 +66,19 @@ class Apply:
         zero_array = np.zeros(nobj, dtype=np.float64)
 
         self.results['origin'] = 'apply'
-        self.results['projection'] = estimator.project(X)
-        self.results['CI'] = zero_array
-        self.results['RI'] = zero_array
+        #self.results['projection'] = estimator.project(X)
+        #self.results['CI'] = zero_array
+        #self.results['RI'] = zero_array
+
+        projection = estimator.project(X)
+
+        for key in projection:
+            self.results[key] = projection[key]
+            
+        if not 'CI' in self.results:
+            self.results['CI'] = zero_array
+        if not 'RI' in self.results:
+            self.results['RI'] = zero_array   
 
         return True, self.results
 
