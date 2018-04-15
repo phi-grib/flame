@@ -22,23 +22,53 @@
 function parseResults (results) {
     $("#data-body").text(results);
 
-    const headers = ['#','name','prediction','CI','RI']
+    const headers = ['#','name','prediction'];
+    const fix = ['obj_nam','values','origin'];
+    var myjson = JSON.parse(results);
+
     var tbl_body = '<thead><tr>'
     for (i in headers){
         tbl_body += '<th>'+headers[i]+'</th>'
     }
+    for (var key in myjson){
+        if (! fix.includes(key)) {
+            label = key.replace (/_/g , " ");
+            tbl_body +=  '<th>'+label+'</th>';
+        }
+    }
     tbl_body+='</tr></thead>'
     
-    var myjson = JSON.parse(results);
+    
+
+    // for (i in myjson['values']){
+    //     tbl_body += "<tr><td>"+(parseInt(i)+1)+
+    //                 "</td><td>"+myjson['obj_nam'][i]+
+    //                 "</td><td>"+myjson['values'][i].toFixed(4)+
+    //                 "</td><td>"+myjson['CI'][i]+
+    //                 "</td><td>"+myjson['RI'][i]+
+    //                 "</td></tr>";
+    // }
+
+    var val;
 
     for (i in myjson['values']){
         tbl_body += "<tr><td>"+(parseInt(i)+1)+
                     "</td><td>"+myjson['obj_nam'][i]+
-                    "</td><td>"+myjson['values'][i].toFixed(4)+
-                    "</td><td>"+myjson['CI'][i]+
-                    "</td><td>"+myjson['RI'][i]+
-                    "</td></tr>";
+                    "</td><td>"+myjson['values'][i].toFixed(4)
+
+        //TODO: use metadata for guessing type and adding tooltips
+        for (var key in myjson){
+            if (! fix.includes(key)) {
+                val = myjson[key][i];
+                tbl_body +=  "</td><td>"+val.toFixed(4);
+            }
+        }
+                    // "</td><td>"+myjson['CI'][i]+
+                    // "</td><td>"+myjson['RI'][i]+
+        tbl_body += "</td></tr>";
     }
+
+
 
     $("#data-table").html(tbl_body);   
 };
