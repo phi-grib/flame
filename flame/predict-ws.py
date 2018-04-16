@@ -30,10 +30,6 @@ from predict import Predict
 import manage
 import util.utils as utils
 
-# PARTNER_ID = 'UPF'
-# PARTNER_WEB ="http://phi.upf.edu"
-# ADMIN_NAME = 'Manuel Pastor'
-# ADMIN_EMAIL = 'manuel.pastor@upf.edu'
 
 class FlamePredict(object):
     @cherrypy.expose
@@ -88,11 +84,7 @@ class FlameInfoWS(object):
                  "admin_name": utils.configuration['admin_name'],
                  "admin_email": utils.configuration['admin_email']
                  }   
-        # data = { "provider": PARTNER_ID,
-        #          "homepage": PARTNER_WEB,
-        #          "admin": ADMIN_NAME,
-        #          "admin_email": ADMIN_EMAIL
-        #          }
+
         return json.dumps(data)
 
 @cherrypy.expose

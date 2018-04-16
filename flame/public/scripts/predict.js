@@ -97,6 +97,7 @@ function postPredict (temp_dir, ifile) {
     });
 };
 
+// simple utility function to download as a file text generated here (client-side)
 function download(filename, text) {
     var element = document.createElement('a');
     element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
@@ -108,7 +109,7 @@ function download(filename, text) {
     element.click();
   
     document.body.removeChild(element);
-  }  
+}  
 
 // main
 $(document).ready(function() {
@@ -256,7 +257,6 @@ $(document).ready(function() {
 
         e.preventDefault(); // from predict click function
     });
-
 
 
 });
