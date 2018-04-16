@@ -40,21 +40,17 @@ class Odata():
 
 
     def run_apply (self):
+        ''' process the results of apply, serializing to JSON '''
 
-        # names and structures
-        # JSON serialization (if out_format is JSON)
-
-        #print ('odata : ', self.results)
-
+        ## at least 'values' must be present
         if not 'values' in self.results:
             return False, self.results
         
-        # numpy arrays must be converted to lists before they
-        # can be serialized by json.dumps
+        ## do not output var arrays, only obj arrays
+        black_list = ['xmatrix', 'var_nam']   
+
         temp_json = {}
-        
-        # do not output var arrays, only obj arrays
-        black_list = ['xmatrix', 'var_nam']    #TODO: experim was excluded because NaN gives problems
+
         for key in self.results:
 
             if key in black_list :
@@ -63,6 +59,7 @@ class Odata():
             value = self.results[key]
 
             if 'numpy.ndarray' in str(type(value)):
+                # this removes NaN and and creates a plain list from ndarrays
                 temp_json[key] = [x if not np.isnan(x) else None for x in value]
             else:
                 temp_json[key]=value
@@ -98,6 +95,13 @@ class Odata():
         #             'projection': self.results['projection'],
         #             'CI': self.results['CI'].tolist(),
         #             'RI': self.results['RI'].tolist()}
+
+        ## TODO:
+        ## the last step must be add meta dictionary in results which contains information for every key
+        ## this will include:
+        ## - var/obj/meta
+        ## - float/int/str
+        ## - description for tooltip
             
         return True, json.dumps(temp_json) 
 
