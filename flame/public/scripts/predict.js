@@ -22,52 +22,49 @@
 function parseResults (results) {
     $("#data-body").text(results);
 
-    const headers = ['#','name','prediction'];
-    const fix = ['obj_nam','values','origin'];
     var myjson = JSON.parse(results);
 
-    var tbl_body = '<thead><tr>'
-    for (i in headers){
-        tbl_body += '<th>'+headers[i]+'</th>'
-    }
+    // special JSON keys which must be processed separatelly
+    const key_no = ['origin', 'meta', 'obj_nam', 'values'];
+
+    // select keys and order logically
+    var key_list = ['obj_nam','values'];
     for (var key in myjson){
-        if (! fix.includes(key)) {
-            label = key.replace (/_/g , " ");
-            tbl_body +=  '<th>'+label+'</th>';
+        if ( ! key_no.includes(key)){
+            key_list.push(key);
         }
     }
 
+    // header
+    var tbl_body = '<thead><tr><th>#</th>';
+    for (var key in key_list){
+        label = key_list[key];
+        label = label.replace (/_/g , " ");
+        tbl_body +=  '<th>'+label+'</th>';
+    }
+    
+    // body
+    tbl_body+='</tr></thead>';
     var val;
-    
-    tbl_body+='</tr></thead>'
-    
     for (i in myjson['values']){
-        tbl_body += "<tr><td>"+(parseInt(i)+1)+
-                    "</td><td>"+myjson['obj_nam'][i]+
-                    "</td><td>"+myjson['values'][i].toFixed(4)
-
-        //TODO: use metadata for guessing type and adding tooltips
-        for (var key in myjson){
-            if (! fix.includes(key)) {
-                val = myjson[key][i];
-                if (val==null) {
-                    tbl_body +=  "</td><td> - ";
+        tbl_body += "<tr><td>"+(parseInt(i)+1);
+        for (var key in key_list){
+            val = myjson[key_list[key]][i];
+            if (val==null) {
+                tbl_body +=  "</td><td> - ";
+            }
+            else {
+                val_float = parseFloat(val);
+                if(isNaN(val_float)){
+                    tbl_body +=  "</td><td>"+val;
                 }
                 else {
-                    val_float = parseFloat(val);
-                    if(isNaN(val_float)){
-                        tbl_body +=  "</td><td>"+val;
-                    }
-                    else {
-                        tbl_body +=  "</td><td>"+val_float.toFixed(3);
-                    }
+                    tbl_body +=  "</td><td>"+val_float.toFixed(3);
                 }
             }
         }
         tbl_body += "</td></tr>";
     }
-
-
 
     $("#data-table").html(tbl_body);   
 };
