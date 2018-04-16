@@ -46,8 +46,9 @@ function parseResults (results) {
     // body
     tbl_body+='</tr></thead>';
     var val;
+    var val_float;
     for (i in myjson['values']){
-        tbl_body += "<tr><td>"+(parseInt(i)+1);
+        tbl_body += "<tr><td>"+(+i+1);
         for (var key in key_list){
             val = myjson[key_list[key]][i];
             if (val==null) {
