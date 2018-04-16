@@ -21,6 +21,7 @@
 ##    along with Flame.  If not, see <http://www.gnu.org/licenses/>.
 
 import json
+import numpy as np
 
 class Odata():
 
@@ -53,7 +54,7 @@ class Odata():
         temp_json = {}
         
         # do not output var arrays, only obj arrays
-        black_list = ['xmatrix', 'var_nam', 'experim']    #TODO: experim was excluded because NaN gives problems
+        black_list = ['xmatrix', 'var_nam']    #TODO: experim was excluded because NaN gives problems
         for key in self.results:
 
             if key in black_list :
@@ -62,7 +63,7 @@ class Odata():
             value = self.results[key]
 
             if 'numpy.ndarray' in str(type(value)):
-                temp_json[key]=value.tolist()
+                temp_json[key] = [x if not np.isnan(x) else None for x in value]
             else:
                 temp_json[key]=value
                 
