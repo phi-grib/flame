@@ -390,6 +390,14 @@ class BaseEstimator:
             results = self.conformalProject(Xb)
         else:
             results = self.regularProject(Xb)
+
+        ## TODO: metainformation about the results returned
+        ## must be customized for each modeling technique
+        if self.quantitative:
+            results['meta'] = {'main':'values'}
+        else:
+            results['meta'] = {'main':'c0'}
+
         return results
 
 

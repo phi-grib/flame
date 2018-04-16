@@ -27,12 +27,13 @@ class Odata():
 
     def __init__ (self, parameters, results, out_format='JSON' ):
 
-        self.results = results
+        self.results = results # previous results (eg. object names, molecular descriptors) are retained 
         self.parameters = parameters
         self.format = out_format
 
 
     def run_learn (self):
+        ''' Process the results of lear, usually a report on the model quality '''
 
         print ('odata : ', self.results)
         print ('building OK!')
@@ -40,70 +41,87 @@ class Odata():
 
 
     def run_apply (self):
-        ''' process the results of apply, serializing to JSON '''
+        ''' Process the results of apply, usually a list of results and serializing to JSON '''
 
+        meta = self.results['meta']
+        main = meta['main']
+        
         ## at least 'values' must be present
-        if not 'values' in self.results:
+        if not main in self.results:
             return False, self.results
         
-        ## do not output var arrays, only obj arrays
-        black_list = ['xmatrix', 'var_nam']   
+        if self.format=='JSON':
+            ## do not output var arrays, only obj arrays
+            black_list = ['xmatrix', 'var_nam']   
 
-        temp_json = {}
+            temp_json = {}
 
-        for key in self.results:
+            for key in self.results:
 
-            if key in black_list :
-                continue
+                if key in black_list :
+                    continue
 
-            value = self.results[key]
+                value = self.results[key]
 
-            if 'numpy.ndarray' in str(type(value)):
-                # this removes NaN and and creates a plain list from ndarrays
-                temp_json[key] = [x if not np.isnan(x) else None for x in value]
-            else:
-                temp_json[key]=value
+                if 'numpy.ndarray' in str(type(value)):
+                    
+                    if 'bool_' in str(type(value[0])):
+                        temp_json[key] = ['True' if x else 'False' for x in value]
+                    else:
+                        # this removes NaN and and creates a plain list from ndarrays
+                        temp_json[key] = [x if not np.isnan(x) else None for x in value]
+
+                else:
+                    temp_json[key]=value
+                    
+
+            # if not self.parameters['conformal']:
                 
+            #     if self.parameters['quantitative']:
+            #         temp_json = {
+            #             'obj_nam': self.results['obj_nam'],
+            #             'projection': self.results['projection'].tolist(),
+            #             'CI': self.results['CI'].tolist(),
+            #             'RI': self.results['RI'].tolist()}
+            #     else:
+            #         temp_json = {
+            #             'obj_nam': self.results['obj_nam'],
+            #             'projection': self.results['projection'].tolist(),
+            #             'CI': self.results['CI'].tolist(),
+            #             'RI': self.results['RI'].tolist()}
+                    
+            # else:
+            #     if self.parameters['quantitative']:
+            #         temp_json = {
+            #             'obj_nam': self.results['obj_nam'],
+            #             'projection': self.results['projection']['values'].tolist(),
+            #             'lower_limit': self.results['projection']['lower_limit'].tolist(),
+            #             'upper_limit': self.results['projection']['upper_limit'].tolist(),
+            #             'CI': self.results['CI'].tolist(),
+            #             'RI': self.results['RI'].tolist()}
+            #     else:
+            #         temp_json = {
+            #             'obj_nam': self.results['obj_nam'],
+            #             'projection': self.results['projection'],
+            #             'CI': self.results['CI'].tolist(),
+            #             'RI': self.results['RI'].tolist()}
 
-        # if not self.parameters['conformal']:
-            
-        #     if self.parameters['quantitative']:
-        #         temp_json = {
-        #             'obj_nam': self.results['obj_nam'],
-        #             'projection': self.results['projection'].tolist(),
-        #             'CI': self.results['CI'].tolist(),
-        #             'RI': self.results['RI'].tolist()}
-        #     else:
-        #         temp_json = {
-        #             'obj_nam': self.results['obj_nam'],
-        #             'projection': self.results['projection'].tolist(),
-        #             'CI': self.results['CI'].tolist(),
-        #             'RI': self.results['RI'].tolist()}
-                
-        # else:
-        #     if self.parameters['quantitative']:
-        #         temp_json = {
-        #             'obj_nam': self.results['obj_nam'],
-        #             'projection': self.results['projection']['values'].tolist(),
-        #             'lower_limit': self.results['projection']['lower_limit'].tolist(),
-        #             'upper_limit': self.results['projection']['upper_limit'].tolist(),
-        #             'CI': self.results['CI'].tolist(),
-        #             'RI': self.results['RI'].tolist()}
-        #     else:
-        #         temp_json = {
-        #             'obj_nam': self.results['obj_nam'],
-        #             'projection': self.results['projection'],
-        #             'CI': self.results['CI'].tolist(),
-        #             'RI': self.results['RI'].tolist()}
+            ## TODO:
+            ## the last step must be add meta dictionary in results which contains information for every key
+            ## this will include:
+            ## - var/obj/meta
+            ## - float/int/str
+            ## - description for tooltip
 
-        ## TODO:
-        ## the last step must be add meta dictionary in results which contains information for every key
-        ## this will include:
-        ## - var/obj/meta
-        ## - float/int/str
-        ## - description for tooltip
+            ## temp_json['meta'] = {'main':'c0'}
+
+            output = json.dumps(temp_json)
+
+        elif self.format=='TSV':
+
+            output = 'not implemented'
             
-        return True, json.dumps(temp_json) 
+        return True, output
 
 
     def run (self):

@@ -108,10 +108,12 @@ ENV/
 
 # Molecules
 .sdf
+mols
 
-# Pickle files
+# Pickle files and models
 .pkl
-src/models/CACO2/dev/model.pkl
+flame/models
 
 # Pycharm config
 .idea
+flame/models/CACO2/dev/data.pkl

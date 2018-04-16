@@ -23,12 +23,14 @@ function parseResults (results) {
     $("#data-body").text(results);
 
     var myjson = JSON.parse(results);
+    var meta = myjson['meta'];
+    var main = meta['main']
 
     // special JSON keys which must be processed separatelly
-    const key_no = ['origin', 'meta', 'obj_nam', 'values'];
+    const key_no = ['origin', 'meta', 'obj_nam', main];
 
     // select keys and order logically
-    var key_list = ['obj_nam','values'];
+    var key_list = ['obj_nam',main];
     for (var key in myjson){
         if ( ! key_no.includes(key)){
             key_list.push(key);
@@ -47,7 +49,7 @@ function parseResults (results) {
     tbl_body+='</tr></thead>';
     var val;
     var val_float;
-    for (i in myjson['values']){
+    for (i in myjson[main]){
         tbl_body += "<tr><td>"+(+i+1);
         for (var key in key_list){
             val = myjson[key_list[key]][i];
