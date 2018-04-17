@@ -78,45 +78,6 @@ class Odata():
 
                 else:
                     temp_json[key]=value
-                    
-
-            # if not self.parameters['conformal']:
-                
-            #     if self.parameters['quantitative']:
-            #         temp_json = {
-            #             'obj_nam': self.results['obj_nam'],
-            #             'projection': self.results['projection'].tolist(),
-            #             'CI': self.results['CI'].tolist(),
-            #             'RI': self.results['RI'].tolist()}
-            #     else:
-            #         temp_json = {
-            #             'obj_nam': self.results['obj_nam'],
-            #             'projection': self.results['projection'].tolist(),
-            #             'CI': self.results['CI'].tolist(),
-            #             'RI': self.results['RI'].tolist()}
-                    
-            # else:
-            #     if self.parameters['quantitative']:
-            #         temp_json = {
-            #             'obj_nam': self.results['obj_nam'],
-            #             'projection': self.results['projection']['values'].tolist(),
-            #             'lower_limit': self.results['projection']['lower_limit'].tolist(),
-            #             'upper_limit': self.results['projection']['upper_limit'].tolist(),
-            #             'CI': self.results['CI'].tolist(),
-            #             'RI': self.results['RI'].tolist()}
-            #     else:
-            #         temp_json = {
-            #             'obj_nam': self.results['obj_nam'],
-            #             'projection': self.results['projection'],
-            #             'CI': self.results['CI'].tolist(),
-            #             'RI': self.results['RI'].tolist()}
-
-            ## TODO:
-            ## the last step must be add meta dictionary in results which contains information for every key
-            ## this will include:
-            ## - var/obj/meta
-            ## - float/int/str
-            ## - description for tooltip
 
             ## temp_json['meta'] = {'main':'c0'}
             output = json.dumps(temp_json)
