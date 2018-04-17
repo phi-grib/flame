@@ -21,17 +21,19 @@
 ##    along with Flame.  If not, see <http://www.gnu.org/licenses/>.
 
 import json
+import numpy as np
 
 class Odata():
 
     def __init__ (self, parameters, results, out_format='JSON' ):
 
-        self.results = results
+        self.results = results # previous results (eg. object names, molecular descriptors) are retained 
         self.parameters = parameters
         self.format = out_format
 
 
     def run_learn (self):
+        ''' Process the results of lear, usually a report on the model quality '''
 
         print ('odata : ', self.results)
         print ('building OK!')
@@ -39,24 +41,48 @@ class Odata():
 
 
     def run_apply (self):
+        ''' Process the results of apply, usually a list of results and serializing to JSON '''
 
-        # names and structures
-        # JSON serialization (if out_format is JSON)
+        meta = self.results['meta']
+        main = meta['main']
 
-        #print ('odata : ', self.results)
-
-        if not 'projection' in self.results:
+        ## at least 'values' must be present
+        if not main in self.results:
             return False, self.results
         
-        # numpy arrays must be converted to lists before they
-        # can be serialized by json.dumps
-        temp_json = {
-            'obj_nam': self.results['obj_nam'],
-            'projection': self.results['projection'].tolist(),
-            'CI': self.results['CI'].tolist(),
-            'RI': self.results['RI'].tolist()}
+        if self.format=='JSON':
+            ## do not output var arrays, only obj arrays
+            black_list = ['xmatrix', 'var_nam']   
 
-        return True, json.dumps(temp_json) 
+            temp_json = {}
+
+            for key in self.results:
+
+                if key in black_list :
+                    continue
+
+                value = self.results[key]
+
+                if 'numpy.ndarray' in str(type(value)):
+                    
+                    if 'bool_' in str(type(value[0])):
+                        temp_json[key] = ['True' if x else 'False' for x in value]
+                    else:
+                        # this removes NaN and and creates a plain list from ndarrays
+                        temp_json[key] = [x if not np.isnan(x) else None for x in value]
+
+                else:
+                    temp_json[key]=value
+
+            ## temp_json['meta'] = {'main':'c0'}
+
+            output = json.dumps(temp_json)
+
+        elif self.format=='TSV':
+
+            output = 'not implemented'
+            
+        return True, output
 
 
     def run (self):

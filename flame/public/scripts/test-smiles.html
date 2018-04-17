@@ -1,0 +1,44 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="x-ua-compatible" content="ie=edge">
+        <title>Smiles Drawer Example</title>
+    </head>
+    <body>
+        <script src="./smiles-drawer.min.js"></script>
+        <script src="./jquery-3.3.1.min.js"></script>
+        <script>
+            // Initialize the drawer
+            let options = {'width':200, 'height':200};
+            let smilesDrawer = new SmilesDrawer.Drawer(options);
+
+            const mols = ['O=C(O)C[C@H](O)C[C@H](O)CCn2c(c(c(c2c1ccc(F)cc1)c3ccccc3)C(=O)Nc4ccccc4)C(C)C','CN1CCC23C4C1CC5=C2C(=C(C=C5)O)OC3C(C=C4)O' ]
+
+            $(document).ready(function() {
+                
+                table = document.getElementById('mytable');
+                var table_content;
+                for (i in mols) {
+                    molname = 'mol'+i;
+                    
+                    // create cells and canvas with right ID
+                    table_content = '<tr><td>'+molname+'</td><td><canvas id="'+molname+'"></canvas></td></tr>'; 
+                    table.insertAdjacentHTML('beforeend',table_content);
+                    
+                    // parse SMILES and draw in canvas
+                    SmilesDrawer.parse(mols[i], function(tree) {
+                        smilesDrawer.draw(tree, molname, 'light', false);
+                    });
+                };
+                
+            });
+
+        </script>
+
+
+        <table id="mytable">
+        </table>
+
+    </body>
+</html>

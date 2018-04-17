@@ -41,9 +41,34 @@ from sklearn.metrics import mean_squared_error, matthews_corrcoef as mcc
 from sklearn.metrics import f1_score
 from sklearn.metrics import make_scorer
 from sklearn.metrics import confusion_matrix
-
+from sklearn.model_selection import train_test_split
 from stats.model_validation import *
 from stats.scale import center, scale
+
+## nonconformist imports
+
+from nonconformist.base import ClassifierAdapter, RegressorAdapter
+from nonconformist.icp import IcpClassifier, IcpRegressor
+from nonconformist.nc import MarginErrFunc
+from nonconformist.nc import ClassifierNc, RegressorNc
+from nonconformist.nc import AbsErrorErrFunc, SignErrorErrFunc, RegressorNormalizer
+from nonconformist.acp import AggregatedCp
+from nonconformist.acp import BootstrapSampler, CrossSampler, RandomSubSampler
+from nonconformist.acp import BootstrapConformalClassifier
+from nonconformist.acp import CrossConformalClassifier
+
+from nonconformist.evaluation import class_mean_errors, class_one_c
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.tree import DecisionTreeRegressor
+from nonconformist.base import ClassifierAdapter
+from nonconformist.icp import IcpClassifier
+from nonconformist.nc import ClassifierNc, MarginErrFunc
+from nonconformist.evaluation import cross_val_score as conformal_cross_val_score
+from nonconformist.evaluation import ClassIcpCvHelper, RegIcpCvHelper
+from nonconformist.evaluation import class_avg_c, class_mean_errors
+from nonconformist.evaluation import reg_mean_errors, reg_median_size
+from nonconformist.evaluation import reg_mean_size
+from nonconformist.evaluation import class_mean_errors
 
 class BaseEstimator:
     def __init__(self, X, Y, quantitative=False, autoscale=False,
@@ -95,7 +120,10 @@ class BaseEstimator:
         self.conformal = conformal
         self.conformalSignificance = conformalSignificance
         self.conformal_pred = None
-        self.meanConformalInterval = 0.00
+        self.conformal_mean_interval = 0.00
+        self.conformal_accuracy = 0.00
+        self.conformal_coverage = 0.00
+
 
         self.failed = False
 
@@ -121,12 +149,104 @@ class BaseEstimator:
                 (self.TP, self.TN, self.FP, self.FN, self.specificity, self.sensitivity, self.mcc))
 
 
+    def CF_quantitative_validation(self):
+
+        X = self.X.copy()
+        Y = self.Y.copy()
+
+        seeds = [5, 7, 35]
+        interval_means = []
+        accuracies = []
+        for i in range(len(seeds)):
+            X_train, X_test, Y_train, Y_test =  train_test_split(X, Y, test_size= 0.25,
+                                                     random_state=i, shuffle=False)
+            conformal_pred = AggregatedCp(IcpRegressor(RegressorNc(RegressorAdapter(self.estimator))),
+            BootstrapSampler())
+            conformal_pred.fit(X_train, Y_train)
+            prediction = conformal_pred.predict(X_test, self.conformalSignificance)
+
+            interval_means.append(np.mean(np.abs(prediction[:, 0]) - np.abs(prediction[:, 1])))
+            Y_test = Y_test.reshape(-1, 1)
+            inside_interval = (prediction[:, 0].reshape(-1,1) < Y_test ) & (prediction[:, 1].reshape(-1,1) > Y_test )
+            accuracy =  np.sum(inside_interval)/len(Y_test)
+            accuracies.append(accuracy)
+        interval_means = np.mean(interval_means)
+        accuracies = np.mean(accuracies)
+        self.conformal_accuracy = float("{0:.2f}".format(accuracies))
+        self.conformal_mean_interval = float("{0:.2f}".format(interval_means))
+        return True, 'ok'
+
+    def CF_qualitative_validation(self):
+        
+        X = self.X.copy()
+        Y = self.Y.copy()
+
+
+        seeds = [5, 7, 35]
+        average_class_errors = []
+        c0_correct_all = []
+        c0_incorrect_all = []
+        c1_correct_all = []
+        c1_incorrect_all = []
+        not_predicted_all = []
+
+        for i in range(len(seeds)):
+            X_train, X_test, Y_train, Y_test =  train_test_split(X, Y, test_size= 0.25,
+                                                     random_state=i, shuffle=True)
+            conformal_pred = AggregatedCp(IcpClassifier(ClassifierNc(ClassifierAdapter(self.estimator),
+                MarginErrFunc())), BootstrapSampler())
+            conformal_pred.fit(X_train, Y_train)
+            prediction = conformal_pred.predict(X_test, self.conformalSignificance)
+            c0_correct = 0
+            c1_correct = 0
+            not_predicted = 0
+            c0_incorrect = 0
+            c1_incorrect = 0
+            for i in range(len(Y_test)):
+                real = float(Y_test[i])
+                predicted = prediction[i]
+                if predicted[0] != predicted[1]:
+                    if real == 0 and predicted[0] == True:
+                        c0_correct += 1
+                    if real == 0 and predicted[1] == True:
+                        c0_incorrect += 1
+                    if real == 1 and predicted[1]== True:
+                        c1_correct += 1
+                    if real == 1 and predicted[0]== True:
+                        c1_incorrect += 1
+                else:
+                    not_predicted += 1
+            c0_correct_all.append(c0_correct)
+            c0_incorrect_all.append(c0_incorrect)
+            c1_correct_all.append(c1_correct)
+            c1_incorrect_all.append(c1_incorrect)
+            not_predicted_all.append(not_predicted)
+
+        
+        self.TN = np.int(np.mean(c0_correct_all))
+        self.FP = np.int(np.mean(c0_incorrect_all))
+        self.TP = np.int(np.mean(c1_correct_all))
+        self.FN = np.int(np.mean(c1_incorrect_all))
+        not_predicted_all = np.int(np.mean(not_predicted_all))
+
+        self.sensitivity = (self.TP / (self.TP + self.FN))
+        self.specificity = (self.TN / (self.TN + self.FP))
+
+        self.mcc = (((self.TP * self.TN) - (self.FP * self.FN)) / 
+                    np.sqrt((self.TP + self.FP) * (self.TP + self.FN) * 
+                    (self.TN + self.FP) * (self.TN + self.FN)))
+        self.mcc = float("{0:.2f}".format(self.mcc))
+        self.sensitivity = float("{0:.2f}".format(self.sensitivity))
+        self.specificity = float("{0:.2f}".format(self.specificity))
+        self.coverage = (self.TN + self.FP + self.TP + self.FN) / ((self.TN + self.FP + self.TP + self.FN) + not_predicted_all)
+        self.coverage = float("{0:.2f}".format(self.coverage))
+
+        return True, 'ok'
+
+
+
     def quantitativeValidation(self):
         
-        nobj, nvarx = np.shape(self.X)
-        if self.X is None or self.estimator is None:
-            return False, 'no estimator'
-
         X = self.X.copy()
         Y = self.Y.copy()
 
@@ -158,13 +278,8 @@ class BaseEstimator:
 
         return True, 'ok'
 
-
     def qualitativeValidation(self):
         
-        nobj, nvarx = np.shape(self.X)
-        if self.X is None or self.estimator is None:
-            return False, 'no estimator'
-
         X = self.X.copy()
         Y = self.Y.copy()
 
@@ -199,16 +314,24 @@ class BaseEstimator:
 
     def validate(self):
         """ Validates the models and completes suitable scoring values"""
-        
-        if self.quantitative:
-            success, results = self.quantitativeValidation()
-            if success :
-                self.printQuantitativeValidationResults()
+        nobj, nvarx = np.shape(self.X)
+        if self.X is None or self.estimator is None:
+            return False, 'no estimator'
+        if not self.conformal:
+            if self.quantitative:
+                success, results = self.quantitativeValidation()
+                if success :
+                    self.printQuantitativeValidationResults()
+            else:
+                success, results = self.qualitativeValidation()
+                if success :
+                    self.printQualitativeValidationResults()
         else:
-            success, results = self.qualitativeValidation()
-            if success :
-                self.printQualitativeValidationResults()
-        
+            if self.quantitative:
+               success, results =  self.CF_quantitative_validation()
+            else:
+                success, results = self.CF_qualitative_validation()
+
         return success, results
 
         # Move this to an external module ****
@@ -231,16 +354,25 @@ class BaseEstimator:
 
 
     def conformalProject(self, Xb):
-        Yp = self.regularProject(Xb)
-        prediction = conformal_pred_pred(Xb, self.conformal_pred,
-                     self.conformalSignificance)
+        print ("conformal projection")
+        prediction = self.conformal_pred.predict(Xb, significance=self.conformalSignificance)
+        
 
         if self.quantitative:
+            mean1 = np.mean(prediction, axis=1)
             predictionSize = abs(abs(prediction[0][0]) - abs(prediction[0][1]))
-            prediction = prediction.tolist() + [predictionSize, self.meanConformalInterval]
-            return ([Yp, prediction])         
+            lower_limit = prediction[:, 0]
+            upper_limit = prediction[:, 1]
+            return ({'values' : mean1, 'lower_limit' : lower_limit, 'upper_limit' : upper_limit})         
         else:
-            return ([Yp, prediction])
+            ## For the moment is returning a dictionary with class predictions 
+            # / c0 / c1 / c2 /
+            # /True/True/False/
+            class_prediction = {}
+            for i in range(len(prediction[0])):
+                clas_name = 'c' + str(i)
+                class_prediction[clas_name] = prediction[:, i]
+            return (class_prediction)
                
 
     def project (self, Xb):
@@ -258,6 +390,14 @@ class BaseEstimator:
             results = self.conformalProject(Xb)
         else:
             results = self.regularProject(Xb)
+
+        ## TODO: metainformation about the results returned
+        ## must be customized for each modeling technique
+        if self.quantitative:
+            results['meta'] = {'main':'values'}
+        else:
+            results['meta'] = {'main':'c0'}
+
         return results
 
 
@@ -302,7 +442,7 @@ class BaseEstimator:
 
     def getResults (self, results):
 
-        # Goodness of the fit restults
+        # Goodness of the fit results
         
         results ['TPpred'] = self.TPpred 
         results ['TNpred'] = self.TNpred 

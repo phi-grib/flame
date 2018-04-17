@@ -45,32 +45,29 @@ from sklearn.model_selection import LeaveOneOut
 
 
 ### Conformal Prediction
-try:
-    from nonconformist.base import ClassifierAdapter, RegressorAdapter
-    from nonconformist.icp import IcpClassifier, IcpRegressor
-    from nonconformist.nc import MarginErrFunc
-    from nonconformist.nc import ClassifierNc, RegressorNc
-    # from nonconformist.nc import NormalizedRegressorNc
-    from nonconformist.nc import AbsErrorErrFunc, SignErrorErrFunc, RegressorNormalizer
-    from nonconformist.acp import AggregatedCp
-    from nonconformist.acp import BootstrapSampler, CrossSampler, RandomSubSampler
-    from nonconformist.acp import BootstrapConformalClassifier
-    from nonconformist.acp import CrossConformalClassifier
-    from nonconformist.evaluation import class_mean_errors, class_one_c
+from nonconformist.base import ClassifierAdapter, RegressorAdapter
+from nonconformist.icp import IcpClassifier, IcpRegressor
+from nonconformist.nc import MarginErrFunc
+from nonconformist.nc import ClassifierNc, RegressorNc
+# from nonconformist.nc import NormalizedRegressorNc
+from nonconformist.nc import AbsErrorErrFunc, SignErrorErrFunc, RegressorNormalizer
+from nonconformist.acp import AggregatedCp
+from nonconformist.acp import BootstrapSampler, CrossSampler, RandomSubSampler
+from nonconformist.acp import BootstrapConformalClassifier
+from nonconformist.acp import CrossConformalClassifier
+from nonconformist.evaluation import class_mean_errors, class_one_c
 
-    from sklearn.tree import DecisionTreeClassifier
-    from sklearn.tree import DecisionTreeRegressor
-    from nonconformist.base import ClassifierAdapter
-    from nonconformist.icp import IcpClassifier
-    from nonconformist.nc import ClassifierNc, MarginErrFunc
-    from nonconformist.evaluation import cross_val_score as conformal_cross_val_score
-    from nonconformist.evaluation import ClassIcpCvHelper, RegIcpCvHelper
-    from nonconformist.evaluation import class_avg_c, class_mean_errors
-    from nonconformist.evaluation import reg_mean_errors, reg_median_size
-    from nonconformist.evaluation import reg_mean_size
-    from nonconformist.evaluation import class_mean_errors
-except:
-    print ("nonconformist packale unavailable, please run a non-conformal model")
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.tree import DecisionTreeRegressor
+from nonconformist.base import ClassifierAdapter
+from nonconformist.icp import IcpClassifier
+from nonconformist.nc import ClassifierNc, MarginErrFunc
+from nonconformist.evaluation import cross_val_score as conformal_cross_val_score
+from nonconformist.evaluation import ClassIcpCvHelper, RegIcpCvHelper
+from nonconformist.evaluation import class_avg_c, class_mean_errors
+from nonconformist.evaluation import reg_mean_errors, reg_median_size
+from nonconformist.evaluation import reg_mean_size
+from nonconformist.evaluation import class_mean_errors
 
 
 
@@ -218,27 +215,44 @@ def CF_QualVal(X, Y, estimator, conformalSignificance):
 def CF_QuanVal(X, Y, estimator, conformalSignificance):
     print ("Starting quantitative conformal prediction validation")
 
-    icp = IcpRegressor(RegressorNc(RegressorAdapter(estimator),
-                                   AbsErrorErrFunc(), RegressorNormalizer(estimator, RegressorAdapter(copy.copy(estimator)), AbsErrorErrFunc())))
+    icp = AggregatedCp(IcpRegressor(RegressorNc(RegressorAdapter(estimator))),BootstrapSampler())
+                                   
 
-    icp_cv = RegIcpCvHelper(icp)
-    scores = conformal_cross_val_score(icp_cv,
-                             X,
-                             Y,
-                             iterations=20,
-                             folds=5,
-                             scoring_funcs=[reg_mean_errors, reg_median_size, reg_mean_size],
-                             significance_levels=[0.05, 0.1, 0.2, conformalSignificance])
 
-    print('Absolute error regression')
-    scores = scores.drop(['fold', 'iter'], axis=1)
 
-    new_scores = (scores.groupby(['significance']).mean())
-    print (new_scores)
-    ns = new_scores["reg_mean_size"].values.tolist()
-    ns = dict(zip(["0.05", "0.1", "0.2", str(conformalSignificance)], ns))
-    reg_mean_error = ns[str(conformalSignificance)]
-    return reg_mean_error
+    # icp = AggregatedCp(IcpRegressor(RegressorNc(RegressorAdapter(estimator),
+    #                               AbsErrorErrFunc(), RegressorNormalizer(estimator,
+    #                                RegressorAdapter(copy.copy(estimator)), AbsErrorErrFunc()))))
+    # icp_cv = RegIcpCvHelper(icp)
+    # scores = conformal_cross_val_score(icp_cv,
+    #                          X,
+    #                          Y,
+    #                          iterations=5,
+    #                          folds=5,
+    #                          scoring_funcs=[reg_mean_errors, reg_median_size, reg_mean_size],
+    #                          significance_levels=[0.05, 0.1, 0.2, conformalSignificance])
+
+    icp.fit(X[:30], Y[:30])
+    prediction = icp.predict(X[30:])
+    prediction_sign = icp.predict(X[30:], significance=0.25)
+
+    interval = prediction_sign[:, 0] - prediction_sign[:, 1]
+    print (np.mean(interval))
+    print (interval)
+    print ("\n")
+    print (prediction)
+    print (prediction_sign)
+    return (icp)
+
+    # print('Absolute error regression')
+    # scores = scores.drop(['fold', 'iter'], axis=1)
+
+    # new_scores = (scores.groupby(['significance']).mean())
+    # print (new_scores)
+    # ns = new_scores["reg_mean_size"].values.tolist()
+    # ns = dict(zip(["0.05", "0.1", "0.2", str(conformalSignificance)], ns))
+    # reg_mean_error = ns[str(conformalSignificance)]
+    # return reg_mean_error
 
 
 

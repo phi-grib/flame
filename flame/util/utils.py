@@ -22,31 +22,76 @@
             
 import hashlib
 import os
+import sys
+import yaml
 
-working_dir = os.path.dirname(os.path.abspath(__file__))[:-5] #removing '/utils'
+def __read_configuration ():
+    ''' Reads configuration file "config.yaml". Do not call directly, read configuration variable instead '''
+    conf = {}
+    source_dir = os.path.dirname(os.path.abspath(__file__))[:-5] #removing '/utils'
 
-root_dir = working_dir + '/models' 
+    with open (os.path.join(source_dir,'config.yaml'), 'r') as config_file:
+        conf = yaml.load(config_file)
 
-def root_path ():
-    return root_dir
+    ## if the name of a path starts with '.' we will prepend the path with the source dir
+    if conf ['model_repository_path'][0] =='.' :
 
-def base_path (model):
-    return root_dir+'/'+model
+        #TODO: I dislike the use of "/" here... but os.path.append does not work well
+        conf ['model_repository_path']=source_dir+'/'+ conf ['model_repository_path'][1:]
 
-def model_path (model, version):        
+    #print (conf)
+
+    return conf
+    
+    
+## read configuraton file and store in a variable to prevent reading files more
+## than strictly necessary
+configuration = __read_configuration ()
+
+
+def model_repository_path ():
+    ''' Returns the path to the root of the model repository, containing all models and versions '''
+
+    return configuration ['model_repository_path']
+
+
+def model_tree_path (model):
+    ''' Returns the path to the model given as argumen, containg all versions '''
+
+    return os.path.join(model_repository_path(),model)
+
+
+def model_path (model, version):
+    ''' Returns the path to the model and version given as arguments '''
        
-    epd = base_path(model)
+    modpath = model_tree_path(model)
     
     if version == 0 :
-        epd += '/dev'
+       modpath = os.path.join(modpath,'dev')
     else:
-        epd += '/ver%0.6d'%(version)
+       modpath = os.path.join(modpath,'ver%0.6d'%(version))
     
-    return epd
+    return modpath
+
 
 def module_path (model, version):
+    ''' 
+    
+    Returns the path to the model and version given as arguments, in Python synthax (separated by "."). 
+    
+    Also adds the model repository path to the Python path, so the relative module path can be 
+    understood and the module imported 
 
-    modpath = 'models'+'.'+model
+    '''
+
+    modreppath = model_repository_path()
+    if not modreppath in sys.path:
+        sys.path.insert(0,modreppath)
+
+    ##print (sys.path)
+
+    ##modpath = 'models'+'.'+model
+    modpath = model
 
     if version == 0 :
         modpath += '.dev'
@@ -55,7 +100,9 @@ def module_path (model, version):
 
     return modpath
 
+
 def md5sum(filename, blocksize=65536):
+    ''' Returns the MD5 sum of the file given as argument '''
 
     hash = hashlib.md5()
 
@@ -65,7 +112,10 @@ def md5sum(filename, blocksize=65536):
 
     return hash.hexdigest()
 
+
 def intver(raw_version):
+    ''' Returns an int describing at best the model version provided as argument '''
+
     if raw_version is None:
         return 0
     

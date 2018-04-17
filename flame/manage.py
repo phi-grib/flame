@@ -28,9 +28,12 @@ import json
 import util.utils as utils
 
 def action_new (model):
-    """ create a new model tree, using the given name. This creates the development version "dev", copying inside default child classes """
+    ''' create a new model tree, using the given name. This creates the development version "dev", copying inside default child classes '''
 
-    ndir = utils.base_path(model)
+    if not model:
+        return False, 'empty model label'
+
+    ndir = utils.model_tree_path(model)
     
     # check if there is already a tree for this endpoint
     if os.path.isdir (ndir):
@@ -59,9 +62,12 @@ def action_new (model):
 
 
 def action_kill (model):
-    """ removes the model tree described by the argument """
+    ''' removes the model tree described by the argument '''
 
-    ndir = utils.base_path(model)
+    if not model:
+        return False, 'empty model label'
+
+    ndir = utils.model_tree_path(model)
     
     if not os.path.isdir (ndir):
         return False, 'model not found'
@@ -72,9 +78,12 @@ def action_kill (model):
 
 
 def action_publish (model):
-    """ clone the development "dev" version as a new model version, assigning a sequential version number """
+    ''' clone the development "dev" version as a new model version, assigning a sequential version number '''
 
-    bdir = utils.base_path(model)
+    if not model:
+        return False, 'empty model label'
+    
+    bdir = utils.model_tree_path(model)
 
     if not os.path.isdir(bdir):
         return False, 'model not found'
@@ -101,7 +110,10 @@ def action_publish (model):
 
 
 def action_remove (model, version):
-    """ remove the version indicated as argument from the model tree indicated as argument """
+    ''' Remove the version indicated as argument from the model tree indicated as argument '''
+
+    if not model:
+        return False, 'empty model label'
 
     if version == 0:
         return False, 'development version cannot be removed'
@@ -116,11 +128,13 @@ def action_remove (model, version):
 
 
 def action_list (model):
-    """ list available models (if no argument is provided) and model versions (if "model" is provided as argument) """
+    ''' Lists available models (if no argument is provided) and model versions (if "model" is provided as argument) '''
 
     # TODO: if no argument is provided, also list all models
     if not model:
-        rdir = utils.root_path()
+        rdir = utils.model_repository_path()
+        print (rdir)
+        
         num_models=0
         for x in os.listdir (rdir):
             num_models+=1
@@ -128,7 +142,7 @@ def action_list (model):
 
         return True, str(num_models)+' models found in the repository'
 
-    bdir = utils.base_path (model)
+    bdir = utils.model_tree_path (model)
 
     num_versions = 0
     for x in os.listdir (bdir):
@@ -140,9 +154,12 @@ def action_list (model):
 
 
 def action_import (model):
-    """ create a new model tree from a tarbal file with the name "model.tgz" """
+    ''' Creates a new model tree from a tarbal file with the name "model.tgz" '''
+    
+    if not model:
+        return False, 'empty model label'
 
-    bdir = utils.base_path (model)
+    bdir = utils.model_tree_path (model)
     
     if os.path.isdir (bdir) :
         return False, 'endpoint already exists'
@@ -165,12 +182,15 @@ def action_import (model):
 
 
 def action_export (model):
-    """ export the whole model tree indicated in the argument as a single tarball file with the same name """
+    ''' Exports the whole model tree indicated in the argument as a single tarball file with the same name '''
 
+    if not model:
+        return False, 'empty model label'
+        
     current_path = os.getcwd ()
     exportfile = current_path+'/'+model+'.tgz'
     
-    bdir = utils.base_path (model)
+    bdir = utils.model_tree_path (model)
 
     if not os.path.isdir(bdir):
         return False, 'endpoint directory not found'
@@ -193,7 +213,7 @@ def action_export (model):
 
 ## TODO: implement refactoring, starting with simple methods
 def action_refactoring (file):
-    """ not implemented, call to import externally generated models (eg. in KNIME or R) """
+    ''' NOT IMPLEMENTED, call to import externally generated models (eg. in KNIME or R) '''
 
     print ('refactoring')
 
@@ -201,15 +221,15 @@ def action_refactoring (file):
 
 
 def action_dir ():
-    """ return a JSON with the list of models and versions """
+    ''' Returns a JSON with the list of models and versions '''
 
     results = []
-    rdir = utils.root_path()
+    rdir = utils.model_repository_path()
 
     for imodel in os.listdir (rdir):
         versions = ['dev']
 
-        for iversion in os.listdir (utils.base_path(imodel)):
+        for iversion in os.listdir (utils.model_tree_path(imodel)):
             if iversion.startswith('ver'):
                 versions.append (iversion)
                 

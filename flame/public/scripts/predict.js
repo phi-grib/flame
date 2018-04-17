@@ -22,31 +22,65 @@
 function parseResults (results) {
     $("#data-body").text(results);
 
-    const headers = ['#','name','prediction','CI','RI']
-    var tbl_body = '<thead><tr>'
-    for (i in headers){
-        tbl_body += '<th>'+headers[i]+'</th>'
-    }
-    tbl_body+='</tr></thead>'
+    lastResults = results;
     
     var myjson = JSON.parse(results);
-
-    for (i in myjson['projection']){
-        tbl_body += "<tr><td>"+(parseInt(i)+1)+
-                    "</td><td>"+myjson['obj_nam'][i]+
-                    "</td><td>"+myjson['projection'][i].toFixed(4)+
-                    "</td><td>"+myjson['CI'][i]+
-                    "</td><td>"+myjson['RI'][i]+
-                    "</td></tr>";
+    var meta = myjson['meta'];
+    var main = meta['main']
+    
+    // special JSON keys which must be processed separatelly
+    const key_no = ['origin', 'meta', 'obj_nam', main];
+    
+    // select keys and order logically
+    var key_list = ['obj_nam',main];
+    for (var key in myjson){
+        if ( ! key_no.includes(key)){
+            key_list.push(key);
+        }
     }
-
+    
+    // header
+    var tbl_body = '<thead><tr><th>#</th>';
+    for (var key in key_list){
+        label = key_list[key];
+        label = label.replace (/_/g , " ");
+        tbl_body +=  '<th>'+label+'</th>';
+    }
+    
+    // body
+    tbl_body+='</tr></thead>';
+    var val;
+    var val_float;
+    for (var i in myjson[main]){
+        tbl_body += "<tr><td>"+(+i+1);
+        for (var key in key_list){
+            val = myjson[key_list[key]][i];
+            if (val==null) {
+                tbl_body +=  "</td><td> - ";
+            }
+            else {
+                val_float = parseFloat(val);
+                if(isNaN(val_float)){
+                    tbl_body +=  "</td><td>"+val;
+                }
+                else {
+                    tbl_body +=  "</td><td>"+val_float.toFixed(3);
+                }
+            }
+        }
+        tbl_body += "</td></tr>";
+    }
+    
     $("#data-table").html(tbl_body);   
+
+    // now we can export the results
+    $("#export").prop('disabled', false);
 };
 
 // POST a prediction request for the selected model, version and input file
 function postPredict (temp_dir, ifile) {
     // collect all data for the post and insert into postData object
-
+    
     var version = $("#version option:selected").text();
     if (version=='dev') {
         version = '0';
@@ -58,16 +92,34 @@ function postPredict (temp_dir, ifile) {
                         "temp_dir": temp_dir
                         })
     .done(function(results) {
+        lastResults = results;
         parseResults (results)
     });
 };
 
+// simple utility function to download as a file text generated here (client-side)
+function download(filename, text) {
+    var element = document.createElement('a');
+    element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+    element.setAttribute('download', filename);
+  
+    element.style.display = 'none';
+    document.body.appendChild(element);
+  
+    element.click();
+  
+    document.body.removeChild(element);
+}  
+
 // main
 $(document).ready(function() {
 
+    // no prediction so far
+    lastResults = null;
     
     // initialize button status to disabled on reload
     $("#predict").prop('disabled', true);
+    $("#export").prop('disabled', true);
     
     
     // show file value after file select 
@@ -128,6 +180,8 @@ $(document).ready(function() {
         // clear GUI
         $("#data-body").text('processing... please wait');
         $("#data-table").html('');
+
+        $("#export").prop('disabled', true);
          
         // get the file 
         var ifile = document.getElementById("ifile").files[0];
@@ -140,6 +194,66 @@ $(document).ready(function() {
             $("#data-body").text("unable to upload file, prediction aborted...");
             return;
         };
+
+        e.preventDefault(); // from predict click function
+    });
+
+    $("#export").click(function(e) {
+
+        if (lastResults==null) {
+            return;
+        }
+
+        var myjson = JSON.parse(lastResults);
+        var meta = myjson['meta'];
+        var main = meta['main'];
+
+        // special JSON keys which must be processed separatelly
+        const key_no = ['origin', 'meta', 'obj_nam', main];
+            
+        // select keys and order logically
+        var key_list = ['obj_nam',main];
+        for (var key in myjson){
+            if ( ! key_no.includes(key)){
+                key_list.push(key);
+            }
+        }
+
+        var tsv='';
+
+        // header
+        for (var key in key_list){
+            label = key_list[key];
+            label = label.replace (/_/g , " ");
+            tsv +=  label+'\t';
+        }
+        tsv += '\n';
+
+    
+        // body
+        var val;
+        var val_float;
+        for (var i in myjson[main]){
+            for (var key in key_list ){
+                val = myjson[key_list[key]][i];
+                if (val==null) {
+                    tsv +=  " - \t";
+                }
+                else {
+                    val_float = parseFloat(val);
+                    if(isNaN(val_float)){
+                        tsv +=  val.toString()+'\t';
+                    }
+                    else {
+                        var vtemp = val_float.toFixed(3);
+                        tsv +=  vtemp.toString()+'\t';
+                    }
+                }
+            }
+            tsv += "\n";
+        }
+
+        download("results.tsv",tsv);
 
         e.preventDefault(); // from predict click function
     });
