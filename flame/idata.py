@@ -64,6 +64,7 @@ class Idata:
         obj_nam = []
         obj_bio = []
         obj_exp = []
+        obj_sml = []
 
         for i, mol in enumerate(suppl):
 
@@ -87,13 +88,16 @@ class Idata:
             if mol.HasProp(self.parameters['SDFile_experimental']):
                 exp = mol.GetProp(self.parameters['SDFile_experimental'])
 
+            ## generate a SMILES
+            sml = Chem.MolToSmiles(mol)
+
             obj_nam.append(name)
             obj_bio.append(activity_num)
             obj_exp.append(exp)
+            obj_sml.append(sml)
 
-        result = (obj_nam, np.array(obj_bio, dtype=np.float64), np.array(obj_exp, dtype=np.float64))
+        return(obj_nam, obj_sml, np.array(obj_bio, dtype=np.float64), np.array(obj_exp, dtype=np.float64))
 
-        return result
 
     def normalize (self, ifile, method):
         """
@@ -389,8 +393,9 @@ class Idata:
         # extract useful information from file
         results = self.extractAnotations (self.ifile)
         obj_nam = results[0]
-        ymatrix = results[1]
-        experim = results[2]
+        obj_sml = results[1]
+        ymatrix = results[2]
+        experim = results[3]
 
         nobj = len(obj_nam)
         ncpu = self.parameters['numCPUs']
@@ -439,17 +444,11 @@ class Idata:
         if len(results) > 1:
             var_nam = results [1]
         
-        # results is a tuple with:
-        # [0] xmatrix
-        # [1] ymatrix 
-        # [2] experim      for prediction quality assessment   
-        # [3] obj_nam      for presenting results
-        # [4] var_nam        
-        #results = (xmatrix, ymatrix, experim, obj_nam, var_nam)
         results = {"xmatrix": xmatrix,
                    "ymatrix": ymatrix,
                    "experim": experim,
                    "obj_nam": obj_nam,
+                   "SMILES": obj_sml,
                    "var_nam": var_nam}
 
         return success, results

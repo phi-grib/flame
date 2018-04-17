@@ -24,10 +24,24 @@ function sortKeys (myjson) {
     var main = meta['main'] // list of keys describing main prediction results, to be listed first
     
     // special JSON keys which must be processed separatelly
-    const key_no = ['origin', 'meta', 'obj_nam'].concat(main);
+    const key_no = ['origin', 'meta', 'obj_nam', 'SMILES'].concat(main);
 
     // select keys and order logically
-    var key_list = ['obj_nam'].concat(main);
+    var key_list = ['obj_nam'];
+
+    includesSMILES=false;
+    for (var key in myjson){
+        if (key=='SMILES' ){
+            includesSMILES=true;
+        }
+    }
+
+    if (includesSMILES){
+        key_list.push('SMILES')
+    }
+    
+    key_list.concat(main);
+
     for (var key in myjson){
         if ( ! key_no.includes(key)){
             key_list.push(key);
@@ -65,18 +79,25 @@ function parseResults (results) {
     for (var i in myjson[mainv]){
 
         tbl_body += "<tr><td>"+(+i+1);
+        //var key_names = Object.keys(myjson);
         for (var key in key_list){
-            val = myjson[key_list[key]][i];
-            if (val==null) {
-                tbl_body +=  "</td><td> - ";
-            }
+            if (key_list[key]=="SMILES"){
+                molname = 'mol'+i;
+                tbl_body += '<td><canvas id="'+molname+'"></canvas>';  
+            } 
             else {
-                val_float = parseFloat(val);
-                if(isNaN(val_float)){
-                    tbl_body +=  "</td><td>"+val;
+                val = myjson[key_list[key]][i];
+                if (val==null) {
+                    tbl_body +=  "</td><td> - ";
                 }
                 else {
-                    tbl_body +=  "</td><td>"+val_float.toFixed(3);
+                    val_float = parseFloat(val);
+                    if(isNaN(val_float)){
+                        tbl_body +=  "</td><td>"+val;
+                    }
+                    else {
+                        tbl_body +=  "</td><td>"+val_float.toFixed(3);
+                    }
                 }
             }
         }
@@ -84,6 +105,19 @@ function parseResults (results) {
     }
     
     $("#data-table").html(tbl_body);   
+
+    if (key_list.includes('SMILES')){
+
+        let options = {'width':300, 'height':150};
+        let smilesDrawer = new SmilesDrawer.Drawer(options);
+
+        for (var i in myjson[mainv]){
+            molname = 'mol'+i;
+            SmilesDrawer.parse(myjson['SMILES'][i], function(tree) {
+                smilesDrawer.draw(tree, molname, 'light', false);
+            });
+        }
+    }
 
     // now we can export the results
     $("#export").prop('disabled', false);
