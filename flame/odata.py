@@ -45,10 +45,15 @@ class Odata():
 
         meta = self.results['meta']
         main = meta['main']
-        
+
         ## at least 'values' must be present
-        if not main in self.results:
-            return False, self.results
+        #if not main in self.results:
+        #    return False, self.results
+
+        ## Check if all mandatory elements are in the results matrix
+
+        if not np.any([True if x in self.results else False for x in main]):
+            return False,self.results
         
         if self.format=='JSON':
             ## do not output var arrays, only obj arrays
@@ -114,11 +119,9 @@ class Odata():
             ## - description for tooltip
 
             ## temp_json['meta'] = {'main':'c0'}
-
             output = json.dumps(temp_json)
 
-        elif self.format=='TSV':
-
+        elif self.format == 'TSV':
             output = 'not implemented'
             
         return True, output
