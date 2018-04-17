@@ -87,6 +87,7 @@ function parseResults (results) {
 
     // now we can export the results
     $("#export").prop('disabled', false);
+    $("#processing").prop('hidden', true);
 };
 
 
@@ -108,6 +109,7 @@ function postPredict (temp_dir, ifile) {
         lastResults = results;
         parseResults (results)
     });
+
 };
 
 
@@ -191,6 +193,8 @@ $(document).ready(function() {
             $("#data-body").text("this browser does not support file upload");
             return;
         };
+
+        $("#processing").prop('hidden', false);
 
         // clear GUI
         $("#data-body").text('processing... please wait');

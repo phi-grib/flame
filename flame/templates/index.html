@@ -8,69 +8,100 @@
 
     <script src="/static/scripts/utils.js"></script>
     <script src="/static/scripts/predict.js"></script>
-    
+
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+
+    .loader {
+      position: absolute;
+      left: 50%;
+      /* top: 50%; */ /* center vertically */
+      z-index: 1; 
+      width: 120px;
+      height: 120px;
+      /* margin: -75px 0 0 -75px; */
+      margin: 0 0 0 -60px;
+      border: 20px solid #f3f3f3;
+      border-radius: 60%;
+      border-top: 20px solid #3498db;
+      -webkit-animation: spin 2s linear infinite;
+      animation: spin 2s linear infinite;
+    }
+
+    /* Safari */
+    @-webkit-keyframes spin {
+      0% { -webkit-transform: rotate(0deg); }
+      100% { -webkit-transform: rotate(360deg); }
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    </style>
+
   </head>
 
   <body>
     <div class="container" >
-
+      
       <div class="row">  
-
-          <div class="col-8">
-            <h1>Flame predict interface</h1>
-          </div>
-          
-          <div class="col-4">
-            <img class="pull-left pull-top" src="/static/images/etransafe-logo.png"></image>
-          </div>
-
-          <div>&nbsp;</div>
+        
+        <div class="col-8">
+          <h1>Flame predict interface</h1>
+        </div>
+        
+        <div class="col-4">
+          <img class="pull-left pull-top" src="/static/images/etransafe-logo.png"></image>
+        </div>
+        
+        <div>&nbsp;</div>
       </div>  
-
+      
       <div class="row">
-          <div class ="col-8">
-
-            <form class="form">
-
-              <div class="form-group row">
-                <label class="col-sm-2 control-label" for="ifile">Input </label>
-                <div class="col-sm-10">                  
-                  <div class="custom-file" id="customFile">
-                    <input type="file" class="custom-file-input" id="ifile">
-                    <label class="custom-file-label" for="ifile" id="ifile-label">Choose file</label>
-                  </div>
-                </div>
-              </div>
-
-              <div class="form-group row">
-                <label class="col-sm-2 control-label" for="model">model</label>
-                <div class="col-sm-10">
-                  <select class="form-control" id="model" name="model">
-                  </select>
-                </div>
-              </div>
-              
-              <div class="form-group row">
-                <label class="col-sm-2 control-label" for="version">version</label>
-                <div class="col-sm-10">
-                  <select class="form-control" id="version" name="version">
-                  </select>               
-                </div>
-              </div>
-              
-            </form>
-            
-          </div>
+        <div class ="col-8">
           
-          <div class="col-4 ">
-            <button class="btn btn-outline-primary" role="button" id="predict" disabled="true">Predict</button>
-            <button class="btn btn-outline-secondary" role="button" id="export" disabled="true" >Export</button>
-          </div>
-
+          <form class="form">
+            
+            <div class="form-group row">
+              <label class="col-sm-2 control-label" for="ifile">Input </label>
+              <div class="col-sm-10">                  
+                <div class="custom-file" id="customFile">
+                  <input type="file" class="custom-file-input" id="ifile">
+                  <label class="custom-file-label" for="ifile" id="ifile-label">Choose file</label>
+                </div>
+              </div>
+            </div>
+            
+            <div class="form-group row">
+              <label class="col-sm-2 control-label" for="model">model</label>
+              <div class="col-sm-10">
+                <select class="form-control" id="model" name="model">
+                </select>
+              </div>
+            </div>
+            
+            <div class="form-group row">
+              <label class="col-sm-2 control-label" for="version">version</label>
+              <div class="col-sm-10">
+                <select class="form-control" id="version" name="version">
+                </select>               
+              </div>
+            </div>
+            
+          </form>
+          
+        </div>
+        
+        <div class="col-4 ">
+          <button class="btn btn-outline-primary" role="button" id="predict" disabled="true">Predict</button>
+          <button class="btn btn-outline-secondary" role="button" id="export" disabled="true" >Export</button>
+        </div>
+        
       </div>
-
+      
       <div class="row">
-
+        
         <div class="col-12">
           <h4>Console</h4>
           <p class="bg-light border rounded" id="data-body" >[not run]</p>
@@ -80,10 +111,13 @@
           <h4>Results</h4>
           <table class="table table-bordered table-striped" id="data-table"></table>
         </div>
-
+        
+        
       </div>
-
+      
+      <div class="loader" id="processing" hidden="true"></div>
+      
     </div>
-
+    
   </body>
-</html>
+  </html>
