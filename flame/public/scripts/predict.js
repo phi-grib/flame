@@ -18,20 +18,13 @@
 //     You should have received a copy of the GNU General Public License
 //     along with Flame. If not, see <http://www.gnu.org/licenses/>.
 
-// parse results obtained from the prediction
-function parseResults (results) {
-    $("#data-body").text(results);
-
-    lastResults = results;
-    
-    var myjson = JSON.parse(results);
+// sort keys to order columns in a logical way
+function sortKeys (myjson) {
     var meta = myjson['meta'];
-    var main = meta['main']
+    var main = meta['main'] // list of keys describing main prediction results, to be listed first
     
     // special JSON keys which must be processed separatelly
-
     const key_no = ['origin', 'meta', 'obj_nam'].concat(main);
-    alert(key_no);
 
     // select keys and order logically
     var key_list = ['obj_nam'].concat(main);
@@ -40,6 +33,21 @@ function parseResults (results) {
             key_list.push(key);
         }
     }
+
+    return key_list
+}
+
+
+// parse results obtained from the prediction
+function parseResults (results) {
+    $("#data-body").text(results);
+
+    lastResults = results;
+    
+    var myjson = JSON.parse(results);
+    var mainv = myjson['meta']['main'][0];
+
+    key_list = sortKeys(myjson);
     
     // header
     var tbl_body = '<thead><tr><th>#</th>';
@@ -54,7 +62,7 @@ function parseResults (results) {
     var val;
     var val_float;
 
-    for (var i in myjson[main[0]]){
+    for (var i in myjson[mainv]){
 
         tbl_body += "<tr><td>"+(+i+1);
         for (var key in key_list){
@@ -81,6 +89,7 @@ function parseResults (results) {
     $("#export").prop('disabled', false);
 };
 
+
 // POST a prediction request for the selected model, version and input file
 function postPredict (temp_dir, ifile) {
     // collect all data for the post and insert into postData object
@@ -101,6 +110,7 @@ function postPredict (temp_dir, ifile) {
     });
 };
 
+
 // simple utility function to download as a file text generated here (client-side)
 function download(filename, text) {
     var element = document.createElement('a');
@@ -114,6 +124,7 @@ function download(filename, text) {
   
     document.body.removeChild(element);
 }  
+
 
 // main
 $(document).ready(function() {
@@ -204,24 +215,13 @@ $(document).ready(function() {
 
     $("#export").click(function(e) {
 
-        if (lastResults==null) {
+        if (lastResults==null)
             return;
-        }
 
         var myjson = JSON.parse(lastResults);
-        var meta = myjson['meta'];
-        var main = meta['main'];
+        var mainv = myjson['meta']['main'][0];
 
-        // special JSON keys which must be processed separatelly
-        const key_no = ['origin', 'meta', 'obj_nam', main];
-            
-        // select keys and order logically
-        var key_list = ['obj_nam',main];
-        for (var key in myjson){
-            if ( ! key_no.includes(key)){
-                key_list.push(key);
-            }
-        }
+        key_list = sortKeys(myjson);
 
         var tsv='';
 
@@ -237,7 +237,7 @@ $(document).ready(function() {
         // body
         var val;
         var val_float;
-        for (var i in myjson[main]){
+        for (var i in myjson[mainv]){
             for (var key in key_list ){
                 val = myjson[key_list[key]][i];
                 if (val==null) {
