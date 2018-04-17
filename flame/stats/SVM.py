@@ -96,6 +96,15 @@ class SVM(BaseEstimator):
             else:
                 print ("Building Qualitative SVM-C")
                 self.estimator = svm.SVC(**self.estimator_parameters)
+        if self.conformal:
+            if self.quantitative:
+                self.conformal_pred = AggregatedCp(IcpRegressor(RegressorNc(RegressorAdapter(self.estimator))),
+                BootstrapSampler())
+                self.conformal_pred.fit(X, Y)
+            else:
+                self.conformal_pred = AggregatedCp(IcpClassifier(ClassifierNc(ClassifierAdapter(self.estimator),
+                MarginErrFunc())), BootstrapSampler())
+                self.conformal_pred.fit(X, Y)
                 
         self.estimator.fit(X, Y)
 

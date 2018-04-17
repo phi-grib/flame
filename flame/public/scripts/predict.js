@@ -29,10 +29,12 @@ function parseResults (results) {
     var main = meta['main']
     
     // special JSON keys which must be processed separatelly
-    const key_no = ['origin', 'meta', 'obj_nam', main];
-    
+
+    const key_no = ['origin', 'meta', 'obj_nam'].concat(main);
+    alert(key_no);
+
     // select keys and order logically
-    var key_list = ['obj_nam',main];
+    var key_list = ['obj_nam'].concat(main);
     for (var key in myjson){
         if ( ! key_no.includes(key)){
             key_list.push(key);
@@ -51,7 +53,9 @@ function parseResults (results) {
     tbl_body+='</tr></thead>';
     var val;
     var val_float;
-    for (var i in myjson[main]){
+
+    for (var i in myjson[main[0]]){
+
         tbl_body += "<tr><td>"+(+i+1);
         for (var key in key_list){
             val = myjson[key_list[key]][i];
