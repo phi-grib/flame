@@ -52,8 +52,12 @@ class Odata():
 
         ## Check if all mandatory elements are in the results matrix
 
-        if not np.any([True if x in self.results else False for x in main]):
-            return False,self.results
+        for i in main:
+            if not i in self.results:
+                return False, 'unable to find '+i+' in results'
+
+        # if not np.any([True if x in self.results else False for x in main]):
+        #     return False, 'missing prediction result'
         
         if self.format=='JSON':
             ## do not output var arrays, only obj arrays
@@ -81,6 +85,8 @@ class Odata():
 
             ## temp_json['meta'] = {'main':'c0'}
             output = json.dumps(temp_json)
+
+            print (output)
 
         elif self.format == 'TSV':
             output = 'not implemented'

@@ -96,8 +96,14 @@ class Idata:
             obj_exp.append(exp)
             obj_sml.append(sml)
 
-        return(obj_nam, obj_sml, np.array(obj_bio, dtype=np.float64), np.array(obj_exp, dtype=np.float64))
-
+        anotation_results = {
+            'obj_nam': obj_nam,
+            'SMILES': obj_sml,
+            'ymatrix': np.array(obj_bio, dtype=np.float64),
+            'experim': np.array(obj_exp, dtype=np.float64)
+        }
+        
+        return anotation_results 
 
     def normalize (self, ifile, method):
         """
@@ -308,6 +314,7 @@ class Idata:
                 pickle.dump (results["ymatrix"],fo)
                 pickle.dump (results["experim"],fo)
                 pickle.dump (results["obj_nam"],fo)
+                pickle.dump (results["SMILES"],fo)
                 pickle.dump (results["var_nam"],fo)
         except :
             return False
@@ -334,6 +341,7 @@ class Idata:
                 results["ymatrix"] = pickle.load(fi)
                 results["experim"] = pickle.load(fi)
                 results["obj_nam"] = pickle.load(fi)
+                results["SMILES"] = pickle.load(fi)
                 results["var_nam"] = pickle.load(fi)
         except :
             return False, 'unable to open pickl file'
@@ -381,6 +389,7 @@ class Idata:
     def _run_molecule (self):
         """
         version of Run for molecular input
+
         """
 
         # trick to avoid RDKit dumping warnings to the console
@@ -391,13 +400,16 @@ class Idata:
             os.dup2(stderr_fd.fileno(), stderr_fileno)
 
         # extract useful information from file
-        results = self.extractAnotations (self.ifile)
-        obj_nam = results[0]
-        obj_sml = results[1]
-        ymatrix = results[2]
-        experim = results[3]
 
-        nobj = len(obj_nam)
+        workflow_results = self.extractAnotations (self.ifile)
+
+        # obj_nam = results[0]
+        # obj_sml = results[1]
+        # ymatrix = results[2]
+        # experim = results[3]
+
+        nobj = len(workflow_results['obj_nam'])
+
         ncpu = self.parameters['numCPUs']
 
         # do not run multiprocess for small series, the overheads slow the overall computation time
@@ -439,19 +451,24 @@ class Idata:
             stderr_fd.close()                     # close the RDKit log
             os.dup2(stderr_save, stderr_fileno)   # restore old syserr
 
-        xmatrix = results [0]
-        var_nam = None
-        if len(results) > 1:
-            var_nam = results [1]
-        
-        results = {"xmatrix": xmatrix,
-                   "ymatrix": ymatrix,
-                   "experim": experim,
-                   "obj_nam": obj_nam,
-                   "SMILES": obj_sml,
-                   "var_nam": var_nam}
+        workflow_results['xmatrix'] = results[0]
 
-        return success, results
+        if len(results)>1 :
+            workflow_results['var_nam'] = results[1]
+
+        # var_nam = None
+        # if len(results) > 1:
+        #     var_nam = results [1]
+        
+        # results = {"xmatrix": xmatrix,
+        #            "ymatrix": ymatrix,
+        #            "experim": experim,
+        #            "obj_nam": obj_nam,
+        #            "SMILES": obj_sml,
+        #            "var_nam": var_nam}
+
+        # return success, results
+        return success, workflow_results
 
     def _run_data (self):
         """

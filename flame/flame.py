@@ -37,6 +37,7 @@ def predict_cmd(args):
 
     predict = Predict(args.infile, args.endpoint, version)
     success, results = predict.run()
+
     print('flame : ', success, results)
 
 def build_cmd(args):

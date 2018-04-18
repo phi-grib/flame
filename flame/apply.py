@@ -81,5 +81,6 @@ class Apply:
             self.results['RI'] = zero_array   
         #print (self.results)
 
+
         return True, self.results
 
