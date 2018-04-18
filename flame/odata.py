@@ -43,21 +43,12 @@ class Odata():
     def run_apply (self):
         ''' Process the results of apply, usually a list of results and serializing to JSON '''
 
-        meta = self.results['meta']
-        main = meta['main']
-
-        ## at least 'values' must be present
-        #if not main in self.results:
-        #    return False, self.results
-
         ## Check if all mandatory elements are in the results matrix
-
-        for i in main:
-            if not i in self.results:
-                return False, 'unable to find '+i+' in results'
-
-        # if not np.any([True if x in self.results else False for x in main]):
-        #     return False, 'missing prediction result'
+        main_results = self.results['meta']['main']
+        
+        for key in main_results:
+            if not key in self.results:
+                return False, 'unable to find "'+key+'" in results'
         
         if self.format=='JSON':
             ## do not output var arrays, only obj arrays
@@ -83,10 +74,7 @@ class Odata():
                 else:
                     temp_json[key]=value
 
-            ## temp_json['meta'] = {'main':'c0'}
             output = json.dumps(temp_json)
-
-            print (output)
 
         elif self.format == 'TSV':
             output = 'not implemented'
