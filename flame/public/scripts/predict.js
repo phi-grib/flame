@@ -18,37 +18,38 @@
 //     You should have received a copy of the GNU General Public License
 //     along with Flame. If not, see <http://www.gnu.org/licenses/>.
 
+
 // sort keys to order columns in a logical way
 function sortKeys (myjson) {
-    var meta = myjson['meta'];
-    var main = meta['main'] // list of keys describing main prediction results, to be listed first
-    
-    // special JSON keys which must be processed separatelly
-    const key_no = ['origin', 'meta', 'obj_nam', 'SMILES'].concat(main);
-
+   
     // select keys and order logically
+    //  1. obj_name
+    //  2. SMILES (if present at all)
+    //  3. main results (one or many)
+    
+    // 1. obj_name
     var key_list = ['obj_nam'];
-
-    includesSMILES=false;
-    for (var key in myjson){
-        if (key=='SMILES' ){
-            includesSMILES=true;
-        }
-    }
-
-    if (includesSMILES){
-        key_list.push('SMILES')
+    
+    // 2. SMILES
+    if (myjson.hasOwnProperty('SMILES')){
+        key_list.push('SMILES');
     }
     
-    key_list.concat(main);
+    // 3. main results
+    var main = myjson['meta']['main'];
+    key_list = key_list.concat(main);
+    
+    // special keys, already processed (obj_nam, SMILES and main[])
+    // or never shown in a table (origin and meta)
+    const black_list = key_list.concat(['origin','meta']);
 
     for (var key in myjson){
-        if ( ! key_no.includes(key)){
+        if ( ! black_list.includes(key)){
             key_list.push(key);
         }
     }
 
-    return key_list
+    return key_list;
 }
 
 
@@ -79,42 +80,44 @@ function parseResults (results) {
     for (var i in myjson[mainv]){
 
         tbl_body += "<tr><td>"+(+i+1);
-        //var key_names = Object.keys(myjson);
+
         for (var key in key_list){
+
             if (key_list[key]=="SMILES"){
-                molname = 'mol'+i;
-                tbl_body += '<td><canvas id="'+molname+'"></canvas>';  
+                tbl_body += '<td><canvas id="mol'+i+'"></canvas>';
+                continue;
             } 
-            else {
-                val = myjson[key_list[key]][i];
-                if (val==null) {
-                    tbl_body +=  "</td><td> - ";
-                }
-                else {
-                    val_float = parseFloat(val);
-                    if(isNaN(val_float)){
-                        tbl_body +=  "</td><td>"+val;
-                    }
-                    else {
-                        tbl_body +=  "</td><td>"+val_float.toFixed(3);
-                    }
-                }
+
+            val = myjson[key_list[key]][i];
+
+            if (val==null) {
+                tbl_body += "</td><td> - ";
+                continue;
             }
+
+            val_float = parseFloat(val);
+
+            if(isNaN(val_float)){
+                tbl_body += "</td><td>"+val;
+                continue;
+            }
+
+            tbl_body += "</td><td>"+val_float.toFixed(3);
+
         }
         tbl_body += "</td></tr>";
     }
     
     $("#data-table").html(tbl_body);   
 
+    // SMILES must be inserted after the canvases were already created in included in the HTML code
     if (key_list.includes('SMILES')){
 
-        let options = {'width':300, 'height':150};
-        let smilesDrawer = new SmilesDrawer.Drawer(options);
+        let smilesDrawer = new SmilesDrawer.Drawer( {'width':300, 'height':150});
 
         for (var i in myjson[mainv]){
-            molname = 'mol'+i;
             SmilesDrawer.parse(myjson['SMILES'][i], function(tree) {
-                smilesDrawer.draw(tree, molname, 'light', false);
+                smilesDrawer.draw(tree, 'mol'+i, 'light', false);
             });
         }
     }
