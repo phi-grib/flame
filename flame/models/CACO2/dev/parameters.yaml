@@ -1,6 +1,13 @@
 # system settings
 verbose_error: true
-numCPUs: 2
+numCPUs: 1
+
+# external models
+ext_models:
+- - MAGENTA                           # list of models used for producing input
+  - 0
+- - MAGENTA
+  - 1
 
 # input settings
 input_type: molecule                  # molecule | data

@@ -22,6 +22,7 @@
 
 import os
 import importlib
+import multiprocessing as mp
 
 import util.utils as utils
 from control import Control
@@ -35,10 +36,37 @@ class Predict:
         self.version = version
         self.out_format = out_format
 
+        # if version == None:
+        #     self.version = 0
+        # elif version == "dev":
+        #     self.version = 0
+        # else :
+        #     try:
+        #         self.version = int (version)
+        #     except:
+        #         self.version = 0
+
         return
+
+    def run_external (self, model_ext):
+
+        model = model_ext[0]
+        ver   = model_ext[1]
+        ifile = model_ext[2]
+
+        print (ifile, model, ver)
+
+        ## run python script (ifile, model, var) and write to temp file
+        ## parse result file or pipe output and return 
+
+        return True, [1,2,3,4,5,6,7,8,9]
 
     def run (self):
         ''' Executes a default predicton workflow '''
+
+        # instance Control object
+        control = Control(self.model,self.version)
+        parameters = control.get_parameters()
 
         # path to endpoint
         epd = utils.model_path(self.model, self.version)
@@ -48,19 +76,35 @@ class Predict:
         #uses the child classes within the 'model' folder, to allow customization of
         #the processing applied to each model
         modpath = utils.module_path(self.model, self.version)
-     
+
         idata_child = importlib.import_module (modpath+".idata_child")
         apply_child = importlib.import_module (modpath+".apply_child")
         odata_child = importlib.import_module (modpath+".odata_child")
         
-        # instance Control object
-        control = Control(self.model,self.version)
-        parameters = control.get_parameters()
+        if 'ext_models' in parameters:
+            model_set = parameters['ext_models'] ### this is a list of tuples (ifile,model,var)
+            model_num = len(model_set)
 
-        # run idata object, in charge of generate model data from input
-        idata = idata_child.IdataChild (parameters, self.ifile)
-        success, results = idata.run ()
-        
+            print ('external models', model_set)
+            for mi in model_set:
+                mi.append(self.ifile)
+
+            pool = mp.Pool(model_num)
+            model_res = pool.map(self.run_external, model_set)
+
+            #### combine model_num list into a list with model_num variable per object
+            success = True
+            results = [0,1,2,3,4,5,6,7,8,9]
+
+        else:
+
+            # run idata object, in charge of generate model data from input
+            idata = idata_child.IdataChild (parameters, self.ifile)
+            success, results = idata.run ()
+            
+        # irrespectivelly of the use of external models, results must contain
+        # appropriate input for apply/learn
+
         if not success:
             return success, results
 
