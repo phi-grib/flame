@@ -23,6 +23,7 @@
 import os
 import sys
 import pickle
+import json
 
 import numpy as np
 from rdkit import Chem
@@ -39,12 +40,20 @@ import util.utils as utils
 
 class Idata:
 
-    def __init__ (self, parameters, ifile):
+    def __init__ (self, parameters, input_source):
 
         self.parameters = parameters      # control object defining the processing
-        self.ifile = ifile          # input file
 
-        self.dest_path = os.path.dirname(ifile)     # path where any temp file must be written
+        if ('ext_input' in parameters) and (parameters['ext_input']):
+            self.idata = input_source
+            self.ifile = None
+            self.dest_path = '.' ## TODO: define an appropriate path 
+
+        else:
+            self.idate = None
+            self.ifile = input_source          
+            self.dest_path = os.path.dirname(self.ifile)     # path where any temp file must be written
+
         if self.dest_path == '':
             self.dest_path = '.'
 
@@ -302,6 +311,9 @@ class Idata:
         Saves the results in serialized form, together with the MD5 signature of the control class and the input file
         """
 
+        if 'ext_input' in self.parameters and self.parameters['ext_input']:
+            return True
+
         md5_parameters = self.parameters['md5']
         md5_input = utils.md5sum(self.ifile)  # run md5 in self.ifile
 
@@ -325,6 +337,9 @@ class Idata:
         """ 
         Loads the results in serialized form, together with the MD5 signature of the control class and the input file
         """
+
+        if 'ext_input' in self.parameters and self.parameters['ext_input']:
+            return False, 'model depends on external data sources'
 
         try:
             with open (self.dest_path+'/data.pkl', 'rb') as fi:
@@ -456,17 +471,6 @@ class Idata:
         if len(results)>1 :
             workflow_results['var_nam'] = results[1]
 
-        # var_nam = None
-        # if len(results) > 1:
-        #     var_nam = results [1]
-        
-        # results = {"xmatrix": xmatrix,
-        #            "ymatrix": ymatrix,
-        #            "experim": experim,
-        #            "obj_nam": obj_nam,
-        #            "SMILES": obj_sml,
-        #            "var_nam": var_nam}
-
         # return success, results
         return success, workflow_results
 
@@ -477,20 +481,38 @@ class Idata:
 
         success = False
         results = 'not implemented'
-        #results = (xmatrix, ymatrix, experim, obj_nam, var_nam)
+
 
         return success, results
 
-    def _run_process (self):
+    def _run_ext_data (self):
         """
         version of Run for inter-process input (calling another model to obtain input)
         """
+        print (self.idata)
         
-        success = False
-        results = 'not implemented'
-        #results = (xmatrix, ymatrix, experim, obj_nam, var_nam)
+        results = json.loads(self.idata[0])
+        original_main = results ['meta']['main']
+        results['meta']['main']= ['xmatrix']
 
-        return success, results
+        combo = None
+        for ijson in self.idata:
+            idict = json.loads(ijson)
+            main_keys = idict['meta']['main']
+            for j in main_keys:
+                if combo is None:
+                    combo = np.array(idict[j], dtype=np.float64)
+                else:
+                    combo = np.c_[combo, np.array(idict[j], dtype=np.float64)]
+                
+        for key in original_main:
+            del results[key]
+
+        results['xmatrix']= combo
+        
+        print ('in ext_data with following data: ', results)
+        
+        return True, results
 
     def run (self):
         """         
@@ -514,8 +536,8 @@ class Idata:
             success, results = self._run_molecule()
         elif (input_type == 'data'):
             success, results = self._run_data()
-        elif (input_type == 'process'):
-            success, results = self._run_process()
+        elif (input_type == 'ext_data'):
+            success, results = self._run_ext_data()
         else:
             return False, 'unknown input data format'
 

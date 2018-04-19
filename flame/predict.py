@@ -22,51 +22,42 @@
 
 import os
 import importlib
-import multiprocessing as mp
 
 import util.utils as utils
 from control import Control
 
 class Predict:
 
-    def __init__ (self, ifile, model, version, out_format='JSON'):
+    def __init__ (self, model, version, out_format='JSON'):
 
-        self.ifile = ifile
         self.model = model
         self.version = version
         self.out_format = out_format
 
-        # if version == None:
-        #     self.version = 0
-        # elif version == "dev":
-        #     self.version = 0
-        # else :
-        #     try:
-        #         self.version = int (version)
-        #     except:
-        #         self.version = 0
+        # instance Control object
+        control = Control(model, version)
+        self.parameters = control.get_parameters()
 
         return
 
-    def run_external (self, model_ext):
+    def getModelSet(self):
+        ext_input = False
+        model_set = None
 
-        model = model_ext[0]
-        ver   = model_ext[1]
-        ifile = model_ext[2]
+        if 'ext_input' in self.parameters:
+            if self.parameters['ext_input']:
+                if 'model_set' in self.parameters:
+                    if len(self.parameters['model_set'])>1:
+                        model_set = self.parameters['model_set']
+                        ext_input = True
 
-        print (ifile, model, ver)
+        return ext_input, model_set
 
-        ## run python script (ifile, model, var) and write to temp file
-        ## parse result file or pipe output and return 
+    def setSingleCPU(self):
+        self.parameters['numCPUs']=1
 
-        return True, [1,2,3,4,5,6,7,8,9]
-
-    def run (self):
+    def run (self, input_source):
         ''' Executes a default predicton workflow '''
-
-        # instance Control object
-        control = Control(self.model,self.version)
-        parameters = control.get_parameters()
 
         # path to endpoint
         epd = utils.model_path(self.model, self.version)
@@ -81,42 +72,22 @@ class Predict:
         apply_child = importlib.import_module (modpath+".apply_child")
         odata_child = importlib.import_module (modpath+".odata_child")
         
-        if 'ext_models' in parameters:
-            model_set = parameters['ext_models'] ### this is a list of tuples (ifile,model,var)
-            model_num = len(model_set)
-
-            print ('external models', model_set)
-            for mi in model_set:
-                mi.append(self.ifile)
-
-            pool = mp.Pool(model_num)
-            model_res = pool.map(self.run_external, model_set)
-
-            #### combine model_num list into a list with model_num variable per object
-            success = True
-            results = [0,1,2,3,4,5,6,7,8,9]
-
-        else:
-
-            # run idata object, in charge of generate model data from input
-            idata = idata_child.IdataChild (parameters, self.ifile)
-            success, results = idata.run ()
-            
-        # irrespectivelly of the use of external models, results must contain
-        # appropriate input for apply/learn
+        # run idata object, in charge of generate model data from input
+        idata = idata_child.IdataChild (self.parameters, input_source)
+        success, results = idata.run ()
 
         if not success:
             return success, results
 
         # run apply object, in charge of generate a prediction from idata
-        apply = apply_child.ApplyChild (parameters, results)
+        apply = apply_child.ApplyChild (self.parameters, results)
         success, results = apply.run ()
         
         if not success:
             return success, results
 
         # run odata object, in charge of formatting the prediction results
-        odata = odata_child.OdataChild (parameters, results, self.out_format)
+        odata = odata_child.OdataChild (self.parameters, results, self.out_format)
         success, results = odata.run ()
 
         return success, results

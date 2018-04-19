@@ -24,21 +24,58 @@ import os
 import sys
 import argparse
 import shutil
+import multiprocessing as mp
 
 from predict import Predict
 from build import Build
 import util.utils as utils 
 import manage 
 
-def predict_cmd(args):
+def predict_cmd(model):
     ''' Instantiates a Predict object to run a prediction using the given input file and model '''
 
-    version = utils.intver(args.version)
+    predict = Predict(model['endpoint'], model['version'])
 
-    predict = Predict(args.infile, args.endpoint, version)
-    success, results = predict.run()
+    ext_input, model_set = predict.getModelSet()
 
-    print('flame : ', success, results)
+    if ext_input :
+
+        # parallel is approppriate for many external sources
+        parallel = (len(model_set)>3)
+        if parallel:
+            predict.setSingleCPU()
+
+        model_suc = []
+        model_res = []
+
+        for mi in model_set:
+            mi['infile']=model['infile']
+
+        if parallel :
+            pool = mp.Pool(len(model_set))
+            model_temp = pool.map(predict_cmd, model_set)
+
+            for x in model_temp:
+                model_suc.append(x[0])
+                model_res.append(x[1])
+        else:
+             for mi in model_set:
+                success, results = predict_cmd (mi)
+                model_suc.append(success)
+                model_res.append(results)
+
+        if False in model_suc:
+            return False, 'Some external input sources failed: ', str(model_suc)
+
+        # now run the model using the data from the external sources            
+        success, results = predict.run(model_res)    
+
+    else:
+
+        # run the model with the input file
+        success, results = predict.run(model['infile'])
+
+    return success, results
 
 def build_cmd(args):
     ''' Instantiates a Build object to build a model using the given input file (training series) and model (name of endpoint, eg. 'CACO2') '''
@@ -100,9 +137,18 @@ def main():
         required=True)
 
     args = parser.parse_args()
-    
     if args.command == 'predict':
-        predict_cmd(args)
+
+        version = utils.intver(args.version) 
+        
+        model = {'endpoint' : args.endpoint,
+                 'version' : version,
+                 'infile' : args.infile}
+
+        success, results = predict_cmd(model)
+
+        print ('flame predict : ', success, results)
+
     elif args.command == 'build':
         build_cmd(args)
     elif args.command == 'manage':

@@ -68,9 +68,11 @@ class FlamePredictWS(object):
         #     success, results = predict.run()
         # except:
         #     raise cherrypy.HTTPError(500)
+
+        # TODO: for now, only working for plain models (no external input sources)
             
-        predict = Predict(ifile, model, version)
-        success, results = predict.run()
+        predict = Predict(model, version)
+        success, results = predict.run(ifile)
 
         return results
 
