@@ -24,65 +24,85 @@ import os
 import sys
 import argparse
 import shutil
-import multiprocessing as mp
 
-from predict import Predict
-from build import Build
+# from predict import Predict
+# from build import Build
 import util.utils as utils 
 import manage 
+import command
 
-def predict_cmd(model):
-    ''' Instantiates a Predict object to run a prediction using the given input file and model '''
+# def getExternalInput (task, model_set, infile):
+#     # parallel is approppriate for many external sources
+#     parallel = (len(model_set)>3)
+#     if parallel:
+#         task.setSingleCPU()
 
-    predict = Predict(model['endpoint'], model['version'])
+#     # add input molecule to the model input definition of every internal model
+#     for mi in model_set:
+#         mi['infile']=infile
 
-    ext_input, model_set = predict.getModelSet()
+#     model_suc = []
+#     model_res = []
 
-    if ext_input :
+#     ## TODO: if any of the models belongs to another module, send a POST for
+#     ## obtaining the results
 
-        # parallel is approppriate for many external sources
-        parallel = (len(model_set)>3)
-        if parallel:
-            predict.setSingleCPU()
+#     if parallel :
+#         pool = mp.Pool(len(model_set))
+#         model_temp = pool.map(predict_cmd, model_set)
 
-        model_suc = []
-        model_res = []
+#         for x in model_temp:
+#             model_suc.append(x[0])
+#             model_res.append(x[1])
+#     else:
+#         for mi in model_set:
+#             success, results = predict_cmd (mi)
+#             model_suc.append(success)
+#             model_res.append(results)
 
-        for mi in model_set:
-            mi['infile']=model['infile']
+#     if False in model_suc:
+#         return False, 'Some external input sources failed: ', str(model_suc)
 
-        if parallel :
-            pool = mp.Pool(len(model_set))
-            model_temp = pool.map(predict_cmd, model_set)
+#     return True, model_res
 
-            for x in model_temp:
-                model_suc.append(x[0])
-                model_res.append(x[1])
-        else:
-             for mi in model_set:
-                success, results = predict_cmd (mi)
-                model_suc.append(success)
-                model_res.append(results)
 
-        if False in model_suc:
-            return False, 'Some external input sources failed: ', str(model_suc)
-
-        # now run the model using the data from the external sources            
-        success, results = predict.run(model_res)    
-
-    else:
-
-        # run the model with the input file
-        success, results = predict.run(model['infile'])
-
-    return success, results
-
-def build_cmd(args):
-    ''' Instantiates a Build object to build a model using the given input file (training series) and model (name of endpoint, eg. 'CACO2') '''
+# def predict_cmd(model):
+#     ''' 
     
-    build = Build(args.infile, args.endpoint)
-    success, results = build.run()
-    print('flame : ', success, results)
+#     Instantiates a Predict object to run a prediction using the given input file and model 
+    
+#     This method must be self-contained and suitable for being called in cascade, by models
+#     which use the output of other models as input
+    
+#     '''
+
+#     predict = Predict(model['endpoint'], model['version'])
+
+#     ext_input, model_set = predict.getModelSet()
+
+#     if ext_input :
+
+#         success, model_res = getExternalInput (predict, model_set, model['infile'])
+
+#         if not success:
+#             return False, model_res
+
+#         # now run the model using the data from the external sources            
+#         success, results = predict.run(model_res)    
+
+#     else:
+
+#         # run the model with the input file
+#         success, results = predict.run(model['infile'])
+
+#     return success, results
+
+# def build_cmd(args):
+#     ''' Instantiates a Build object to build a model using the given input file (training series) and model (name of endpoint, eg. 'CACO2') '''
+    
+#     build = Build(args.infile, args.endpoint)
+#     success, results = build.run()
+#     print('flame : ', success, results)
 
 def manage_cmd(args):
     ''' Instantiates a Build object to build a model using the given input file (training series) and model (name of endpoint, eg. 'CACO2') '''
@@ -137,6 +157,8 @@ def main():
         required=True)
 
     args = parser.parse_args()
+
+
     if args.command == 'predict':
 
         version = utils.intver(args.version) 
@@ -145,12 +167,18 @@ def main():
                  'version' : version,
                  'infile' : args.infile}
 
-        success, results = predict_cmd(model)
-
+        success, results = command.predict_cmd(model)
         print ('flame predict : ', success, results)
 
     elif args.command == 'build':
-        build_cmd(args)
+        
+        model = {'endpoint' : args.endpoint,
+                 'infile' : args.infile}
+
+        success, results = command.build_cmd(model)
+        print ('flame build : ', success, results)
+
+        ## build_cmd(args)
     elif args.command == 'manage':
         manage_cmd(args)
 

@@ -5,7 +5,7 @@ numCPUs: 1
 # external models
 ext_input: true
 model_set:
-- endpoint: MAGENTA                           # list of models used for producing input
+- endpoint: MAGENTA                   # list of models used for producing input
   version: 1
 - endpoint: MAGENTA
   version: 2

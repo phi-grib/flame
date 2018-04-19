@@ -21,6 +21,7 @@
 ##    along with Flame.  If not, see <http://www.gnu.org/licenses/>.
 
 from apply import Apply
+import numpy as np
 
 class ApplyChild (Apply):
 
@@ -28,9 +29,11 @@ class ApplyChild (Apply):
 
         Apply.__init__(self, control, results)
 
-    # def run (self):
+    def run (self):
 
-    #     success, results = Apply.run (self)
-
-    #     return success, results
+        self.results['values']=self.results['xmatrix'].mean(1)
+        self.results['origin'] = 'apply'
+        self.results['meta'] = {'main':['values']}
+ 
+        return True, self.results
 
