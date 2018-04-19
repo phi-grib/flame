@@ -1,6 +1,7 @@
 #! -*- coding: utf-8 -*-
 
-##    Description    Misc tools 
+##    Description    Command wrappers allowing to call predict and build
+##                   for models making use of extenal input sources 
 ##
 ##    Authors:       Manuel Pastor (manuel.pastor@upf.edu)
 ##
@@ -24,8 +25,6 @@ import multiprocessing as mp
 
 from predict import Predict
 from build import Build
-import util.utils as utils 
-import manage 
 
 def getExternalInput (task, model_set, infile):
     # parallel is approppriate for many external sources
