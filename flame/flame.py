@@ -23,7 +23,7 @@
 import argparse
 
 import util.utils as utils 
-import command
+import context
 import manage 
 
 
@@ -90,7 +90,7 @@ def main():
                  'version' : version,
                  'infile' : args.infile}
 
-        success, results = command.predict_cmd(model)
+        success, results = context.predict_cmd(model)
         print ('flame predict : ', success, results)
 
     elif args.command == 'build':
@@ -98,7 +98,7 @@ def main():
         model = {'endpoint' : args.endpoint,
                  'infile' : args.infile}
 
-        success, results = command.build_cmd(model)
+        success, results = context.build_cmd(model)
         print ('flame build : ', success, results)
 
         ## build_cmd(args)

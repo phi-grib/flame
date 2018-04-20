@@ -28,7 +28,7 @@ import tempfile
 
 from predict import Predict
 import manage
-import command
+import context
 import util.utils as utils
 
 
@@ -77,7 +77,7 @@ class FlamePredictWS(object):
                  'version' : version,
                  'infile' : ifile}
 
-        success, results = command.predict_cmd(model)
+        success, results = context.predict_cmd(model)
 
         # predict = Predict(model, version)
         # success, results = predict.run(ifile)

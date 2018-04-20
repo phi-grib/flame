@@ -1,7 +1,7 @@
 #! -*- coding: utf-8 -*-
 
-##    Description    Command wrappers allowing to call predict and build
-##                   for models making use of extenal input sources 
+##    Description    Context wrapps calls to predict and build to
+##                   support models making use of extenal input sources 
 ##
 ##    Authors:       Manuel Pastor (manuel.pastor@upf.edu)
 ##
