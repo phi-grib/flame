@@ -1,5 +1,10 @@
+Flame uses diverse libraries, which are distributed under different licenses
 
-**nonconformist**
+- RDKit
+- numpy-scipy
+- smilesDrawer
+- non-conformist
+- standardizer
 
 The MIT License (MIT)
 Copyright (c) 2015 Henrik Linusson
