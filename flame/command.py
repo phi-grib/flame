@@ -26,9 +26,13 @@ import multiprocessing as mp
 from predict import Predict
 from build import Build
 
+MAX_MODELS_SINGLE_CPU = 4   # if the number of models is higher, try to run in multithread 
+
 def getExternalInput (task, model_set, infile):
+    '''  Manage obtention of input data from external data sources (e.g. models or MD servers) '''
+
     # parallel is approppriate for many external sources
-    parallel = (len(model_set)>3)
+    parallel = (len(model_set)>MAX_MODELS_SINGLE_CPU)
     if parallel:
         task.setSingleCPU()
 

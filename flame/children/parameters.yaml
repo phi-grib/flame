@@ -10,6 +10,13 @@ convert3D_method: null                # null | ETKDG
 computeMD_method:                     # RDKit_properties | RDKit_md | custom
 - RDKit_properties
 
+ext_input: false                      # external input source TRUE
+model_set:                            # list of models used for producing input
+- endpoint: MAGENTA                   # - model name
+  version: 1                          # - model version
+- endpoint: MAGENTA
+  version: 2
+
 # SDFile settings
 SDFile_activity: activity             # str
 SDFile_experimental: IC50             # str

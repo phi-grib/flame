@@ -485,34 +485,47 @@ class Idata:
 
         return success, results
 
+
     def _run_ext_data (self):
         """
         version of Run for inter-process input (calling another model to obtain input)
         """
-        print (self.idata)
-        
+
+        # idata is a list of JSON from 1-n sources
+        # the data usable for input must be listed in the ['meta']['main'] key
+
+        # use first JSON to load common info like obj_nam, etc         
         results = json.loads(self.idata[0])
+
+        # identify usable data imported from element 0. This will be deleted latter
         original_main = results ['meta']['main']
+
+        # new, consolidated, usable data will be added as 'xmatrix' 
         results['meta']['main']= ['xmatrix']
 
+        # extract usable data from every source and add to 'combo' np.array
         combo = None
+        var_nam = []
         for ijson in self.idata:
             idict = json.loads(ijson)
             main_keys = idict['meta']['main']
             for j in main_keys:
-                if combo is None:
+                ## TODO: consider adding a prefix (e.g. 'source_1')
+                var_nam.append(j)
+                if combo is None:  # for first element just copy
                     combo = np.array(idict[j], dtype=np.float64)
-                else:
+                else: # append laterally
                     combo = np.c_[combo, np.array(idict[j], dtype=np.float64)]
                 
+        results['xmatrix'] = combo
+        results['var_nam'] = var_nam
+
+        # del original usable data in element 0
         for key in original_main:
             del results[key]
-
-        results['xmatrix']= combo
-        
-        print ('in ext_data with following data: ', results)
         
         return True, results
+
 
     def run (self):
         """         

@@ -30,57 +30,41 @@ class Apply:
         self.parameters = parameters
         self.results = results
         
-    def getMatrices (self):
-        return self.results["xmatrix"]
+        self.results['origin'] = 'apply'
 
     def run (self):
        
-        X = self.getMatrices()
+        # assume X matrix is present in 'xmatrix0
+        X = self.results["xmatrix"]
+
         # retrieve data and dimensions from results
         nobj, nvarx = np.shape(X)
 
         if (nobj==0) or (nvarx==0) :
             return False, 'failed to extract activity or to generate MD'
 
-        # try:
-        #     model_file = self.parameters['model_path'] + '/model.pkl'
+        try:
+            model_file = self.parameters['model_path'] + '/model.pkl'
+        except:
+            return False, 'estimator not found'
 
-        #     # select prediction tool from control
-        #     with open(model_file, "rb") as input_file:
-        #         estimator = pickle.load(input_file)
-
-        #     zero_array = np.zeros(nobj, dtype=np.float64)
-        #     self.results['origin'] = 'apply'
-        #     self.results['projection'] = estimator.project(X)
-        #     self.results['CI'] = zero_array
-        #     self.results['RI'] = zero_array
-        # except:
-        #     return False, 'projection error'
-
-        model_file = self.parameters['model_path'] + '/model.pkl'
-
-        # select prediction tool from control
-        with open(model_file, "rb") as input_file:
-            estimator = pickle.load(input_file)
-
-        zero_array = np.zeros(nobj, dtype=np.float64)
-
-        self.results['origin'] = 'apply'
-        #self.results['projection'] = estimator.project(X)
-        #self.results['CI'] = zero_array
-        #self.results['RI'] = zero_array
-
-        projection = estimator.project(X)
+        try:
+            with open(model_file, "rb") as input_file:
+                estimator = pickle.load(input_file)
+            projection = estimator.project(X)
+        except:
+            return False, 'unable to project'
 
         for key in projection:
             self.results[key] = projection[key]
             
+        ## TODO: implement this for every prediction
+        zero_array = np.zeros(nobj, dtype=np.float64)
+
         if not 'CI' in self.results:
             self.results['CI'] = zero_array
         if not 'RI' in self.results:
             self.results['RI'] = zero_array   
-        #print (self.results)
-
 
         return True, self.results
 

@@ -93,7 +93,7 @@ class FlameInfoWS(object):
                  "homepage": utils.configuration['homepage'],
                  "admin_name": utils.configuration['admin_name'],
                  "admin_email": utils.configuration['admin_email']
-                 }   
+                }   
 
         return json.dumps(data)
 

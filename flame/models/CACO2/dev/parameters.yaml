@@ -2,14 +2,6 @@
 verbose_error: true
 numCPUs: 1
 
-# external models
-ext_input: true
-model_set:
-- endpoint: MAGENTA                   # list of models used for producing input
-  version: 1
-- endpoint: MAGENTA
-  version: 2
-
 # input settings
 input_type: ext_data                  # molecule | data | ext_data
 normalize_method: standardize         # null | standardize
@@ -18,8 +10,15 @@ convert3D_method: null                # null | ETKDG
 computeMD_method:                     # RDKit_properties | RDKit_md | custom
 - RDKit_md
 
+ext_input: true                       # external input source TRUE
+model_set:                            # list of models used for producing input
+- endpoint: MAGENTA                   # - model name
+  version: 1                          # - model version
+- endpoint: MAGENTA
+  version: 2
+
 # SDFile settings
-SDFile_activity: activity             # str s
+SDFile_activity: activity             # str 
 SDFile_experimental: IC50             # str
 SDFile_name: GENERIC_NAME             # str
 
