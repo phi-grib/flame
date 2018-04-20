@@ -150,7 +150,7 @@ python predict-ws.py
 
 To access the web graphical interface, open a web brower and enter the address *http://localhost:8080*
 
-![Alt text](images/flame-gui.png?raw=true "web GUI")
+![Alt text](images/Flame-gui.png?raw=true "web GUI")
 
 Web API services available:
 
