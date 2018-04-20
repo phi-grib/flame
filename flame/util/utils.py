@@ -24,6 +24,8 @@ import hashlib
 import os
 import sys
 import yaml
+import random
+import string
 
 def __read_configuration ():
     ''' Reads configuration file "config.yaml". Do not call directly, read configuration variable instead '''
@@ -126,4 +128,9 @@ def intver(raw_version):
 
     return version
 
+
+def id_generator(size=10, chars=string.ascii_uppercase + string.digits):
+    ''' Return a random ID (used for temp files) with uppercase letters and numbers '''
+
+    return ''.join(random.choice(chars) for _ in range(size))
 

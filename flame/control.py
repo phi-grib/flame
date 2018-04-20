@@ -42,8 +42,10 @@ class Control:
         self.parameters['model_path'] = util.model_path(model,version)
         self.parameters['md5'] = util.md5sum(self.yaml_file)
 
+
     def load_parameters (self, model):
-        
+        ''' Loads parameters from a yaml file '''
+
         if not os.path.isfile (self.yaml_file):
             return False, None
 
@@ -58,16 +60,36 @@ class Control:
     # def save_parameters (self, parameters):
     #     yaml.dump(open(self.yaml_file,'w'), parameters)
 
+
     def get_parameters (self):
+        ''' Commodity function to access stored parameters '''
         
         return self.parameters
 
+
+    def get_model_set (self):
+        ''' Returns a Boolean indicating if the model uses external input sources and a list with these sources '''
+
+        ext_input = False
+        model_set = None
+
+        if 'ext_input' in self.parameters:
+            if self.parameters['ext_input']:
+                if 'model_set' in self.parameters:
+                    if len(self.parameters['model_set'])>1:
+                        model_set = self.parameters['model_set']
+                        ext_input = True
+
+        return ext_input, model_set
+
+
     def get_defaults (self):
+        ''' Fallback for setting parameters even when no "config.yaml" file is found '''
 
         parameters = {
             ## system settings
             'verbose_error' : True,
-            'numCPUs' : 2,                                  # (int)
+            'numCPUs' : 1,                                  # (int)
             
             ## input settings
             'input_type' : 'molecule',                     # 'molecule' | 'data'

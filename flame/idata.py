@@ -24,11 +24,11 @@ import os
 import sys
 import pickle
 import json
+import tempfile
+import multiprocessing as mp
 
 import numpy as np
 from rdkit import Chem
-
-import multiprocessing as mp
 
 from standardiser import standardise
 
@@ -43,29 +43,32 @@ class Idata:
     def __init__ (self, parameters, input_source):
 
         self.parameters = parameters      # control object defining the processing
+        self.dest_path = '.'              # path for temp files (fallback default)
 
         if ('ext_input' in parameters) and (parameters['ext_input']):
             self.idata = input_source
             self.ifile = None
-            self.dest_path = '.' ## TODO: define an appropriate path 
+            randomName = 'flame-'+utils.id_generator()
+            self.dest_path = os.path.join(tempfile.gettempdir(),randomName) 
 
         else:
             self.idate = None
             self.ifile = input_source          
-            self.dest_path = os.path.dirname(self.ifile)     # path where any temp file must be written
+            self.dest_path = os.path.dirname(self.ifile) 
 
-        if self.dest_path == '':
-            self.dest_path = '.'
 
     def extractAnotations (self, ifile):
         """  
 
         Extracts molecule names, biological anotations and experimental values from an SDFile.
 
-        Returns a tupple with three lists:
-        [0] Molecule names
-        [1] Molecule activity values (as np.array(dtype=np.float64))
-        [2] Molecule activity type (i.e. IC50) (as np.array(dtype=np.float64))     
+        Returns a dictionary with lists of num_object elements:
+            anotation_results = {
+                'obj_nam':          list of object names (strings)
+                'SMILES':           list of SMILES (strings)
+                'ymatrix':          np.array with y values
+                'experim':          np.array with experimental values 
+            } 
         
         """
 
@@ -473,6 +476,7 @@ class Idata:
 
         # return success, results
         return success, workflow_results
+
 
     def _run_data (self):
         """

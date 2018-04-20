@@ -34,26 +34,21 @@ class Build:
         self.model = model
 
         # instance Control object
-        control = Control(self.model,0)
-        self.parameters = control.get_parameters()
+        self.control = Control(self.model,0)
+        self.parameters = self.control.get_parameters()
 
         return
 
-    def getModelSet(self):
-        ext_input = False
-        model_set = None
 
-        if 'ext_input' in self.parameters:
-            if self.parameters['ext_input']:
-                if 'model_set' in self.parameters:
-                    if len(self.parameters['model_set'])>1:
-                        model_set = self.parameters['model_set']
-                        ext_input = True
+    def get_model_set(self):
+        ''' Returns a Boolean indicating if the model uses external input sources and a list with these sources '''
+        return self.control.get_model_set()
 
-        return ext_input, model_set
 
-    def setSingleCPU(self):
+    def set_single_CPU(self):
+        ''' Forces the use of a single CPU '''
         self.parameters['numCPUs']=1
+
 
     def run (self, input_source):
         ''' Executes a default predicton workflow '''

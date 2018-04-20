@@ -83,6 +83,7 @@ class Odata():
 
 
     def run (self):
+        ''' Formats the results produced by "learn" or "apply" as appropriate '''
 
         if not 'origin' in self.results:
             return False, 'invalid result format'
