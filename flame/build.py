@@ -29,15 +29,33 @@ from control import Control
 
 class Build:
 
-    def __init__ (self, ifile, model):
+    def __init__ (self, model):
 
-        self.ifile = ifile
         self.model = model
-        self.lfile = None
+
+        # instance Control object
+        control = Control(self.model,0)
+        self.parameters = control.get_parameters()
 
         return
 
-    def run (self):
+    def getModelSet(self):
+        ext_input = False
+        model_set = None
+
+        if 'ext_input' in self.parameters:
+            if self.parameters['ext_input']:
+                if 'model_set' in self.parameters:
+                    if len(self.parameters['model_set'])>1:
+                        model_set = self.parameters['model_set']
+                        ext_input = True
+
+        return ext_input, model_set
+
+    def setSingleCPU(self):
+        self.parameters['numCPUs']=1
+
+    def run (self, input_source):
         ''' Executes a default predicton workflow '''
 
         # path to endpoint
@@ -45,9 +63,6 @@ class Build:
         if not os.path.isdir(epd):
             return False, 'unable to find model: '+self.model
         
-        self.lfile = epd+'/'+os.path.basename(self.ifile)
-        shutil.copy (self.ifile,self.lfile)
-
         #uses the child classes within the 'model' folder, to allow customization of
         #the processing applied to each model
         modpath = utils.module_path(self.model, 0)
@@ -56,26 +71,30 @@ class Build:
         learn_child = importlib.import_module (modpath+".learn_child")
         odata_child = importlib.import_module (modpath+".odata_child")
         
-        # instance Control object
-        control = Control(self.model,0)
-        parameters = control.get_parameters()
-
         # run idata object, in charge of generate model data from local copy of input
-        idata = idata_child.IdataChild (parameters, self.lfile)
+
+        if not ('ext_input' in self.parameters and self.parameters['ext_input']):
+            self.ifile = input_source
+            self.lfile = epd+'/'+os.path.basename(self.ifile)
+            shutil.copy (self.ifile,self.lfile)
+            idata = idata_child.IdataChild (self.parameters, self.lfile)
+        else:
+            idata = idata_child.IdataChild (self.parameters, input_source)
+
         success, results = idata.run ()
-        
+
         if not success:
             return success, results
 
         # run learn object, in charge of generate a prediction from idata
-        learn = learn_child.LearnChild (parameters, results)
+        learn = learn_child.LearnChild (self.parameters, results)
         success, results = learn.run ()
         
         if not success:
             return success, results
 
         # run odata object, in charge of formatting the prediction results
-        odata = odata_child.OdataChild (parameters, results)
+        odata = odata_child.OdataChild (self.parameters, results)
         success, results = odata.run ()
 
         return success, results

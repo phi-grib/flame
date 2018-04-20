@@ -1,9 +1,17 @@
 # system settings
 verbose_error: true
-numCPUs: 2
+numCPUs: 1
+
+# external models
+ext_input: true
+model_set:
+- endpoint: MAGENTA                   # list of models used for producing input
+  version: 1
+- endpoint: MAGENTA
+  version: 2
 
 # input settings
-input_type: molecule                  # molecule | data
+input_type: ext_data                  # molecule | data | ext_data
 normalize_method: standardize         # null | standardize
 ionize_method: null                   # null | moka
 convert3D_method: null                # null | ETKDG
@@ -92,5 +100,5 @@ RF_optimize:
   - 46
 
 # conformal predictor settings
-conformal: true
+conformal: false
 conformalSignificance: 0.15

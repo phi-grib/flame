@@ -20,31 +20,12 @@
 ##    You should have received a copy of the GNU General Public License
 ##    along with Flame. If not, see <http://www.gnu.org/licenses/>.
 
-import os
-import sys
 import argparse
-import shutil
 
-from predict import Predict
-from build import Build
 import util.utils as utils 
+import command
 import manage 
 
-def predict_cmd(args):
-    ''' Instantiates a Predict object to run a prediction using the given input file and model '''
-
-    version = utils.intver(args.version)
-
-    predict = Predict(args.infile, args.endpoint, version)
-    success, results = predict.run()
-    print('flame : ', success, results)
-
-def build_cmd(args):
-    ''' Instantiates a Build object to build a model using the given input file (training series) and model (name of endpoint, eg. 'CACO2') '''
-    
-    build = Build(args.infile, args.endpoint)
-    success, results = build.run()
-    print('flame : ', success, results)
 
 def manage_cmd(args):
     ''' Instantiates a Build object to build a model using the given input file (training series) and model (name of endpoint, eg. 'CACO2') '''
@@ -99,11 +80,28 @@ def main():
         required=True)
 
     args = parser.parse_args()
-    
+
+
     if args.command == 'predict':
-        predict_cmd(args)
+
+        version = utils.intver(args.version) 
+        
+        model = {'endpoint' : args.endpoint,
+                 'version' : version,
+                 'infile' : args.infile}
+
+        success, results = command.predict_cmd(model)
+        print ('flame predict : ', success, results)
+
     elif args.command == 'build':
-        build_cmd(args)
+        
+        model = {'endpoint' : args.endpoint,
+                 'infile' : args.infile}
+
+        success, results = command.build_cmd(model)
+        print ('flame build : ', success, results)
+
+        ## build_cmd(args)
     elif args.command == 'manage':
         manage_cmd(args)
 

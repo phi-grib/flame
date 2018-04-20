@@ -28,6 +28,7 @@ import tempfile
 
 from predict import Predict
 import manage
+import command
 import util.utils as utils
 
 
@@ -68,9 +69,18 @@ class FlamePredictWS(object):
         #     success, results = predict.run()
         # except:
         #     raise cherrypy.HTTPError(500)
+
+        # TODO: for now, only working for plain models (no external input sources)
             
-        predict = Predict(ifile, model, version)
-        success, results = predict.run()
+
+        model = {'endpoint' : model,
+                 'version' : version,
+                 'infile' : ifile}
+
+        success, results = command.predict_cmd(model)
+
+        # predict = Predict(model, version)
+        # success, results = predict.run(ifile)
 
         return results
 

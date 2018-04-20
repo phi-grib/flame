@@ -28,16 +28,35 @@ from control import Control
 
 class Predict:
 
-    def __init__ (self, ifile, model, version, out_format='JSON'):
+    def __init__ (self, model, version, out_format='JSON'):
 
-        self.ifile = ifile
         self.model = model
         self.version = version
         self.out_format = out_format
 
+        # instance Control object
+        control = Control(model, version)
+        self.parameters = control.get_parameters()
+
         return
 
-    def run (self):
+    def getModelSet(self):
+        ext_input = False
+        model_set = None
+
+        if 'ext_input' in self.parameters:
+            if self.parameters['ext_input']:
+                if 'model_set' in self.parameters:
+                    if len(self.parameters['model_set'])>1:
+                        model_set = self.parameters['model_set']
+                        ext_input = True
+
+        return ext_input, model_set
+
+    def setSingleCPU(self):
+        self.parameters['numCPUs']=1
+
+    def run (self, input_source):
         ''' Executes a default predicton workflow '''
 
         # path to endpoint
@@ -48,31 +67,27 @@ class Predict:
         #uses the child classes within the 'model' folder, to allow customization of
         #the processing applied to each model
         modpath = utils.module_path(self.model, self.version)
-     
+
         idata_child = importlib.import_module (modpath+".idata_child")
         apply_child = importlib.import_module (modpath+".apply_child")
         odata_child = importlib.import_module (modpath+".odata_child")
         
-        # instance Control object
-        control = Control(self.model,self.version)
-        parameters = control.get_parameters()
-
         # run idata object, in charge of generate model data from input
-        idata = idata_child.IdataChild (parameters, self.ifile)
+        idata = idata_child.IdataChild (self.parameters, input_source)
         success, results = idata.run ()
-        
+
         if not success:
             return success, results
 
         # run apply object, in charge of generate a prediction from idata
-        apply = apply_child.ApplyChild (parameters, results)
+        apply = apply_child.ApplyChild (self.parameters, results)
         success, results = apply.run ()
         
         if not success:
             return success, results
 
         # run odata object, in charge of formatting the prediction results
-        odata = odata_child.OdataChild (parameters, results, self.out_format)
+        odata = odata_child.OdataChild (self.parameters, results, self.out_format)
         success, results = odata.run ()
 
         return success, results

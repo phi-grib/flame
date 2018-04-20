@@ -18,6 +18,41 @@
 //     You should have received a copy of the GNU General Public License
 //     along with Flame. If not, see <http://www.gnu.org/licenses/>.
 
+
+// sort keys to order columns in a logical way
+function sortKeys (myjson) {
+   
+    // select keys and order logically
+    //  1. obj_name
+    //  2. SMILES (if present at all)
+    //  3. main results (one or many)
+    
+    // 1. obj_name
+    var key_list = ['obj_nam'];
+    
+    // 2. SMILES
+    if (myjson.hasOwnProperty('SMILES')){
+        key_list.push('SMILES');
+    }
+    
+    // 3. main results
+    var main = myjson['meta']['main'];
+    key_list = key_list.concat(main);
+    
+    // special keys, already processed (obj_nam, SMILES and main[])
+    // or never shown in a table (origin and meta)
+    const black_list = key_list.concat(['origin','meta']);
+
+    for (var key in myjson){
+        if ( ! black_list.includes(key)){
+            key_list.push(key);
+        }
+    }
+
+    return key_list;
+}
+
+
 // parse results obtained from the prediction
 function parseResults (results) {
     $("#data-body").text(results);
@@ -25,19 +60,9 @@ function parseResults (results) {
     lastResults = results;
     
     var myjson = JSON.parse(results);
-    var meta = myjson['meta'];
-    var main = meta['main']
-    
-    // special JSON keys which must be processed separatelly
-    const key_no = ['origin', 'meta', 'obj_nam', main];
-    
-    // select keys and order logically
-    var key_list = ['obj_nam',main];
-    for (var key in myjson){
-        if ( ! key_no.includes(key)){
-            key_list.push(key);
-        }
-    }
+    var mainv = myjson['meta']['main'][0];
+
+    key_list = sortKeys(myjson);
     
     // header
     var tbl_body = '<thead><tr><th>#</th>';
@@ -51,31 +76,57 @@ function parseResults (results) {
     tbl_body+='</tr></thead>';
     var val;
     var val_float;
-    for (var i in myjson[main]){
+
+    for (var i in myjson[mainv]){
+
         tbl_body += "<tr><td>"+(+i+1);
+
         for (var key in key_list){
+
+            if (key_list[key]=="SMILES"){
+                tbl_body += '<td><canvas id="mol'+i+'"></canvas>';
+                continue;
+            } 
+
             val = myjson[key_list[key]][i];
+
             if (val==null) {
-                tbl_body +=  "</td><td> - ";
+                tbl_body += "</td><td> - ";
+                continue;
             }
-            else {
-                val_float = parseFloat(val);
-                if(isNaN(val_float)){
-                    tbl_body +=  "</td><td>"+val;
-                }
-                else {
-                    tbl_body +=  "</td><td>"+val_float.toFixed(3);
-                }
+
+            val_float = parseFloat(val);
+
+            if(isNaN(val_float)){
+                tbl_body += "</td><td>"+val;
+                continue;
             }
+
+            tbl_body += "</td><td>"+val_float.toFixed(3);
+
         }
         tbl_body += "</td></tr>";
     }
     
     $("#data-table").html(tbl_body);   
 
+    // SMILES must be inserted after the canvases were already created in included in the HTML code
+    if (key_list.includes('SMILES')){
+
+        let smilesDrawer = new SmilesDrawer.Drawer( {'width':300, 'height':150});
+
+        for (var i in myjson[mainv]){
+            SmilesDrawer.parse(myjson['SMILES'][i], function(tree) {
+                smilesDrawer.draw(tree, 'mol'+i, 'light', false);
+            });
+        }
+    }
+
     // now we can export the results
     $("#export").prop('disabled', false);
+    $("#processing").prop('hidden', true);
 };
+
 
 // POST a prediction request for the selected model, version and input file
 function postPredict (temp_dir, ifile) {
@@ -95,7 +146,9 @@ function postPredict (temp_dir, ifile) {
         lastResults = results;
         parseResults (results)
     });
+
 };
+
 
 // simple utility function to download as a file text generated here (client-side)
 function download(filename, text) {
@@ -110,6 +163,7 @@ function download(filename, text) {
   
     document.body.removeChild(element);
 }  
+
 
 // main
 $(document).ready(function() {
@@ -177,6 +231,8 @@ $(document).ready(function() {
             return;
         };
 
+        $("#processing").prop('hidden', false);
+
         // clear GUI
         $("#data-body").text('processing... please wait');
         $("#data-table").html('');
@@ -200,24 +256,13 @@ $(document).ready(function() {
 
     $("#export").click(function(e) {
 
-        if (lastResults==null) {
+        if (lastResults==null)
             return;
-        }
 
         var myjson = JSON.parse(lastResults);
-        var meta = myjson['meta'];
-        var main = meta['main'];
+        var mainv = myjson['meta']['main'][0];
 
-        // special JSON keys which must be processed separatelly
-        const key_no = ['origin', 'meta', 'obj_nam', main];
-            
-        // select keys and order logically
-        var key_list = ['obj_nam',main];
-        for (var key in myjson){
-            if ( ! key_no.includes(key)){
-                key_list.push(key);
-            }
-        }
+        key_list = sortKeys(myjson);
 
         var tsv='';
 
@@ -233,7 +278,7 @@ $(document).ready(function() {
         // body
         var val;
         var val_float;
-        for (var i in myjson[main]){
+        for (var i in myjson[mainv]){
             for (var key in key_list ){
                 val = myjson[key_list[key]][i];
                 if (val==null) {

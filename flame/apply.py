@@ -79,6 +79,8 @@ class Apply:
             self.results['CI'] = zero_array
         if not 'RI' in self.results:
             self.results['RI'] = zero_array   
+        #print (self.results)
+
 
         return True, self.results
 

@@ -23,6 +23,7 @@
 import os
 import sys
 import pickle
+import json
 
 import numpy as np
 from rdkit import Chem
@@ -39,12 +40,20 @@ import util.utils as utils
 
 class Idata:
 
-    def __init__ (self, parameters, ifile):
+    def __init__ (self, parameters, input_source):
 
         self.parameters = parameters      # control object defining the processing
-        self.ifile = ifile          # input file
 
-        self.dest_path = os.path.dirname(ifile)     # path where any temp file must be written
+        if ('ext_input' in parameters) and (parameters['ext_input']):
+            self.idata = input_source
+            self.ifile = None
+            self.dest_path = '.' ## TODO: define an appropriate path 
+
+        else:
+            self.idate = None
+            self.ifile = input_source          
+            self.dest_path = os.path.dirname(self.ifile)     # path where any temp file must be written
+
         if self.dest_path == '':
             self.dest_path = '.'
 
@@ -64,6 +73,7 @@ class Idata:
         obj_nam = []
         obj_bio = []
         obj_exp = []
+        obj_sml = []
 
         for i, mol in enumerate(suppl):
 
@@ -87,13 +97,22 @@ class Idata:
             if mol.HasProp(self.parameters['SDFile_experimental']):
                 exp = mol.GetProp(self.parameters['SDFile_experimental'])
 
+            ## generate a SMILES
+            sml = Chem.MolToSmiles(mol)
+
             obj_nam.append(name)
             obj_bio.append(activity_num)
             obj_exp.append(exp)
+            obj_sml.append(sml)
 
-        result = (obj_nam, np.array(obj_bio, dtype=np.float64), np.array(obj_exp, dtype=np.float64))
-
-        return result
+        anotation_results = {
+            'obj_nam': obj_nam,
+            'SMILES': obj_sml,
+            'ymatrix': np.array(obj_bio, dtype=np.float64),
+            'experim': np.array(obj_exp, dtype=np.float64)
+        }
+        
+        return anotation_results 
 
     def normalize (self, ifile, method):
         """
@@ -292,6 +311,9 @@ class Idata:
         Saves the results in serialized form, together with the MD5 signature of the control class and the input file
         """
 
+        if 'ext_input' in self.parameters and self.parameters['ext_input']:
+            return True
+
         md5_parameters = self.parameters['md5']
         md5_input = utils.md5sum(self.ifile)  # run md5 in self.ifile
 
@@ -304,6 +326,7 @@ class Idata:
                 pickle.dump (results["ymatrix"],fo)
                 pickle.dump (results["experim"],fo)
                 pickle.dump (results["obj_nam"],fo)
+                pickle.dump (results["SMILES"],fo)
                 pickle.dump (results["var_nam"],fo)
         except :
             return False
@@ -314,6 +337,9 @@ class Idata:
         """ 
         Loads the results in serialized form, together with the MD5 signature of the control class and the input file
         """
+
+        if 'ext_input' in self.parameters and self.parameters['ext_input']:
+            return False, 'model depends on external data sources'
 
         try:
             with open (self.dest_path+'/data.pkl', 'rb') as fi:
@@ -330,6 +356,7 @@ class Idata:
                 results["ymatrix"] = pickle.load(fi)
                 results["experim"] = pickle.load(fi)
                 results["obj_nam"] = pickle.load(fi)
+                results["SMILES"] = pickle.load(fi)
                 results["var_nam"] = pickle.load(fi)
         except :
             return False, 'unable to open pickl file'
@@ -377,6 +404,7 @@ class Idata:
     def _run_molecule (self):
         """
         version of Run for molecular input
+
         """
 
         # trick to avoid RDKit dumping warnings to the console
@@ -387,12 +415,16 @@ class Idata:
             os.dup2(stderr_fd.fileno(), stderr_fileno)
 
         # extract useful information from file
-        results = self.extractAnotations (self.ifile)
-        obj_nam = results[0]
-        ymatrix = results[1]
-        experim = results[2]
 
-        nobj = len(obj_nam)
+        workflow_results = self.extractAnotations (self.ifile)
+
+        # obj_nam = results[0]
+        # obj_sml = results[1]
+        # ymatrix = results[2]
+        # experim = results[3]
+
+        nobj = len(workflow_results['obj_nam'])
+
         ncpu = self.parameters['numCPUs']
 
         # do not run multiprocess for small series, the overheads slow the overall computation time
@@ -434,25 +466,13 @@ class Idata:
             stderr_fd.close()                     # close the RDKit log
             os.dup2(stderr_save, stderr_fileno)   # restore old syserr
 
-        xmatrix = results [0]
-        var_nam = None
-        if len(results) > 1:
-            var_nam = results [1]
-        
-        # results is a tuple with:
-        # [0] xmatrix
-        # [1] ymatrix 
-        # [2] experim      for prediction quality assessment   
-        # [3] obj_nam      for presenting results
-        # [4] var_nam        
-        #results = (xmatrix, ymatrix, experim, obj_nam, var_nam)
-        results = {"xmatrix": xmatrix,
-                   "ymatrix": ymatrix,
-                   "experim": experim,
-                   "obj_nam": obj_nam,
-                   "var_nam": var_nam}
+        workflow_results['xmatrix'] = results[0]
 
-        return success, results
+        if len(results)>1 :
+            workflow_results['var_nam'] = results[1]
+
+        # return success, results
+        return success, workflow_results
 
     def _run_data (self):
         """
@@ -461,20 +481,38 @@ class Idata:
 
         success = False
         results = 'not implemented'
-        #results = (xmatrix, ymatrix, experim, obj_nam, var_nam)
+
 
         return success, results
 
-    def _run_process (self):
+    def _run_ext_data (self):
         """
         version of Run for inter-process input (calling another model to obtain input)
         """
+        print (self.idata)
         
-        success = False
-        results = 'not implemented'
-        #results = (xmatrix, ymatrix, experim, obj_nam, var_nam)
+        results = json.loads(self.idata[0])
+        original_main = results ['meta']['main']
+        results['meta']['main']= ['xmatrix']
 
-        return success, results
+        combo = None
+        for ijson in self.idata:
+            idict = json.loads(ijson)
+            main_keys = idict['meta']['main']
+            for j in main_keys:
+                if combo is None:
+                    combo = np.array(idict[j], dtype=np.float64)
+                else:
+                    combo = np.c_[combo, np.array(idict[j], dtype=np.float64)]
+                
+        for key in original_main:
+            del results[key]
+
+        results['xmatrix']= combo
+        
+        print ('in ext_data with following data: ', results)
+        
+        return True, results
 
     def run (self):
         """         
@@ -498,8 +536,8 @@ class Idata:
             success, results = self._run_molecule()
         elif (input_type == 'data'):
             success, results = self._run_data()
-        elif (input_type == 'process'):
-            success, results = self._run_process()
+        elif (input_type == 'ext_data'):
+            success, results = self._run_ext_data()
         else:
             return False, 'unknown input data format'
 

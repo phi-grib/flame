@@ -238,9 +238,10 @@ class BaseEstimator:
         self.mcc = float("{0:.2f}".format(self.mcc))
         self.sensitivity = float("{0:.2f}".format(self.sensitivity))
         self.specificity = float("{0:.2f}".format(self.specificity))
-        self.coverage = (self.TN + self.FP + self.TP + self.FN) / ((self.TN + self.FP + self.TP + self.FN) + not_predicted_all)
-        self.coverage = float("{0:.2f}".format(self.coverage))
-
+        self.conformal_coverage = (self.TN + self.FP + self.TP + self.FN) / ((self.TN + self.FP + self.TP + self.FN) + not_predicted_all)
+        self.conformal_coverage = float("{0:.2f}".format(self.conformal_coverage))
+        self.conformal_accuracy = float(self.TN + self.TP)/ float(self.FP + self.FN + self.TN + self.TP)
+        self.conformal_accuracy = float("{0:.2f}".format(self.conformal_accuracy))
         return True, 'ok'
 
 
@@ -249,6 +250,8 @@ class BaseEstimator:
         
         X = self.X.copy()
         Y = self.Y.copy()
+
+        nobj = len(X)
 
         if self.autoscale:
             X = X - self.mux
@@ -371,7 +374,7 @@ class BaseEstimator:
             class_prediction = {}
             for i in range(len(prediction[0])):
                 clas_name = 'c' + str(i)
-                class_prediction[clas_name] = prediction[:, i]
+                class_prediction[clas_name] = prediction[:, i].tolist()
             return (class_prediction)
                
 
@@ -385,18 +388,21 @@ class BaseEstimator:
         if self.autoscale:
             Xb = Xb-self.mux
             Xb = Xb*self.wgx
+        if not self.conformal:
+            results = self.regularProject(Xb)
+            if self.quantitative:
+                results['meta'] = {'main': ['values']}
 
         if self.conformal:
             results = self.conformalProject(Xb)
-        else:
-            results = self.regularProject(Xb)
+            if self.quantitative:
+                results['meta'] = {'main': ['values']}
+            else:
+                results['meta'] = {'main' : [class_p for class_p in results.keys()]}
+
 
         ## TODO: metainformation about the results returned
         ## must be customized for each modeling technique
-        if self.quantitative:
-            results['meta'] = {'main':'values'}
-        else:
-            results['meta'] = {'main':'c0'}
 
         return results
 
@@ -460,10 +466,24 @@ class BaseEstimator:
 
         # Cross-val
 
-        results ['TP'] = self.TP 
-        results ['TN'] = self.TN 
-        results ['FP'] = self.FP 
-        results ['FN'] = self.FN 
+        if not self.quantitative:
+            results ['TP'] = self.TP 
+            results ['TN'] = self.TN 
+            results ['FP'] = self.FP 
+            results ['FN'] = self.FN 
+            results ['mcc'] =self.mcc
+            if self.conformal:
+                results ['Conformal_accuracy'] = self.conformal_accuracy
+                results ['Conformal_significance'] = self.conformalSignificance
+        else:
+            results ['SDEC' ] = self.SDEC     # SD error of the calculations
+            results ['R2'] = self.R2     # determination coefficient
+            if self.conformal:
+                results ['Conformal_accuracy'] = self.conformal_accuracy
+                results ["Conformal_mean_interval"] = self.conformal_mean_interval
+                results ['Conformal_coverage'] = self.conformal_coverage
+                results ['Conformal_significance'] = self.conformalSignificance
+
 
         #self.sensitivity = 0.00
         #self.specificity = 0.00
