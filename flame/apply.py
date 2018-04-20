@@ -48,12 +48,12 @@ class Apply:
         except:
             return False, 'estimator not found'
 
-        try:
-            with open(model_file, "rb") as input_file:
-                estimator = pickle.load(input_file)
-            projection = estimator.project(X)
-        except:
-            return False, 'unable to project'
+        with open(model_file, "rb") as input_file:
+            estimator = pickle.load(input_file)
+        
+        success, projection = estimator.project(X)
+        if not success:
+            return success, projection
 
         for key in projection:
             self.results[key] = projection[key]

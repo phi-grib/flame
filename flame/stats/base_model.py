@@ -352,8 +352,8 @@ class BaseEstimator:
 
 
     def regularProject(self, Xb):
-        Yp = self.estimator.predict(Xb)
-        return Yp
+        Yp =  self.estimator.predict(Xb)
+        return {'values': Yp}
 
 
     def conformalProject(self, Xb):
@@ -383,11 +383,12 @@ class BaseEstimator:
         
         results = None
         if self.estimator == None:
-            print ('failed to load clasifier')
-            return
+            return False, 'failed to load classifier'
+        
         if self.autoscale:
             Xb = Xb-self.mux
             Xb = Xb*self.wgx
+
         if not self.conformal:
             results = self.regularProject(Xb)
             if self.quantitative:
@@ -395,16 +396,16 @@ class BaseEstimator:
 
         if self.conformal:
             results = self.conformalProject(Xb)
+
             if self.quantitative:
                 results['meta'] = {'main': ['values']}
             else:
                 results['meta'] = {'main' : [class_p for class_p in results.keys()]}
 
-
         ## TODO: metainformation about the results returned
         ## must be customized for each modeling technique
 
-        return results
+        return True, results
 
 
     def conformal_calibration(self,):

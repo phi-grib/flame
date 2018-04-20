@@ -29,11 +29,3 @@ class ApplyChild (Apply):
 
         Apply.__init__(self, control, results)
 
-    def run (self):
-
-        self.results['values']=self.results['xmatrix'].mean(1)
-        self.results['origin'] = 'apply'
-        self.results['meta'] = {'main':['values']}
- 
-        return True, self.results
-
