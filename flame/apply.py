@@ -29,8 +29,6 @@ class Apply:
 
         self.parameters = parameters
         self.results = results
-        
-        print (results)
 
         self.results['origin'] = 'apply'
 
