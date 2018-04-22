@@ -447,8 +447,10 @@ class BaseEstimator:
         #print self.estimator.get_params() 
 
 
-    def getResults (self, results):
+    def getResults (self):
 
+        results = {}
+        
         # Goodness of the fit results
         
         results ['TPpred'] = self.TPpred 

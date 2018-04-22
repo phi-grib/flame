@@ -75,7 +75,7 @@ def predict_cmd(model):
     
     '''
 
-    predict = Predict(model['endpoint'], model['version'])
+    predict = Predict(model['endpoint'], model['version'], 'JSON')
 
     ext_input, model_set = predict.get_model_set()
 
@@ -107,7 +107,7 @@ def build_cmd(model):
     
     '''
 
-    build = Build(model['endpoint'])
+    build = Build(model['endpoint'],'JSON')
 
     ext_input, model_set = build.get_model_set()
 

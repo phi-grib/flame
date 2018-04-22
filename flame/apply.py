@@ -30,6 +30,8 @@ class Apply:
         self.parameters = parameters
         self.results = results
         
+        print (results)
+
         self.results['origin'] = 'apply'
 
     def run (self):
@@ -41,19 +43,21 @@ class Apply:
         nobj, nvarx = np.shape(X)
 
         if (nobj==0) or (nvarx==0) :
-            return False, 'failed to extract activity or to generate MD'
+            self.results['error'] = 'Failed to extract activity or to generate MD'
+            return self.results
 
         try:
             model_file = self.parameters['model_path'] + '/model.pkl'
+            with open(model_file, "rb") as input_file:
+                estimator = pickle.load(input_file)
         except:
-            return False, 'estimator not found'
+            self.results['error'] = 'No valid model estimator found'
+            return self.results
 
-        with open(model_file, "rb") as input_file:
-            estimator = pickle.load(input_file)
-        
         success, projection = estimator.project(X)
         if not success:
-            return success, projection
+            self.results['error'] = projection
+            return self.results
 
         for key in projection:
             self.results[key] = projection[key]
@@ -66,5 +70,5 @@ class Apply:
         if not 'RI' in self.results:
             self.results['RI'] = zero_array   
 
-        return True, self.results
+        return self.results
 

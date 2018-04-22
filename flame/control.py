@@ -32,11 +32,10 @@ class Control:
 
         success, parameters = self.load_parameters(model)
 
-        #TODO: remove this code
+        #TODO: study the pros and cons of copying the children template instead
         if not success:
             print ('CRITICAL ERROR: unable to load parameter file. Running with fallback defaults')
             parameters = self.get_defaults()
-            # self.save_parameters(parameters)
 
         self.parameters = parameters
         self.parameters['model_path'] = util.model_path(model,version)
@@ -86,93 +85,10 @@ class Control:
     def get_defaults (self):
         ''' Fallback for setting parameters even when no "config.yaml" file is found '''
 
-        parameters = {
-            ## system settings
-            'verbose_error' : True,
-            'numCPUs' : 1,                                  # (int)
-            
-            ## input settings
-            'input_type' : 'molecule',                     # 'molecule' | 'data'
-            'normalize_method' : 'standardize',             # None | 'standardize'
-            'ionize_method' : None,                         # None | 'moka'
-            'convert3D_method' : None,                      # 'ETKDG' 
-            'computeMD_method' : ['RDKit_properties'],      # 'RDKit_properties'|'RDKit_md'|'custom'
-            
-            'SDFile_name' : 'GENERIC_NAME',                 # (str)
-            'SDFile_activity' : 'activity',                 # (str)
-            'SDFile_experimental' : 'IC50',                 # (str)
+        self.yaml_file = os.path.join(os.path.dirname(os.path.abspath(__file__)),'children','parameters.yaml')
 
-            ## learn/apply settings
-            'modelingToolkit' : 'internal',                 # 'internal' | 'R' | 'KNIME' | 'custom'
-            'model' : 'RF',
-            'modelAutoscaling' : None,
-            'quantitative' : True,
-            'tune' : False,
-            # self.modelLV = None
-            # self.modelCutoff = None
-
-            ## Model Validation Settings
-            'ModelValidationCV' : 'loo',
-            'ModelValidationN' : 2,
-            'ModelValidationP' : 1,
-            'ModelValidationLC' : False,                    # Learning curve
-
-            # self.selVar = None
-            # #self.selVarMethod = None
-            # self.selVarLV = None
-            # #self.selVarCV = None
-            # self.selVarRun = None
-            # self.selVarMask = None
-
-            ## Random Forest
-            'RF_parameters' : { 
-                "n_estimators" : 200, 
-                "max_features" : "sqrt",
-                "class_weight" : "balanced", 
-                "random_state" : 46,
-                "oob_score"    : True, 
-                "n_jobs"       : -1, 
-                "max_depth" : None 
-                },
-
-            'RF_optimize' : {
-                'n_estimators': range(50, 200, 50),
-                'max_features': ['sqrt','log2'],
-                'class_weight' : [None, 'balanced'],
-                'oob_score' : [True],
-                'random_state' : [46],
-                },  
-
-            ## SVM
-            'SVM_parameters' : {
-                "kernel" : "rbf",
-                "degree" : 3, 
-                "gamma" : "auto",
-                "coef0" : 0.0, 
-                "probability" : False,
-                "decision_function_shape" : "ovr",
-                "class_weight" : "balanced",
-                "tol" : 1e-3,
-                "epsilon" : 0.1,
-                "C" : 1.0,
-                "shrinking" : True,
-                "random_state" : 46
-                },
-
-            'SVM_optimize' : {
-                'kernel': ['rbf', ],                          # kernels: poly, sigmoid
-                'gamma': ['auto'],
-                'coef0': [0.0, 0.8, 100.0],
-                'C': [1, 10, 100] ,
-                'degree': [1, 3, 5],
-                'class_weight' : [None, 'balanced'],
-                'random_state' : [46]
-                },  
-
-            ## conformal predictor  settings
-            'conformal' : False,
-            'conformalSignificance' : 0.2
-        }
+        with open (self.yaml_file, 'r') as pfile:
+            parameters = yaml.load(pfile)  
 
         return parameters
 

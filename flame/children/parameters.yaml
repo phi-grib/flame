@@ -17,6 +17,9 @@ model_set:                            # list of models used for producing input
 - endpoint: MAGENTA
   version: 2
 
+# Output 
+output_format: JSON                   # JSON | TSV
+
 # SDFile settings
 SDFile_activity: activity             # str
 SDFile_experimental: IC50             # str

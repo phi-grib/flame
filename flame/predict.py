@@ -28,15 +28,18 @@ from control import Control
 
 class Predict:
 
-    def __init__ (self, model, version, out_format='JSON'):
+    def __init__ (self, model, version, output_format=None):
 
         self.model = model
         self.version = version
-        self.out_format = out_format
 
         # instance Control object
         self.control = Control(model, version)
         self.parameters = self.control.get_parameters()
+
+        # set parameter overriding value in 
+        if output_format != None:
+            self.parameters['output_format'] = output_format
 
         return
 
@@ -71,19 +74,12 @@ class Predict:
         idata = idata_child.IdataChild (self.parameters, input_source)
         success, results = idata.run ()
 
-        if not success:
-            return success, results
+        if not 'error' in results:
+            # run apply object, in charge of generate a prediction from idata
+            apply = apply_child.ApplyChild (self.parameters, results)
+            results = apply.run ()
 
-        # run apply object, in charge of generate a prediction from idata
-        apply = apply_child.ApplyChild (self.parameters, results)
-        success, results = apply.run ()
-        
-        if not success:
-            return success, results
-
-        # run odata object, in charge of formatting the prediction results
-        odata = odata_child.OdataChild (self.parameters, results, self.out_format)
-        success, results = odata.run ()
-
-        return success, results
+        # run odata object, in charge of formatting the prediction results or any error
+        odata = odata_child.OdataChild (self.parameters, results)
+        return odata.run()
 

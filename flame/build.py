@@ -29,13 +29,17 @@ from control import Control
 
 class Build:
 
-    def __init__ (self, model):
+    def __init__ (self, model, output_format=None):
 
         self.model = model
 
         # instance Control object
         self.control = Control(self.model,0)
         self.parameters = self.control.get_parameters()
+        
+        # set parameter overriding value in 
+        if output_format != None:
+            self.parameters['output_format'] = output_format
 
         return
 
@@ -78,19 +82,17 @@ class Build:
 
         success, results = idata.run ()
 
+        ## TODO: horrible hack to implement passing errors in the results key
         if not success:
-            return success, results
+            results = {'error':results, 'origin':'apply'}
 
-        # run learn object, in charge of generate a prediction from idata
-        learn = learn_child.LearnChild (self.parameters, results)
-        success, results = learn.run ()
-        
-        if not success:
-            return success, results
+        if not 'error' in results:
+            # run learn object, in charge of generate a prediction from idata
+            learn = learn_child.LearnChild (self.parameters, results)
+            results = learn.run ()
 
         # run odata object, in charge of formatting the prediction results
         odata = odata_child.OdataChild (self.parameters, results)
-        success, results = odata.run ()
+        return odata.run ()
 
-        return success, results
 

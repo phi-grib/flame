@@ -63,9 +63,19 @@ function parseResults (results) {
         var myjson = JSON.parse(results);
     } catch(e) {
         $("#processing").prop('hidden', true);
-        alert(e); // error in the above string (in this case, yes)!
+        alert('ERROR: '+results); // error in the above string (in this case, yes)!
+        return;
+    }
+
+    console.log(myjson);
+
+    if (("error" in myjson)!=false){
+        $("#processing").prop('hidden', true);
+        alert(myjson['error']); // show error as alert
+        return;
     }
     
+
     var mainv = myjson['meta']['main'][0];
 
     key_list = sortKeys(myjson);
