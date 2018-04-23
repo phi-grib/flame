@@ -142,7 +142,9 @@ def add_result (results, var, _key, _label, _type, _dimension='objs', _descripti
 
     manifest=results['manifest']
     
-    results[key] = var
+    # TODO: check if the _key already exist and add _1 _2 _3 etc as needed
+
+    results[_key] = var
 
     manifest_item = {'key': _key,                      # key in results
                      'label': _label,                  # descriptive text 
@@ -155,9 +157,10 @@ def add_result (results, var, _key, _label, _type, _dimension='objs', _descripti
     manifest.append(manifest_item)
 
     if _relevance == 'main':
-        if not 'meta' in results:
-            results['meta']= {'main':[]}
-
-        results['meta']['main'].append[_key]
+        if 'meta' not in results:
+            results['meta'] = {'main':[_key]}
+        else:
+            main_ver = results['meta']['main']
+            main_var.append[_key]
 
 

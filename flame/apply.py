@@ -22,6 +22,7 @@
 
 import numpy as np
 import pickle
+import util.utils as utils
 
 class Apply:
 
@@ -31,6 +32,7 @@ class Apply:
         self.results = results
 
         self.results['origin'] = 'apply'
+
 
     def run (self):
        
@@ -52,21 +54,22 @@ class Apply:
             self.results['error'] = 'No valid model estimator found'
             return self.results
 
-        success, projection = estimator.project(X)
-        if not success:
-            self.results['error'] = projection
+        estimator.project(X, self.results)
+
+        if 'error' in self.results:
             return self.results
 
-        for key in projection:
-            self.results[key] = projection[key]
-            
         ## TODO: implement this for every prediction
         zero_array = np.zeros(nobj, dtype=np.float64)
 
-        if not 'CI' in self.results:
-            self.results['CI'] = zero_array
-        if not 'RI' in self.results:
-            self.results['RI'] = zero_array   
+        # if not 'CI' in self.results:
+        #     self.results['CI'] = zero_array
+        # if not 'RI' in self.results:
+        #     self.results['RI'] = zero_array   
+
+        utils.add_result (self.results, zero_array, 'CI', 'CI (95%)', 'confidence', 'objs', 'Approximate 95% Confidence Interval')
+
+        utils.add_result (self.results, zero_array, 'RI', 'RI (prob)', 'confidence', 'objs', 'Reliability Index, from 0 (good) to 6 (bad)')
 
         return self.results
 

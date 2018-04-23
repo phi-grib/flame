@@ -70,6 +70,8 @@ from nonconformist.evaluation import reg_mean_errors, reg_median_size
 from nonconformist.evaluation import reg_mean_size
 from nonconformist.evaluation import class_mean_errors
 
+import util.utils as utils
+
 class BaseEstimator:
     def __init__(self, X, Y, quantitative=False, autoscale=False,
                  cv='loo', n=2, p=1, lc=True,
@@ -351,57 +353,55 @@ class BaseEstimator:
         # return (Yp)
 
 
-    def regularProject(self, Xb):
+    def regularProject(self, Xb, results):
+        
         Yp =  self.estimator.predict(Xb)
-        return {'values': Yp}
+
+        utils.add_result (results, Yp, 'values', 'Prediction', 'result', 'objs', 'Results of the prediction', 'main')
 
 
-    def conformalProject(self, Xb):
+    def conformalProject(self, Xb, results):
+
         prediction = self.conformal_pred.predict(Xb, significance=self.conformalSignificance)
         
         if self.quantitative:
             mean1 = np.mean(prediction, axis=1)
-            predictionSize = abs(abs(prediction[0][0]) - abs(prediction[0][1]))
+            #predictionSize = abs(abs(prediction[0][0]) - abs(prediction[0][1]))
             lower_limit = prediction[:, 0]
             upper_limit = prediction[:, 1]
-            return ({'values' : mean1, 'lower_limit' : lower_limit, 'upper_limit' : upper_limit})         
+            utils.add_result (results, mean1, 'values', 'Prediction', 'result', 'objs', 'Results of the prediction', 'main')
+            utils.add_result (results, lower_limit, 'lower_limit', 'Lower limit', 'confidence', 'objs', 'Lower limit of the conformal prediction' )
+            utils.add_result (results, upper_limit, 'upper_limit', 'Upper limit', 'confidence', 'objs', 'Upper limit of the conformal prediction' )
+
         else:
+
             ## For the moment is returning a dictionary with class predictions 
             # / c0 / c1 / c2 /
             # /True/True/False/
-            class_prediction = {}
+            
             for i in range(len(prediction[0])):
-                clas_name = 'c' + str(i)
-                class_prediction[clas_name] = prediction[:, i].tolist()
-            return (class_prediction)
+                class_key = 'c' + str(i)
+                class_label = 'Class ' + str(i) 
+                class_list = prediction[:, i].tolist()
+                utils.add_result (results, class_list, class_key, class_label, 'result', 'objs', 'Conformal class assignment', 'main')
                
 
-    def project (self, Xb):
+    def project (self, Xb, results):
         """ Uses the X matrix provided as argument to predict Y"""
         
-        results = None
         if self.estimator == None:
-            return False, 'failed to load classifier'
+            results['error']='failed to load classifier'
+            return
         
         if self.autoscale:
             Xb = Xb-self.mux
             Xb = Xb*self.wgx
 
         if not self.conformal:
-            results = self.regularProject(Xb)
-            results['meta'] = {'main': ['values']}  
+            self.regularProject(Xb, results)
         else:
-            results = self.conformalProject(Xb)
-            if not self.quantitative:
-                results['meta'] = {'main' : [class_p for class_p in results.keys()]}
-            else:
-                results['meta'] = {'main': ['values']}  
-                
-        ## TODO: metainformation about the results returned
-        ## must be customized for each modeling technique
-
-        return True, results
-
+            self.conformalProject(Xb, results)
+        
 
     def conformal_calibration(self,):
 
