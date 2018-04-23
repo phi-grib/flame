@@ -45,6 +45,8 @@ class Idata:
         self.parameters = parameters      # control object defining the processing
         self.dest_path = '.'              # path for temp files (fallback default)
 
+        self.results = {}
+
         if ('ext_input' in parameters) and (parameters['ext_input']):
             self.idata = input_source
             self.ifile = None
@@ -72,7 +74,12 @@ class Idata:
         
         """
 
-        suppl = Chem.SDMolSupplier(ifile)
+        try:
+            suppl = Chem.SDMolSupplier(ifile)
+        except:
+            self.results['error'] = 'unable to open '+ifile+' input file'
+            return self.results
+
         obj_nam = []
         obj_bio = []
         obj_exp = []
@@ -108,6 +115,7 @@ class Idata:
             obj_exp.append(exp)
             obj_sml.append(sml)
 
+        #add_results (self.results, )
         anotation_results = {
             'obj_nam': obj_nam,
             'SMILES': obj_sml,
@@ -419,14 +427,16 @@ class Idata:
 
         # extract useful information from file
 
-        workflow_results = self.extractAnotations (self.ifile)
+        self.results = self.extractAnotations (self.ifile)
+        if 'error' in self.results:
+            return self.results
 
         # obj_nam = results[0]
         # obj_sml = results[1]
         # ymatrix = results[2]
         # experim = results[3]
 
-        nobj = len(workflow_results['obj_nam'])
+        nobj = len(self.results['obj_nam'])
 
         ncpu = self.parameters['numCPUs']
 
@@ -463,19 +473,20 @@ class Idata:
             success, results = self.workflow (self.ifile)
 
         if not success:
-            return False, results
+            self.results['error'] = 'error in run molecule workflow'
+            return self.results
 
         if not self.parameters['verbose_error']:
             stderr_fd.close()                     # close the RDKit log
             os.dup2(stderr_save, stderr_fileno)   # restore old syserr
 
-        workflow_results['xmatrix'] = results[0]
+        self.results['xmatrix'] = results[0]
 
         if len(results)>1 :
-            workflow_results['var_nam'] = results[1]
+            self.results['var_nam'] = results[1]
 
         # return success, results
-        return success, workflow_results
+        return self.results
 
 
     def _run_data (self):
@@ -483,11 +494,9 @@ class Idata:
         version of Run for data input (CSV tabular format)
         """
 
-        success = False
-        results = 'not implemented'
+        self.results ['error'] = 'inporting data is not implemented yet'
 
-
-        return success, results
+        return results
 
 
     def _run_ext_data (self):
@@ -499,13 +508,13 @@ class Idata:
         # the data usable for input must be listed in the ['meta']['main'] key
 
         # use first JSON to load common info like obj_nam, etc         
-        results = json.loads(self.idata[0])
+        self.results = json.loads(self.idata[0])
 
         # identify usable data imported from element 0. This will be deleted latter
-        original_main = results ['meta']['main']
+        original_main = self.results ['meta']['main']
 
         # new, consolidated, usable data will be added as 'xmatrix' 
-        results['meta']['main']= ['xmatrix']
+        self.results['meta']['main']= ['xmatrix']
 
         # extract usable data from every source and add to 'combo' np.array
         combo = None
@@ -521,14 +530,14 @@ class Idata:
                 else: # append laterally
                     combo = np.c_[combo, np.array(idict[j], dtype=np.float64)]
                 
-        results['xmatrix'] = combo
-        results['var_nam'] = var_nam
+        self.results['xmatrix'] = combo
+        self.results['var_nam'] = var_nam
 
         # del original usable data in element 0
         for key in original_main:
-            del results[key]
+            del self.results[key]
         
-        return True, results
+        return self.results
 
 
     def run (self):
@@ -545,21 +554,27 @@ class Idata:
         # check for the presence of a valid pickle file
         success, results = self.load()
         if success:
-            return success, results
+            return results
 
         input_type = self.parameters['input_type'] 
+
         # processing for molecular input (for now an SDFile)
         if (input_type== 'molecule'):
-            success, results = self._run_molecule()
+            self.results = self._run_molecule()
+
+        # processing for non-molecular input (not implemented)
         elif (input_type == 'data'):
-            success, results = self._run_data()
+            self.results = self._run_data()
+
+        # processing for external data 
         elif (input_type == 'ext_data'):
-            success, results = self._run_ext_data()
+            self.results = self._run_ext_data()
+
         else:
-            return False, 'unknown input data format'
+            self.results['error']='unknown input data format'
 
         # save in a pickle file stamped with MD5 hash of file and control
-        if success:
-            success = self.save (results)
+        if not 'error' in self.results:
+            self.save (self.results)
 
-        return success, results
+        return self.results

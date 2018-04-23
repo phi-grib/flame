@@ -22,7 +22,6 @@
 
 import os
 import importlib
-import shutil
 
 import util.utils as utils
 from control import Control
@@ -57,34 +56,25 @@ class Build:
     def run (self, input_source):
         ''' Executes a default predicton workflow '''
 
+        results = {}
+
         # path to endpoint
         epd = utils.model_path(self.model, 0)
         if not os.path.isdir(epd):
-            return False, 'unable to find model: '+self.model
-        
-        #uses the child classes within the 'model' folder, to allow customization of
-        #the processing applied to each model
-        modpath = utils.module_path(self.model, 0)
-     
-        idata_child = importlib.import_module (modpath+".idata_child")
-        learn_child = importlib.import_module (modpath+".learn_child")
-        odata_child = importlib.import_module (modpath+".odata_child")
-        
-        # run idata object, in charge of generate model data from local copy of input
+            results['error']= 'unable to find model: '+self.model 
 
-        if not ('ext_input' in self.parameters and self.parameters['ext_input']):
-            self.ifile = input_source
-            self.lfile = epd+'/'+os.path.basename(self.ifile)
-            shutil.copy (self.ifile,self.lfile)
-            idata = idata_child.IdataChild (self.parameters, self.lfile)
-        else:
+        if not 'error' in results:       
+            #uses the child classes within the 'model' folder, to allow customization of
+            #the processing applied to each model
+            modpath = utils.module_path(self.model, 0)
+        
+            idata_child = importlib.import_module (modpath+".idata_child")
+            learn_child = importlib.import_module (modpath+".learn_child")
+            odata_child = importlib.import_module (modpath+".odata_child")
+            
+            # run idata object, in charge of generate model data from local copy of input           
             idata = idata_child.IdataChild (self.parameters, input_source)
-
-        success, results = idata.run ()
-
-        ## TODO: horrible hack to implement passing errors in the results key
-        if not success:
-            results = {'error':results, 'origin':'apply'}
+            results = idata.run ()
 
         if not 'error' in results:
             # run learn object, in charge of generate a prediction from idata

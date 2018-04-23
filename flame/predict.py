@@ -57,22 +57,25 @@ class Predict:
     def run (self, input_source):
         ''' Executes a default predicton workflow '''
 
+        results = {}
+
         # path to endpoint
         epd = utils.model_path(self.model, self.version)
         if not os.path.isdir(epd):
-            return False, 'unable to find model: '+self.model+' version: '+str(self.version)
+            results ['error'] = 'unable to find model: '+self.model+' version: '+str(self.version) 
 
-        #uses the child classes within the 'model' folder, to allow customization of
-        #the processing applied to each model
-        modpath = utils.module_path(self.model, self.version)
+        if not 'error' in results:
+            #uses the child classes within the 'model' folder, to allow customization of
+            #the processing applied to each model
+            modpath = utils.module_path(self.model, self.version)
 
-        idata_child = importlib.import_module (modpath+".idata_child")
-        apply_child = importlib.import_module (modpath+".apply_child")
-        odata_child = importlib.import_module (modpath+".odata_child")
-        
-        # run idata object, in charge of generate model data from input
-        idata = idata_child.IdataChild (self.parameters, input_source)
-        success, results = idata.run ()
+            idata_child = importlib.import_module (modpath+".idata_child")
+            apply_child = importlib.import_module (modpath+".apply_child")
+            odata_child = importlib.import_module (modpath+".odata_child")
+            
+            # run idata object, in charge of generate model data from input
+            idata = idata_child.IdataChild (self.parameters, input_source)
+            results = idata.run ()
 
         if not 'error' in results:
             # run apply object, in charge of generate a prediction from idata

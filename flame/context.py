@@ -21,6 +21,11 @@
 ##    You should have received a copy of the GNU General Public License
 ##    along with Flame. If not, see <http://www.gnu.org/licenses/>.     
 
+import os
+import shutil
+import util.utils as utils
+
+
 import multiprocessing as mp
 
 from predict import Predict
@@ -123,7 +128,16 @@ def build_cmd(model):
 
     else:
 
+        ifile = model['infile']
+
+        if not os.path.isfile(ifile):
+            return False, 'wrong training series file'
+
+        epd = utils.model_path(model['endpoint'], 0)
+        lfile = os.path.join(epd,os.path.basename(ifile))
+        shutil.copy(ifile,lfile)
+           
         # run the model with the input file
-        success, results = build.run(model['infile'])
+        success, results = build.run(lfile)
 
     return success, results
