@@ -24,8 +24,9 @@ from odata import Odata
 
 class OdataChild (Odata):
 
-    def __init__ (self, control, results, out_format='JSON'):
+    def __init__ (self, control, results):
 
-        Odata.__init__ (self, control, results, out_format)
+        Odata.__init__ (self, control, results)
+
 
 

@@ -29,9 +29,3 @@ class IdataChild (Idata):
         Idata.__init__ (self, control, ifile)
     
 
-    def run (self):
-
-        success, results = Idata.run (self)
-
-        return success, results
-

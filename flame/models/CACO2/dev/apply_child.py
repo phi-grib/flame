@@ -29,11 +29,17 @@ class ApplyChild (Apply):
 
         Apply.__init__(self, control, results)
 
-    def run (self):
+    ## example of run for overriding
+    # def run (self):
 
-        self.results['values']=self.results['xmatrix'].mean(1)
-        self.results['origin'] = 'apply'
-        self.results['meta'] = {'main':['values']}
- 
-        return True, self.results
+    #     self.results['origin'] = 'apply'
+
+    #     ## prediction results must be an array, with as many values as object
+    #     ## are in the results
+    #     self.results['example'] = np.zeros(len(self.results['obj_nam']), dsize=np.float64))
+
+    #     ## label prediction output, inserting the key name in ['meta']['main'] 
+    #     self.results['meta'] = {'main':['example']}
+
+    #     return True, self.results
 

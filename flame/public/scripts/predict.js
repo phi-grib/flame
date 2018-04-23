@@ -59,7 +59,23 @@ function parseResults (results) {
 
     lastResults = results;
     
-    var myjson = JSON.parse(results);
+    try {
+        var myjson = JSON.parse(results);
+    } catch(e) {
+        $("#processing").prop('hidden', true);
+        alert('ERROR: '+results); // error in the above string (in this case, yes)!
+        return;
+    }
+
+    console.log(myjson);
+
+    if (("error" in myjson)!=false){
+        $("#processing").prop('hidden', true);
+        alert(myjson['error']); // show error as alert
+        return;
+    }
+    
+
     var mainv = myjson['meta']['main'][0];
 
     key_list = sortKeys(myjson);
@@ -133,6 +149,7 @@ function postPredict (temp_dir, ifile) {
     // collect all data for the post and insert into postData object
     
     var version = $("#version option:selected").text();
+
     if (version=='dev') {
         version = '0';
     };
@@ -226,7 +243,7 @@ $(document).ready(function() {
     $("#predict").click(function(e) {
 
         // make sure the browser can upload XMLHTTP requests
-        if (!window.XMLHttpRequest) {
+        if (!window.XMLHttpRequest) {          
             $("#data-body").text("this browser does not support file upload");
             return;
         };

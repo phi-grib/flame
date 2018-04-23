@@ -28,33 +28,31 @@ from control import Control
 
 class Predict:
 
-    def __init__ (self, model, version, out_format='JSON'):
+    def __init__ (self, model, version, output_format=None):
 
         self.model = model
         self.version = version
-        self.out_format = out_format
 
         # instance Control object
-        control = Control(model, version)
-        self.parameters = control.get_parameters()
+        self.control = Control(model, version)
+        self.parameters = self.control.get_parameters()
+
+        # set parameter overriding value in 
+        if output_format != None:
+            self.parameters['output_format'] = output_format
 
         return
 
-    def getModelSet(self):
-        ext_input = False
-        model_set = None
 
-        if 'ext_input' in self.parameters:
-            if self.parameters['ext_input']:
-                if 'model_set' in self.parameters:
-                    if len(self.parameters['model_set'])>1:
-                        model_set = self.parameters['model_set']
-                        ext_input = True
+    def get_model_set(self):
+        ''' Returns a Boolean indicating if the model uses external input sources and a list with these sources '''
+        return self.control.get_model_set()
 
-        return ext_input, model_set
 
-    def setSingleCPU(self):
+    def set_single_CPU(self):
+        ''' Forces the use of a single CPU '''
         self.parameters['numCPUs']=1
+
 
     def run (self, input_source):
         ''' Executes a default predicton workflow '''
@@ -76,19 +74,12 @@ class Predict:
         idata = idata_child.IdataChild (self.parameters, input_source)
         success, results = idata.run ()
 
-        if not success:
-            return success, results
+        if not 'error' in results:
+            # run apply object, in charge of generate a prediction from idata
+            apply = apply_child.ApplyChild (self.parameters, results)
+            results = apply.run ()
 
-        # run apply object, in charge of generate a prediction from idata
-        apply = apply_child.ApplyChild (self.parameters, results)
-        success, results = apply.run ()
-        
-        if not success:
-            return success, results
-
-        # run odata object, in charge of formatting the prediction results
-        odata = odata_child.OdataChild (self.parameters, results, self.out_format)
-        success, results = odata.run ()
-
-        return success, results
+        # run odata object, in charge of formatting the prediction results or any error
+        odata = odata_child.OdataChild (self.parameters, results)
+        return odata.run()
 

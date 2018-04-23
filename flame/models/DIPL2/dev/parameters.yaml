@@ -8,17 +8,27 @@ normalize_method: standardize         # null | standardize
 ionize_method: null                   # null | moka
 convert3D_method: null                # null | ETKDG
 computeMD_method:                     # RDKit_properties | RDKit_md | custom
-- RDKit_md
+- RDKit_properties
+
+ext_input: false                      # external input source TRUE
+model_set:                            # list of models used for producing input
+- endpoint: MAGENTA                   # - model name
+  version: 1                          # - model version
+- endpoint: MAGENTA
+  version: 2
+
+# Output 
+output_format: JSON                   # JSON | TSV
 
 # SDFile settings
-SDFile_activity: activity             # str s
+SDFile_activity: activity             # str
 SDFile_experimental: IC50             # str
 SDFile_name: GENERIC_NAME             # str
 
 # modeling settings
 modelingToolkit: internal             # internal | R | KNIME
 model: RF                             # RF | SVM
-modelAutoscaling: false               # true | false
+modelAutoscaling: true                # true | false
 quantitative: false
 tune: false
 
@@ -93,4 +103,4 @@ RF_optimize:
 
 # conformal predictor settings
 conformal: false
-conformalSignificance: 0.1
+conformalSignificance: 0.2

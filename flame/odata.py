@@ -25,11 +25,11 @@ import numpy as np
 
 class Odata():
 
-    def __init__ (self, parameters, results, out_format='JSON' ):
+    def __init__ (self, parameters, results ):
 
         self.results = results # previous results (eg. object names, molecular descriptors) are retained 
         self.parameters = parameters
-        self.format = out_format
+        self.format = self.parameters['output_format']
 
 
     def run_learn (self):
@@ -48,7 +48,8 @@ class Odata():
         
         for key in main_results:
             if not key in self.results:
-                return False, 'unable to find "'+key+'" in results'
+                self.results['error'] = 'unable to find "'+key+'" in results'
+                return self.run_error()
         
         if self.format=='JSON':
             ## do not output var arrays, only obj arrays
@@ -82,15 +83,31 @@ class Odata():
         return True, output
 
 
+    def run_error (self):
+        ''' Formats error messages, sending only the error and the error source '''
+        
+        white_list = ['error', 'origin']
+        error_json = { key: val for key, val in self.results.items() if key in white_list } 
+
+        if self.format=='JSON':
+            return True, json.dumps(error_json)    
+        
+        if self.format == 'TSV':
+            return False, 'not implemented'
+
+
     def run (self):
+        ''' Formats the results produced by "learn" or "apply" as appropriate '''
 
-        if not 'origin' in self.results:
-            return False, 'invalid result format'
+        if 'error' in self.results:
+            success, results = self.run_error ()
 
-        if self.results['origin'] == 'learn':
+        elif self.results['origin'] == 'learn':
             success, results  = self.run_learn ()
 
         elif self.results['origin'] == 'apply':
+            print ('predict apply run: ', self.results)
+
             success, results  = self.run_apply ()
 
         else:

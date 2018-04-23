@@ -35,23 +35,29 @@ class Learn:
         self.X = results['xmatrix']
         self.Y = results['ymatrix']
         # TODO: make use of other results items
+
+        self.results = results
+        self.results['origin'] = 'learn'
         
         self.model_path = self.parameters['model_path']
     
     def run_custom (self):
 
-        return False, 'not implemented'
+        self.results['error']='not implemented'
+        return 
     
     def run_internal (self):
 
         nobj, nvarx = np.shape(self.X)
 
         if (nobj==0) or (nvarx==0) :
-            return False, 'failed to extract activity or to generate MD'
+            self.results['error']='failed to extract activity or to generate MD'
+            return
 
         if (np.shape(self.Y)==0) :
-            return False, 'no activity found'
-        
+            self.results['error']='no activity found'
+            return
+
         # initilizate estimator
         model = self.parameters['model']
         if  model == 'RF':
@@ -59,25 +65,28 @@ class Learn:
                         self.parameters['ModelValidationCV'], self.parameters['ModelValidationN'], self.parameters['ModelValidationP'], 
                         self.parameters['ModelValidationLC'] ,self.parameters['conformalSignificance'], self.model_path,
                         self.parameters['RF_parameters'], self.parameters['RF_optimize'], self.parameters['conformal'])
+        
         elif model == 'SVM':
             model = SVM(self.X,self.Y, self.parameters['quantitative'], self.parameters['modelAutoscaling'], self.parameters['tune'],
                         self.parameters['ModelValidationCV'], self.parameters['ModelValidationN'], self.parameters['ModelValidationP'], 
                         self.parameters['ModelValidationLC'] ,self.parameters['conformalSignificance'], self.model_path,
                         self.parameters['SVM_parameters'], self.parameters['SVM_optimize'], self.parameters['conformal'])
-
             
         else:
-            return False, 'modeling method not recognised'
+            self.results['error']='modeling method not recognised'
+            return
             
         # build model       
         success = model.build()
         if not success:
-            return success, 'error building '+self.parameters['model']+' model'
+            self.results['error']='error building '+self.parameters['model']+' model'
+            return
 
         # validate model
         success, results = model.validate()
         if not success:
-            return success, results
+            self.results['error']=results
+            return 
             
         # TODO: this must be a class method even if we can define the base path
         # save model
@@ -88,19 +97,20 @@ class Learn:
         
         # copy any relevant information from the model building into a dictionary
         # what is relevant? to be defined...
-        results = {'origin':'learn'}
-        results = model.getResults(results)
+        building = model.getResults()
+        for key in building:
+            self.results[key] = building[key]
 
-        return True, results
+        return
 
     def run (self):
 
         toolkit = self.parameters['modelingToolkit']
         if toolkit == 'internal':
-            success, results = self.run_internal ()
+            self.run_internal ()
         elif toolkit == 'custom':
-            success, results = self.run_custom ()
+            self.run_custom ()
         else:
-            return False, 'modeling Toolkit '+toolkit+' is not supported yet'
+            self.results['error']='modeling Toolkit '+toolkit+' is not supported yet'
 
-        return success, results
+        return self.results

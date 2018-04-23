@@ -41,6 +41,13 @@ source activate flame
 
 to activate the environment.
 
+Conda environments can be easily updated using a new version of the environment definition
+
+```bash
+conda env update -f new_environment.yml
+```
+
+
 
 ## Main features
 
@@ -112,7 +119,7 @@ And then the model is immediately operative and able to produce exactly the same
 | --- | --- |
 | -c/ --command | Action to be performed. Acceptable values are *build*, *predict* and *manage* |
 | -e/ --endpoint | Name of the model which will be used by the command. This name is defined when the model is created for the fist time with the command *-c manage -a new* |
-| -v/ --version | Version of the model, typically an integer. Version 0 refers to the model development "sandbox" which is created automatically uppon model creation |
+| -v/ --version | Version of the model, typically an integer. Version 0 refers to the model development "sandbox" which is created automatically upon model creation |
 | -a/ --action | Management action to be carried out. Acceptable values are *list*, *new*, *kill*, *publish*, *remove*, *export* and *import*. The meaning of these actions and examples of use are provided below   |
 | -f/ --infile | Name of the input file used by the command. This file can correspond to the training data (*build*) or the query compounds (*predict*) |
 | -h/ --help | Shows a help message on the screen |
@@ -128,7 +135,7 @@ Management commands deserve further description:
 | kill | *python -c manage -a kill -e NEWMODEL* | Removes NEWMODEL from the model repository. **Use with extreme care**, since the program will not ask confirmation and the removal will be permanent and irreversible  |
 | publish | *python -c manage -a publish -e NEWMODEL* | Clones the development version, creating a new version in the model repository. Versions are assigned sequential numbers |
 | remove | *python -c manage -a remove -e NEWMODEL -v 2* | Removes the version specified from the NEWMODEL model repository |
-| list | *python -c manage -a list* | Lists the models present in the repository and the published version for each one. If the name of a model is provided, lists only the the published versions for this model  |
+| list | *python -c manage -a list* | Lists the models present in the repository and the published version for each one. If the name of a model is provided, lists only the published versions for this model  |
 | export | *python -c manage -a export -e NEWMODEL* | Exports the model entry NEWMODE, creating a tar compressed file *NEWMODEL.tgz* which contains all the versions. This file can be imported by another flame instance (installed in a different host or company) with the *-c manage import* command |
 | import | *python -c manage -a import -e NEWMODEL* | Imports file *NEWMODEL.tgz*, typically generated using command *-c manage -a export* creating model NEWMODEL in the local model repository |
 
@@ -143,7 +150,7 @@ python predict-ws.py
 
 To access the web graphical interface, open a web brower and enter the address *http://localhost:8080*
 
-![Alt text](images/flame-gui.png?raw=true "web GUI")
+![Alt text](images/Flame-gui.png?raw=true "web GUI")
 
 Web API services available:
 
@@ -187,7 +194,7 @@ Models can be published to obtain persistent versions, usable for predicton in t
 
 Models built in Flame can be used for obtaining predictions using diverse methods. We can use the command mode interface with a simple call:
 ```sh
-python flame.py -c predict -m MyModel -v 1 -f query.sdf
+python flame.py -c predict -e MyModel -v 1 -f query.sdf
 ```
 This allows to integate the prediction in scripts, or workflow tools like KNIME and Pipeline Pilot.
 

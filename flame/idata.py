@@ -24,11 +24,11 @@ import os
 import sys
 import pickle
 import json
+import tempfile
+import multiprocessing as mp
 
 import numpy as np
 from rdkit import Chem
-
-import multiprocessing as mp
 
 from standardiser import standardise
 
@@ -43,29 +43,32 @@ class Idata:
     def __init__ (self, parameters, input_source):
 
         self.parameters = parameters      # control object defining the processing
+        self.dest_path = '.'              # path for temp files (fallback default)
 
         if ('ext_input' in parameters) and (parameters['ext_input']):
             self.idata = input_source
             self.ifile = None
-            self.dest_path = '.' ## TODO: define an appropriate path 
+            randomName = 'flame-'+utils.id_generator()
+            self.dest_path = os.path.join(tempfile.gettempdir(),randomName) 
 
         else:
             self.idate = None
             self.ifile = input_source          
-            self.dest_path = os.path.dirname(self.ifile)     # path where any temp file must be written
+            self.dest_path = os.path.dirname(self.ifile) 
 
-        if self.dest_path == '':
-            self.dest_path = '.'
 
     def extractAnotations (self, ifile):
         """  
 
         Extracts molecule names, biological anotations and experimental values from an SDFile.
 
-        Returns a tupple with three lists:
-        [0] Molecule names
-        [1] Molecule activity values (as np.array(dtype=np.float64))
-        [2] Molecule activity type (i.e. IC50) (as np.array(dtype=np.float64))     
+        Returns a dictionary with lists of num_object elements:
+            anotation_results = {
+                'obj_nam':          list of object names (strings)
+                'SMILES':           list of SMILES (strings)
+                'ymatrix':          np.array with y values
+                'experim':          np.array with experimental values 
+            } 
         
         """
 
@@ -474,6 +477,7 @@ class Idata:
         # return success, results
         return success, workflow_results
 
+
     def _run_data (self):
         """
         version of Run for data input (CSV tabular format)
@@ -485,34 +489,47 @@ class Idata:
 
         return success, results
 
+
     def _run_ext_data (self):
         """
         version of Run for inter-process input (calling another model to obtain input)
         """
-        print (self.idata)
-        
+
+        # idata is a list of JSON from 1-n sources
+        # the data usable for input must be listed in the ['meta']['main'] key
+
+        # use first JSON to load common info like obj_nam, etc         
         results = json.loads(self.idata[0])
+
+        # identify usable data imported from element 0. This will be deleted latter
         original_main = results ['meta']['main']
+
+        # new, consolidated, usable data will be added as 'xmatrix' 
         results['meta']['main']= ['xmatrix']
 
+        # extract usable data from every source and add to 'combo' np.array
         combo = None
+        var_nam = []
         for ijson in self.idata:
             idict = json.loads(ijson)
             main_keys = idict['meta']['main']
             for j in main_keys:
-                if combo is None:
+                ## TODO: consider adding a prefix (e.g. 'source_1')
+                var_nam.append(j)
+                if combo is None:  # for first element just copy
                     combo = np.array(idict[j], dtype=np.float64)
-                else:
+                else: # append laterally
                     combo = np.c_[combo, np.array(idict[j], dtype=np.float64)]
                 
+        results['xmatrix'] = combo
+        results['var_nam'] = var_nam
+
+        # del original usable data in element 0
         for key in original_main:
             del results[key]
-
-        results['xmatrix']= combo
-        
-        print ('in ext_data with following data: ', results)
         
         return True, results
+
 
     def run (self):
         """         

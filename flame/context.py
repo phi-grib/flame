@@ -1,7 +1,7 @@
 #! -*- coding: utf-8 -*-
 
-##    Description    Command wrappers allowing to call predict and build
-##                   for models making use of extenal input sources 
+##    Description    Context wrapps calls to predict and build to
+##                   support models making use of extenal input sources 
 ##
 ##    Authors:       Manuel Pastor (manuel.pastor@upf.edu)
 ##
@@ -26,11 +26,15 @@ import multiprocessing as mp
 from predict import Predict
 from build import Build
 
-def getExternalInput (task, model_set, infile):
+MAX_MODELS_SINGLE_CPU = 4   # if the number of models is higher, try to run in multithread 
+
+def get_external_input (task, model_set, infile):
+    '''  Manage obtention of input data from external data sources (e.g. models or MD servers) '''
+
     # parallel is approppriate for many external sources
-    parallel = (len(model_set)>3)
+    parallel = (len(model_set)>MAX_MODELS_SINGLE_CPU)
     if parallel:
-        task.setSingleCPU()
+        task.set_single_CPU()
 
     # add input molecule to the model input definition of every internal model
     for mi in model_set:
@@ -71,13 +75,13 @@ def predict_cmd(model):
     
     '''
 
-    predict = Predict(model['endpoint'], model['version'])
+    predict = Predict(model['endpoint'], model['version'], 'JSON')
 
-    ext_input, model_set = predict.getModelSet()
+    ext_input, model_set = predict.get_model_set()
 
     if ext_input :
 
-        success, model_res = getExternalInput (predict, model_set, model['infile'])
+        success, model_res = get_external_input (predict, model_set, model['infile'])
 
         if not success:
             return False, model_res
@@ -103,13 +107,13 @@ def build_cmd(model):
     
     '''
 
-    build = Build(model['endpoint'])
+    build = Build(model['endpoint'],'JSON')
 
-    ext_input, model_set = build.getModelSet()
+    ext_input, model_set = build.get_model_set()
 
     if ext_input :
 
-        success, model_res = getExternalInput (build, model_set, model['infile'])
+        success, model_res = get_external_input (build, model_set, model['infile'])
 
         if not success:
             return False, model_res

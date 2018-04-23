@@ -29,31 +29,30 @@ from control import Control
 
 class Build:
 
-    def __init__ (self, model):
+    def __init__ (self, model, output_format=None):
 
         self.model = model
 
         # instance Control object
-        control = Control(self.model,0)
-        self.parameters = control.get_parameters()
+        self.control = Control(self.model,0)
+        self.parameters = self.control.get_parameters()
+        
+        # set parameter overriding value in 
+        if output_format != None:
+            self.parameters['output_format'] = output_format
 
         return
 
-    def getModelSet(self):
-        ext_input = False
-        model_set = None
 
-        if 'ext_input' in self.parameters:
-            if self.parameters['ext_input']:
-                if 'model_set' in self.parameters:
-                    if len(self.parameters['model_set'])>1:
-                        model_set = self.parameters['model_set']
-                        ext_input = True
+    def get_model_set(self):
+        ''' Returns a Boolean indicating if the model uses external input sources and a list with these sources '''
+        return self.control.get_model_set()
 
-        return ext_input, model_set
 
-    def setSingleCPU(self):
+    def set_single_CPU(self):
+        ''' Forces the use of a single CPU '''
         self.parameters['numCPUs']=1
+
 
     def run (self, input_source):
         ''' Executes a default predicton workflow '''
@@ -83,19 +82,17 @@ class Build:
 
         success, results = idata.run ()
 
+        ## TODO: horrible hack to implement passing errors in the results key
         if not success:
-            return success, results
+            results = {'error':results, 'origin':'apply'}
 
-        # run learn object, in charge of generate a prediction from idata
-        learn = learn_child.LearnChild (self.parameters, results)
-        success, results = learn.run ()
-        
-        if not success:
-            return success, results
+        if not 'error' in results:
+            # run learn object, in charge of generate a prediction from idata
+            learn = learn_child.LearnChild (self.parameters, results)
+            results = learn.run ()
 
         # run odata object, in charge of formatting the prediction results
         odata = odata_child.OdataChild (self.parameters, results)
-        success, results = odata.run ()
+        return odata.run ()
 
-        return success, results
 

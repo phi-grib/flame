@@ -47,12 +47,14 @@ function upload(file, temp_dir, postPredict) {
     // });
 
     xhr.ontimeout = function () {
-        console.log('WARNING! timed out. File can be incomplete');
+        $("#processing").prop('hidden', true);        
+        alert('File upload timed out. Results can be incomplete');
         return false;
     };
 
     xhr.onerror = function () {
-        console.log('ERROR! file not uploaded');
+        $("#processing").prop('hidden', true);        
+        alert('File upload error!');
         return false;
     }
 
@@ -62,7 +64,7 @@ function upload(file, temp_dir, postPredict) {
 
 
     xhr.open('POST', '/upload', true); 
-    xhr.timeout = 600000;
+    xhr.timeout = 600000; //600.000 ms, 10 minutes!
 
     xhr.setRequestHeader('X-Filename', file.name);
     xhr.setRequestHeader('Temp-Dir', temp_dir);
