@@ -29,3 +29,17 @@ class ApplyChild (Apply):
 
         Apply.__init__(self, control, results)
 
+    ## example of run for overriding
+    # def run (self):
+
+    #     self.results['origin'] = 'apply'
+
+    #     ## prediction results must be an array, with as many values as object
+    #     ## are in the results
+    #     self.results['example'] = np.zeros(len(self.results['obj_nam']), dsize=np.float64))
+
+    #     ## label prediction output, inserting the key name in ['meta']['main'] 
+    #     self.results['meta'] = {'main':['example']}
+
+    #     return True, self.results
+

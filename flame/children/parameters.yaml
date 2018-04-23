@@ -102,5 +102,5 @@ RF_optimize:
   - 46
 
 # conformal predictor settings
-conformal: True
+conformal: true
 conformalSignificance: 0.2

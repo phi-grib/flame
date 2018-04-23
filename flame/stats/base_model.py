@@ -391,17 +391,14 @@ class BaseEstimator:
 
         if not self.conformal:
             results = self.regularProject(Xb)
-            if self.quantitative:
-                results['meta'] = {'main': ['values']}
-
-        if self.conformal:
+            results['meta'] = {'main': ['values']}  
+        else:
             results = self.conformalProject(Xb)
-
-            if self.quantitative:
-                results['meta'] = {'main': ['values']}
-            else:
+            if not self.quantitative:
                 results['meta'] = {'main' : [class_p for class_p in results.keys()]}
-
+            else:
+                results['meta'] = {'main': ['values']}  
+                
         ## TODO: metainformation about the results returned
         ## must be customized for each modeling technique
 

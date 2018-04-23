@@ -28,10 +28,5 @@ class LearnChild (Learn):
 
         Learn.__init__(self, control, results)
 
-    def run (self):
-
-        success, results = Learn.run (self)
-
-        return success, results
 
 

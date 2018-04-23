@@ -3,29 +3,32 @@ verbose_error: true
 numCPUs: 2
 
 # input settings
-input_type: molecule                  # molecule | data | ext_data
+input_type: molecule                  # molecule | data
 normalize_method: standardize         # null | standardize
 ionize_method: null                   # null | moka
 convert3D_method: null                # null | ETKDG
 computeMD_method:                     # RDKit_properties | RDKit_md | custom
 - RDKit_md
 
-ext_input: false                       # external input source TRUE
+ext_input: false                      # external input source TRUE
 model_set:                            # list of models used for producing input
 - endpoint: MAGENTA                   # - model name
   version: 1                          # - model version
 - endpoint: MAGENTA
   version: 2
 
+# Output 
+output_format: JSON                   # JSON | TSV
+
 # SDFile settings
-SDFile_activity: activity             # str 
+SDFile_activity: activity             # str
 SDFile_experimental: IC50             # str
 SDFile_name: GENERIC_NAME             # str
 
 # modeling settings
 modelingToolkit: internal             # internal | R | KNIME
 model: RF                             # RF | SVM
-modelAutoscaling: false               # true | false
+modelAutoscaling: true                # true | false
 quantitative: true
 tune: false
 
@@ -99,5 +102,5 @@ RF_optimize:
   - 46
 
 # conformal predictor settings
-conformal: true
-conformalSignificance: 0.15
+conformal: false
+conformalSignificance: 0.2

@@ -28,10 +28,5 @@ class OdataChild (Odata):
 
         Odata.__init__ (self, control, results)
 
-    def run (self):
-
-        success, results = Odata.run (self)
-
-        return success, results
 
 
