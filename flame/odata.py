@@ -35,7 +35,6 @@ class Odata():
     def run_learn (self):
         ''' Process the results of lear, usually a report on the model quality '''
 
-        print ('odata : ', self.results)
         print ('building OK!')
         return True, 'ok'
 
@@ -53,7 +52,7 @@ class Odata():
         
         if self.format=='JSON':
             ## do not output var arrays, only obj arrays
-            black_list = ['xmatrix', 'var_nam']   
+            black_list = ['xmatrix', 'confidence', 'var_nam']   
 
             temp_json = {}
 
@@ -106,7 +105,6 @@ class Odata():
             success, results  = self.run_learn ()
 
         elif self.results['origin'] == 'apply':
-            print ('predict apply run: ', self.results)
 
             success, results  = self.run_apply ()
 

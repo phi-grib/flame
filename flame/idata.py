@@ -502,36 +502,51 @@ class Idata:
         # the data usable for input must be listed in the ['meta']['main'] key
 
         # use first JSON to load common info like obj_nam, etc         
-        self.results = json.loads(self.idata[0])
+        obj_common=['label', 'decoration']
 
-        # identify usable data imported from element 0. This will be deleted latter
-        original_main = self.results ['meta']['main']
+        # load object identifiers and decorators
+        first_results = json.loads(self.idata[0])
+        first_manifest = first_results['manifest']
 
-        # new, consolidated, usable data will be added as 'xmatrix' 
-        self.results['meta']['main']= ['xmatrix']
+        for item in first_manifest:
+            if item['type'] in obj_common:
+                item_key = item['key']
+                self.results[item_key]=first_results[item_key]
+                self.results['manifest'].append(item)
 
         # extract usable data from every source and add to 'combo' np.array
-        combo = None
+        combo_results = None
+        combo_confidence = None
         var_nam = []
-        for ijson in self.idata:
-            idict = json.loads(ijson)
-            main_keys = idict['meta']['main']
-            for j in main_keys:
-                ## TODO: consider adding a prefix (e.g. 'source_1')
-                var_nam.append(j)
-                if combo is None:  # for first element just copy
-                    combo = np.array(idict[j], dtype=np.float64)
-                else: # append laterally
-                    combo = np.c_[combo, np.array(idict[j], dtype=np.float64)]
-                
-        self.results['xmatrix'] = combo
-        self.results['var_nam'] = var_nam
-
-        # del original usable data in element 0
-        for key in original_main:
-            del self.results[key]
         
-        return self.results
+        for ijson in self.idata:
+            i_result = json.loads(ijson)
+            i_manifest = i_result['manifest']
+
+            for item in i_manifest:
+                if item['type']=='result':
+                    item_key = item['key']
+                    if combo_results is None:  # for first element just copy
+                        combo_results = np.array(i_result[item_key], dtype=np.float64)
+                    else: # append laterally
+                        combo_results = np.c_[combo_results, np.array(i_result[item_key], dtype=np.float64)]
+
+                    var_nam.append(item_key)
+
+                if item['type']=='confidence':
+                    item_key = item['key']
+                    if combo_confidence is None:  # for first element just copy
+                        combo_confidence = np.array(i_result[item_key], dtype=np.float64)
+                    else: # append laterally
+                        combo_confidence = np.c_[combo_confidence, np.array(i_result[item_key], dtype=np.float64)]
+
+        utils.add_result (self.results, combo_results, 'xmatrix', 'X matrix', 'results', 'objs', 'Combined output from external sources')
+
+        utils.add_result (self.results, combo_confidence, 'confidence', 'Confidence', 'confidence', 'objs', 'Combined confidence from external sources')
+
+        utils.add_result (self.results, var_nam, 'var_nam', 'Var names', 'method', 'vars', 'Variable names from external sources')
+
+        return 
 
 
     def run (self):

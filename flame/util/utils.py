@@ -160,7 +160,6 @@ def add_result (results, var, _key, _label, _type, _dimension='objs', _descripti
         if 'meta' not in results:
             results['meta'] = {'main':[_key]}
         else:
-            main_ver = results['meta']['main']
-            main_var.append[_key]
+            results['meta']['main'].append(_key)
 
 

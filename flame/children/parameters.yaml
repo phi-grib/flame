@@ -3,7 +3,7 @@ verbose_error: true
 numCPUs: 2
 
 # input settings
-input_type: molecule                  # molecule | data
+input_type: molecule                  # molecule | data | ext_data
 normalize_method: standardize         # null | standardize
 ionize_method: null                   # null | moka
 convert3D_method: null                # null | ETKDG
