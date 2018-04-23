@@ -135,24 +135,29 @@ def id_generator(size=10, chars=string.ascii_uppercase + string.digits):
     return ''.join(random.choice(chars) for _ in range(size))
 
 
-def add_result (results, var, _key, _label, _type, _dimension, _description, _relevance=None  ):
+def add_result (results, var, _key, _label, _type, _dimension='objs', _description=None, _relevance=None):
 
     if 'manifest' not in results:
         results['manifest']=[]
 
     manifest=results['manifest']
     
-    resuls[key] = var
+    results[key] = var
 
-    manifest_item = {'key': _key,
-                     'label': _label,
-                     'type': _type,
+    manifest_item = {'key': _key,                      # key in results
+                     'label': _label,                  # descriptive text 
+                     'type': _type,                    # label, decoration, result, confidence, method
                      'dimension': _dimension,          # can be vars | objs
-                     'description': _description,
-                     'relevance': _relevance 
+                     'description': _description,      # descriptive text (long) 
+                     'relevance': _relevance           # main | None
                     }
     
     manifest.append(manifest_item)
 
-    ## update manifest|main
+    if _relevance == 'main':
+        if not 'meta' in results:
+            results['meta']= {'main':[]}
+
+        results['meta']['main'].append[_key]
+
 

@@ -331,7 +331,7 @@ class BaseEstimator:
                     self.printQualitativeValidationResults()
         else:
             if self.quantitative:
-               success, results =  self.CF_quantitative_validation()
+                success, results =  self.CF_quantitative_validation()
             else:
                 success, results = self.CF_qualitative_validation()
 
@@ -357,10 +357,8 @@ class BaseEstimator:
 
 
     def conformalProject(self, Xb):
-        print ("conformal projection")
         prediction = self.conformal_pred.predict(Xb, significance=self.conformalSignificance)
         
-
         if self.quantitative:
             mean1 = np.mean(prediction, axis=1)
             predictionSize = abs(abs(prediction[0][0]) - abs(prediction[0][1]))
