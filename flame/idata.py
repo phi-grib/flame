@@ -45,7 +45,7 @@ class Idata:
         self.parameters = parameters      # control object defining the processing
         self.dest_path = '.'              # path for temp files (fallback default)
 
-        self.results = {}
+        self.results = {'manifest':[]}    # create empty context index ('manifest')
 
         if ('ext_input' in parameters) and (parameters['ext_input']):
             self.idata = input_source
@@ -78,7 +78,7 @@ class Idata:
             suppl = Chem.SDMolSupplier(ifile)
         except:
             self.results['error'] = 'unable to open '+ifile+' input file'
-            return self.results
+            return
 
         obj_nam = []
         obj_bio = []
@@ -116,14 +116,20 @@ class Idata:
             obj_sml.append(sml)
 
         #add_results (self.results, )
-        anotation_results = {
-            'obj_nam': obj_nam,
-            'SMILES': obj_sml,
-            'ymatrix': np.array(obj_bio, dtype=np.float64),
-            'experim': np.array(obj_exp, dtype=np.float64)
-        }
+        # anotation_results = {
+        #     'obj_nam': obj_nam,
+        #     'SMILES': obj_sml,
+        #     'ymatrix': np.array(obj_bio, dtype=np.float64),
+        #     'experim': np.array(obj_exp, dtype=np.float64)
+        # }
+
+        utils.add_result (self.results, obj_nam, 'obj_nam', 'Mol name', 'label', 'objs', 'Name of the molecule, as present in the input file')
+        utils.add_result (self.results, obj_sml, 'SMILES', 'SMILES', 'decoration', 'objs', 'Structure of the molecule in SMILES format')
+
+        utils.add_result (self.results, np.array(obj_bio, dtype=np.float64), 'ymatrix', 'Activity', 'decoration', 'objs', 'Biological anotation to be predicted by the model')
+        utils.add_result (self.results, np.array(obj_exp, dtype=np.float64), 'experim', 'Experim.', 'decoration', 'objs', 'Experimental anotation present in the input file')
         
-        return anotation_results 
+        return
 
     def normalize (self, ifile, method):
         """
@@ -317,13 +323,13 @@ class Idata:
 
         return success, results
 
-    def save (self, results):
+    def save (self):
         """ 
         Saves the results in serialized form, together with the MD5 signature of the control class and the input file
         """
 
         if 'ext_input' in self.parameters and self.parameters['ext_input']:
-            return True
+            return
 
         md5_parameters = self.parameters['md5']
         md5_input = utils.md5sum(self.ifile)  # run md5 in self.ifile
@@ -333,16 +339,11 @@ class Idata:
 
                 pickle.dump (md5_parameters, fo)
                 pickle.dump (md5_input, fo)
-                pickle.dump (results["xmatrix"],fo)
-                pickle.dump (results["ymatrix"],fo)
-                pickle.dump (results["experim"],fo)
-                pickle.dump (results["obj_nam"],fo)
-                pickle.dump (results["SMILES"],fo)
-                pickle.dump (results["var_nam"],fo)
+                
+                pickle.dump (self.results,fo)
+                
         except :
-            return False
-
-        return True
+            pass
 
     def load (self):
         """ 
@@ -350,33 +351,25 @@ class Idata:
         """
 
         if 'ext_input' in self.parameters and self.parameters['ext_input']:
-            return False, 'model depends on external data sources'
+            return False
 
         try:
             with open (self.dest_path+'/data.pkl', 'rb') as fi:
                 md5_parameters = pickle.load(fi)
                 if md5_parameters != self.parameters['md5']:
-                    return False, 'md5 parameters'
+                    return False
 
                 md5_input = pickle.load(fi)
                 if md5_input != utils.md5sum(self.ifile):
-                    return False, 'md5 input file'
+                    return False
 
-                results = {}
-                results["xmatrix"] = pickle.load(fi)
-                results["ymatrix"] = pickle.load(fi)
-                results["experim"] = pickle.load(fi)
-                results["obj_nam"] = pickle.load(fi)
-                results["SMILES"] = pickle.load(fi)
-                results["var_nam"] = pickle.load(fi)
+                self.results = pickle.load(fi)
         except :
-            return False, 'unable to open pickl file'
-    
-        #results = (xmatrix, ymatrix, experim, obj_nam, var_nam)
+            return False
 
-        print ('recycling!')
+        print ('*** recycling ***')
 
-        return True, results
+        return True
 
     def workflow (self, ifile):
         """      
@@ -427,9 +420,9 @@ class Idata:
 
         # extract useful information from file
 
-        self.results = self.extractAnotations (self.ifile)
+        self.extractAnotations (self.ifile)
         if 'error' in self.results:
-            return self.results
+            return
 
         # obj_nam = results[0]
         # obj_sml = results[1]
@@ -474,19 +467,20 @@ class Idata:
 
         if not success:
             self.results['error'] = 'error in run molecule workflow'
-            return self.results
+            return
 
         if not self.parameters['verbose_error']:
             stderr_fd.close()                     # close the RDKit log
             os.dup2(stderr_save, stderr_fileno)   # restore old syserr
 
         self.results['xmatrix'] = results[0]
+        utils.add_result (self.results, results[0], 'xmatrix', 'X matrix', 'method', 'vars', 'Molecular descriptors')
 
         if len(results)>1 :
-            self.results['var_nam'] = results[1]
+            utils.add_result (self.results, results[1], 'var_nam', 'Var names', 'method', 'vars', 'Names of the X variables')
 
         # return success, results
-        return self.results
+        return
 
 
     def _run_data (self):
@@ -494,7 +488,7 @@ class Idata:
         version of Run for data input (CSV tabular format)
         """
 
-        self.results ['error'] = 'inporting data is not implemented yet'
+        self.results ['error'] = 'importing data is not implemented yet'
 
         return results
 
@@ -552,29 +546,28 @@ class Idata:
         """
 
         # check for the presence of a valid pickle file
-        success, results = self.load()
-        if success:
-            return results
+        if self.load():
+            return self.results
 
         input_type = self.parameters['input_type'] 
 
         # processing for molecular input (for now an SDFile)
         if (input_type== 'molecule'):
-            self.results = self._run_molecule()
+            self._run_molecule()
 
         # processing for non-molecular input (not implemented)
         elif (input_type == 'data'):
-            self.results = self._run_data()
+            self._run_data()
 
         # processing for external data 
         elif (input_type == 'ext_data'):
-            self.results = self._run_ext_data()
+            self._run_ext_data()
 
         else:
             self.results['error']='unknown input data format'
 
         # save in a pickle file stamped with MD5 hash of file and control
         if not 'error' in self.results:
-            self.save (self.results)
+            self.save ()
 
         return self.results
