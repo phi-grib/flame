@@ -3,12 +3,12 @@ verbose_error: true
 numCPUs: 2
 
 # input settings
-input_type: molecule                  # molecule | data
+input_type: molecule                  # molecule | data | ext_data
 normalize_method: standardize         # null | standardize
 ionize_method: null                   # null | moka
 convert3D_method: null                # null | ETKDG
 computeMD_method:                     # RDKit_properties | RDKit_md | custom
-- RDKit_md
+- RDKit_properties
 
 ext_input: false                      # external input source TRUE
 model_set:                            # list of models used for producing input
@@ -28,7 +28,7 @@ SDFile_name: GENERIC_NAME             # str
 # modeling settings
 modelingToolkit: internal             # internal | R | KNIME
 model: RF                             # RF | SVM
-modelAutoscaling: true                # true | false
+modelAutoscaling: false               # true | false
 quantitative: true
 tune: false
 
@@ -102,5 +102,5 @@ RF_optimize:
   - 46
 
 # conformal predictor settings
-conformal: false
+conformal: true
 conformalSignificance: 0.2

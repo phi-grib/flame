@@ -38,6 +38,8 @@ class Control:
             parameters = self.get_defaults()
 
         self.parameters = parameters
+        self.parameters['endpoint'] = model
+        self.parameters['version'] = version
         self.parameters['model_path'] = util.model_path(model,version)
         self.parameters['md5'] = util.md5sum(self.yaml_file)
 

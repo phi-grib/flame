@@ -45,7 +45,14 @@ class Idata:
         self.parameters = parameters      # control object defining the processing
         self.dest_path = '.'              # path for temp files (fallback default)
 
-        self.results = {'manifest':[]}    # create empty context index ('manifest')
+        self.results = {
+            'manifest':[],
+            'meta':{'main':[],
+                    'endpoint':self.parameters['endpoint'],
+                    'version':self.parameters['version'],
+                   }
+            }    # create empty context index ('manifest')
+        
 
         if ('ext_input' in parameters) and (parameters['ext_input']):
             self.idata = input_source
@@ -115,7 +122,6 @@ class Idata:
             obj_exp.append(exp)
             obj_sml.append(sml)
 
-        #add_results (self.results, )
         # anotation_results = {
         #     'obj_nam': obj_nam,
         #     'SMILES': obj_sml,
@@ -366,6 +372,12 @@ class Idata:
                     return False
 
                 self.results = pickle.load(fi)
+
+                # these values are added programatically and therefore not
+                # checked by the md5
+                self.results['meta']['endpoint']=self.parameters['endpoint']
+                self.results['meta']['version']=self.parameters['version']
+
         except :
             return False
 
@@ -386,6 +398,12 @@ class Idata:
         # TODO: implement control of object size, in case any of the steps removes molecules
         # this would produce missmatch problems with object names and Y values and must be
         # avoided, even at the cost of repeating the computation molecule-by-molecule
+
+        # IDEA: return num_mols, results. Set num_mols to 0 to indicate an error. Alfo include a 
+        # paramater with the number of objects to compare
+
+        # in case of error, provide a molecule-wyse procedure, maybe embeeding the whole procedure in
+        # a convenience function
 
         # normalize chemical  
         success, results = self.normalize (ifile, self.parameters['normalize_method'])
@@ -520,10 +538,12 @@ class Idata:
         combo_results = None
         combo_confidence = None
         var_nam = []
+        conf_nam = []
         
         for ijson in self.idata:
             i_result = json.loads(ijson)
             i_manifest = i_result['manifest']
+            i_meta = i_result['meta']
 
             for item in i_manifest:
                 if item['type']=='result':
@@ -533,7 +553,7 @@ class Idata:
                     else: # append laterally
                         combo_results = np.c_[combo_results, np.array(i_result[item_key], dtype=np.float64)]
 
-                    var_nam.append(item_key)
+                    var_nam.append(item_key+':'+i_meta['endpoint']+':'+str(i_meta['version']))
 
                 if item['type']=='confidence':
                     item_key = item['key']
@@ -542,11 +562,16 @@ class Idata:
                     else: # append laterally
                         combo_confidence = np.c_[combo_confidence, np.array(i_result[item_key], dtype=np.float64)]
 
+                    conf_nam.append(item_key+':'+i_meta['endpoint']+':'+str(i_meta['version']))
+
         utils.add_result (self.results, combo_results, 'xmatrix', 'X matrix', 'results', 'objs', 'Combined output from external sources')
 
         utils.add_result (self.results, combo_confidence, 'confidence', 'Confidence', 'confidence', 'objs', 'Combined confidence from external sources')
 
-        utils.add_result (self.results, var_nam, 'var_nam', 'Var names', 'method', 'vars', 'Variable names from external sources')
+        utils.add_result (self.results, var_nam, 'var_nam', 'Var. names', 'method', 'vars', 'Variable names from external sources')
+
+        utils.add_result (self.results, conf_nam, 'conf_nam', 'Conf. names', 'method', 'vars', 'Confidence indexes from external sources')
+
 
         return 
 

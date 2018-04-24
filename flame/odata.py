@@ -52,7 +52,8 @@ class Odata():
         
         if self.format=='JSON':
             ## do not output var arrays, only obj arrays
-            black_list = ['xmatrix', 'confidence', 'var_nam']   
+            ## TODO: replace this hardcoded list with var type from manifest
+            black_list = ['xmatrix', 'confidence', 'var_nam', 'conf_nam']   
 
             temp_json = {}
 
