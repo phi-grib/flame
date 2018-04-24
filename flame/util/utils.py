@@ -163,3 +163,8 @@ def add_result (results, var, _key, _label, _type, _dimension='objs', _descripti
             results['meta']['main'].append(_key)
 
 
+def is_empty (mylist):
+    for i in mylist:
+        if i is not None:
+            return False
+    return True

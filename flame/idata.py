@@ -126,8 +126,10 @@ class Idata:
         utils.add_result (self.results, obj_nam, 'obj_nam', 'Mol name', 'label', 'objs', 'Name of the molecule, as present in the input file')
         utils.add_result (self.results, obj_sml, 'SMILES', 'SMILES', 'decoration', 'objs', 'Structure of the molecule in SMILES format')
 
-        utils.add_result (self.results, np.array(obj_bio, dtype=np.float64), 'ymatrix', 'Activity', 'decoration', 'objs', 'Biological anotation to be predicted by the model')
-        utils.add_result (self.results, np.array(obj_exp, dtype=np.float64), 'experim', 'Experim.', 'decoration', 'objs', 'Experimental anotation present in the input file')
+        if not utils.is_empty(obj_bio):
+            utils.add_result (self.results, np.array(obj_bio, dtype=np.float64), 'ymatrix', 'Activity', 'decoration', 'objs', 'Biological anotation to be predicted by the model')
+        if not utils.is_empty(obj_exp):
+            utils.add_result (self.results, np.array(obj_exp, dtype=np.float64), 'experim', 'Experim.', 'decoration', 'objs', 'Experimental anotation present in the input file')
         
         return
 
