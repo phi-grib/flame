@@ -71,13 +71,7 @@ class Idata:
 
         Extracts molecule names, biological anotations and experimental values from an SDFile.
 
-        Returns a dictionary with lists of num_object elements:
-            anotation_results = {
-                'obj_nam':          list of object names (strings)
-                'SMILES':           list of SMILES (strings)
-                'ymatrix':          np.array with y values
-                'experim':          np.array with experimental values 
-            } 
+        Anotations must be added using method utils.add_result, so they are also inserted into the results manifest
         
         """
 
@@ -121,13 +115,6 @@ class Idata:
             obj_bio.append(activity_num)
             obj_exp.append(exp)
             obj_sml.append(sml)
-
-        # anotation_results = {
-        #     'obj_nam': obj_nam,
-        #     'SMILES': obj_sml,
-        #     'ymatrix': np.array(obj_bio, dtype=np.float64),
-        #     'experim': np.array(obj_exp, dtype=np.float64)
-        # }
 
         utils.add_result (self.results, obj_nam, 'obj_nam', 'Mol name', 'label', 'objs', 'Name of the molecule, as present in the input file')
         utils.add_result (self.results, obj_sml, 'SMILES', 'SMILES', 'decoration', 'objs', 'Structure of the molecule in SMILES format')
