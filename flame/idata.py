@@ -447,6 +447,8 @@ class Idata:
         # start serieswise and in error repeat objectwise
         
 
+        # TODO: nobj is an important value. Must be provide by extractAnnotations using a more
+        # robust method and stored in a class variable to compare with the results of workflow
         nobj = len(self.results['obj_nam'])
 
         ncpu = self.parameters['numCPUs']
