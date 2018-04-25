@@ -382,16 +382,6 @@ class Idata:
 
         """
 
-        # TODO: implement control of object size, in case any of the steps removes molecules
-        # this would produce missmatch problems with object names and Y values and must be
-        # avoided, even at the cost of repeating the computation molecule-by-molecule
-
-        # IDEA: return num_mols, results. Set num_mols to 0 to indicate an error. Alfo include a 
-        # paramater with the number of objects to compare
-
-        # in case of error, provide a molecule-wyse procedure, maybe embeeding the whole procedure in
-        # a convenience function
-
         # normalize chemical  
         success, results = self.normalize (ifile, self.parameters['normalize_method'])
         if not success :
@@ -431,10 +421,31 @@ class Idata:
         if 'error' in self.results:
             return
 
-        # obj_nam = results[0]
-        # obj_sml = results[1]
-        # ymatrix = results[2]
-        # experim = results[3]
+        # TODO: Generalize mixing multiple CPUs and object-wise processing
+        # Split input file in chuncks of
+        #     no objectwise and no multicpu: 1
+        #     no objectwise and c cpus     : c
+        #     objectwise and no multicpu   : n
+        #     objectwise and c cpus        : n/c
+        #
+        # in every case, first split and then send each chunk to a 
+        # common conveniece function what decides if raise threads or not
+        # and consolidates results if neccesary
+        #
+        # guarantee 100% that the number of objects is the same and that 
+        # no uncontroled "holes" are shown
+        #
+        # objectwise:
+        # prune the serie of "holes" and create "warnings" in self.results
+        # reporting processing errors
+        #
+        # serieswise:
+        # if the number of objects disagree create "error" in self.results 
+        # and exit
+        #
+        # auto:
+        # start serieswise and in error repeat objectwise
+        
 
         nobj = len(self.results['obj_nam'])
 
