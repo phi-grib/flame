@@ -1,6 +1,7 @@
 # system settings
 verbose_error: true
 numCPUs: 2
+mol_batch: series                    # series | objects | auto
 
 # input settings
 input_type: molecule                  # molecule | data | ext_data

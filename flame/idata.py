@@ -66,7 +66,7 @@ class Idata:
             self.dest_path = os.path.dirname(self.ifile) 
 
 
-    def extractAnotations (self, ifile):
+    def extractInformation (self, ifile):
         """  
 
         Extracts molecule names, biological anotations and experimental values from an SDFile.
@@ -85,15 +85,16 @@ class Idata:
         obj_bio = []
         obj_exp = []
         obj_sml = []
+        obj_num = 0
 
-        for i, mol in enumerate(suppl):
+        for mol in suppl:
 
             # Do not even try to process molecules not recognised by RDKit. 
             # They will be removed at the normalization step
             if mol is None:
                 continue
                 
-            name = sdfu.getName(mol, count=i, field=self.parameters['SDFile_name'], suppl= suppl)
+            name = sdfu.getName(mol, count=obj_num, field=self.parameters['SDFile_name'], suppl= suppl)
 
             activity_num = None
             exp = None
@@ -109,13 +110,19 @@ class Idata:
                 exp = mol.GetProp(self.parameters['SDFile_experimental'])
 
             ## generate a SMILES
-            sml = Chem.MolToSmiles(mol)
+            try:
+                sml = Chem.MolToSmiles(mol)
+            except:
+                sml = None
 
             obj_nam.append(name)
             obj_bio.append(activity_num)
             obj_exp.append(exp)
             obj_sml.append(sml)
+            
+            obj_num+=1
 
+        utils.add_result (self.results, obj_num, 'obj_num', 'Num mol', 'method', 'single', 'Number of molecules present in the input file')
         utils.add_result (self.results, obj_nam, 'obj_nam', 'Mol name', 'label', 'objs', 'Name of the molecule, as present in the input file')
         utils.add_result (self.results, obj_sml, 'SMILES', 'SMILES', 'decoration', 'objs', 'Structure of the molecule in SMILES format')
 
@@ -124,7 +131,7 @@ class Idata:
         if not utils.is_empty(obj_exp):
             utils.add_result (self.results, np.array(obj_exp, dtype=np.float64), 'experim', 'Experim.', 'decoration', 'objs', 'Experimental anotation present in the input file')
         
-        return
+        return 
 
     def normalize (self, ifile, method):
         """
@@ -372,7 +379,7 @@ class Idata:
 
         return True
 
-    def workflow (self, ifile):
+    def workflow_object (self, input_file):
         """      
 
         Executes in sequence methods required to generate MD, starting from a single molecular file
@@ -381,26 +388,70 @@ class Idata:
         output: results is a numpy bidimensional array containing MD     
 
         """
+        print ('processing object-wise')
 
-        # normalize chemical  
-        success, results = self.normalize (ifile, self.parameters['normalize_method'])
-        if not success :
+        success_list = []
+
+        md_results = []
+        va_results = []
+
+        num_mol = sdfu.count_mols(input_file)
+        success, results = sdfu.split_SDFile(input_file, num_mol)
+
+        if not success:
             return success, results
 
-        # ionize molecules
-        success, results = self.ionize (results, self.parameters['ionize_method'])
-        if not success :
-            return success, results
-        
-        # generate a 3D structure
-        success, results = self.convert3D (results, self.parameters['convert3D_method'])
-        if not success :
-            return success, results
-        
-        # compute MD
-        success, results = self.computeMD (results, self.parameters['computeMD_method'])
+        file_list = results[0]
+        file_size = results[1]
+
+        for fsize in file_size:
+            success_list.append(fsize == 1)
+    
+        for i, ifile in enumerate(i,file_list):
+
+            if success_list[i]:
+                success, results = self.normalize (ifile, self.parameters['normalize_method'])
+                if success :
+                    success, results = self.ionize (results, self.parameters['ionize_method'])
+                    if success :
+                        success, results = self.convert3D (results, self.parameters['convert3D_method'])
+                        if success:
+                            success, results = self.computeMD (results, self.parameters['computeMD_method'])
+
+            success_list[i] = success
+
+            if success:
+                if len(md_results) == 0 : #first molecule
+                    md_results = results[0]
+                    va_results = results[1]
+                else:
+                    md_results = np.vstack ((md_results, results[0]))
+
+        return success_list, (md_results, va_results)
+
+
+    def workflow_series (self, input_file):
+        '''      
+
+        Executes in sequence methods required to generate MD, starting from a single molecular file
+
+        input : ifile, a molecular file in SDFile format
+        output: results is a numpy bidimensional array containing MD     
+
+        '''
+
+        print ('processing series-wise')
+
+        success, results = self.normalize (input_file, self.parameters['normalize_method'])
+        if success :
+            success, results = self.ionize (results, self.parameters['ionize_method'])
+            if success :
+                success, results = self.convert3D (results, self.parameters['convert3D_method'])
+                if success:
+                    success, results = self.computeMD (results, self.parameters['computeMD_method'])
 
         return success, results
+
 
     def _run_molecule (self):
         """
@@ -417,58 +468,22 @@ class Idata:
 
         # extract useful information from file
 
-        self.extractAnotations (self.ifile)
+        self.extractInformation (self.ifile)
         if 'error' in self.results:
             return
-
-        # TODO: Generalize mixing multiple CPUs and object-wise processing
-        # Split input file in chuncks of
-        #     no objectwise and no multicpu: 1
-        #     no objectwise and c cpus     : c
-        #     objectwise and no multicpu   : n
-        #     objectwise and c cpus        : n/c
-        #
-        # in every case, first split and then send each chunk to a 
-        # common conveniece function what decides if raise threads or not
-        # and consolidates results if neccesary
-        #
-        # guarantee 100% that the number of objects is the same and that 
-        # no uncontroled "holes" are shown
-        #
-        # objectwise:
-        # prune the serie of "holes" and create "warnings" in self.results
-        # reporting processing errors
-        #
-        # serieswise:
-        # if the number of objects disagree create "error" in self.results 
-        # and exit
-        #
-        # auto:
-        # start serieswise and in error repeat objectwise
         
-
-        # TODO: nobj is an important value. Must be provide by extractAnnotations using a more
-        # robust method and stored in a class variable to compare with the results of workflow
-        nobj = len(self.results['obj_nam'])
-
-        ncpu = self.parameters['numCPUs']
-
-        # do not run multiprocess for small series, the overheads slow the overall computation time
-        if nobj < 10 :
-            ncpu = 1
-
-        # never run a single molecule in two CPUs!
-        if ncpu > nobj:
-            ncpu = nobj
+        nobj = self.results['obj_num']
+        ncpu = min(nobj, self.parameters['numCPUs'])
 
         # Execute the workflow in 1 or n CPUs
         if ncpu > 1:
+
             # Count number of molecules and split in chuncks 
             # for multiprocessing 
             success, results = sdfu.split_SDFile(self.ifile, ncpu)
 
             if not success : 
-                return False, "error splitting: "+self.ifile
+                return False, results
 
             split_files_names = results[0]
             split_files_sizes = results[1]
@@ -476,30 +491,50 @@ class Idata:
             # print (split_files_names, split_files_sizes)
 
             pool = mp.Pool(ncpu)
-            results = pool.map(self.workflow, split_files_names)
 
-            # Check the results and make sure there are 
-            # no missing objects.
-            # Reassemble results for parallel computing results
+            if self.parameters['mol_batch'] == 'series':
+                results = pool.map(self.workflow_series, split_files_names)
+            else:
+                results = pool.map(self.workflow_objects, split_files_names)
+
+            ## for objects consolidate must process internally the success list 
+            ## which now contain lists of True/False for every molecule
+
             success, results = self.consolidate(results, split_files_sizes) 
+
         else:
-            success, results = self.workflow (self.ifile)
 
-        if not success:
-            self.results['error'] = 'error in run molecule workflow'
-            return
+            if self.parameters['mol_batch'] == 'series':
+                success, results = self.workflow_series (self.ifile)
 
-        if not self.parameters['verbose_error']:
-            stderr_fd.close()                     # close the RDKit log
-            os.dup2(stderr_save, stderr_fileno)   # restore old syserr
+                if not success:
 
-        self.results['xmatrix'] = results[0]
+                    ## TODO: if mol_bat is auto re-run with object
+
+                    self.results['error'] = 'error in run molecule workflow'
+
+                    if not self.parameters['verbose_error']:
+                        stderr_fd.close()                     # close the RDKit log
+                        os.dup2(stderr_save, stderr_fileno)   # restore old syserr
+                    
+                    return
+            else:
+                success, results = self.workflow_objects (self.ifile)
+
+                ## for objects we must process the success list 
+                ## which now contain lists of True/False for every molecule
+                ## and modify annotations
+
+
         utils.add_result (self.results, results[0], 'xmatrix', 'X matrix', 'method', 'vars', 'Molecular descriptors')
 
         if len(results)>1 :
             utils.add_result (self.results, results[1], 'var_nam', 'Var names', 'method', 'vars', 'Names of the X variables')
 
-        # return success, results
+        if not self.parameters['verbose_error']:
+            stderr_fd.close()                     # close the RDKit log
+            os.dup2(stderr_save, stderr_fileno)   # restore old syserr
+
         return
 
 
@@ -510,7 +545,7 @@ class Idata:
 
         self.results ['error'] = 'importing data is not implemented yet'
 
-        return results
+        return
 
 
     def _run_ext_data (self):
