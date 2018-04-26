@@ -40,7 +40,11 @@ class Apply:
         X = self.results["xmatrix"]
 
         # retrieve data and dimensions from results
-        nobj, nvarx = np.shape(X)
+        try:
+            nobj, nvarx = np.shape(X)
+        except:
+            self.results['error'] = 'Failed to generate MD'
+            return self.results
 
         if (nobj==0) or (nvarx==0) :
             self.results['error'] = 'Failed to extract activity or to generate MD'

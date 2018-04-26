@@ -43,8 +43,17 @@ def _RDKit_properties (ifile):
 
     xmatrix = np.zeros ((len(suppl),len(md_nam)),dtype=np.float64)
 
-    for i,mol in enumerate(suppl):      
-        xmatrix [i] = properties.ComputeProperties(mol)
+    try:
+        for i,mol in enumerate(suppl): 
+            xmatrix [i] = properties.ComputeProperties(mol)
+
+            ##### DEBUG 
+            if xmatrix[i][0]>400.0:
+                print ('DEBUG****')
+                return False, 'error in compute properties' 
+
+    except:
+        return False, 'unable to compute RDKit properties'
 
     return True, (xmatrix, md_nam)
 

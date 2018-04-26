@@ -91,6 +91,7 @@ def split_SDFile (ifile, num_chunks):
     temp_files_size.append(chunk_mol_i)
 
     return True, (temp_files_name, temp_files_size)
+    
 
 def getNameFromEmpty(suppl, count=1, field=None):
 
