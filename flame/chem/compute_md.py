@@ -49,8 +49,9 @@ def _RDKit_properties (ifile):
 
             ##### DEBUG 
             if xmatrix[i][0]>400.0:
-                print ('DEBUG****')
+                print ('**** DEBUG in compute_md.py ****')
                 return False, 'error in compute properties' 
+            ##### REMOVE!!!!
 
     except:
         return False, 'unable to compute RDKit properties'

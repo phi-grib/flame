@@ -336,8 +336,9 @@ class Idata:
         Saves the results in serialized form, together with the MD5 signature of the control class and the input file
         """
 
-        ## ********************* DEBUG *******************
+        ###################### DEBUG *******************
         return
+        ###################### REMOVE!!!!! *************
 
 
         if 'ext_input' in self.parameters and self.parameters['ext_input']:
@@ -524,11 +525,26 @@ class Idata:
             #print (success_inform)
             #print (success_workflow)
 
+            
+            obj_clean_required = False
             for i,j in zip(success_inform, success_workflow):
                 if i!=j:
-                    print ('call object annotation cleaner')
-                    ## this method must identify object annotations in self.results and remove from these the
-                    ## objects which we were not able to compute
+                    obj_clean_required = True
+
+            if obj_clean_required:
+                for ikey in self.results['manifest']:
+                    if ikey['dimension']=='objs':
+                        iobjlist = self.results[ikey['key']]
+
+                        ## TODO: improve with better support for numpy arrays and 
+                        ## more efficient value removal algorithm 
+
+                        print (ikey['key'],'<<<<<<<<<<<<<<<<<<<<<<<<<<<')
+                        nobjlist = []
+                        for i in range(len(success_workflow)):
+                            if success_workflow[i] :
+                                nobjlist.append(iobjlist[i])
+                        self.results[ikey['key']]=nobjlist
 
         utils.add_result (self.results, results[0], 'xmatrix', 'X matrix', 'method', 'vars', 'Molecular descriptors')
 
