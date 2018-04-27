@@ -403,6 +403,7 @@ class Idata:
         output: results is a numpy bidimensional array containing MD     
 
         """
+        
         print ('processing object-wise')
 
         success_list = []
@@ -472,7 +473,18 @@ class Idata:
 
 
     def ammend_objects (self, inform, workflow):
+        ''' 
 
+        The arguments inform and workflow are lists of booleans describing when the objects
+        were successfully informed (inform) or completed the workflow
+
+        This functions is called only when a disagreement if found, revealing that any object
+        failed to be processed, and that the xmatrix will have less rows than expected
+
+        The function ammends all keys describing objects, removing those appearing as "false"
+        in workflow and not in inform
+
+        '''
 
         # list objects to remove
         remove_index = []
@@ -482,15 +494,19 @@ class Idata:
                 remove_index.append(i)
                 warning_list.append(self.results['obj_nam'][i]) 
 
-        print (remove_index)
+        #print (remove_index)
 
         manifest = self.results['manifest']
         for element in manifest:
             if element['dimension']=='objs':
+
                 ikey = element['key']
                 ilist = self.results[ikey]
+                
+                # keys are experim or ymatrix are numpy arrays
                 if 'numpy.ndarray' in str(type(ilist)):
                     self.results[ikey] = np.delete(ilist,remove_index)
+                # other keys are regular list
                 else:
                     for i in sorted(remove_index, reverse=True):
                         del ilist[i]
