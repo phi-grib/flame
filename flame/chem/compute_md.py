@@ -47,14 +47,14 @@ def _RDKit_properties (ifile):
         for i,mol in enumerate(suppl): 
             xmatrix [i] = properties.ComputeProperties(mol)
 
-            ##### DEBUG 
-            if xmatrix[i][0]>400.0:
-                print ('**** DEBUG in compute_md.py ****')
-                return False, 'error in compute properties' 
-            ##### REMOVE!!!!
+            # ##### DEBUG 
+            # if xmatrix[i][0]>400.0:
+            #     print ('**** simulated error for DEBUG in compute_md.py ****')
+            #     return False, 'Unable to compute RDKit properties' 
+            # ##### REMOVE!!!!
 
     except:
-        return False, 'unable to compute RDKit properties'
+        return False, 'Unable to compute RDKit properties'
 
     return True, (xmatrix, md_nam)
 
@@ -62,7 +62,7 @@ def _RDKit_descriptors (ifile):
     try:
         suppl=Chem.SDMolSupplier(ifile)
     except:
-        return False, 'unable to compute RDKit MD'
+        return False, 'Unable to compute RDKit MD'
 
     nms=[x[0] for x in Descriptors._descList]
 

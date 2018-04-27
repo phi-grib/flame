@@ -41,7 +41,7 @@ function sortKeys (myjson) {
     
     // special keys, already processed (obj_nam, SMILES and main[])
     // or never shown in a table (origin and meta)
-    const black_list = key_list.concat(['origin','meta','manifest','obj_num']);
+    const black_list = key_list.concat(['origin','meta','manifest','obj_num', 'warning']);
 
     for (var key in myjson){
         if ( ! black_list.includes(key)){
@@ -71,10 +71,14 @@ function parseResults (results) {
     
     if (("error" in myjson)!=false){
         $("#processing").prop('hidden', true);
-        alert(myjson['error']); // show error as alert
+        alert(myjson['error']); // show error as alert and return
         return;
     }
     
+    if (("warning" in myjson)!=false){
+        $("#processing").prop('hidden', true);
+        alert(myjson['warning']); // show warning but do not return
+    }
     
     var mainv = myjson['meta']['main'][0];
     var manifest = myjson['manifest'];

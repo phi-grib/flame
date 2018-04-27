@@ -266,25 +266,29 @@ class Idata:
 
         if 'RDKit_properties' in method :
             success, results  = computeMD._RDKit_properties(ifile)
-            if success :
-                results_all.append(results)
+            
+            if not success :
+                return success, results
+            
+            results_all.append(results)
         
         if 'RDKit_md' in method :
             success, results  = computeMD._RDKit_descriptors(ifile)
-            if success :
-                results_all.append(results)
+            
+            if not success :
+                return success, results
+            
+            results_all.append(results)
         
         if 'custom' in method :
             success, results  = self.computeMD_custom(ifile)
-            if success :
-                results_all.append(results)
         
-        if len(results_all) < 1:
-            return False, 'No MD computed'
+        # if len(results_all) < 1:
+        #     return False, 'No MD computed'
 
-        # TODO: check that the number of objects is the same for all the pieces
+        # # TODO: check that the number of objects is the same for all the pieces
 
-        return success, results
+        return True, results
 
     def consolidate (self, results, nobj):
         """ 
@@ -306,6 +310,7 @@ class Idata:
             # for serieswise "internal" is a tupla of 3 elements (xmatrix, var_nam, success_list)
             internal = iresults [1]
             ixmatrix = internal [0]
+
             if type (ixmatrix).__module__ != np.__name__:
                 return False, "unknown results type in consolidate"
 
@@ -336,9 +341,9 @@ class Idata:
         Saves the results in serialized form, together with the MD5 signature of the control class and the input file
         """
 
-        ## ********************* DEBUG *******************
-        return
-
+        ### uncomment to avoid saving results
+        ## return
+        ##
 
         if 'ext_input' in self.parameters and self.parameters['ext_input']:
             return
@@ -466,15 +471,18 @@ class Idata:
 
 
 
-    def clean_objects (self, inform, workflow):
+    def ammend_objects (self, inform, workflow):
+
 
         # list objects to remove
-        removeindex = []
+        remove_index = []
+        warning_list = []
         for i in range(len(workflow)):
             if inform[i] and not workflow[i]:
-                removeindex.append(i)
+                remove_index.append(i)
+                warning_list.append(self.results['obj_nam'][i]) 
 
-        print (removeindex)
+        print (remove_index)
 
         manifest = self.results['manifest']
         for element in manifest:
@@ -482,10 +490,17 @@ class Idata:
                 ikey = element['key']
                 ilist = self.results[ikey]
                 if 'numpy.ndarray' in str(type(ilist)):
-                    self.results[ikey] = np.delete(ilist,removeindex)
+                    self.results[ikey] = np.delete(ilist,remove_index)
                 else:
-                    for i in sorted(removeindex, reverse=True):
+                    for i in sorted(remove_index, reverse=True):
                         del ilist[i]
+
+        message = 'Failed to process '+str(len(warning_list))+' molecules : '+str(warning_list)
+        message += '\nWill show results for the rest of the series...'
+        message += '\nCheck the error.log file for further details'
+        
+        self.results['warning'] = message
+
         return
     
 
@@ -548,7 +563,7 @@ class Idata:
 
             for i,j in zip(success_inform, success_workflow):
                 if i and not j:
-                    self.clean_objects (success_inform, success_workflow)
+                    self.ammend_objects (success_inform, success_workflow)
                     break
 
         utils.add_result (self.results, results[0], 'xmatrix', 'X matrix', 'method', 'vars', 'Molecular descriptors')
