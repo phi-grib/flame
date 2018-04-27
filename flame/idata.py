@@ -336,9 +336,8 @@ class Idata:
         Saves the results in serialized form, together with the MD5 signature of the control class and the input file
         """
 
-        ###################### DEBUG *******************
+        ## ********************* DEBUG *******************
         return
-        ###################### REMOVE!!!!! *************
 
 
         if 'ext_input' in self.parameters and self.parameters['ext_input']:
@@ -466,6 +465,30 @@ class Idata:
         return success, results
 
 
+
+    def clean_objects (self, inform, workflow):
+
+        # list objects to remove
+        removeindex = []
+        for i in range(len(workflow)):
+            if inform[i] and not workflow[i]:
+                removeindex.append(i)
+
+        print (removeindex)
+
+        manifest = self.results['manifest']
+        for element in manifest:
+            if element['dimension']=='objs':
+                ikey = element['key']
+                ilist = self.results[ikey]
+                if 'numpy.ndarray' in str(type(ilist)):
+                    self.results[ikey] = np.delete(ilist,removeindex)
+                else:
+                    for i in sorted(removeindex, reverse=True):
+                        del ilist[i]
+        return
+    
+
     def _run_molecule (self):
         """
         version of Run for molecular input
@@ -514,7 +537,8 @@ class Idata:
         if not success:
             self.results['error'] = results
 
-
+        ## check if any molecule failed to complete the workflow and then 
+        ## ammend object annotations in self.results
         if self.parameters['mol_batch'] == 'objects':
             success_workflow = results[2]
 
@@ -522,29 +546,10 @@ class Idata:
                 self.results['error'] = 'number of molecules informed and processed does not match'
                 return
 
-            #print (success_inform)
-            #print (success_workflow)
-
-            
-            obj_clean_required = False
             for i,j in zip(success_inform, success_workflow):
-                if i!=j:
-                    obj_clean_required = True
-
-            if obj_clean_required:
-                for ikey in self.results['manifest']:
-                    if ikey['dimension']=='objs':
-                        iobjlist = self.results[ikey['key']]
-
-                        ## TODO: improve with better support for numpy arrays and 
-                        ## more efficient value removal algorithm 
-
-                        print (ikey['key'],'<<<<<<<<<<<<<<<<<<<<<<<<<<<')
-                        nobjlist = []
-                        for i in range(len(success_workflow)):
-                            if success_workflow[i] :
-                                nobjlist.append(iobjlist[i])
-                        self.results[ikey['key']]=nobjlist
+                if i and not j:
+                    self.clean_objects (success_inform, success_workflow)
+                    break
 
         utils.add_result (self.results, results[0], 'xmatrix', 'X matrix', 'method', 'vars', 'Molecular descriptors')
 
