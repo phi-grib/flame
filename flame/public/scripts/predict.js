@@ -55,7 +55,9 @@ function sortKeys (myjson) {
 
 // parse results obtained from the prediction
 function parseResults (results) {
-    $("#data-body").text(results);
+    $("#data-console").text('prediction OK');
+    $("#data-json").text(results);
+    $("#data-json").prop('hidden', false);
 
     lastResults = results;
     
@@ -255,15 +257,16 @@ $(document).ready(function() {
         
         // make sure the browser can upload XMLHTTP requests
         if (!window.XMLHttpRequest) {          
-            $("#data-body").text("this browser does not support file upload");
+            $("#data-console").text("this browser does not support file upload");
             return;
         };
         
         $("#processing").prop('hidden', false);
         
         // clear GUI
-        $("#data-body").text('processing... please wait');
+        $("#data-console").text('processing... please wait');
         $("#data-table").html('');
+        $("#data-json").prop('hidden', true);
         
         $("#export").prop('disabled', true);
         
@@ -275,7 +278,7 @@ $(document).ready(function() {
         
         // call postPredict when file upload is completed
         if (upload(ifile, temp_dir, postPredict)==false) {
-            $("#data-body").text("unable to upload file, prediction aborted...");
+            $("#data-console").text("unable to upload file, prediction aborted...");
             return;
         };
         

@@ -39,6 +39,7 @@
       0% { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
     }
+
     </style>
 
   </head>
@@ -57,6 +58,7 @@
         </div>
         
         <div>&nbsp;</div>
+        
       </div>  
       
       <div class="row">
@@ -105,19 +107,23 @@
         
         <div class="col-12">
           <h4>Console</h4>
-          <p class="bg-light border rounded" id="data-body" >[not run]</p>
+          <p class="bg-light border rounded" id="data-console" >[not run]</p>     
         </div>
-        
+
         <div class="col-12">
           <h4>Results</h4>
-          <table class="table table-bordered table-striped" id="data-table"></table>
+          <table class="table table-fixed table-bordered table-striped" id="data-table"></table>
         </div>
-        
+
+        <div class="col-12">
+          <p class="bg-light border rounded" id="data-json" hidden="true" ></p>     
+        </div>        
         
       </div>
-      
-      <div class="loader" id="processing" hidden="true"></div>
-      
+      <div class="row">
+        <div class="loader" id="processing" hidden="true"></div>
+      </div>
+
     </div>
     
   </body>
