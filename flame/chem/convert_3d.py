@@ -35,12 +35,21 @@ def _ETKDG(ifile):
     
     filename, fileext = os.path.splitext(ifile)
     ofile = filename + '_3d' + fileext
+
+    num_obj = 0
     with open (ofile,'w') as fo:
         for mol in suppl:
+
+            if mol is None:
+                print ('ERROR: (@_ETKDG) Unable to obtain 3D structure for molecule #',str(num_obj+1), 'in file '+ ifile)
+                continue  
+
             mol3=Chem.AddHs(mol)
             AllChem.EmbedMolecule(mol3, AllChem.ETKDG())
 
             fo.write (Chem.MolToMolBlock(mol3))
             fo.write('\n$$$$\n')
+
+            num_obj += 1
 
     return True, ofile

@@ -93,7 +93,7 @@ class Idata:
             # Do not even try to process molecules not recognised by RDKit. 
             # They will be removed at the normalization step
             if mol is None:
-                print ('error in extractInformation')
+                print ('ERROR: (@extractInformaton) Unable to process molecule #',str(obj_num+1), 'in file '+ ifile)
                 success_list.append(False)
                 continue
                 
@@ -129,7 +129,7 @@ class Idata:
         utils.add_result (self.results, obj_num, 'obj_num', 'Num mol', 'method', 'single', 'Number of molecules present in the input file')
         utils.add_result (self.results, obj_nam, 'obj_nam', 'Mol name', 'label', 'objs', 'Name of the molecule, as present in the input file')
         utils.add_result (self.results, obj_sml, 'SMILES', 'SMILES', 'decoration', 'objs', 'Structure of the molecule in SMILES format')
-
+        
         if not utils.is_empty(obj_bio):
             utils.add_result (self.results, np.array(obj_bio, dtype=np.float64), 'ymatrix', 'Activity', 'decoration', 'objs', 'Biological anotation to be predicted by the model')
         if not utils.is_empty(obj_exp):
@@ -171,10 +171,8 @@ class Idata:
 
                 # molecule not recognised by RDKit
                 if m is None:
-                    
-                    print ("ERROR: unable to process molecule #"+str(mcount))
+                    print ('ERROR: (@normalize) Unable to process molecule #',str(mcount+1), 'in file '+ ifile)
 
-                    # merror+=1
                     continue
 
                 # if standardize
@@ -188,6 +186,10 @@ class Idata:
                             return False, e.name
                     except:
                         return False, "Unknown standardiser error"
+
+                else:
+                    print ('ERROR: (@normalize) method '+method+' not recognized')
+                    parent = Chem.MolToMolBlock(m)
 
                 # in any case, write parent plus internal ID (flameID)
                 fo.write(parent)
@@ -428,7 +430,7 @@ class Idata:
 
             if not success_list[i]:   # molecule was empty, do not process
 
-                print ('empty molecule skypped')
+                print ('ERROR: (@workflow_objects) Unable to process molecule #',str(i+1), 'in file '+ ifile)
 
                 continue
 
@@ -437,6 +439,9 @@ class Idata:
             success_list[i] = success
 
             if not success:           # failed in the workflow
+
+                print ('ERROR: (@workflow_objects) Workflow failed for molecule #',str(i+1), 'in file '+ input_file)
+                
                 continue
 
             if len(md_results) == 0 : #first molecule
@@ -444,6 +449,8 @@ class Idata:
                 va_results = results[1]
             else:
                 md_results = np.vstack ((md_results, results[0]))
+
+        #print (success_list)
 
         return True, (md_results, va_results, success_list)
 
@@ -469,7 +476,6 @@ class Idata:
                     success, results = self.computeMD (results, self.parameters['computeMD_method'])
 
         return success, results
-
 
 
     def ammend_objects (self, inform, workflow):
@@ -574,6 +580,7 @@ class Idata:
             success_workflow = results[2]
 
             if len (success_inform) != len(success_workflow):
+                print (success_inform, success_workflow)
                 self.results['error'] = 'number of molecules informed and processed does not match'
                 return
 
@@ -583,6 +590,8 @@ class Idata:
                     break
 
         utils.add_result (self.results, results[0], 'xmatrix', 'X matrix', 'method', 'vars', 'Molecular descriptors')
+
+        #print ('xmatrix', np.shape(results[0]))
 
         if len(results)>1 :
             utils.add_result (self.results, results[1], 'var_nam', 'Var names', 'method', 'vars', 'Names of the X variables')

@@ -39,22 +39,30 @@ def _RDKit_properties (ifile):
     for nam in properties.GetPropertyNames():
         md_nam.append(nam)
 
-    #print (len(md_nam), md_nam)
-
-    xmatrix = np.zeros ((len(suppl),len(md_nam)),dtype=np.float64)
-
     try:
-        for i,mol in enumerate(suppl): 
-            xmatrix [i] = properties.ComputeProperties(mol)
+        num_obj = 0
+        for mol in suppl: 
+            if mol is None:
+                print ('ERROR: (@_RDKit_properties) Unable to process molecule #',str(num_obj+1), 'in file '+ ifile)
+                continue      
+            #xmatrix [num_obj] = properties.ComputeProperties(mol)
+            if num_obj == 0:
+                xmatrix = properties.ComputeProperties(mol)
+            else:
+                xmatrix = np.vstack ((xmatrix,properties.ComputeProperties(mol)))
 
-            # ##### DEBUG 
-            # if xmatrix[i][0]>400.0:
+            # ##### DEBUG
+            # if properties.ComputeProperties(mol)[0]>400.0:
             #     print ('**** simulated error for DEBUG in compute_md.py ****')
-            #     return False, 'Unable to compute RDKit properties' 
-            # ##### REMOVE!!!!
+            #     return False, 'Failed compute RDKit properties' 
+            ##### REMOVE!!!!
+            num_obj += 1 
 
     except:
-        return False, 'Unable to compute RDKit properties'
+        return False, 'Failed computing RDKit properties for molecule' + str(num_obj+1) + 'in file '+ ifile
+
+    if num_obj == 0:
+        return False, 'Unable to compute RDKit properties for molecule '+ifile
 
     return True, (xmatrix, md_nam)
 
@@ -68,11 +76,21 @@ def _RDKit_descriptors (ifile):
 
     md = MoleculeDescriptors.MolecularDescriptorCalculator(nms)
 
-    #print(len(nms), nms)
+    try:
+        num_obj = 0
+        for mol in suppl:
+            if mol is None:
+                print ('ERROR: (@_RDKit_descriptors) Unable to process molecule #',str(num_obj+1), 'in file '+ ifile)
+                continue      
+            
+            if num_obj == 0:
+                xmatrix = md.CalcDescriptors(mol)
+            else:
+                xmatrix = np.vstack ((xmatrix,md.CalcDescriptors(mol)))
 
-    xmatrix = np.zeros ((len(suppl),len(nms)),dtype=np.float64)
-
-    for i,mol in enumerate(suppl):      
-        xmatrix [i] = md.CalcDescriptors(mol) 
+            num_obj += 1 
+    
+    except:
+        return False, 'Failed computing RDKit descriptors for molecule' + str(num_obj+1) + 'in file '+ ifile
 
     return True, (xmatrix, nms)
