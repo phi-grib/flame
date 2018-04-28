@@ -392,7 +392,7 @@ class Idata:
         except :
             return False
 
-        print ('*** recycling ***')
+        print ('>>> recycling data >>>')
 
         return True
 
@@ -405,8 +405,6 @@ class Idata:
         output: results is a numpy bidimensional array containing MD     
 
         """
-        
-        print ('processing object-wise')
 
         success_list = []
         md_results = []
@@ -580,7 +578,6 @@ class Idata:
             success_workflow = results[2]
 
             if len (success_inform) != len(success_workflow):
-                print (success_inform, success_workflow)
                 self.results['error'] = 'number of molecules informed and processed does not match'
                 return
 
