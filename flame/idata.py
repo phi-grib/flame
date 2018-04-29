@@ -581,6 +581,14 @@ class Idata:
                 self.results['error'] = 'number of molecules informed and processed does not match'
                 return
 
+            ## TODO: This should never happen!!!. Pass the success_inform to the workflow to avoid
+            ## processing non informed molecules
+            ## Until we fix, we better issue an error
+            for i,j in zip(success_inform, success_workflow):
+                if j and not i:
+                    self.results['error'] = 'unknown error in molecule inform'
+                    return
+
             for i,j in zip(success_inform, success_workflow):
                 if i and not j:
                     self.ammend_objects (success_inform, success_workflow)
