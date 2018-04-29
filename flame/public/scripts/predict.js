@@ -96,9 +96,13 @@ function parseResults (results) {
                 descr = manifest[item]['description'];
             }
         }
-        tbl_body +=  '<th ><a href="#" title="'+ descr +'">'+label+'</a></th>';
+        tbl_body +=  '<th class="cssToolTip">'+label+'<span>'+descr+'</span></th>';
+
+        //tbl_body +=  '<th ><a href="#" title=" '+ descr +' id= " '+descr+ '" onmouseover="mostrarTooltip(this,'+ label + ');>'+label+'</a></th>';
+        
     }
     
+
     // body
     tbl_body+='</tr></thead>';
     var val;
@@ -137,6 +141,9 @@ function parseResults (results) {
     
     $("#data-table").html(tbl_body);  
 
+   
+
+
 
 
     // SMILES must be inserted after the canvases were already created in included in the HTML code
@@ -156,6 +163,8 @@ function parseResults (results) {
     $("#export").prop('disabled', false);
     $("#processing").prop('hidden', true);
 };
+
+
 
 
 // POST a prediction request for the selected model, version and input file

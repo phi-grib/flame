@@ -1,0 +1,60 @@
+/* rotating circle to show progress */
+
+.loader {
+      position: absolute;
+      left: 50%;
+      /* top: 50%; */ /* center vertically */
+      z-index: 1; 
+      width: 120px;
+      height: 120px;
+      /* margin: -75px 0 0 -75px; */
+      margin: 0 0 0 -60px;
+      /* border: 20px solid #f3f3f3; */
+      border: 20px solid #e6901a;
+
+      border-radius: 60%;
+      /* border-top: 20px solid #3498db; */
+      border-top: 20px solid #165379;
+      -webkit-animation: spin 2s linear infinite;
+      animation: spin 2s linear infinite;
+    }
+
+    /* Safari */
+    @-webkit-keyframes spin {
+      0% { -webkit-transform: rotate(0deg); }
+      100% { -webkit-transform: rotate(360deg); }
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    
+/* tooltip class and color of text*/
+.cssToolTip {
+    position: relative; 
+    color:  #e6901a; /* text color */
+}
+
+/* tooltip */
+.cssToolTip span {
+    display: none; /* hiden by default */
+    background: rgba(22,83,121,0.8) center left 5px no-repeat; 
+    box-shadow: 5px 5px 5px #333;
+    color: #ffffff;
+    font-size: 0.8em;
+    font-weight: normal;
+    padding: 5px 5px 5px 5px;
+    max-width: 6000px;
+    position: absolute; 
+    top: 15px; /* relative from top of first parent element */
+    left: 100px; /* relative from left of first parent element */ 
+    z-index: 100; 
+}
+
+/* how to show the ToolTip */
+.cssToolTip:hover span {
+    display: inline; 
+}
+
