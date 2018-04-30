@@ -68,8 +68,6 @@ function parseResults (results) {
         alert('ERROR: '+results); // error in the above string (in this case, yes)!
         return;
     }
-
-    console.log(myjson);
     
     if (("error" in myjson)!=false){
         $("#processing").prop('hidden', true);
@@ -97,12 +95,8 @@ function parseResults (results) {
             }
         }
         tbl_body +=  '<th class="cssToolTip">'+label+'<span>'+descr+'</span></th>';
-
-        //tbl_body +=  '<th ><a href="#" title=" '+ descr +' id= " '+descr+ '" onmouseover="mostrarTooltip(this,'+ label + ');>'+label+'</a></th>';
-        
     }
     
-
     // body
     tbl_body+='</tr></thead>';
     var val;
@@ -142,10 +136,6 @@ function parseResults (results) {
     $("#data-table").html(tbl_body);  
 
    
-
-
-
-
     // SMILES must be inserted after the canvases were already created in included in the HTML code
     if (key_list.includes('SMILES')){
 
