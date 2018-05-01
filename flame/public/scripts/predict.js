@@ -97,9 +97,6 @@ function parseResults (results) {
             }
         }
         tbl_body +=  '<th class="cssToolTip">'+label+'<span>'+descr+'</span></th>';
-
-        //tbl_body +=  '<th ><a href="#" title=" '+ descr +' id= " '+descr+ '" onmouseover="mostrarTooltip(this,'+ label + ');>'+label+'</a></th>';
-        
     }
     
 

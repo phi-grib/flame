@@ -263,10 +263,12 @@ class Idata:
         output is boolean anda a tupla of two elements:
         [0] xmatrix (nparray np.float64)
         [1] list of variable names (str)
+
         '''  
 
         combined_md = None
         combined_nm = None
+
         is_empty = True
         
         registered_methods = [('RDKit_properties',computeMD._RDKit_properties),
@@ -277,6 +279,7 @@ class Idata:
             if imethod[0] in method:
 
                 success, results  = imethod[1](ifile)
+
                 if not success :
                     return success, results
 
@@ -284,6 +287,7 @@ class Idata:
 
                     combined_md = results[0]  # np.array of values
                     combined_nm = results[1]  # list of variable names
+
                     shape = np.shape (combined_md)
 
                     is_empty = False
@@ -297,12 +301,11 @@ class Idata:
                             print ('ERROR: number of objects processed by md method "'+imethod[0]+'" does not match those computed by other methods')
                             continue
 
-                    combined_md =np.hstack((combined_md, results[0]))
+                    combined_md = np.hstack((combined_md, results[0]))
                     combined_nm.append (results[1])
 
-        print ('full matrix:',np.shape(combined_md))
-
         return True, (combined_md, combined_nm)
+
 
     def consolidate (self, results, nobj):
         ''' 
@@ -335,18 +338,22 @@ class Idata:
                 var_nam = ivar_nam
                 if len(internal)>2:
                     success_list = internal [2]
-                first_nobj, first_nvar = np.shape(ixmatrix)
+                shape = np.shape(ixmatrix)                
                 first = False
             else:
-                nobj, nvar = np.shape(ixmatrix)
-                if nvar != first_nvar :
-                    return False, "inconsistent number of variables"
+                ishape = np.shape(ixmatrix)
+                if len(shape)>1 and len(ishape)>1 : # for bidimensional arrays, num_var is shape[1]
+                    if shape[1] != ishape[1] :
+                        return False, "inconsistent number of variables"
+                else:
+                    if shape[0] != ishape[0] :  # for vectors obtained with a single object, numvar is shape[0]
+                        return False, "inconsistent number of variables"
 
                 xmatrix = np.vstack ((xmatrix, ixmatrix))
 
                 if len(internal)>2:
                     success_list += internal[2]
-            
+
         return True, (xmatrix, var_nam, success_list)
 
 
@@ -649,10 +656,10 @@ class Idata:
                 self.results['manifest'].append(item)
 
         # extract usable data from every source and add to 'combo' np.array
-        combo_results = None
-        combo_confidence = None
-        var_nam = []
-        conf_nam = []
+        combined_md = None
+        combined_cf = None
+        combined_md_names = []
+        combined_cf_names = []
         
         for ijson in self.idata:
             i_result = json.loads(ijson)
@@ -662,30 +669,32 @@ class Idata:
             for item in i_manifest:
                 if item['type']=='result':
                     item_key = item['key']
-                    if combo_results is None:  # for first element just copy
-                        combo_results = np.array(i_result[item_key], dtype=np.float64)
-                    else: # append laterally
-                        combo_results = np.c_[combo_results, np.array(i_result[item_key], dtype=np.float64)]
 
-                    var_nam.append(item_key+':'+i_meta['endpoint']+':'+str(i_meta['version']))
+                    if combined_md is None:  # for first element just copy
+                        combined_md = np.array(i_result[item_key], dtype=np.float64)
+                        num_obj = len(i_result[item_key])
+                    else: # append laterally
+                        if len(i_result[item_key]) != num_obj:
+                            self.results['error'] = 'incompatible size of results obtained from external sources'
+                            return
+
+                        combined_md = np.c_[combined_md, np.array(i_result[item_key], dtype=np.float64)]
+
+                    combined_md_names.append(item_key+':'+i_meta['endpoint']+':'+str(i_meta['version']))
 
                 if item['type']=='confidence':
                     item_key = item['key']
-                    if combo_confidence is None:  # for first element just copy
-                        combo_confidence = np.array(i_result[item_key], dtype=np.float64)
+                    if combined_cf is None:  # for first element just copy
+                        combined_cf = np.array(i_result[item_key], dtype=np.float64)
                     else: # append laterally
-                        combo_confidence = np.c_[combo_confidence, np.array(i_result[item_key], dtype=np.float64)]
+                        combined_cf = np.c_[combined_cf, np.array(i_result[item_key], dtype=np.float64)]
 
-                    conf_nam.append(item_key+':'+i_meta['endpoint']+':'+str(i_meta['version']))
+                    combined_cf_names.append(item_key+':'+i_meta['endpoint']+':'+str(i_meta['version']))
 
-        utils.add_result (self.results, combo_results, 'xmatrix', 'X matrix', 'results', 'objs', 'Combined output from external sources')
-
-        utils.add_result (self.results, combo_confidence, 'confidence', 'Confidence', 'confidence', 'objs', 'Combined confidence from external sources')
-
-        utils.add_result (self.results, var_nam, 'var_nam', 'Var. names', 'method', 'vars', 'Variable names from external sources')
-
-        utils.add_result (self.results, conf_nam, 'conf_nam', 'Conf. names', 'method', 'vars', 'Confidence indexes from external sources')
-
+        utils.add_result (self.results, combined_md, 'xmatrix', 'X matrix', 'results', 'objs', 'Combined output from external sources')
+        utils.add_result (self.results, combined_cf, 'confidence', 'Confidence', 'confidence', 'objs', 'Combined confidence from external sources')
+        utils.add_result (self.results, combined_md_names, 'var_nam', 'Var. names', 'method', 'vars', 'Variable names from external sources')
+        utils.add_result (self.results, combined_cf_names, 'conf_nam', 'Conf. names', 'method', 'vars', 'Confidence indexes from external sources')
 
         return 
 
