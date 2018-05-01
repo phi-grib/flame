@@ -40,16 +40,17 @@
 /* tooltip */
 .cssToolTip span {
     display: none; /* hiden by default */
-    background: rgba(22,83,121,0.8) center left 5px no-repeat; 
+    background: rgba(22,83,121,0.9) center left 5px no-repeat; 
     box-shadow: 5px 5px 5px #333;
     color: #ffffff;
     font-size: 0.8em;
     font-weight: normal;
     padding: 5px 5px 5px 5px;
     max-width: 6000px;
+    min-width: 150px;
     position: absolute; 
-    top: 15px; /* relative from top of first parent element */
-    left: 100px; /* relative from left of first parent element */ 
+    top: 30px; /* relative from top of first parent element */
+    left: 30px; /* relative from left of first parent element */ 
     z-index: 100; 
 }
 
@@ -57,4 +58,3 @@
 .cssToolTip:hover span {
     display: inline; 
 }
-

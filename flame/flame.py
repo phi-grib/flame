@@ -84,6 +84,10 @@ def main():
 
     if args.command == 'predict':
 
+        if (args.endpoint is None ) or (args.infile is None):
+            print ('flame predict : endpoint and input file arguments are compulsory')
+            return
+
         version = utils.intver(args.version) 
         
         model = {'endpoint' : args.endpoint,
@@ -95,13 +99,17 @@ def main():
 
     elif args.command == 'build':
         
+        if (args.endpoint is None) or (args.infile is None):
+            print ('flame build : endpoint and input file arguments are compulsory')
+            return
+
         model = {'endpoint' : args.endpoint,
                  'infile' : args.infile}
 
         success, results = context.build_cmd(model)
         print ('flame build : ', success, results)
 
-        ## build_cmd(args)
+
     elif args.command == 'manage':
         manage_cmd(args)
 

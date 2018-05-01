@@ -67,13 +67,13 @@ class Idata:
 
 
     def extractInformation (self, ifile):
-        """  
+        '''
 
         Extracts molecule names, biological anotations and experimental values from an SDFile.
 
         Anotations must be added using method utils.add_result, so they are also inserted into the results manifest
         
-        """
+        '''
 
         try:
             suppl = Chem.SDMolSupplier(ifile)
@@ -138,7 +138,7 @@ class Idata:
         return success_list
 
     def normalize (self, ifile, method):
-        """
+        '''
 
         Generates a simplified SDFile with MolBlock and an internal ID for further processing
 
@@ -150,7 +150,7 @@ class Idata:
         Returns a tuple containing the result of the method and (if True) the name of the 
         output molecule and an error message otherwyse
 
-        """
+        '''
 
         if not method :
             return True, ifile
@@ -176,7 +176,7 @@ class Idata:
                     continue
 
                 # if standardize
-                if method == 'standardize':
+                if 'standardize' in method:
                     try:
                         parent = standardise.run (Chem.MolToMolBlock(m))
                     except standardise.StandardiseException as e:
@@ -204,10 +204,11 @@ class Idata:
 
         return success, ofile
 
+
     def ionize (self, ifile, method):
-        """ 
+        ''' 
         Adjust the ionization status of the molecular structure, using a given pH.
-        """
+        '''
 
         if not method :
             return True, ifile
@@ -222,9 +223,9 @@ class Idata:
         return success, results
 
     def convert3D (self, ifile, method):
-        """ 
+        ''' 
         Assigns 3D structures to the molecular structures provided as input.
-        """
+        '''
 
         if not method :
             return True, ifile
@@ -238,7 +239,7 @@ class Idata:
         return success, results
 
     def computeMD_custom (self, ifile):
-        """ 
+        ''' 
         
         Empty method for computing molecular descriptors
 
@@ -250,7 +251,7 @@ class Idata:
 
         example:    return True, (xmatrix, md_nam)
 
-        """
+        '''
         
         return False, 'not implemented'
 
@@ -263,39 +264,50 @@ class Idata:
         [0] xmatrix (nparray np.float64)
         [1] list of variable names (str)
         '''  
-        
-        results_all = []
 
-        if 'RDKit_properties' in method :
-            success, results  = computeMD._RDKit_properties(ifile)
-            
-            if not success :
-                return success, results
-            
-            results_all.append(results)
+        combined_md = None
+        combined_nm = None
+        is_empty = True
         
-        if 'RDKit_md' in method :
-            success, results  = computeMD._RDKit_descriptors(ifile)
-            
-            if not success :
-                return success, results
-            
-            results_all.append(results)
-        
-        if 'custom' in method :
-            success, results  = self.computeMD_custom(ifile)
-        
-        # if len(results_all) < 1:
-        #     return False, 'No MD computed'
+        registered_methods = [('RDKit_properties',computeMD._RDKit_properties),
+                              ('RDKit_md', computeMD._RDKit_descriptors),
+                              ('custom', self.computeMD_custom)]
 
-        # # TODO: check that the number of objects is the same for all the pieces
+        for imethod in registered_methods:
+            if imethod[0] in method:
 
-        return True, results
+                success, results  = imethod[1](ifile)
+                if not success :
+                    return success, results
+
+                if is_empty: # firt md computed, just copy
+
+                    combined_md = results[0]  # np.array of values
+                    combined_nm = results[1]  # list of variable names
+                    shape = np.shape (combined_md)
+
+                    is_empty = False
+                
+                else: # append laterally
+
+                    ishape = np.shape (results[0])
+
+                    if (len(ishape)>1):
+                        if ishape[0] != shape[0]:  # for 2D arrays, shape[0] is the number of objects
+                            print ('ERROR: number of objects processed by md method "'+imethod[0]+'" does not match those computed by other methods')
+                            continue
+
+                    combined_md =np.hstack((combined_md, results[0]))
+                    combined_nm.append (results[1])
+
+        print ('full matrix:',np.shape(combined_md))
+
+        return True, (combined_md, combined_nm)
 
     def consolidate (self, results, nobj):
-        """ 
+        ''' 
         Mix the results obtained by multiple CPUs into a single result file 
-        """
+        '''
 
         first = True
         xmatrix = None
@@ -339,12 +351,13 @@ class Idata:
 
 
     def save (self):
-        """ 
+        ''' 
         Saves the results in serialized form, together with the MD5 signature of the control class and the input file
-        """
+        '''
 
         ### uncomment to avoid saving results
-        ## return
+        print ('*** save commented for debugging ***')
+        return
         ##
 
         if 'ext_input' in self.parameters and self.parameters['ext_input']:
@@ -365,9 +378,9 @@ class Idata:
             pass
 
     def load (self):
-        """ 
+        ''' 
         Loads the results in serialized form, together with the MD5 signature of the control class and the input file
-        """
+        '''
 
         if 'ext_input' in self.parameters and self.parameters['ext_input']:
             return False
@@ -397,14 +410,14 @@ class Idata:
         return True
 
     def workflow_objects (self, input_file):
-        """      
+        '''      
 
         Executes in sequence methods required to generate MD, starting from a single molecular file
 
         input : ifile, a molecular file in SDFile format
         output: results is a numpy bidimensional array containing MD     
 
-        """
+        '''
 
         success_list = []
         md_results = []
@@ -525,10 +538,10 @@ class Idata:
     
 
     def _run_molecule (self):
-        """
+        '''
         version of Run for molecular input
 
-        """
+        '''
 
         # extract useful information from file
 
@@ -605,9 +618,9 @@ class Idata:
 
 
     def _run_data (self):
-        """
+        '''
         version of Run for data input (CSV tabular format)
-        """
+        '''
 
         self.results ['error'] = 'importing data is not implemented yet'
 
@@ -615,9 +628,9 @@ class Idata:
 
 
     def _run_ext_data (self):
-        """
+        '''
         version of Run for inter-process input (calling another model to obtain input)
-        """
+        '''
 
         # idata is a list of JSON from 1-n sources
         # the data usable for input must be listed in the ['meta']['main'] key
@@ -678,7 +691,7 @@ class Idata:
 
 
     def run (self):
-        """         
+        '''         
         Process input file to obtain metadata (size, type, number of objects, name of objects, etc.) as well
         as for generating MD
             
@@ -686,7 +699,7 @@ class Idata:
         file
         
         This methods supports multiprocessing, splitting original files in a chunck per CPU        
-        """
+        '''
 
         # check for the presence of a valid pickle file
         if self.load():

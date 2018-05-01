@@ -1,14 +1,17 @@
 # system settings
 verbose_error: false
-numCPUs: 2
-mol_batch: series                     # series | objects | auto (not implemented!)
+numCPUs: 1
+mol_batch: series                    # series | objects | auto (not implemented!)
 
 # input settings
 input_type: molecule                  # molecule | data | ext_data
-normalize_method: standardize         # null | standardize
+normalize_method:                     # null | standardize
+- standardize             
+
 ionize_method: null                   # null | moka
 convert3D_method: null                # null | ETKDG
 computeMD_method:                     # RDKit_properties | RDKit_md | custom
+- RDKit_md
 - RDKit_properties
 
 ext_input: false                      # external input source TRUE
