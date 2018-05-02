@@ -67,13 +67,13 @@ class Idata:
 
 
     def extractInformation (self, ifile):
-        """  
+        '''
 
         Extracts molecule names, biological anotations and experimental values from an SDFile.
 
         Anotations must be added using method utils.add_result, so they are also inserted into the results manifest
         
-        """
+        '''
 
         try:
             suppl = Chem.SDMolSupplier(ifile)
@@ -138,7 +138,7 @@ class Idata:
         return success_list
 
     def normalize (self, ifile, method):
-        """
+        '''
 
         Generates a simplified SDFile with MolBlock and an internal ID for further processing
 
@@ -150,7 +150,7 @@ class Idata:
         Returns a tuple containing the result of the method and (if True) the name of the 
         output molecule and an error message otherwyse
 
-        """
+        '''
 
         if not method :
             return True, ifile
@@ -176,7 +176,7 @@ class Idata:
                     continue
 
                 # if standardize
-                if method == 'standardize':
+                if 'standardize' in method:
                     try:
                         parent = standardise.run (Chem.MolToMolBlock(m))
                     except standardise.StandardiseException as e:
@@ -204,10 +204,11 @@ class Idata:
 
         return success, ofile
 
+
     def ionize (self, ifile, method):
-        """ 
+        ''' 
         Adjust the ionization status of the molecular structure, using a given pH.
-        """
+        '''
 
         if not method :
             return True, ifile
@@ -222,9 +223,9 @@ class Idata:
         return success, results
 
     def convert3D (self, ifile, method):
-        """ 
+        ''' 
         Assigns 3D structures to the molecular structures provided as input.
-        """
+        '''
 
         if not method :
             return True, ifile
@@ -238,7 +239,7 @@ class Idata:
         return success, results
 
     def computeMD_custom (self, ifile):
-        """ 
+        ''' 
         
         Empty method for computing molecular descriptors
 
@@ -250,7 +251,7 @@ class Idata:
 
         example:    return True, (xmatrix, md_nam)
 
-        """
+        '''
         
         return False, 'not implemented'
 
@@ -262,40 +263,54 @@ class Idata:
         output is boolean anda a tupla of two elements:
         [0] xmatrix (nparray np.float64)
         [1] list of variable names (str)
+
         '''  
-        
-        results_all = []
 
-        if 'RDKit_properties' in method :
-            success, results  = computeMD._RDKit_properties(ifile)
-            
-            if not success :
-                return success, results
-            
-            results_all.append(results)
-        
-        if 'RDKit_md' in method :
-            success, results  = computeMD._RDKit_descriptors(ifile)
-            
-            if not success :
-                return success, results
-            
-            results_all.append(results)
-        
-        if 'custom' in method :
-            success, results  = self.computeMD_custom(ifile)
-        
-        # if len(results_all) < 1:
-        #     return False, 'No MD computed'
+        combined_md = None
+        combined_nm = None
 
-        # # TODO: check that the number of objects is the same for all the pieces
+        is_empty = True
+        
+        registered_methods = [('RDKit_properties',computeMD._RDKit_properties),
+                              ('RDKit_md', computeMD._RDKit_descriptors),
+                              ('custom', self.computeMD_custom)]
 
-        return True, results
+        for imethod in registered_methods:
+            if imethod[0] in method:
+
+                success, results  = imethod[1](ifile)
+
+                if not success :
+                    return success, results
+
+                if is_empty: # firt md computed, just copy
+
+                    combined_md = results[0]  # np.array of values
+                    combined_nm = results[1]  # list of variable names
+
+                    shape = np.shape (combined_md)
+
+                    is_empty = False
+                
+                else: # append laterally
+
+                    ishape = np.shape (results[0])
+
+                    if (len(ishape)>1):
+                        if ishape[0] != shape[0]:  # for 2D arrays, shape[0] is the number of objects
+                            print ('ERROR: number of objects processed by md method "'+imethod[0]+'" does not match those computed by other methods')
+                            continue
+
+                    combined_md = np.hstack((combined_md, results[0]))
+                    combined_nm.append (results[1])
+
+        return True, (combined_md, combined_nm)
+
 
     def consolidate (self, results, nobj):
-        """ 
+        ''' 
         Mix the results obtained by multiple CPUs into a single result file 
-        """
+        '''
 
         first = True
         xmatrix = None
@@ -323,28 +338,33 @@ class Idata:
                 var_nam = ivar_nam
                 if len(internal)>2:
                     success_list = internal [2]
-                first_nobj, first_nvar = np.shape(ixmatrix)
+                shape = np.shape(ixmatrix)                
                 first = False
             else:
-                nobj, nvar = np.shape(ixmatrix)
-                if nvar != first_nvar :
-                    return False, "inconsistent number of variables"
+                ishape = np.shape(ixmatrix)
+                if len(shape)>1 and len(ishape)>1 : # for bidimensional arrays, num_var is shape[1]
+                    if shape[1] != ishape[1] :
+                        return False, "inconsistent number of variables"
+                else:
+                    if shape[0] != ishape[0] :  # for vectors obtained with a single object, numvar is shape[0]
+                        return False, "inconsistent number of variables"
 
                 xmatrix = np.vstack ((xmatrix, ixmatrix))
 
                 if len(internal)>2:
                     success_list += internal[2]
-            
+
         return True, (xmatrix, var_nam, success_list)
 
 
     def save (self):
-        """ 
+        ''' 
         Saves the results in serialized form, together with the MD5 signature of the control class and the input file
-        """
+        '''
 
         ### uncomment to avoid saving results
-        ## return
+        print ('*** save commented for debugging ***')
+        return
         ##
 
         if 'ext_input' in self.parameters and self.parameters['ext_input']:
@@ -365,9 +385,9 @@ class Idata:
             pass
 
     def load (self):
-        """ 
+        ''' 
         Loads the results in serialized form, together with the MD5 signature of the control class and the input file
-        """
+        '''
 
         if 'ext_input' in self.parameters and self.parameters['ext_input']:
             return False
@@ -397,14 +417,14 @@ class Idata:
         return True
 
     def workflow_objects (self, input_file):
-        """      
+        '''      
 
         Executes in sequence methods required to generate MD, starting from a single molecular file
 
         input : ifile, a molecular file in SDFile format
         output: results is a numpy bidimensional array containing MD     
 
-        """
+        '''
 
         success_list = []
         md_results = []
@@ -525,10 +545,10 @@ class Idata:
     
 
     def _run_molecule (self):
-        """
+        '''
         version of Run for molecular input
 
-        """
+        '''
 
         # extract useful information from file
 
@@ -605,9 +625,9 @@ class Idata:
 
 
     def _run_data (self):
-        """
+        '''
         version of Run for data input (CSV tabular format)
-        """
+        '''
 
         self.results ['error'] = 'importing data is not implemented yet'
 
@@ -615,9 +635,9 @@ class Idata:
 
 
     def _run_ext_data (self):
-        """
+        '''
         version of Run for inter-process input (calling another model to obtain input)
-        """
+        '''
 
         # idata is a list of JSON from 1-n sources
         # the data usable for input must be listed in the ['meta']['main'] key
@@ -636,10 +656,10 @@ class Idata:
                 self.results['manifest'].append(item)
 
         # extract usable data from every source and add to 'combo' np.array
-        combo_results = None
-        combo_confidence = None
-        var_nam = []
-        conf_nam = []
+        combined_md = None
+        combined_cf = None
+        combined_md_names = []
+        combined_cf_names = []
         
         for ijson in self.idata:
             i_result = json.loads(ijson)
@@ -649,36 +669,38 @@ class Idata:
             for item in i_manifest:
                 if item['type']=='result':
                     item_key = item['key']
-                    if combo_results is None:  # for first element just copy
-                        combo_results = np.array(i_result[item_key], dtype=np.float64)
-                    else: # append laterally
-                        combo_results = np.c_[combo_results, np.array(i_result[item_key], dtype=np.float64)]
 
-                    var_nam.append(item_key+':'+i_meta['endpoint']+':'+str(i_meta['version']))
+                    if combined_md is None:  # for first element just copy
+                        combined_md = np.array(i_result[item_key], dtype=np.float64)
+                        num_obj = len(i_result[item_key])
+                    else: # append laterally
+                        if len(i_result[item_key]) != num_obj:
+                            self.results['error'] = 'incompatible size of results obtained from external sources'
+                            return
+
+                        combined_md = np.c_[combined_md, np.array(i_result[item_key], dtype=np.float64)]
+
+                    combined_md_names.append(item_key+':'+i_meta['endpoint']+':'+str(i_meta['version']))
 
                 if item['type']=='confidence':
                     item_key = item['key']
-                    if combo_confidence is None:  # for first element just copy
-                        combo_confidence = np.array(i_result[item_key], dtype=np.float64)
+                    if combined_cf is None:  # for first element just copy
+                        combined_cf = np.array(i_result[item_key], dtype=np.float64)
                     else: # append laterally
-                        combo_confidence = np.c_[combo_confidence, np.array(i_result[item_key], dtype=np.float64)]
+                        combined_cf = np.c_[combined_cf, np.array(i_result[item_key], dtype=np.float64)]
 
-                    conf_nam.append(item_key+':'+i_meta['endpoint']+':'+str(i_meta['version']))
+                    combined_cf_names.append(item_key+':'+i_meta['endpoint']+':'+str(i_meta['version']))
 
-        utils.add_result (self.results, combo_results, 'xmatrix', 'X matrix', 'results', 'objs', 'Combined output from external sources')
-
-        utils.add_result (self.results, combo_confidence, 'confidence', 'Confidence', 'confidence', 'objs', 'Combined confidence from external sources')
-
-        utils.add_result (self.results, var_nam, 'var_nam', 'Var. names', 'method', 'vars', 'Variable names from external sources')
-
-        utils.add_result (self.results, conf_nam, 'conf_nam', 'Conf. names', 'method', 'vars', 'Confidence indexes from external sources')
-
+        utils.add_result (self.results, combined_md, 'xmatrix', 'X matrix', 'results', 'objs', 'Combined output from external sources')
+        utils.add_result (self.results, combined_cf, 'confidence', 'Confidence', 'confidence', 'objs', 'Combined confidence from external sources')
+        utils.add_result (self.results, combined_md_names, 'var_nam', 'Var. names', 'method', 'vars', 'Variable names from external sources')
+        utils.add_result (self.results, combined_cf_names, 'conf_nam', 'Conf. names', 'method', 'vars', 'Confidence indexes from external sources')
 
         return 
 
 
     def run (self):
-        """         
+        '''         
         Process input file to obtain metadata (size, type, number of objects, name of objects, etc.) as well
         as for generating MD
             
@@ -686,7 +708,7 @@ class Idata:
         file
         
         This methods supports multiprocessing, splitting original files in a chunck per CPU        
-        """
+        '''
 
         # check for the presence of a valid pickle file
         if self.load():
