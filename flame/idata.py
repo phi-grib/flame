@@ -128,7 +128,7 @@ class Idata:
 
         utils.add_result (self.results, obj_num, 'obj_num', 'Num mol', 'method', 'single', 'Number of molecules present in the input file')
         utils.add_result (self.results, obj_nam, 'obj_nam', 'Mol name', 'label', 'objs', 'Name of the molecule, as present in the input file')
-        utils.add_result (self.results, obj_sml, 'SMILES', 'SMILES', 'decoration', 'objs', 'Structure of the molecule in SMILES format')
+        utils.add_result (self.results, obj_sml, 'SMILES', 'SMILES', 'smiles', 'objs', 'Structure of the molecule in SMILES format')
         
         if not utils.is_empty(obj_bio):
             utils.add_result (self.results, np.array(obj_bio, dtype=np.float64), 'ymatrix', 'Activity', 'decoration', 'objs', 'Biological anotation to be predicted by the model')
@@ -363,8 +363,8 @@ class Idata:
         '''
 
         ### uncomment to avoid saving results
-        print ('*** save commented for debugging ***')
-        return
+        # print ('*** save commented for debugging ***')
+        # return
         ##
 
         if 'ext_input' in self.parameters and self.parameters['ext_input']:

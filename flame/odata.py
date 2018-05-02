@@ -35,8 +35,8 @@ class Odata():
     def run_learn (self):
         ''' Process the results of lear, usually a report on the model quality '''
 
-        print ('building OK!')
-        return True, 'ok'
+        ## TODO: process learn output and produce meaniningfull JSON/TSV
+        return True, 'building OK'
 
 
     def run_apply (self):
@@ -50,7 +50,12 @@ class Odata():
                 self.results['error'] = 'unable to find "'+key+'" in results'
                 return self.run_error()
         
-        if self.format=='JSON':
+        if 'TSV' in self.format:
+            pass
+            ## TODO: dump output to 'output.tsv'
+            ## output = 'not implemented'
+ 
+        if 'JSON' in self.format:
             ## do not output var arrays, only obj arrays
             ## TODO: replace this hardcoded list with var type from manifest
             black_list = ['xmatrix', 'confidence', 'var_nam', 'conf_nam']   
@@ -77,9 +82,6 @@ class Odata():
 
             output = json.dumps(temp_json)
 
-        elif self.format == 'TSV':
-            output = 'not implemented'
-            
         return True, output
 
 
@@ -89,11 +91,13 @@ class Odata():
         white_list = ['error', 'origin']
         error_json = { key: val for key, val in self.results.items() if key in white_list } 
 
-        if self.format=='JSON':
+        if 'TSV' in self.format:
+            ## TODO: dump error to 'error.tsv'
+            return False, 'not implemented'
+
+        if 'JSON' in self.format:
             return True, json.dumps(error_json)    
         
-        if self.format == 'TSV':
-            return False, 'not implemented'
 
 
     def run (self):

@@ -84,6 +84,16 @@ function parseResults (results) {
     var manifest = myjson['manifest'];
     
     key_list = sortKeys(myjson);
+
+    // compile keys to render as chemical structures
+    var chem_list = [];
+    for (var item in manifest) {
+        if (manifest[item]['type']=='smiles') {
+            chem_list.push(manifest[item]['key']);
+        }
+    }
+
+    //console.log(chem_list);
     
     // header
     var tbl_body = '<thead><tr><th>#</th>';
@@ -108,8 +118,8 @@ function parseResults (results) {
 
         for (var key in key_list){
 
-            if (key_list[key]=="SMILES"){
-                tbl_body += '<td><canvas id="mol'+i+'"></canvas>';
+            if (chem_list.includes(key_list[key])){
+                tbl_body += '<td><canvas id="'+key_list[key]+i+'"></canvas>';
                 continue;
             } 
 
@@ -137,14 +147,17 @@ function parseResults (results) {
 
    
     // SMILES must be inserted after the canvases were already created in included in the HTML code
-    if (key_list.includes('SMILES')){
+    //if (key_list.includes('SMILES')){
+    if (chem_list.length>0){
 
         let smilesDrawer = new SmilesDrawer.Drawer( {'width':300, 'height':150});
 
         for (var i in myjson[mainv]){
-            SmilesDrawer.parse(myjson['SMILES'][i], function(tree) {
-                smilesDrawer.draw(tree, 'mol'+i, 'light', false);
-            });
+            for (var j in chem_list) {
+                SmilesDrawer.parse(myjson[chem_list[j]][i], function(tree) {
+                    smilesDrawer.draw(tree, chem_list[j]+i, 'light', false);
+                });
+            }
         }
     }
 
@@ -153,8 +166,6 @@ function parseResults (results) {
     $("#export").prop('disabled', false);
     $("#processing").prop('hidden', true);
 };
-
-
 
 
 // POST a prediction request for the selected model, version and input file
@@ -171,11 +182,11 @@ function postPredict (temp_dir, ifile) {
     "model"   : $("#model option:selected").text(),
     "version" : version,
     "temp_dir": temp_dir
-})
-.done(function(results) {
-    lastResults = results;
-    parseResults (results)
-});
+    })
+    .done(function(results) {
+        lastResults = results;
+        parseResults (results)
+    });
 
 };
 

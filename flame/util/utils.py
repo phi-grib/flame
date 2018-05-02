@@ -148,7 +148,7 @@ def add_result (results, var, _key, _label, _type, _dimension='objs', _descripti
 
     manifest_item = {'key': _key,                      # key in results
                      'label': _label,                  # descriptive text 
-                     'type': _type,                    # label, decoration, result, confidence, method
+                     'type': _type,                    # label, decoration, smiles, result, confidence, method
                      'dimension': _dimension,          # can be single | vars | objs
                      'description': _description,      # descriptive text (long) 
                      'relevance': _relevance           # main | None

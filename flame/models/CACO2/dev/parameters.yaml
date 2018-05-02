@@ -22,7 +22,10 @@ model_set:                            # list of models used for producing input
   version: 2
 
 # Output 
-output_format: JSON                   # JSON | TSV
+output_format:                        # JSON | TSV  (dump results to output.tsv and errors to error.tsv)
+- JSON      
+- TSV             
+output_md: false                      # if true dump the MD generated to 'output_md.tsv'
 
 # SDFile settings
 SDFile_activity: activity             # str
