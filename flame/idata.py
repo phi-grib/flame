@@ -302,7 +302,9 @@ class Idata:
                             continue
 
                     combined_md = np.hstack((combined_md, results[0]))
-                    combined_nm.append (results[1])
+                    # print ('parent*******************************',combined_nm)
+                    # print ('child********************************',results[1])
+                    combined_nm += results[1]
 
         return True, (combined_md, combined_nm)
 

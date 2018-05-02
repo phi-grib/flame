@@ -80,7 +80,7 @@ def predict_cmd(model):
     
     '''
 
-    predict = Predict(model['endpoint'], model['version'], 'JSON')
+    predict = Predict(model['endpoint'], model['version'], ['JSON','TSV'])
 
     ext_input, model_set = predict.get_model_set()
 

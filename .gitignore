@@ -116,4 +116,7 @@ flame/models
 
 # Pycharm config
 .idea
+
+# other
 flame/models/CACO2/dev/data.pkl
+flame/output_md.tsv

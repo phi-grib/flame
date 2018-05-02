@@ -51,9 +51,42 @@ class Odata():
                 return self.run_error()
         
         if 'TSV' in self.format:
-            pass
+
+            #TODO: make sure the required keys actualy exist
+            # start writting MD
+            if self.parameters['output_md']:
+
+                with open('output_md.tsv','w') as fo:
+
+                    # header: obj:name + var name
+                    header = 'name'
+                    var_nam = self.results['var_nam']
+  
+                    for nam in var_nam:
+                        header+= '\t'+nam
+                    fo.write (header+'\n')
+
+                    # extract obj_name and xmatrix
+                    xmatrix = self.results['xmatrix']
+                    obj_nam = self.results['obj_nam']
+
+                    # iterate for objects
+                    shape = np.shape(xmatrix)
+
+                    if len(shape)>1:  # 2D matrix (num_obj > 1)
+                        for x in range(shape[0]):
+                            line = obj_nam[x]
+                            for y in range(shape[1]):
+                                line += '\t'+str(xmatrix[x,y])
+                            fo.write(line+'\n')
+
+                    else:             # 1D matrix (num_obj = 1)
+                        line = obj_nam[0]
+                        for y in range(shape[0]):
+                            line += '\t'+str(xmatrix[y])
+                        fo.write(line+'\n')
+
             ## TODO: dump output to 'output.tsv'
-            ## output = 'not implemented'
  
         if 'JSON' in self.format:
             ## do not output var arrays, only obj arrays
