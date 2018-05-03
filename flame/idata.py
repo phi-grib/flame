@@ -636,20 +636,27 @@ class Idata:
 
         with open (self.ifile,'r') as fi:
             index = 0
+            var_nam = []
             obj_nam = []
+            smiles = []
             
             for line in fi:
-                if index==0 and self.parameters['TSV_varnames']:
+                if index==0 and self.parameters['TSV_varnames']:  # we asume that the first row contains var names
                     var_nam = line.strip().split('\t')
                     var_nam = var_nam[1:]
                 else:
                     value_list = line.strip().split('\t')
                     
                     if self.parameters['TSV_objnames']:
-                        obj_nam.append(value_list[0])
-                        value_list = value_list[1:]
+                        obj_nam.append(value_list[0])  # we asume that the first column contains object names
+                        value_list = value_list[1:]    
 
-                    if index==1:
+                    if 'SMILES' in var_nam:
+                        col = var_nam.index('SMILES')
+                        smiles.append(value_list[col])
+                        del value_list[col]
+
+                    if index==1:  # for the fist row, just copy the value list to the xmatrix
                         xmatrix = np.array(value_list, dtype=np.float64)
                     else:
                         xmatrix = np.vstack((xmatrix, np.array(value_list, dtype=np.float64) ))
@@ -677,6 +684,9 @@ class Idata:
                 obj_nam.append('obj%.10f' % i )
         
         utils.add_result (self.results, obj_nam, 'obj_nam', 'Mol name', 'label', 'objs', 'Name of the molecule, as present in the input file')
+
+        if len(smiles)>0:
+            utils.add_result (self.results, smiles, 'SMILES', 'SMILES', 'smiles', 'objs', 'Structure of the molecule in SMILES format')
 
         return
 
