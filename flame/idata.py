@@ -375,7 +375,7 @@ class Idata:
         md5_input = utils.md5sum(self.ifile)  # run md5 in self.ifile
 
         try:
-            with open (self.dest_path+'/data.pkl', 'wb') as fo:
+            with open (os.path.join(self.dest_path,'data.pkl'), 'wb') as fo:
 
                 pickle.dump (md5_parameters, fo)
                 pickle.dump (md5_input, fo)
@@ -394,7 +394,7 @@ class Idata:
             return False
 
         try:
-            with open (self.dest_path+'/data.pkl', 'rb') as fi:
+            with open (os.path.join(self.dest_path,'data.pkl'), 'rb') as fi:
                 md5_parameters = pickle.load(fi)
                 if md5_parameters != self.parameters['md5']:
                     return False
@@ -413,7 +413,7 @@ class Idata:
         except :
             return False
 
-        print ('>>> recycling data >>>')
+        print ('>>> recycling data >>>', os.path.join(self.dest_path,'data.pkl'))
 
         return True
 
@@ -658,8 +658,8 @@ class Idata:
             obj_num-=1
 
         ## extract any named as "TSV_activity" as the ymatrix
-        if self.parameters['TSV_activity'] in obj_nam:
-            col = obj_nam.index(self.parameters['TSV_activity'])
+        if self.parameters['TSV_activity'] in var_nam:
+            col = var_nam.index(self.parameters['TSV_activity'])
             ymatrix = xmatrix[:,col]
             xmatrix = np.delete(xmatrix,col,1)
             utils.add_result (self.results, ymatrix, 'ymatrix', 'Activity', 'decoration', 'objs', 'Biological anotation to be predicted by the model')
