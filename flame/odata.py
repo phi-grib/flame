@@ -52,41 +52,80 @@ class Odata():
         
         if 'TSV' in self.format:
 
-            #TODO: make sure the required keys actualy exist
+            # Make sure the keys 'var_nam', 'obj_nam', 'xmatrix' actualy exist
             # start writting MD
+        
             if self.parameters['output_md']:
 
                 with open('output_md.tsv','w') as fo:
 
-                    # header: obj:name + var name
-                    header = 'name'
-                    var_nam = self.results['var_nam']
-  
-                    for nam in var_nam:
-                        header+= '\t'+nam
-                    fo.write (header+'\n')
+                    if 'var_nam' in self.results:
+                        # header: obj:name + var name
 
-                    # extract obj_name and xmatrix
-                    xmatrix = self.results['xmatrix']
-                    obj_nam = self.results['obj_nam']
+                        header = 'name'
+                        var_nam = self.results['var_nam']
+    
+                        for nam in var_nam:
+                            header+= '\t'+nam
+                        fo.write (header+'\n')
 
-                    # iterate for objects
-                    shape = np.shape(xmatrix)
 
-                    if len(shape)>1:  # 2D matrix (num_obj > 1)
-                        for x in range(shape[0]):
-                            line = obj_nam[x]
-                            for y in range(shape[1]):
-                                line += '\t'+str(xmatrix[x,y])
+                    if 'xmatrix' in self.results and 'obj_nam' in self.results:
+                        # extract obj_name and xmatrix
+                        xmatrix = self.results['xmatrix']
+                        obj_nam = self.results['obj_nam']
+
+                        # iterate for objects
+                        shape = np.shape(xmatrix)
+
+                        if len(shape)>1:  # 2D matrix (num_obj > 1)
+                            for x in range(shape[0]):
+                                line = obj_nam[x]
+                                for y in range(shape[1]):
+                                    line += '\t'+str(xmatrix[x,y])
+                                fo.write(line+'\n')
+
+                        else:             # 1D matrix (num_obj = 1)
+                            line = obj_nam[0]
+                            for y in range(shape[0]):
+                                line += '\t'+str(xmatrix[y])
                             fo.write(line+'\n')
 
-                    else:             # 1D matrix (num_obj = 1)
-                        line = obj_nam[0]
-                        for y in range(shape[0]):
-                            line += '\t'+str(xmatrix[y])
-                        fo.write(line+'\n')
+            # label and smiles
+            key_list = ['obj_nam']
+            if 'SMILES' in self.results:
+                key_list.append('SMILES')
 
-            ## TODO: dump output to 'output.tsv'
+            # main result    
+            key_list += self.results['meta']['main']
+
+            # add all object type results
+            manifest = self.results['manifest']
+            for item in manifest:
+                if item['dimension']=='objs' and item['key'] not in key_list:
+                    key_list.append(item['key'])
+
+            with open ('output.tsv', 'w') as fo:
+                header = ''
+                for label in key_list:
+                    header += label+'\t'
+                fo.write (header+'\n')
+
+                obj_num = int (self.results['obj_num'])
+
+                for i in range(obj_num):
+                    line = ''
+                    for key in key_list:
+                        val = self.results[key][i]
+                        if val == None:
+                            line += '-'
+                        else:
+                            if isinstance(val, float):
+                                line += "%.4f" % val
+                            else:
+                                line += val
+                        line+='\t'
+                    fo.write (line+'\n')
  
         if 'JSON' in self.format:
             ## do not output var arrays, only obj arrays
@@ -121,16 +160,17 @@ class Odata():
     def run_error (self):
         ''' Formats error messages, sending only the error and the error source '''
         
-        white_list = ['error', 'origin']
+        white_list = ['error', 'warning', 'origin']
         error_json = { key: val for key, val in self.results.items() if key in white_list } 
 
         if 'TSV' in self.format:
-            ## TODO: dump error to 'error.tsv'
-            return False, 'not implemented'
+            with open ('error.tsv','w') as fo:
+                for key, value in error_json.items():
+                    fo.write (key+'\t'+value+'\n')
+            return False, 'Errors written to "error.tsv"'
 
         if 'JSON' in self.format:
-            return True, json.dumps(error_json)    
-        
+            return True, json.dumps(error_json)
 
 
     def run (self):

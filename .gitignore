@@ -120,3 +120,5 @@ flame/models
 # other
 flame/models/CACO2/dev/data.pkl
 flame/output_md.tsv
+flame/output.tsv
+flame/error.tsv
