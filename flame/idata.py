@@ -26,6 +26,7 @@ import pickle
 import json
 import tempfile
 import multiprocessing as mp
+import pathlib
 
 import numpy as np
 from rdkit import Chem
@@ -302,8 +303,6 @@ class Idata:
                             continue
 
                     combined_md = np.hstack((combined_md, results[0]))
-                    # print ('parent*******************************',combined_nm)
-                    # print ('child********************************',results[1])
                     combined_nm += results[1]
 
         return True, (combined_md, combined_nm)
@@ -631,7 +630,51 @@ class Idata:
         version of Run for data input (CSV tabular format)
         '''
 
-        self.results ['error'] = 'importing data is not implemented yet'
+        ## TODO: text existence of file and add more format controls
+
+        with open (self.ifile,'r') as fi:
+            index = 0
+            obj_nam = []
+            
+            for line in fi:
+                if index==0 and self.parameters['TSV_varnames']:
+                    var_nam = line.strip().split('\t')
+                    var_nam = var_nam[1:]
+                else:
+                    value_list = line.strip().split('\t')
+                    
+                    if self.parameters['TSV_objnames']:
+                        obj_nam.append(value_list[0])
+                        value_list = value_list[1:]
+
+                    if index==1:
+                        xmatrix = np.array(value_list, dtype=np.float64)
+                    else:
+                        xmatrix = np.vstack((xmatrix, np.array(value_list, dtype=np.float64) ))
+                index+=1
+
+        obj_num = index
+        if self.parameters['TSV_varnames']:
+            obj_num-=1
+
+        ## extract any named as "TSV_activity" as the ymatrix
+        if self.parameters['TSV_activity'] in obj_nam:
+            col = obj_nam.index(self.parameters['TSV_activity'])
+            ymatrix = xmatrix[:,col]
+            xmatrix = np.delete(xmatrix,col,1)
+            utils.add_result (self.results, ymatrix, 'ymatrix', 'Activity', 'decoration', 'objs', 'Biological anotation to be predicted by the model')
+
+        utils.add_result (self.results, obj_num, 'obj_num', 'Num mol', 'method', 'single', 'Number of molecules present in the input file')
+        utils.add_result (self.results, xmatrix, 'xmatrix', 'X matrix', 'method', 'vars', 'Molecular descriptors')
+
+        if self.parameters['TSV_varnames']:
+            utils.add_result (self.results, var_nam, 'var_nam', 'Var names', 'method', 'vars', 'Names of the X variables')
+        
+        if not self.parameters['TSV_objnames']:
+            for i in range (obj_num):
+                obj_nam.append('obj%.10f' % i )
+        
+        utils.add_result (self.results, obj_nam, 'obj_nam', 'Mol name', 'label', 'objs', 'Name of the molecule, as present in the input file')
 
         return
 
@@ -716,7 +759,15 @@ class Idata:
         if self.load():
             return self.results
 
-        input_type = self.parameters['input_type'] 
+
+        suffix = pathlib.Path(self.ifile).suffix
+
+        if suffix=='.tsv':
+            input_type = 'data'
+        elif suffiz == '.sdf':
+            input_type = 'molecule'
+        else: 
+            input_type = self.parameters['input_type'] 
 
         # processing for molecular input (for now an SDFile)
         if (input_type== 'molecule'):
