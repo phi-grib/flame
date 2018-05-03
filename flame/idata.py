@@ -764,7 +764,7 @@ class Idata:
 
         if suffix=='.tsv':
             input_type = 'data'
-        elif suffiz == '.sdf':
+        elif suffix == '.sdf':
             input_type = 'molecule'
         else: 
             input_type = self.parameters['input_type'] 
