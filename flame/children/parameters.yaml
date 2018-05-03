@@ -30,6 +30,11 @@ SDFile_activity: activity             # str
 SDFile_experimental: IC50             # str
 SDFile_name: GENERIC_NAME             # str
 
+# TSV settings
+TSV_activity: activity                # str
+TSV_objnames: true                    # true if the object names are in the first column
+TSV_varnames: true                    # true if the variable names are in the first row
+
 # modeling settings
 modelingToolkit: internal             # internal | R | KNIME
 model: RF                             # RF | SVM
