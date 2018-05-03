@@ -627,10 +627,12 @@ class Idata:
 
     def _run_data (self):
         '''
-        version of Run for data input (CSV tabular format)
+        version of Run for data input (TSV tabular format)
         '''
 
-        ## TODO: text existence of file and add more format controls
+        if not os.path.isfile(self.ifile):
+            self.results['error'] = 'unable to open file '+self.ifile
+            return
 
         with open (self.ifile,'r') as fi:
             index = 0
@@ -759,15 +761,16 @@ class Idata:
         if self.load():
             return self.results
 
-
-        suffix = pathlib.Path(self.ifile).suffix
-
-        if suffix=='.tsv':
-            input_type = 'data'
-        elif suffix == '.sdf':
-            input_type = 'molecule'
+        if self.parameters['input_type'] == 'ext_data':
+            input_type = 'ext_data'
         else: 
-            input_type = self.parameters['input_type'] 
+            suffix = pathlib.Path(self.ifile).suffix
+            if suffix=='.tsv':
+                input_type = 'data'
+            elif suffix == '.sdf':
+                input_type = 'molecule'
+            else: 
+                input_type = self.parameters['input_type'] 
 
         # processing for molecular input (for now an SDFile)
         if (input_type== 'molecule'):
