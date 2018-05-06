@@ -274,6 +274,7 @@ class Idata:
         
         registered_methods = [('RDKit_properties',computeMD._RDKit_properties),
                               ('RDKit_md', computeMD._RDKit_descriptors),
+                              ('padel',computeMD._padel_descriptors),
                               ('custom', self.computeMD_custom)]
 
         for imethod in registered_methods:
