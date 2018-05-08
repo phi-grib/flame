@@ -125,26 +125,22 @@ def _padel_descriptors (ifile):
     # TODO: this cannot be hardcoded! maybe read from the component registry?
     uri = "http://localhost:5000/padel/api/v0.1/calc/json"
 
-    # try:
-    #     #TODO: check if the service is up
-        
-    # except:
-    #     return False, 'Unable to compute RDKit MD'
-
-    #tmpdir = os.path.abspath('./padel')
     tmpdir = os.path.abspath(tempfile.mkdtemp(dir='./'))
-    ##os.mkdir (tmpdir)
-
     shutil.copy(ifile,tmpdir)
 
     payload = {
         '-2d': '',
-        '-dir': tmpdir,
-        '-log': ''
+        '-dir': tmpdir
     }
 
-    req = requests.post(uri, json=payload)
+    try:
+        req = requests.post(uri, json=payload)
+        if req.status_code != 200:
+            return False, 'ERROR: failed to contact padel service with code: '+str(req.status_code)
+    except:
+        return False, 'ERROR: failed to contact padel service'        
 
+    ## DEBUG only
     print('padel service results : ', req.json())
 
     results = req.json()
@@ -160,6 +156,7 @@ def _padel_descriptors (ifile):
     with open(ofile,'r') as of:
         index = 0
         var_nam = []
+        xmatrix = None
 
         for line in of:
 
@@ -167,13 +164,34 @@ def _padel_descriptors (ifile):
                 var_nam = line.strip().split(',')
                 var_nam = var_nam[1:]
             else:
+
                 value_list = line.strip().split(',')
-                value_list = value_list[1:]    
+
+                errors = False
+                try:
+                    nvalue_list = [float(x) for x in value_list[1:] ]
+                except:
+                    errors = True
+                
+                ## TODO: send back a list of True/False indicating if the xmatrix contains
+                ## MDs for all the molecues. As it is now, the size of the object information
+                ## and the xmatrix might disagree
+
+                md = np.array(nvalue_list, dtype=np.float64)
+                md = np.nan_to_num(md)
+                
+                # detected a rare bug producing extremely large PaDel descriptors (>1.0e300), leading to overflows
+                # apply a conservative top cutoff of 1.0e10
+                md [ md > 1.0e10 ] = 1.0e10
+                
+                if errors:
+                    return False, 'ERROR in Padel results parsing for object '+str(index+1)
 
                 if index==1:  # for the fist row, just copy the value list to the xmatrix
-                    xmatrix = np.array(value_list, dtype=np.float64)
+                    xmatrix = md
                 else:
-                    xmatrix = np.vstack((xmatrix, np.array(value_list, dtype=np.float64) ))
+                    xmatrix = np.vstack((xmatrix, md))
+
             index+=1
 
     shutil.rmtree (tmpdir)
