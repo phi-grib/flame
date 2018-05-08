@@ -166,26 +166,37 @@ def _padel_descriptors (ifile):
             else:
 
                 value_list = line.strip().split(',')
-
                 errors = False
+
                 try:
                     nvalue_list = [float(x) for x in value_list[1:] ]
                 except:
                     errors = True
+
+                # value_list = value_list[1:]
+                # nvalue_list = []
+                # for i in range(len(value_list)):
+                #     try:
+                #         v = float(value_list[i])
+                #     except:
+                #         print ('error in object: ',index,' md: ', i)
+                #         errors = True
+                #         v = 99.999
+                #     nvalue_list.append(v)
                 
                 ## TODO: send back a list of True/False indicating if the xmatrix contains
                 ## MDs for all the molecues. As it is now, the size of the object information
                 ## and the xmatrix might disagree
 
-                md = np.array(nvalue_list, dtype=np.float64)
-                md = np.nan_to_num(md)
-                
-                # detected a rare bug producing extremely large PaDel descriptors (>1.0e300), leading to overflows
-                # apply a conservative top cutoff of 1.0e10
-                md [ md > 1.0e10 ] = 1.0e10
-                
                 if errors:
                     return False, 'ERROR in Padel results parsing for object '+str(index+1)
+                    
+                md = np.array(nvalue_list, dtype=np.float64)
+
+                # md = np.nan_to_num(md)
+                # # detected a rare bug producing extremely large PaDel descriptors (>1.0e300), leading to overflows
+                # # apply a conservative top cutoff of 1.0e10
+                # md [ md > 1.0e10 ] = 1.0e10
 
                 if index==1:  # for the fist row, just copy the value list to the xmatrix
                     xmatrix = md
