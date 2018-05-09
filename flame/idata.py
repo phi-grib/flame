@@ -285,7 +285,7 @@ class Idata:
                 if not success :
                     return success, results
 
-                if is_empty: # firt md computed, just copy
+                if is_empty: # first md computed, just copy
 
                     combined_md = results[0]  # np.array of values
                     combined_nm = results[1]  # list of variable names
