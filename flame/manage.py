@@ -227,12 +227,18 @@ def action_dir ():
     rdir = utils.model_repository_path()
 
     for imodel in os.listdir (rdir):
-        versions = ['dev']
+
+        # versions = ['dev']
+        versions = [{'text':'dev'}]
 
         for iversion in os.listdir (utils.model_tree_path(imodel)):
             if iversion.startswith('ver'):
-                versions.append (iversion)
+                # versions.append (iversion)
+                versions.append( {'text':iversion})
                 
-        results.append ((imodel,versions))
+        # results.append ((imodel,versions))
+        results.append ( {'text':imodel, 'nodes': versions})
 
+    print (json.dumps(results))
+    
     return True, json.dumps(results)
