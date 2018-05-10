@@ -116,8 +116,13 @@ class Odata():
                 for i in range(obj_num):
                     line = ''
                     for key in key_list:
-                        val = self.results[key][i]
-                        if val == None:
+
+                        if i>len(self.results[key]):
+                            val = None
+                        else: 
+                            val = self.results[key][i]
+
+                        if val==None:
                             line += '-'
                         else:
                             if isinstance(val, float):
@@ -167,10 +172,13 @@ class Odata():
             with open ('error.tsv','w') as fo:
                 for key, value in error_json.items():
                     fo.write (key+'\t'+value+'\n')
-            return False, 'Errors written to "error.tsv"'
 
         if 'JSON' in self.format:
-            return True, json.dumps(error_json)
+            return False, json.dumps(error_json)
+
+        # this is only reached if JSON is not present and
+        # expected output is the console
+        return False, 'errors found'
 
 
     def run (self):

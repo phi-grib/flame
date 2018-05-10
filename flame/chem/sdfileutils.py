@@ -127,10 +127,19 @@ def getName(mol, count=1, field=None, suppl= None):
     else:
         name = ''
 
-        if field and mol.HasProp (field):
-            name = mol.GetProp(field)
-        else:
-            name = mol.GetProp('_Name')
+        candidates = []
+        if field:
+            if isinstance(field, list):
+                candidates = field
+            elif isinstance(fiedl, str):
+                candidates = [field]
+
+        candidates.append('_Name')
+
+        for iname in candidates:
+            if mol.HasProp (iname):
+                name = mol.GetProp(iname)
+                break
             
         if name == '':
             name = 'mol%0.10d'%count

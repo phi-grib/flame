@@ -46,15 +46,18 @@ def _RDKit_properties (ifile):
     properties = rdMolDescriptors.Properties()
 
     md_nam = []
+    success_list = []
 
     for nam in properties.GetPropertyNames():
         md_nam.append(nam)
+
 
     try:
         num_obj = 0
         for mol in suppl: 
             if mol is None:
                 print ('ERROR: (@_RDKit_properties) Unable to process molecule #',str(num_obj+1), 'in file '+ ifile)
+                success_list.append(False)
                 continue      
             #xmatrix [num_obj] = properties.ComputeProperties(mol)
             if num_obj == 0:
@@ -67,6 +70,7 @@ def _RDKit_properties (ifile):
             #     print ('**** simulated error for DEBUG in compute_md.py ****')
             #     return False, 'Failed compute RDKit properties' 
             ##### REMOVE!!!!
+            success_list.append(True)
             num_obj += 1 
 
     except:
@@ -75,7 +79,7 @@ def _RDKit_properties (ifile):
     if num_obj == 0:
         return False, 'Unable to compute RDKit properties for molecule '+ifile
 
-    return True, (xmatrix, md_nam)
+    return True, (xmatrix, md_nam, success_list)
 
 
 def _RDKit_descriptors (ifile):
@@ -93,12 +97,14 @@ def _RDKit_descriptors (ifile):
     nms=[x[0] for x in Descriptors._descList]
 
     md = MoleculeDescriptors.MolecularDescriptorCalculator(nms)
+    success_list = []
 
     try:
         num_obj = 0
         for mol in suppl:
             if mol is None:
                 print ('ERROR: (@_RDKit_descriptors) Unable to process molecule #',str(num_obj+1), 'in file '+ ifile)
+                success_list.append(False)
                 continue      
             
             if num_obj == 0:
@@ -106,12 +112,13 @@ def _RDKit_descriptors (ifile):
             else:
                 xmatrix = np.vstack ((xmatrix,md.CalcDescriptors(mol)))
 
+            success_list.append(True)
             num_obj += 1 
     
     except:
         return False, 'Failed computing RDKit descriptors for molecule' + str(num_obj+1) + 'in file '+ ifile
 
-    return True, (xmatrix, nms)
+    return True, (xmatrix, nms, success_list)
 
 
 def _padel_descriptors (ifile):
@@ -156,6 +163,7 @@ def _padel_descriptors (ifile):
     with open(ofile,'r') as of:
         index = 0
         var_nam = []
+        success_list = []
         xmatrix = None
 
         for line in of:
@@ -163,34 +171,18 @@ def _padel_descriptors (ifile):
             if index==0 :  # we asume that the first row contains var names
                 var_nam = line.strip().split(',')
                 var_nam = var_nam[1:]
+
             else:
 
                 value_list = line.strip().split(',')
-                errors = False
 
                 try:
                     nvalue_list = [float(x) for x in value_list[1:] ]
                 except:
-                    errors = True
-
-                # value_list = value_list[1:]
-                # nvalue_list = []
-                # for i in range(len(value_list)):
-                #     try:
-                #         v = float(value_list[i])
-                #     except:
-                #         print ('error in object: ',index,' md: ', i)
-                #         errors = True
-                #         v = 99.999
-                #     nvalue_list.append(v)
+                    success_list.append(False)
+                    print ('ERROR in Padel results parsing for object '+str(index))
+                    continue
                 
-                ## TODO: send back a list of True/False indicating if the xmatrix contains
-                ## MDs for all the molecues. As it is now, the size of the object information
-                ## and the xmatrix might disagree
-
-                if errors:
-                    return False, 'ERROR in Padel results parsing for object '+str(index+1)
-                    
                 md = np.array(nvalue_list, dtype=np.float64)
 
                 # md = np.nan_to_num(md)
@@ -203,8 +195,10 @@ def _padel_descriptors (ifile):
                 else:
                     xmatrix = np.vstack((xmatrix, md))
 
+                success_list.append(True)
+
             index+=1
 
     shutil.rmtree (tmpdir)
 
-    return True, (xmatrix, var_nam)
+    return True, (xmatrix, var_nam, success_list)

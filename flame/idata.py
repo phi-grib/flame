@@ -249,8 +249,9 @@ class Idata:
         returns a boolean anda a tupla of two elements:
         [0] xmatrix (nparray np.float64)
         [1] list of variable names (str)
+        [2] list of booleans indicating if the computation succeeded for each molecule
 
-        example:    return True, (xmatrix, md_nam)
+        example:    return True, (xmatrix, md_nam, success_list)
 
         '''
         
@@ -269,6 +270,7 @@ class Idata:
 
         combined_md = None
         combined_nm = None
+        combined_sc = None
 
         is_empty = True
         
@@ -289,6 +291,7 @@ class Idata:
 
                     combined_md = results[0]  # np.array of values
                     combined_nm = results[1]  # list of variable names
+                    combined_sc = results[2]  # list of true/false
 
                     shape = np.shape (combined_md)
 
@@ -304,9 +307,15 @@ class Idata:
                             continue
 
                     combined_md = np.hstack((combined_md, results[0]))
-                    combined_nm += results[1]
+                    combined_nm.extend(results[1])
 
-        return True, (combined_md, combined_nm)
+                    new_sc = []
+                    for i in range (len(combined_sc)):
+                        new_sc.append(combined_sc and results[2][i])
+
+                    combined_sc=new_sc
+
+        return True, (combined_md, combined_nm, combined_sc)
 
 
     def consolidate (self, results, nobj):
@@ -317,7 +326,6 @@ class Idata:
         first = True
         xmatrix = None
         var_nam = None
-        success_list = []
 
         for iresults in results:
 
@@ -325,21 +333,18 @@ class Idata:
             if iresults[0] == False :
                 return False, iresults [1]
             
-            # for objectwise "internal" is a tupla of 2 elements (xmatrix, var_nam)
-            # for serieswise "internal" is a tupla of 3 elements (xmatrix, var_nam, success_list)
+            # internal is a tupla of 3 elements (xmatrix, var_nam, success_list)
             internal = iresults [1]
             ixmatrix = internal [0]
 
             if type (ixmatrix).__module__ != np.__name__:
                 return False, "unknown results type in consolidate"
 
-            ivar_nam = internal [1]
-
             if first:
                 xmatrix = ixmatrix
-                var_nam = ivar_nam
-                if len(internal)>2:
-                    success_list = internal [2]
+                var_nam = internal [1]
+                success_list = internal [2]
+
                 shape = np.shape(ixmatrix)                
                 first = False
             else:
@@ -352,9 +357,7 @@ class Idata:
                         return False, "inconsistent number of variables"
 
                 xmatrix = np.vstack ((xmatrix, ixmatrix))
-
-                if len(internal)>2:
-                    success_list += internal[2]
+                success_list+=internal[2]
 
         return True, (xmatrix, var_nam, success_list)
 
@@ -456,6 +459,8 @@ class Idata:
 
             success, results = self.workflow_series(ifile)
 
+            # since the workflow was run for a single molecule, results[2] is ignored, because it must match 
+            # the value in success
             success_list[i] = success
 
             if not success:           # failed in the workflow
@@ -483,7 +488,8 @@ class Idata:
         input : ifile, a molecular file in SDFile format
         output: results contains two lists
                 results[0] a numpy bidimensional array containing MD
-                results[1] a list of strings containing the names of the MD vars    
+                results[1] a list of strings containing the names of the MD vars
+                results[2] a list of booleans indicating for which objects the MD computations succeeded    
 
         '''
 
@@ -515,12 +521,17 @@ class Idata:
         # list objects to remove
         remove_index = []
         warning_list = []
+        obj_num = 0
         for i in range(len(workflow)):
             if inform[i] and not workflow[i]:
                 remove_index.append(i)
-                warning_list.append(self.results['obj_nam'][i]) 
+                warning_list.append(self.results['obj_nam'][i])
+            if inform[i] and workflow[i]:
+                obj_num+=1
 
         #print (remove_index)
+        if 'obj_num' in self.results:
+            self.results['obj_num'] = obj_num
 
         manifest = self.results['manifest']
         for element in manifest:
@@ -596,25 +607,25 @@ class Idata:
 
         ## check if any molecule failed to complete the workflow and then 
         ## ammend object annotations in self.results
-        if self.parameters['mol_batch'] == 'objects':
-            success_workflow = results[2]
 
-            if len (success_inform) != len(success_workflow):
-                self.results['error'] = 'number of molecules informed and processed does not match'
+        success_workflow = results[2]
+
+        if len (success_inform) != len(success_workflow):
+            self.results['error'] = 'number of molecules informed and processed does not match'
+            return
+
+        ## check if molecules not informed succeded to be complete MD generation
+        ## this should never happen, because they do not pass the normalization step
+        for i,j in zip(success_inform, success_workflow):
+            if j and not i:
+                self.results['error'] = 'unknown error in molecule inform'
                 return
 
-            ## TODO: This should never happen!!!. Pass the success_inform to the workflow to avoid
-            ## processing non informed molecules
-            ## Until we fix, we better issue an error
-            for i,j in zip(success_inform, success_workflow):
-                if j and not i:
-                    self.results['error'] = 'unknown error in molecule inform'
-                    return
-
-            for i,j in zip(success_inform, success_workflow):
-                if i and not j:
-                    self.ammend_objects (success_inform, success_workflow)
-                    break
+        ## check if a molecule informed did not succeed to complete MD generation 
+        for i,j in zip(success_inform, success_workflow):
+            if i and not j:
+                self.ammend_objects (success_inform, success_workflow)
+                break
 
         utils.add_result (self.results, results[0], 'xmatrix', 'X matrix', 'method', 'vars', 'Molecular descriptors')
 
