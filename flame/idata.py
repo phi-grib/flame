@@ -177,6 +177,7 @@ class Idata:
                     continue
 
                 # if standardize
+                print (method)
                 if 'standardize' in method:
                     try:
                         parent = standardise.run (Chem.MolToMolBlock(m))
@@ -189,7 +190,7 @@ class Idata:
                         return False, "Unknown standardiser error"
 
                 else:
-                    print ('ERROR: (@normalize) method '+method+' not recognized')
+                    #print ('ERROR: (@normalize) method '+str(method)+' not recognized')
                     parent = Chem.MolToMolBlock(m)
 
                 # in any case, write parent plus internal ID (flameID)
@@ -609,6 +610,10 @@ class Idata:
         ## ammend object annotations in self.results
 
         success_workflow = results[2]
+
+        if (len(success_workflow)!=nobj):
+            self.results['error'] = 'failed to complete the MD computation. Only '+str(len(success_workflow))+' out of '+str(nobj)+' compounds found'
+            return     
 
         if len (success_inform) != len(success_workflow):
             self.results['error'] = 'number of molecules informed and processed does not match'

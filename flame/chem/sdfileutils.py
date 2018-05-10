@@ -131,7 +131,7 @@ def getName(mol, count=1, field=None, suppl= None):
         if field:
             if isinstance(field, list):
                 candidates = field
-            elif isinstance(fiedl, str):
+            elif isinstance(field, str):
                 candidates = [field]
 
         candidates.append('_Name')
