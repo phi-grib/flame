@@ -177,7 +177,6 @@ class Idata:
                     continue
 
                 # if standardize
-                print (method)
                 if 'standardize' in method:
                     try:
                         parent = standardise.run (Chem.MolToMolBlock(m))
@@ -190,7 +189,7 @@ class Idata:
                         return False, "Unknown standardiser error"
 
                 else:
-                    #print ('ERROR: (@normalize) method '+str(method)+' not recognized')
+                    print ('ERROR: (@normalize) method '+method+' not recognized')
                     parent = Chem.MolToMolBlock(m)
 
                 # in any case, write parent plus internal ID (flameID)
@@ -358,7 +357,7 @@ class Idata:
                         return False, "inconsistent number of variables"
 
                 xmatrix = np.vstack ((xmatrix, ixmatrix))
-                success_list+=internal[2]
+                success_list+=internal [2]
 
         return True, (xmatrix, var_nam, success_list)
 
@@ -611,10 +610,6 @@ class Idata:
 
         success_workflow = results[2]
 
-        if (len(success_workflow)!=nobj):
-            self.results['error'] = 'failed to complete the MD computation. Only '+str(len(success_workflow))+' out of '+str(nobj)+' compounds found'
-            return     
-
         if len (success_inform) != len(success_workflow):
             self.results['error'] = 'number of molecules informed and processed does not match'
             return
@@ -634,10 +629,7 @@ class Idata:
 
         utils.add_result (self.results, results[0], 'xmatrix', 'X matrix', 'method', 'vars', 'Molecular descriptors')
 
-        #print ('xmatrix', np.shape(results[0]))
-
-        if len(results)>1 :
-            utils.add_result (self.results, results[1], 'var_nam', 'Var names', 'method', 'vars', 'Names of the X variables')
+        utils.add_result (self.results, results[1], 'var_nam', 'Var names', 'method', 'vars', 'Names of the X variables')
 
         return
 

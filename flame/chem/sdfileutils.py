@@ -83,7 +83,9 @@ def split_SDFile (ifile, num_chunks):
             temp_files_name.append(chunk_name)
    
         # write the mol content in the output file
-        fo.write (suppl.GetItemText(mi))
+        buffer = suppl.GetItemText(mi)
+        for line in buffer:
+            fo.write(line.replace('\r',''))
         chunk_mol_i += 1
 
     # Terminate chunk i
