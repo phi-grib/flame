@@ -64,7 +64,7 @@ def split_SDFile (ifile, num_chunks):
     # Chunk i initialization
     chunk_mol_i = 0  # counter of molecules within each chunk
     chunk_name = '{}_{}{}'.format(filename, chunk_i, fileext)
-    fo = open (chunk_name, 'w')
+    fo = open (chunk_name, 'w', newline='\n') # force \n to avoid using CR-LF in Windows
     temp_files_name.append(chunk_name)
     
     for mi in range(num_mols):
@@ -79,13 +79,11 @@ def split_SDFile (ifile, num_chunks):
             # Chunk i initialization
             chunk_mol_i = 0 # counter of molecules within each chunk
             chunk_name = '{}_{}{}'.format(filename, chunk_i, fileext)
-            fo = open (chunk_name, 'w')
+            fo = open (chunk_name, 'w', newline='\n')  # force \n to avoid using CR-LF in Windows
             temp_files_name.append(chunk_name)
    
         # write the mol content in the output file
-        buffer = suppl.GetItemText(mi)
-        for line in buffer:
-            fo.write(line.replace('\r',''))
+        fo.write (suppl.GetItemText(mi))
         chunk_mol_i += 1
 
     # Terminate chunk i

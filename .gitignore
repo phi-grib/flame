@@ -107,11 +107,11 @@ ENV/
 .vscode/
 
 # Molecules
-.sdf
+*.sdf
 mols
 
 # Pickle files and models
-.pkl
+*.pkl
 flame/models
 
 # Pycharm config
@@ -119,5 +119,5 @@ flame/models
 
 # other
 flame/models/CACO2/dev/data.pkl
-.tsv
+*.tsv
 
