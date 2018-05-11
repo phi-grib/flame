@@ -1,17 +1,17 @@
 # system settings
 verbose_error: true
-numCPUs: 1
+numCPUs: 2
 mol_batch: series                    # series | objects | auto (not implemented!)
 
 # input settings
 input_type: molecule                  # molecule | data | ext_data
-normalize_method:                     # null | standardize
-- standardize             
+normalize_method:                     # null | standardize       
+- standardize
 
 ionize_method: null                   # null | moka
 convert3D_method: null                # null | ETKDG
 computeMD_method:                     # RDKit_properties | RDKit_md | padel | custom
-- padel
+- RDKit_properties
 
 ext_input: false                      # external input source TRUE
 model_set:                            # list of models used for producing input
@@ -29,7 +29,9 @@ output_md: true                      # if true dump the MD generated to 'output_
 # SDFile settings
 SDFile_activity: activity             # str
 SDFile_experimental: IC50             # str
-SDFile_name: GENERIC_NAME             # str
+SDFile_name: 
+- GENERIC_NAME             # str
+- name
 
 # TSV settings
 TSV_activity: activity                # str

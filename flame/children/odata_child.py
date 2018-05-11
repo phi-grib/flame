@@ -24,9 +24,9 @@ from odata import Odata
 
 class OdataChild (Odata):
 
-    def __init__ (self, control, results):
+    def __init__ (self, parameters, results):
 
-        Odata.__init__ (self, control, results)
+        Odata.__init__(self, parameters, results)
 
 
 

@@ -24,8 +24,7 @@ from idata import Idata
 
 class IdataChild (Idata):
 
-    def __init__ (self, control, ifile):
+    def __init__ (self, parameters, input_source):
 
-        Idata.__init__ (self, control, ifile)
+        Idata.__init__ (self, parameters, input_source)
     
-
