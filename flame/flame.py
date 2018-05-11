@@ -26,6 +26,14 @@ import util.utils as utils
 import context
 import manage 
 
+## TEMP path to allow EBI models to work
+def sensitivity(y_true, y_pred):
+    tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
+    return(tp / (tp+fn))
+
+def specificity(y_true, y_pred):
+    tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
+    return(tn / (tn+fp))
 
 def manage_cmd(args):
     ''' Instantiates a Build object to build a model using the given input file (training series) and model (name of endpoint, eg. 'CACO2') '''
@@ -50,6 +58,9 @@ def manage_cmd(args):
         success, results = manage.action_refactoring (args.file)
     elif args.action == 'dir':
         success, results = manage.action_dir (args.endpoint)
+    else:
+        success = False
+        results = 'manage command unknown'
 
     print('flame : ', success, results)
 
