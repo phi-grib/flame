@@ -25,7 +25,6 @@ import os
 import shutil
 import util.utils as utils
 
-
 import multiprocessing as mp
 
 from predict import Predict
