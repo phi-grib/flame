@@ -26,6 +26,15 @@ import util.utils as utils
 import context
 import manage 
 
+#TEMP: only to allow EBI model to run
+def sensitivity(y_true, y_pred):
+    tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
+    return(tp / (tp+fn))
+
+#TEMP: only to allow EBI model to run
+def specificity(y_true, y_pred):
+    tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
+    return(tn / (tn+fp))
 
 def manage_cmd(args):
     ''' Instantiates a Build object to build a model using the given input file (training series) and model (name of endpoint, eg. 'CACO2') '''
