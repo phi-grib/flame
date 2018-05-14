@@ -39,7 +39,7 @@ TSV_objnames: true                    # true if the object names are in the firs
 TSV_varnames: true                    # true if the variable names are in the first row
 
 # modeling settings
-modelingToolkit: internal             # internal | R | KNIME
+modelingToolkit: internal             # internal | R | KNIME | custom
 model: RF                             # RF | SVM
 modelAutoscaling: false               # true | false
 quantitative: true

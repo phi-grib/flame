@@ -61,6 +61,8 @@ class Learn:
         # initilizate estimator
         model = self.parameters['model']
         if  model == 'RF':
+            # model = RF(self.results, self.parameters)
+            
             model = RF(self.X,self.Y, self.parameters['quantitative'], self.parameters['modelAutoscaling'], self.parameters['tune'],
                         self.parameters['ModelValidationCV'], self.parameters['ModelValidationN'], self.parameters['ModelValidationP'], 
                         self.parameters['ModelValidationLC'] ,self.parameters['conformalSignificance'], self.model_path,
