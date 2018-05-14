@@ -31,15 +31,15 @@ import manage
 import context
 import util.utils as utils
 
-## TEMP path to allow EBI models to work
+#TEMP: only to allow EBI model to run
 def sensitivity(y_true, y_pred):
     tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
     return(tp / (tp+fn))
 
+#TEMP: only to allow EBI model to run
 def specificity(y_true, y_pred):
     tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
     return(tn / (tn+fp))
-
 
 class FlamePredict(object):
     @cherrypy.expose

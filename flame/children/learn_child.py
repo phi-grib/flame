@@ -24,9 +24,9 @@ from learn import Learn
 
 class LearnChild (Learn):
 
-    def __init__ (self, control, results):
+    def __init__ (self, parameters, results):
 
-        Learn.__init__(self, control, results)
+        Learn.__init__(self, parameters, results)
 
 
 

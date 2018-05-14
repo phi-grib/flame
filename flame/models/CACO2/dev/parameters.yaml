@@ -11,7 +11,6 @@ normalize_method:
 ionize_method: null                   # null | moka
 convert3D_method: null                # null | ETKDG
 computeMD_method:                     # RDKit_properties | RDKit_md | custom
-- RDKit_md
 - RDKit_properties
 
 ext_input: false                      # external input source TRUE
@@ -30,7 +29,9 @@ output_md: false                      # if true dump the MD generated to 'output
 # SDFile settings
 SDFile_activity: activity             # str
 SDFile_experimental: IC50             # str
-SDFile_name: GENERIC_NAME             # str
+SDFile_name: 
+- GENERIC_NAME             
+- name
 
 # TSV settings
 TSV_activity: activity                # str
@@ -38,7 +39,7 @@ TSV_objnames: true                    # true if the object names are in the firs
 TSV_varnames: true                    # true if the variable names are in the first row
 
 # modeling settings
-modelingToolkit: internal             # internal | R | KNIME
+modelingToolkit: internal             # internal | R | KNIME | custom
 model: RF                             # RF | SVM
 modelAutoscaling: true                # true | false
 quantitative: false
