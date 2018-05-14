@@ -1,7 +1,7 @@
 # system settings
 verbose_error: true
-numCPUs: 1
-mol_batch: series                    # series | objects | auto (not implemented!)
+numCPUs: 2
+mol_batch: series                     # series | objects | auto (not implemented!)
 
 # input settings
 input_type: molecule                  # molecule | data | ext_data
@@ -27,9 +27,11 @@ output_format:                        # JSON | TSV  (dump results to output.tsv 
 output_md: true                      # if true dump the MD generated to 'output_md.tsv'
 
 # SDFile settings
-SDFile_activity: activity             # str
-SDFile_experimental: IC50             # str
-SDFile_name: GENERIC_NAME             # str
+SDFile_activity: activity            # str
+SDFile_experimental: IC50            # str
+SDFile_name: 
+- GENERIC_NAME                       # str
+- name
 
 # TSV settings
 TSV_activity: activity                # str
