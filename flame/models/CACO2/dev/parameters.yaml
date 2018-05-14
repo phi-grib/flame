@@ -4,13 +4,13 @@ numCPUs: 2
 mol_batch: series                    # series | objects | auto (not implemented!)
 
 # input settings
-input_type: molecule                  # molecule | data
-normalize_method: 
-- standardize                         # null | standardize
+input_type: molecule                  # molecule | data | ext_data
+normalize_method:                     # null | standardize       
+- standardize
 
 ionize_method: null                   # null | moka
 convert3D_method: null                # null | ETKDG
-computeMD_method:                     # RDKit_properties | RDKit_md | custom
+computeMD_method:                     # RDKit_properties | RDKit_md | padel | custom
 - RDKit_properties
 
 ext_input: false                      # external input source TRUE
@@ -21,16 +21,16 @@ model_set:                            # list of models used for producing input
   version: 2
 
 # Output 
-output_format:                        # JSON | TSV
-- JSON
-- TSV 
-output_md: false                      # if true dump the MD generated to 'output_md.tsv'
+output_format:                        # JSON | TSV  (dump results to output.tsv and errors to error.tsv)
+- JSON      
+         
+output_md: true                      # if true dump the MD generated to 'output_md.tsv'
 
 # SDFile settings
 SDFile_activity: activity             # str
 SDFile_experimental: IC50             # str
-SDFile_name: 
-- GENERIC_NAME             
+SDFile_name:                          # str
+- GENERIC_NAME                        
 - name
 
 # TSV settings
@@ -39,10 +39,10 @@ TSV_objnames: true                    # true if the object names are in the firs
 TSV_varnames: true                    # true if the variable names are in the first row
 
 # modeling settings
-modelingToolkit: internal             # internal | R | KNIME | custom
+modelingToolkit: internal             # internal | R | KNIME
 model: RF                             # RF | SVM
-modelAutoscaling: true                # true | false
-quantitative: false
+modelAutoscaling: false               # true | false
+quantitative: true
 tune: false
 
 ModelValidationCV: loo
@@ -115,5 +115,5 @@ RF_optimize:
   - 46
 
 # conformal predictor settings
-conformal: false
+conformal: true
 conformalSignificance: 0.2
