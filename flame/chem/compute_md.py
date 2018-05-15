@@ -164,7 +164,7 @@ def _padel_descriptors (ifile):
         index = 0
         var_nam = []
         success_list = []
-        xmatrix = None
+        xmatrix = []
 
         for line in of:
 
@@ -180,7 +180,7 @@ def _padel_descriptors (ifile):
                     nvalue_list = [float(x) for x in value_list[1:] ]
                 except:
                     success_list.append(False)
-                    print ('ERROR in Padel results parsing for object '+str(index))
+                    print ('ERROR (@_padel_descriptors) in Padel results parsing for object '+str(index))
                     continue
                 
                 md = np.array(nvalue_list, dtype=np.float64)
@@ -201,4 +201,7 @@ def _padel_descriptors (ifile):
 
     shutil.rmtree (tmpdir)
 
-    return True, (xmatrix, var_nam, success_list)
+    # if no object was processed succesfuly (index==1) return False
+    # this is common when series are processed object-wise
+
+    return (index>1) , (xmatrix, var_nam, success_list)

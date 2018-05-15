@@ -449,6 +449,8 @@ class Idata:
         for fsize in file_size:
             success_list.append(fsize == 1)
     
+        first_mol = True
+
         for i, ifile in enumerate(file_list):
 
             if not success_list[i]:   # molecule was empty, do not process
@@ -464,15 +466,19 @@ class Idata:
             success_list[i] = success
 
             if not success:           # failed in the workflow
-
                 print ('ERROR: (@workflow_objects) Workflow failed for molecule #',str(i+1), 'in file '+ input_file)
-                
                 continue
 
-            if len(md_results) == 0 : #first molecule
+            if first_mol : #first molecule
                 md_results = results[0]
                 va_results = results[1]
+                num_var = len (md_results)
+                first_mol = False
             else:
+                if len(results[0])!= num_var:
+                    print ('ERROR: (@workflow_objects) incorrect number of MD for molecule #',str(i+1), 'in file '+ input_file)
+                    continue
+
                 md_results = np.vstack ((md_results, results[0]))
 
         #print (success_list)
