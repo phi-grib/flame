@@ -1,25 +1,25 @@
 
 # -*- coding: utf-8 -*-
 
-##    Description    tools for qualitative endpoints
+# Description    tools for qualitative endpoints
 ##
-##    Authors:       Manuel Pastor (manuel.pastor@upf.edu)
+# Authors:       Manuel Pastor (manuel.pastor@upf.edu)
 ##
-##    Copyright 2013 Manuel Pastor
+# Copyright 2013 Manuel Pastor
 ##
-##    This file is part of eTOXlab.
+# This file is part of eTOXlab.
 ##
-##    eTOXlab is free software: you can redistribute it and/or modify
-##    it under the terms of the GNU General Public License as published by
-##    the Free Software Foundation version 3.
+# eTOXlab is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation version 3.
 ##
-##    eTOXlab is distributed in the hope that it will be useful,
-##    but WITHOUT ANY WARRANTY; without even the implied warranty of
-##    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-##    GNU General Public License for more details.
+# eTOXlab is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
 ##
-##    You should have received a copy of the GNU General Public License
-##    along with eTOXlab.  If not, see <http://www.gnu.org/licenses/>.
+# You should have received a copy of the GNU General Public License
+# along with eTOXlab.  If not, see <http://www.gnu.org/licenses/>.
 
 
 import numpy as np
@@ -33,9 +33,9 @@ import warnings
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 from sklearn.model_selection import learning_curve  # JC
-from sklearn.model_selection import * #KP
-from sklearn.model_selection import LeavePOut #KP
-from sklearn.model_selection import LeaveOneOut #KP
+from sklearn.model_selection import *  # KP
+from sklearn.model_selection import LeavePOut  # KP
+from sklearn.model_selection import LeaveOneOut  # KP
 from sklearn.model_selection import train_test_split
 from sklearn.datasets import load_iris
 from sklearn.ensemble import RandomForestClassifier
@@ -44,7 +44,7 @@ from sklearn.model_selection import cross_val_predict
 from sklearn.model_selection import LeaveOneOut
 
 
-### Conformal Prediction
+# Conformal Prediction
 from nonconformist.base import ClassifierAdapter, RegressorAdapter
 from nonconformist.icp import IcpClassifier, IcpRegressor
 from nonconformist.nc import MarginErrFunc
@@ -68,7 +68,6 @@ from nonconformist.evaluation import class_avg_c, class_mean_errors
 from nonconformist.evaluation import reg_mean_errors, reg_median_size
 from nonconformist.evaluation import reg_mean_size
 from nonconformist.evaluation import class_mean_errors
-
 
 
 def plot_learning_curve(estimator, title, X, y, ylim=None, cv=None,
@@ -140,21 +139,31 @@ def plot_learning_curve(estimator, title, X, y, ylim=None, cv=None,
     plt.legend(loc="best")
     return plt
 
+
 def getCrossVal(cv, rs, n, p):
 
-    ###Splitter Classes:
+    # Splitter Classes:
 
-    kfold = KFold(n_splits=n, random_state=rs, shuffle=False)                             ### K-Folds cross-validator
-    gkfold = GroupKFold(n_splits=n)                                                       ### K-fold iterator variant with non-overlapping groups.
-    stkfold = StratifiedKFold(n_splits=n, random_state=rs, shuffle=False)                 ### Stratified K-Folds cross-validator
-    logo = LeaveOneGroupOut()                                                             ### Leave One Group Out cross-validator
-    lpgo = LeavePGroupsOut(n_groups=n)                                                    ### Leave P Group(s) Out cross-validator
-    loo = LeaveOneOut()                                                                   ### Leave-One-Out cross-validator
-    lpo = LeavePOut(int(p))                                                               ### Leave-P-Out cross-validator
-    shufsplit = ShuffleSplit(n_splits=n, random_state=rs, test_size=0.25, train_size=None)### Random permutation cross-validator
-    gshufplit = GroupShuffleSplit(test_size=10, n_splits=n)                               ### Shuffle-Group(s)-Out cross-validation iterator
-    stshufsplit = StratifiedShuffleSplit(n_splits=n, test_size=0.5, random_state=0)       ### Stratified ShuffleSplit cross-validator
-    psplit = PredefinedSplit(test_fold=[ 0,  1, -1,  1])                                  ### Predefined split cross-validator
+    # K-Folds cross-validator
+    kfold = KFold(n_splits=n, random_state=rs, shuffle=False)
+    # K-fold iterator variant with non-overlapping groups.
+    gkfold = GroupKFold(n_splits=n)
+    # Stratified K-Folds cross-validator
+    stkfold = StratifiedKFold(n_splits=n, random_state=rs, shuffle=False)
+    logo = LeaveOneGroupOut()  # Leave One Group Out cross-validator
+    lpgo = LeavePGroupsOut(n_groups=n)  # Leave P Group(s) Out cross-validator
+    loo = LeaveOneOut()  # Leave-One-Out cross-validator
+    lpo = LeavePOut(int(p))  # Leave-P-Out cross-validator
+    # Random permutation cross-validator
+    shufsplit = ShuffleSplit(n_splits=n, random_state=rs,
+                             test_size=0.25, train_size=None)
+    # Shuffle-Group(s)-Out cross-validation iterator
+    gshufplit = GroupShuffleSplit(test_size=10, n_splits=n)
+    # Stratified ShuffleSplit cross-validator
+    stshufsplit = StratifiedShuffleSplit(
+        n_splits=n, test_size=0.5, random_state=0)
+    # Predefined split cross-validator
+    psplit = PredefinedSplit(test_fold=[0,  1, -1,  1])
     tssplit = TimeSeriesSplit(n_splits=n)
 
     splitClass = {'kfold': kfold, 'gkfold': gkfold, 'stkfold': stkfold, 'logo': logo,
@@ -162,9 +171,9 @@ def getCrossVal(cv, rs, n, p):
                   'gshufplit': gshufplit, 'stshufsplit': stshufsplit,
                   'psplit': psplit, 'tssplit': tssplit}
 
-##    splitClass = {'kfold': kfold, 'stkfold': stkfold,
-##                  'loo': loo, 'lpo': lpo,
-##                  'shufsplit': shufsplit}
+# splitClass = {'kfold': kfold, 'stkfold': stkfold,
+# 'loo': loo, 'lpo': lpo,
+# 'shufsplit': shufsplit}
 
     cv = splitClass.get(str(cv))
 
@@ -174,9 +183,9 @@ def getCrossVal(cv, rs, n, p):
 def CF_QualVal(X, Y, estimator, conformalSignificance):
     """ Qualitative conformal predictor validation"""
 
-    print ("Starting qualitative conformal prediction validation")
+    print("Starting qualitative conformal prediction validation")
     icp = AggregatedCp(IcpClassifier(ClassifierNc(ClassifierAdapter(estimator),
-                             MarginErrFunc())), BootstrapSampler())
+                                                  MarginErrFunc())), BootstrapSampler())
     Y = np.asarray(Y).reshape(-1, 1)
     loo = LeaveOneOut()
     predictions = []
@@ -196,29 +205,27 @@ def CF_QualVal(X, Y, estimator, conformalSignificance):
     print('Error rate: {}'.format(class_mean_errors(predictions,
                                                     Y,
                                                     0.15)))
-    print (class_one_c(predictions, Y, 0.15))
+    print(class_one_c(predictions, Y, 0.15))
     return icp
     # icp_cv = RegIcpCvHelper(icp)
 
     # scores = conformal_cross_val_score(icp_cv,
-                     # X,
-                     # Y,
-                     # iterations=5,
-                     # folds=3,
-                     # scoring_funcs=[class_mean_errors, class_avg_c],
-                     # significance_levels=[0.05, 0.1, 0.2, conformalSignificance])
+    # X,
+    # Y,
+    # iterations=5,
+    # folds=3,
+    # scoring_funcs=[class_mean_errors, class_avg_c],
+    # significance_levels=[0.05, 0.1, 0.2, conformalSignificance])
 
     # scores = scores.drop(['fold', 'iter'], axis=1)
     # print(scores.groupby(['significance']).mean())
 
 
 def CF_QuanVal(X, Y, estimator, conformalSignificance):
-    print ("Starting quantitative conformal prediction validation")
+    print("Starting quantitative conformal prediction validation")
 
-    icp = AggregatedCp(IcpRegressor(RegressorNc(RegressorAdapter(estimator))),BootstrapSampler())
-                                   
-
-
+    icp = AggregatedCp(IcpRegressor(RegressorNc(
+        RegressorAdapter(estimator))), BootstrapSampler())
 
     # icp = AggregatedCp(IcpRegressor(RegressorNc(RegressorAdapter(estimator),
     #                               AbsErrorErrFunc(), RegressorNormalizer(estimator,
@@ -237,11 +244,11 @@ def CF_QuanVal(X, Y, estimator, conformalSignificance):
     prediction_sign = icp.predict(X[30:], significance=0.25)
 
     interval = prediction_sign[:, 0] - prediction_sign[:, 1]
-    print (np.mean(interval))
-    print (interval)
-    print ("\n")
-    print (prediction)
-    print (prediction_sign)
+    print(np.mean(interval))
+    print(interval)
+    print("\n")
+    print(prediction)
+    print(prediction_sign)
     return (icp)
 
     # print('Absolute error regression')
@@ -255,20 +262,17 @@ def CF_QuanVal(X, Y, estimator, conformalSignificance):
     # return reg_mean_error
 
 
-
-
 def CF_QualCal(X, Y, estimator):
     """Qualitative conformal predictor calibration"""
 
     acp = AggregatedCp(IcpClassifier(ClassifierNc(ClassifierAdapter(estimator),
-                             MarginErrFunc())), BootstrapSampler())
-
+                                                  MarginErrFunc())), BootstrapSampler())
 
     acp.fit(X, Y)
 
     # X_train, X_test, y_train, y_test = train_test_split( X, Y, test_size=0.30, random_state=42)
     # icp = IcpClassifier(ClassifierNc(ClassifierAdapter(estimator),
-                                     # MarginErrFunc()))
+    # MarginErrFunc()))
 
     # icp.fit(X_train, y_train)
     # icp.calibrate(X_test, y_test)
@@ -278,7 +282,7 @@ def CF_QualCal(X, Y, estimator):
 def CF_QuanCal(X, Y, estimator):
     # X_train, X_test, y_train, y_test = train_test_split( X, Y, test_size=0.20, random_state=42)
     acp = AggregatedCp(IcpRegressor(RegressorNc(RegressorAdapter(estimator), AbsErrorErrFunc(),  RegressorNormalizer(estimator,
-                            copy.copy(estimator), AbsErrorErrFunc())),  RandomSubSampler()),)
+                                                                                                                     copy.copy(estimator), AbsErrorErrFunc())),  RandomSubSampler()),)
     acp.fit(X, Y)
     # icp.calibrate(X_test, y_test)
     return acp
@@ -290,4 +294,3 @@ def conformal_pred_pred(xb, conformal_pred, significance):
     table = prediction
     # df = pd.DataFrame(np.vstack([header, table]))
     return table
-
