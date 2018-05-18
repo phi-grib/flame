@@ -1,24 +1,24 @@
 #! -*- coding: utf-8 -*-
 
-##    Description    Flame web-service
+# Description    Flame web-service
 ##
-##    Authors:       Manuel Pastor (manuel.pastor@upf.edu)
+# Authors:       Manuel Pastor (manuel.pastor@upf.edu)
 ##
-##    Copyright 2018 Manuel Pastor
+# Copyright 2018 Manuel Pastor
 ##
-##    This file is part of Flame
+# This file is part of Flame
 ##
-##    Flame is free software: you can redistribute it and/or modify
-##    it under the terms of the GNU General Public License as published by
-##    the Free Software Foundation version 3.
+# Flame is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation version 3.
 ##
-##    Flame is distributed in the hope that it will be useful,
-##    but WITHOUT ANY WARRANTY; without even the implied warranty of
-##    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-##    GNU General Public License for more details.
+# Flame is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
 ##
-##    You should have received a copy of the GNU General Public License
-##    along with Flame. If not, see <http://www.gnu.org/licenses/>.
+# You should have received a copy of the GNU General Public License
+# along with Flame. If not, see <http://www.gnu.org/licenses/>.
 
 import os
 import cherrypy
@@ -31,15 +31,20 @@ import manage
 import context
 import util.utils as utils
 
-#TEMP: only to allow EBI model to run
+# TEMP: only to allow EBI model to run
+
+
 def sensitivity(y_true, y_pred):
     tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
     return(tp / (tp+fn))
 
-#TEMP: only to allow EBI model to run
+# TEMP: only to allow EBI model to run
+
+
 def specificity(y_true, y_pred):
     tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
     return(tn / (tn+fp))
+
 
 class FlamePredict(object):
     @cherrypy.expose
@@ -52,24 +57,24 @@ class FlamePredict(object):
         filename = os.path.basename(cherrypy.request.headers['x-filename'])
         temp_dir = os.path.basename(cherrypy.request.headers['temp-dir'])
 
-        path = os.path.join(tempfile.gettempdir(),temp_dir)
-        os.mkdir (path)
- 
+        path = os.path.join(tempfile.gettempdir(), temp_dir)
+        os.mkdir(path)
+
         destination = os.path.join(path, filename)
         with open(destination, 'wb') as f:
             shutil.copyfileobj(cherrypy.request.body, f)
+
 
 @cherrypy.expose
 class FlamePredictWS(object):
 
     @cherrypy.tools.accept(media='text/plain')
-
     def POST(self, ifile, model, version, temp_dir):
 
-        ifile = os.path.join(tempfile.gettempdir(),temp_dir,ifile)
-        
-        if version[:3]=='ver': 
-            version = int(version[-6:]) ## get the numbers
+        ifile = os.path.join(tempfile.gettempdir(), temp_dir, ifile)
+
+        if version[:3] == 'ver':
+            version = int(version[-6:])  # get the numbers
 
         version = utils.intver(version)
 
@@ -80,11 +85,10 @@ class FlamePredictWS(object):
         #     raise cherrypy.HTTPError(500)
 
         # TODO: for now, only working for plain models (no external input sources)
-            
 
-        model = {'endpoint' : model,
-                 'version' : version,
-                 'infile' : ifile}
+        model = {'endpoint': model,
+                 'version': version,
+                 'infile': ifile}
 
         success, results = context.predict_cmd(model)
 
@@ -93,18 +97,20 @@ class FlamePredictWS(object):
 
         return results
 
+
 @cherrypy.expose
 class FlameInfoWS(object):
 
     @cherrypy.tools.accept(media='text/plain')
     def GET(self):
-        data = { "provider": utils.configuration['provider'],
-                 "homepage": utils.configuration['homepage'],
-                 "admin_name": utils.configuration['admin_name'],
-                 "admin_email": utils.configuration['admin_email']
-                }   
+        data = {"provider": utils.configuration['provider'],
+                "homepage": utils.configuration['homepage'],
+                "admin_name": utils.configuration['admin_name'],
+                "admin_email": utils.configuration['admin_email']
+                }
 
         return json.dumps(data)
+
 
 @cherrypy.expose
 class FlameDirWS(object):
@@ -117,6 +123,7 @@ class FlameDirWS(object):
         if not success:
             return "no model found"
         return results
+
 
 if __name__ == '__main__':
     conf = {
@@ -143,10 +150,10 @@ if __name__ == '__main__':
             'tools.staticdir.on': True,
             'tools.staticdir.dir': './public',
         },
-        'global' : {
-            'server.socket_host' : '0.0.0.0',
-            'server.socket_port' : 8080,
-            'server.thread_pool' : 8,
+        'global': {
+            'server.socket_host': '0.0.0.0',
+            'server.socket_port': 8080,
+            'server.thread_pool': 8,
         }
     }
 
