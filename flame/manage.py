@@ -246,13 +246,13 @@ def action_dir():
 
     print(json.dumps(results))
 
-def action_info(model, version):
-    ''' Returns a JSON with info for a given model and version '''
+def action_info(model, version=None, output='text'):
+    ''' Returns a text or JSON with info for a given model and version '''
 
     if not model:
         return False, 'empty model label'
 
-    if not version == 0:
+    if version==None:
         return False, 'no version provided'
 
     rdir = utils.model_path(model, version)
@@ -263,6 +263,12 @@ def action_info(model, version):
         results = pickle.load (handle)
         results += pickle.load (handle)
 
-    print(json.dumps(results))
+    if output=='text':
+        for val in results:
+            if len(val)<3:
+                print (val)
+            else:
+                print (val[0],' (', val[1], ') : ', val[2])
+        return True, 'model informed OK'
 
     return True, json.dumps(results)
