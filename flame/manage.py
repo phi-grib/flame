@@ -25,6 +25,7 @@ import sys
 import shutil
 import tarfile
 import json
+import pickle
 import util.utils as utils
 
 
@@ -149,6 +150,8 @@ def action_list(model):
     num_versions = 0
     for x in os.listdir(bdir):
         if x.startswith("ver"):
+
+
             num_versions += 1
             print(model, ':', x)
 
@@ -240,6 +243,25 @@ def action_dir():
 
         # results.append ((imodel,versions))
         results.append({'text': imodel, 'nodes': versions})
+
+    print(json.dumps(results))
+
+def action_info(model, version):
+    ''' Returns a JSON with info for a given model and version '''
+
+    if not model:
+        return False, 'empty model label'
+
+    if not version == 0:
+        return False, 'no version provided'
+
+    rdir = utils.model_path(model, version)
+    if not os.path.isfile(os.path.join(rdir,'info.pkl')):
+        return False, 'info not found'
+
+    with open(os.path.join(rdir,'info.pkl'),'rb') as handle:
+        results = pickle.load (handle)
+        results += pickle.load (handle)
 
     print(json.dumps(results))
 

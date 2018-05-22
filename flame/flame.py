@@ -63,7 +63,9 @@ def manage_cmd(args):
     elif args.action == 'refactoring':
         success, results = manage.action_refactoring(args.file)
     elif args.action == 'dir':
-        success, results = manage.action_dir(args.endpoint)
+        success, results = manage.action_dir()
+    elif args.action == 'info':
+        success, results = manage.action_info(args.endpoint, version)
 
     print('flame : ', success, results)
 
