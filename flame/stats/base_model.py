@@ -72,83 +72,38 @@ from nonconformist.evaluation import class_mean_errors
 
 import util.utils as utils
 
-
 class BaseEstimator:
-    def __init__(self, X, Y, quantitative=False, autoscale=False,
-                 cv='loo', n=2, p=1, lc=True,
-                 conformalSignificance=0.05, vpath='',
-                 estimator_parameters={}, conformal=False):
+    def __init__(self, X, Y, parameters):
+    
+        self.failed = False
+        self.parameters = parameters
 
-        self.name = ""
         self.X = X
         self.Y = Y
         self.nobj, self.nvarx = np.shape(X)
-        self.quantitative = quantitative
-        self.autoscale = autoscale
-        self.learning_curve = lc
-        self.cv = cv
-        self.n = n
-        self.p = p
-        self.scoring_function = None
 
-        self.mux = None
-        self.wgx = None
+        if (self.nobj == 0) or (self.nvarx == 0):
+            self.failed = True
+            return
 
-        # Cross-val
-        self.TP = 0
-        self.TN = 0
-        self.FP = 0
-        self.FN = 0
-        self.sensitivity = 0.00
-        self.specificity = 0.00
-        self.mcc = 0
-        self.SDEP = 0.00
-        self.Q2 = 0.00
-        self.scoringP = 0.00
+        if (np.shape(Y) == 0):
+            self.failed = True
+            return
 
-        # Goodness of the fit restults
-        self.TPpred = 0
-        self.TNpred = 0
-        self.FPpred = 0
-        self.FNpred = 0
-        self.sensitivityPred = 0.00
-        self.specificityPred = 0.00
-        self.SDEC = 0.00    # SD error of the calculations
-        self.R2 = 0.00    # determination coefficient
-        self.scoringR = 0.00
-        self.mccp = 0
+        self.quantitative = self.parameters['quantitative']
+        self.autoscale = self.parameters['modelAutoscaling']
+        self.cv = self.parameters['ModelValidationCV']
+        self.n = self.parameters['ModelValidationN']
+        self.p = self.parameters['ModelValidationP']
+        self.learning_curve = parameters['ModelValidationLC']
+        self.conformal = self.parameters['conformal']
+        self.conformalSignificance = self.parameters['conformalSignificance']
+ 
 
-        self.estimator = None
-        self.estimator_parameters = estimator_parameters
-        self.conformal = conformal
-        self.conformalSignificance = conformalSignificance
-        self.conformal_pred = None
-        self.conformal_mean_interval = 0.00
-        self.conformal_accuracy = 0.00
-        self.conformal_coverage = 0.00
-
-        self.failed = False
-
-    def printQuantitativeValidationResults(self):
-
-        print("Recalculated results")
-        print('rec R2:%5.3f SDEC:%5.3f  mean_squared_error:%5.3f' %
-              (self.R2, self.SDEC, self.scoringR))
-        print(str(self.cv)+" cross-validation results")
-        print('pred R2:%5.3f Q2:%5.3f SDEP:%5.3f mean_squared_error:%5.3f' %
-              (self.R2, self.Q2, self.SDEP, self.scoringP))
-
-    def printQualitativeValidationResults(self):
-        print("Recalculated results")
-        print("rec  TP:%d TN:%d FP:%d FN:%d spec:%5.3f sens:%5.3f MCC:%5.3f" %
-              (self.TPpred, self.TNpred, self.FPpred, self.FNpred, self.specificityPred,
-               self.sensitivityPred, self.mccp))
-
-        print(str(self.cv)+" cross-validation results")
-        print("pred  TP:%d TN:%d FP:%d FN:%d spec:%5.3f sens:%5.3f MCC:%5.3f" %
-              (self.TP, self.TN, self.FP, self.FN, self.specificity, self.sensitivity, self.mcc))
+    # Validation methods section
 
     def CF_quantitative_validation(self):
+        ''' performs validation for conformal quantitative models '''
 
         X = self.X.copy()
         Y = self.Y.copy()
@@ -156,6 +111,7 @@ class BaseEstimator:
         seeds = [5, 7, 35]
         interval_means = []
         accuracies = []
+        results = []
         for i in range(len(seeds)):
             X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.25,
                                                                 random_state=i, shuffle=False)
@@ -176,9 +132,14 @@ class BaseEstimator:
         accuracies = np.mean(accuracies)
         self.conformal_accuracy = float("{0:.2f}".format(accuracies))
         self.conformal_mean_interval = float("{0:.2f}".format(interval_means))
-        return True, 'ok'
+
+        results.append (('Conformal_mean_interval','Conformal mean interval', self.conformal_mean_interval))
+        results.append (('Conformal_accuracy','Conformal accuracy', self.conformal_accuracy))
+
+        return True, results
 
     def CF_qualitative_validation(self):
+        ''' performs validation for conformal qualitative models '''
 
         X = self.X.copy()
         Y = self.Y.copy()
@@ -190,6 +151,8 @@ class BaseEstimator:
         c1_correct_all = []
         c1_incorrect_all = []
         not_predicted_all = []
+
+        results = []
 
         for i in range(len(seeds)):
             X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.25,
@@ -229,6 +192,11 @@ class BaseEstimator:
         self.TP = np.int(np.mean(c1_correct_all))
         self.FN = np.int(np.mean(c1_incorrect_all))
         not_predicted_all = np.int(np.mean(not_predicted_all))
+        
+        results.append (('TP','True positives in cross-validation', self.TP))
+        results.append (('TN','True negatives in cross-validation', self.TN))
+        results.append (('FP','False positives in cross-validation', self.FP))
+        results.append (('FN','False negatives in cross-validation', self.FN))
 
         self.sensitivity = (self.TP / (self.TP + self.FN))
         self.specificity = (self.TN / (self.TN + self.FP))
@@ -236,25 +204,29 @@ class BaseEstimator:
         self.mcc = (((self.TP * self.TN) - (self.FP * self.FN)) /
                     np.sqrt((self.TP + self.FP) * (self.TP + self.FN) *
                             (self.TN + self.FP) * (self.TN + self.FN)))
-        self.mcc = float("{0:.2f}".format(self.mcc))
-        self.sensitivity = float("{0:.2f}".format(self.sensitivity))
-        self.specificity = float("{0:.2f}".format(self.specificity))
+
+        results.append (('Sensitivity','Sensitivity in cross-validation', self.sensitivity))
+        results.append (('Specificity','Specificity in cross-validation', self.specificity))
+        results.append (('MCC', 'Mattews Correlation Coefficient in cross-validation', self.mcc ))
+
         self.conformal_coverage = (self.TN + self.FP + self.TP + self.FN) / (
             (self.TN + self.FP + self.TP + self.FN) + not_predicted_all)
-        self.conformal_coverage = float(
-            "{0:.2f}".format(self.conformal_coverage))
+        
         self.conformal_accuracy = float(
             self.TN + self.TP) / float(self.FP + self.FN + self.TN + self.TP)
-        self.conformal_accuracy = float(
-            "{0:.2f}".format(self.conformal_accuracy))
-        return True, 'ok'
+        
+        results.append (('Conformal_coverage','Conformal coverage', self.conformal_coverage))
+        results.append (('Conformal_accuracy','Conformal accuracy', self.conformal_accuracy))
+
+        return True, results
 
     def quantitativeValidation(self):
-
+        ''' performs validation for quantitative models '''
+        
         X = self.X.copy()
         Y = self.Y.copy()
 
-        nobj = len(X)
+        nobj = self.nobj
 
         if self.autoscale:
             X = X - self.mux
@@ -262,8 +234,9 @@ class BaseEstimator:
 
         Yp = self.estimator.predict(X)
         Ym = np.mean(Y)
+        results = []
 
-        # Goodness of the fit
+        # Goodness of the fitt
 
         SSY0 = np.sum(np.square(Ym-Y))
         SSY = np.sum(np.square(Yp-Y))
@@ -272,6 +245,10 @@ class BaseEstimator:
             mean_squared_error(Y, Yp))  # Mean Squared Error
         self.SDEC = np.sqrt(SSY/nobj)
         self.R2 = 1.00 - (SSY/SSY0)
+
+        results.append (('scoringR','Scoring P', self.scoringR))
+        results.append (('R2','Determination coefficient', self.R2))
+        results.append (('SDEC','Standard Deviation Error of the Calculations', self.SDEC))
 
         # Cross-validation
 
@@ -283,9 +260,14 @@ class BaseEstimator:
         self.SDEP = np.sqrt(SSY_out/(nobj))
         self.Q2 = 1.00 - (SSY_out/SSY0_out)
 
-        return True, 'ok'
+        results.append (('scoringP','Scoring P', self.scoringP))
+        results.append (('Q2','Determination coefficient in cross-validation', self.Q2))
+        results.append (('SDEP','Standard Deviation Error of the Predictions', self.SDEP))
+
+        return True, results
 
     def qualitativeValidation(self):
+        ''' performs validation for qualitative models '''        
 
         X = self.X.copy()
         Y = self.Y.copy()
@@ -299,18 +281,26 @@ class BaseEstimator:
         if len(Yp) != len(Y):
             return False, 'lenght of prediction do not match'
 
+        results = []
+
         # Goodness of the fit
 
-        print('Goodness of the fit validation')
         self.TPpred, self.FPpred, self.FNpred, self.TNpred = confusion_matrix(
             Y, Yp).ravel()
         self.sensitivityPred = (self.TPpred / (self.TPpred + self.FNpred))
         self.specificityPred = (self.TNpred / (self.TNpred + self.FPpred))
         self.mccp = mcc(Y, Yp)
 
+        results.append (('TPpred','True positives', self.TPpred))
+        results.append (('TNpred','True negatives', self.TNpred))
+        results.append (('FPpred','False positives', self.FPpred))
+        results.append (('FNpred','False negatives', self.FNpred))
+        results.append (('SensitivityPed','Sensitivity in fitting', self.sensitivityPred))
+        results.append (('SpecificityPred','Specificity in fitting',self.specificityPred))
+        results.append (('MCCpred', 'Mattews Correlation Coefficient', self.mccp ))
+
         # Cross validation
 
-        print('Cross validating')
         y_pred = cross_val_predict(self.estimator, X, Y, cv=self.cv, n_jobs=-1)
         self.TP, self.FP, self.FN, self.TN = confusion_matrix(
             Y, y_pred).ravel()
@@ -318,22 +308,28 @@ class BaseEstimator:
         self.specificity = (self.TN / (self.TN + self.FP))
         self.mcc = mcc(Y, y_pred)
 
-        return True, 'ok'
+        results.append (('TP','True positives in cross-validation', self.TP))
+        results.append (('TN','True negatives in cross-validation', self.TN))
+        results.append (('FP','False positives in cross-validation', self.FP))
+        results.append (('FN','False negatives in cross-validation', self.FN))
+
+        results.append (('Sensitivity','Sensitivity in cross-validation', self.sensitivity))
+        results.append (('Specificity','Specificity in cross-validation',self.specificity))
+        results.append (('MCC', 'Mattews Correlation Coefficient in cross-validation', self.mcc ))
+
+        return True, results
 
     def validate(self):
-        """ Validates the models and completes suitable scoring values"""
-        nobj, nvarx = np.shape(self.X)
+        ''' Validates the model and computes suitable model quality scoring values'''
+
         if self.X is None or self.estimator is None:
             return False, 'no estimator'
+
         if not self.conformal:
             if self.quantitative:
                 success, results = self.quantitativeValidation()
-                if success:
-                    self.printQuantitativeValidationResults()
             else:
                 success, results = self.qualitativeValidation()
-                if success:
-                    self.printQualitativeValidationResults()
         else:
             if self.quantitative:
                 success, results = self.CF_quantitative_validation()
@@ -355,72 +351,10 @@ class BaseEstimator:
 
         # return (Yp)
 
-    def regularProject(self, Xb, results):
-
-        Yp = self.estimator.predict(Xb)
-
-        utils.add_result(results, Yp, 'values', 'Prediction',
-                         'result', 'objs', 'Results of the prediction', 'main')
-
-    def conformalProject(self, Xb, results):
-
-        prediction = self.conformal_pred.predict(
-            Xb, significance=self.conformalSignificance)
-
-        if self.quantitative:
-            mean1 = np.mean(prediction, axis=1)
-            # predictionSize = abs(abs(prediction[0][0]) - abs(prediction[0][1]))
-            lower_limit = prediction[:, 0]
-            upper_limit = prediction[:, 1]
-            utils.add_result(results, mean1, 'values', 'Prediction',
-                             'result', 'objs', 'Results of the prediction', 'main')
-            utils.add_result(results, lower_limit, 'lower_limit', 'Lower limit',
-                             'confidence', 'objs', 'Lower limit of the conformal prediction')
-            utils.add_result(results, upper_limit, 'upper_limit', 'Upper limit',
-                             'confidence', 'objs', 'Upper limit of the conformal prediction')
-
-        else:
-
-            # For the moment is returning a dictionary with class predictions
-            # / c0 / c1 / c2 /
-            # /True/True/False/
-
-            for i in range(len(prediction[0])):
-                class_key = 'c' + str(i)
-                class_label = 'Class ' + str(i)
-                class_list = prediction[:, i].tolist()
-                utils.add_result(results, class_list, class_key, class_label,
-                                 'result', 'objs', 'Conformal class assignment', 'main')
-
-    def project(self, Xb, results):
-        """ Uses the X matrix provided as argument to predict Y"""
-
-        if self.estimator == None:
-            results['error'] = 'failed to load classifier'
-            return
-
-        if self.autoscale:
-            Xb = Xb-self.mux
-            Xb = Xb*self.wgx
-
-        if not self.conformal:
-            self.regularProject(Xb, results)
-        else:
-            self.conformalProject(Xb, results)
-
-    def conformal_calibration(self,):
-
-        X = copy.copy(self.X)
-        Y = copy.copy(self.Y)
-        if self.autoscale:
-            X, self.mux = center(X)
-            X, self.wgx = scale(X, self.autoscale)
-        if not self.quantitative:
-            self.conformal_pred = CF_QualCal(X, Y, copy.copy(self.estimator))
-        else:
-            self.conformal_pred = CF_QuanCal(X, Y, copy.copy(self.estimator))
 
     def optimize(self, X, Y, estimator, tune_parameters):
+        ''' optimizes a model using a grid search over a range of values for diverse parameters'''
+        
         metric = ""
         if self.quantitative:
             metric = 'r2'
@@ -445,53 +379,58 @@ class BaseEstimator:
         print(tclf.best_params_)
         # print self.estimator.get_params()
 
-    def getResults(self):
+    
+    # Projection section
 
-        results = {}
+    def regularProject(self, Xb, results):
+        ''' projects a collection of query objects in a regular model, for obtaining predictions '''
 
-        # Goodness of the fit results
+        Yp = self.estimator.predict(Xb)
 
-        results['TPpred'] = self.TPpred
-        results['TNpred'] = self.TNpred
-        results['FPpred'] = self.FPpred
-        results['FNpred'] = self.FNpred
+        utils.add_result(results, Yp, 'values', 'Prediction',
+                         'result', 'objs', 'Results of the prediction', 'main')
 
-        # self.sensitivityPred = 0.00
-        # self.specificityPred = 0.00
+    def conformalProject(self, Xb, results):
+        ''' projects a collection of query objects in a conformal model, for obtaining predictions '''
 
-        results['SDEC'] = self.SDEC     # SD error of the calculations
-        results['R2'] = self.R2     # determination coefficient
+        prediction = self.conformal_pred.predict(
+            Xb, significance=self.conformalSignificance)
 
-        # self.scoringR = 0.00
-        # self.mccp = 0
-
-        # Cross-val
-
-        if not self.quantitative:
-            results['TP'] = self.TP
-            results['TN'] = self.TN
-            results['FP'] = self.FP
-            results['FN'] = self.FN
-            results['mcc'] = self.mcc
-            if self.conformal:
-                results['Conformal_accuracy'] = self.conformal_accuracy
-                results['Conformal_significance'] = self.conformalSignificance
+        if self.quantitative:
+            mean1 = np.mean(prediction, axis=1)
+            # predictionSize = abs(abs(prediction[0][0]) - abs(prediction[0][1]))
+            lower_limit = prediction[:, 0]
+            upper_limit = prediction[:, 1]
+            utils.add_result(results, mean1, 'values', 'Prediction',
+                             'result', 'objs', 'Results of the prediction', 'main')
+            utils.add_result(results, lower_limit, 'lower_limit', 'Lower limit',
+                             'confidence', 'objs', 'Lower limit of the conformal prediction')
+            utils.add_result(results, upper_limit, 'upper_limit', 'Upper limit',
+                             'confidence', 'objs', 'Upper limit of the conformal prediction')
         else:
-            results['SDEC'] = self.SDEC     # SD error of the calculations
-            results['R2'] = self.R2     # determination coefficient
-            if self.conformal:
-                results['Conformal_accuracy'] = self.conformal_accuracy
-                results["Conformal_mean_interval"] = self.conformal_mean_interval
-                results['Conformal_coverage'] = self.conformal_coverage
-                results['Conformal_significance'] = self.conformalSignificance
+            # For the moment is returning a dictionary with class predictions
+            # / c0 / c1 / c2 /
+            # /True/True/False/
 
-        # self.sensitivity = 0.00
-        # self.specificity = 0.00
-        # self.mcc = 0
+            for i in range(len(prediction[0])):
+                class_key = 'c' + str(i)
+                class_label = 'Class ' + str(i)
+                class_list = prediction[:, i].tolist()
+                utils.add_result(results, class_list, class_key, class_label,
+                                 'result', 'objs', 'Conformal class assignment', 'main')
 
-        results['SDEP'] = self.SDEP
-        results['Q2'] = self.Q2
+    def project(self, Xb, results):
+        ''' Uses the X matrix provided as argument to predict Y'''
 
-        # self.scoringP = 0.00
+        if self.estimator == None:
+            results['error'] = 'failed to load classifier'
+            return
 
-        return results
+        if self.autoscale:
+            Xb = Xb-self.mux
+            Xb = Xb*self.wgx
+
+        if not self.conformal:
+            self.regularProject(Xb, results)
+        else:
+            self.conformalProject(Xb, results)

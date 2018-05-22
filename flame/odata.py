@@ -36,6 +36,20 @@ class Odata():
     def run_learn(self):
         ''' Process the results of lear, usually a report on the model quality '''
 
+        if 'model_build' in self.results:
+            for val in self.results['model_build']:
+                if len(val)<3:
+                    print (val)
+                else:
+                    print (val[0],' (', val[1], ') : ', val[2])
+
+        if 'model_validate' in self.results:
+            for val in self.results['model_validate']:
+                if len(val)<3:
+                    print (val)
+                else:
+                    print (val[0],' (', val[1], ') : ', val[2])
+
         # TODO: process learn output and produce meaniningfull JSON/TSV
         return True, 'building OK'
 

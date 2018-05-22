@@ -27,46 +27,30 @@ from stats.base_model import getCrossVal
 from stats.scale import scale, center
 from stats.model_validation import CF_QuanVal
 
-from stats.base_model import *
-
+from nonconformist.base import ClassifierAdapter, RegressorAdapter
+from nonconformist.acp import AggregatedCp
+from nonconformist.acp import BootstrapSampler
+from nonconformist.icp import IcpClassifier, IcpRegressor
+from nonconformist.nc import ClassifierNc, MarginErrFunc, RegressorNc
 
 class RF(BaseEstimator):
 
-    def __init__(self, X=None,
-                 Y=None,
-                 quantitative=False,
-                 autoscale=False,
-                 tune=False,
-                 cv='loo',
-                 n=2,
-                 p=1,
-                 lc=False,
-                 conformalSignificance=0.05,
-                 vpath='',
-                 estimator_parameters={},
-                 tune_parameters={},
-                 conformal=False):
-        if X is not None:
-            super(RF, self).__init__(X, Y, quantitative, autoscale,
-                                     cv, n, p, lc, conformalSignificance, vpath, estimator_parameters, conformal)
+    def __init__(self, X, Y, parameters):
+        super(RF, self).__init__(X, Y, parameters)
 
-            self.tune = tune
-            self.tune_parameters = tune_parameters
+        self.estimator_parameters = parameters['RF_parameters']
+        self.tune = parameters['tune']
+        self.tune_parameters = parameters['RF_optimize']
 
-            if self.quantitative:
-                self.name = "RF-R"
-                self.tune_parameters.pop("class_weight")
-            else:
-                self.name = "RF-C"
-
-            self.failed = False
-
+        if self.quantitative:
+            self.name = "RF-R"
+            self.tune_parameters.pop("class_weight")
         else:
-            self.failed = True
+            self.name = "RF-C"
 
-    """Build a new RF model with the X and Y numpy matrices """
 
     def build(self):
+        '''Build a new RF model with the X and Y numpy matrices '''
 
         if self.failed:
             return False
@@ -78,6 +62,11 @@ class RF(BaseEstimator):
             X, self.mux = center(X)
             X, self.wgx = scale(X, self.autoscale)
 
+        results = []
+
+        results.append (('nobj', 'number of objects', self.nobj))
+        results.append (('nvarx', 'number of predictor variables', self.nvarx))
+
         if self.cv:
             self.cv = getCrossVal(self.cv,
                                   self.estimator_parameters["random_state"],
@@ -86,10 +75,11 @@ class RF(BaseEstimator):
             if self.quantitative:
                 self.optimize(X, Y, RandomForestRegressor(),
                               self.tune_parameters)
+                results.append(('model','model type','RF quantitative (optimized)'))
             else:
                 self.optimize(X, Y, RandomForestClassifier(),
                               self.tune_parameters)
-
+                results.append (('model','model type','RF cualitative (optimized)'))
         else:
             if self.quantitative:
                 print("Building Quantitative RF model")
@@ -97,21 +87,27 @@ class RF(BaseEstimator):
 
                 self.estimator = RandomForestRegressor(
                     **self.estimator_parameters)
+                results.append(('model','model type','RF quantitative'))
+
             else:
                 print("Building Qualitative RF_model")
                 self.estimator = RandomForestClassifier(
                     **self.estimator_parameters)
+                results.append(('model','model type','RF cualitative'))
 
         if self.conformal:
             if self.quantitative:
                 self.conformal_pred = AggregatedCp(IcpRegressor(RegressorNc(RegressorAdapter(self.estimator))),
                                                    BootstrapSampler())
                 self.conformal_pred.fit(X, Y)
+                results.append(('model','model type','conformal RF quantitative'))  #overrides non-conformal
+                
             else:
                 self.conformal_pred = AggregatedCp(IcpClassifier(ClassifierNc(ClassifierAdapter(self.estimator),
                                                                               MarginErrFunc())), BootstrapSampler())
                 self.conformal_pred.fit(X, Y)
-
+                results.append(('model','model type','conformal RF cualitative'))   #overrides non-conformal
+                
         self.estimator.fit(X, Y)
 
-        return True
+        return True, results

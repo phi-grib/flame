@@ -135,7 +135,8 @@ def _padel_descriptors(ifile):
     # TODO: this cannot be hardcoded! maybe read from the component registry?
     uri = "http://localhost:5000/padel/api/v0.1/calc/json"
 
-    tmpdir = os.path.abspath(tempfile.mkdtemp(dir='./'))
+
+    tmpdir = os.path.abspath(tempfile.mkdtemp(dir=os.path.dirname(ifile)))
     shutil.copy(ifile, tmpdir)
 
     payload = {
