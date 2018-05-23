@@ -32,7 +32,7 @@ from rdkit.ML.Descriptors import MoleculeDescriptors
 
 
 def _RDKit_properties(ifile):
-    ''' 
+    '''
     computes RDKit properties for the file provided as argument
 
     output is a boolean and a tupla with the xmatrix and the variable names
@@ -122,47 +122,12 @@ def _RDKit_descriptors(ifile):
 
     return True, (xmatrix, nms, success_list)
 
-
-def _padel_descriptors(ifile):
-    ''' 
-    computes Padel molecular descriptors calling an external web service for
-    the file provided as argument
-
-    output is a boolean and a tupla with the xmatrix and the variable names
-
-    '''
-
-    # TODO: this cannot be hardcoded! maybe read from the component registry?
-    uri = "http://localhost:5000/padel/api/v0.1/calc/json"
+# ------------------------------------
+# Request descriptors to PaDEL service
+# ------------------------------------
 
 
-    tmpdir = os.path.abspath(tempfile.mkdtemp(dir=os.path.dirname(ifile)))
-    shutil.copy(ifile, tmpdir)
-
-    payload = {
-        '-2d': '',
-        '-dir': tmpdir
-    }
-
-    try:
-        req = requests.post(uri, json=payload)
-        if req.status_code != 200:
-            return False, 'ERROR: failed to contact padel service with code: '+str(req.status_code)
-    except:
-        return False, 'ERROR: failed to contact padel service'
-
-    # DEBUG only
-    print('padel service results : ', req.json())
-
-    results = req.json()
-
-    if not results['success']:
-        return False, 'padel service returned error condition'
-
-    ofile = os.path.join(tmpdir, results['filename'])
-
-    if not os.path.isfile(ofile):
-        return False, 'padel service returned no file'
+def _parse_csv(ofile):
 
     with open(ofile, 'r') as of:
         index = 0
@@ -191,7 +156,7 @@ def _padel_descriptors(ifile):
                 md = np.array(nvalue_list, dtype=np.float64)
 
                 # md = np.nan_to_num(md)
-                # detected a rare bug producing extremely large PaDel 
+                # detected a rare bug producing extremely large PaDel
                 # descriptors (>1.0e300), leading to overflows
                 # apply a conservative top cutoff of 1.0e10
                 # md [ md > 1.0e10 ] = 1.0e10
@@ -204,7 +169,48 @@ def _padel_descriptors(ifile):
                 success_list.append(True)
 
             index += 1
+    
+    return xmatrix, success_list, var_nam, index
 
+
+def _padel_descriptors(ifile):
+    '''
+    computes Padel molecular descriptors calling an external web service for
+    the file provided as argument
+
+    output is a boolean and a tupla with the xmatrix and the variable names
+
+    '''
+
+    # TODO: this cannot be hardcoded! maybe read from the component registry?
+    uri = "http://padel:5000/padel/api/v0.1/calc/json"
+
+    tmpdir = os.path.abspath(tempfile.mkdtemp(dir=os.path.dirname(ifile)))
+    shutil.copy(ifile, tmpdir)
+
+    payload = {
+        '-2d': '',
+        '-dir': tmpdir
+    }
+    
+    req = requests.post(uri, json=payload)
+    if req.status_code != 200:
+        return False, 'ERROR: failed to contact padel service with code: '+str(req.status_code)
+
+    # DEBUG only
+    print('padel service results : ', req.json())
+
+    results = req.json()
+
+    if not results['success']:
+        return False, 'padel service returned error condition'
+
+    ofile = os.path.join(tmpdir, results['filename'])
+
+    if not os.path.isfile(ofile):
+        return False, 'padel service returned no file'
+
+    xmatrix, success_list, var_nam, index = _parse_csv(ofile)
     shutil.rmtree(tmpdir)
 
     # if no object was processed with success (index==1) return False
