@@ -235,8 +235,7 @@ class BaseEstimator:
         Yp = self.estimator.predict(X)
         Ym = np.mean(Y)
         results = []
-
-        # Goodness of the fitt
+        # Goodness of the fit
 
         SSY0 = np.sum(np.square(Ym-Y))
         SSY = np.sum(np.square(Yp-Y))
@@ -371,7 +370,7 @@ class BaseEstimator:
         print("tune_parameters")
         print("metric: " + str(metric))
         tclf = GridSearchCV(estimator, tune_parameters,
-                            scoring=metric, cv=self.cv)
+                            scoring=metric, cv=30)
         # n_splits=10, shuffle=False,
         #   random_state=42), n_jobs= -1)
         tclf.fit(X, Y)

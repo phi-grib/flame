@@ -1,7 +1,7 @@
 # system settings
 verbose_error: true
 numCPUs: 2
-mol_batch: series                    # series | objects | auto (not implemented!)
+mol_batch: objects                    # series | objects | auto (not implemented!)
 
 # input settings
 input_type: molecule                  # molecule | data
@@ -39,7 +39,7 @@ TSV_varnames: true                    # true if the variable names are in the fi
 
 # modeling settings
 modelingToolkit: internal             # internal | R | KNIME
-model: RF                             # RF | SVM
+model: GNB                             # RF | SVM  | GNB
 modelAutoscaling: true                # true | false
 quantitative: false
 tune: false
@@ -59,7 +59,7 @@ SVM_parameters:
   epsilon: 0.1
   gamma: auto
   kernel: rbf
-  probability: false
+  probability: true
   random_state: 46
   shrinking: true
   tol: 0.001
@@ -112,6 +112,27 @@ RF_optimize:
   - true
   random_state:
   - 46
+#GNB settings
+GNB_parameters:
+  priors: null
+
+ self.PLSR_parameters = {'scale' : False, 'tol' : 1e-06, 'n_components' : 2}
+        self.PLSR_optimize = {'n_components' : [1, 2, 3, 4, 5, 6, 7]}
+#PLSR settings
+PLSR_parameters:
+  -scale: False
+  -tol: 1e-06
+  -n_components: 2
+PLSR_optimize:
+  n_components:
+  -1
+  -2
+  -3
+  -4
+  -5
+  -6
+  -7
+
 
 # conformal predictor settings
 conformal: false

@@ -3,6 +3,7 @@
 # Description    Flame Parent Model Class
 ##
 # Authors:       Jose Carlos Gómez (josecarlos.gomez@upf.edu)
+#                Manuel Pastor (manuel.pastor@upf.edu)
 ##
 # Copyright 2018 Manuel Pastor
 ##
@@ -53,7 +54,7 @@ class RF(BaseEstimator):
         '''Build a new RF model with the X and Y numpy matrices '''
 
         if self.failed:
-            return False
+            return False, "Error initiating model"
 
         X = self.X.copy()
         Y = self.Y.copy()
