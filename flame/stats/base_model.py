@@ -358,9 +358,10 @@ class BaseEstimator:
         if self.quantitative:
             metric = 'r2'
         else:
-            # metric = make_scorer(mcc)
+             #metric = make_scorer(mcc)
             # metric = make_scorer(f1_score)
-            metric = "f1"
+            #metric = "f1"
+            metric = "accuracy"
         # if self.name == 'PLSR':  # Remember problems optimizing PLSR
         #     metric = 'neg_mean_squared_error'
         #     Y = np.asarray(pd.get_dummies(Y)).tolist() # Move this to a new PLS-DA ***
@@ -370,12 +371,14 @@ class BaseEstimator:
         print("tune_parameters")
         print("metric: " + str(metric))
         tclf = GridSearchCV(estimator, tune_parameters,
-                            scoring=metric, cv=30)
+                            scoring=metric, cv=2)
         # n_splits=10, shuffle=False,
         #   random_state=42), n_jobs= -1)
         tclf.fit(X, Y)
         self.estimator = tclf.best_estimator_
-        print(tclf.best_params_)
+        print ("AWSD")
+        print (self.estimator)
+        self.estimator.get_params()
         # print self.estimator.get_params()
 
     

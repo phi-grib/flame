@@ -42,7 +42,7 @@ modelingToolkit: internal             # internal | R | KNIME
 model: PLSR                           # RF | SVM  | GNB  | PLSR
 modelAutoscaling: true                # true | false
 quantitative: true
-tune: true
+tune: false
 
 ModelValidationCV: loo
 ModelValidationLC: false

@@ -28,7 +28,8 @@ import numpy as np
 from stats.RF import RF
 from stats.SVM import SVM
 from stats.GNB import GNB
-from stats.PLSR import PLSR
+from stats.PLSR import PLSR 
+from stats.PLSDA import PLSDA
 
 class Learn:
 
@@ -67,7 +68,8 @@ class Learn:
         registered_methods = [('RF', RF),
                               ('SVM', SVM),
                               ('GNB', GNB),
-                              ('PLSR', PLSR)] # expand with new methods here
+                              ('PLSR', PLSR),
+                              ('PLSDA', PLSDA)] # expand with new methods here
 
         # instanciate an appropriate child of base_model
         model = None
