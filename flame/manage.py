@@ -151,7 +151,6 @@ def action_list(model):
     for x in os.listdir(bdir):
         if x.startswith("ver"):
 
-
             num_versions += 1
             print(model, ':', x)
 
@@ -244,7 +243,8 @@ def action_dir():
         # results.append ((imodel,versions))
         results.append({'text': imodel, 'nodes': versions})
 
-    print(json.dumps(results))
+    return True, json.dumps(results)
+
 
 def action_info(model, version=None, output='text'):
     ''' Returns a text or JSON with info for a given model and version '''
@@ -252,23 +252,23 @@ def action_info(model, version=None, output='text'):
     if not model:
         return False, 'empty model label'
 
-    if version==None:
+    if version == None:
         return False, 'no version provided'
 
     rdir = utils.model_path(model, version)
-    if not os.path.isfile(os.path.join(rdir,'info.pkl')):
+    if not os.path.isfile(os.path.join(rdir, 'info.pkl')):
         return False, 'info not found'
 
-    with open(os.path.join(rdir,'info.pkl'),'rb') as handle:
-        results = pickle.load (handle)
-        results += pickle.load (handle)
+    with open(os.path.join(rdir, 'info.pkl'), 'rb') as handle:
+        results = pickle.load(handle)
+        results += pickle.load(handle)
 
-    if output=='text':
+    if output == 'text':
         for val in results:
-            if len(val)<3:
-                print (val)
+            if len(val) < 3:
+                print(val)
             else:
-                print (val[0],' (', val[1], ') : ', val[2])
+                print(val[0], ' (', val[1], ') : ', val[2])
         return True, 'model informed OK'
 
     return True, json.dumps(results)
