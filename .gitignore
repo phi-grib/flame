@@ -111,8 +111,8 @@ ENV/
 mols
 
 # Pickle files and models
-*.pkl
-flame/models
+#*.pkl
+#flame/models
 
 # Pycharm config
 .idea
