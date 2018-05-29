@@ -244,7 +244,9 @@ def action_dir():
         # results.append ((imodel,versions))
         results.append({'text': imodel, 'nodes': versions})
 
-    print(json.dumps(results))
+    return True, json.dumps(results)
+
+    #print(json.dumps(results))
 
 def action_info(model, version=None, output='text'):
     ''' Returns a text or JSON with info for a given model and version '''
