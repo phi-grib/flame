@@ -38,6 +38,12 @@ from nonconformist.nc import ClassifierNc, MarginErrFunc, RegressorNc
 
 import pandas as pd
 import numpy as np
+from sklearn.metrics import make_scorer
+from sklearn.model_selection import cross_val_predict
+from sklearn.metrics import confusion_matrix
+from sklearn.metrics import mean_squared_error, matthews_corrcoef as mcc
+import copy 
+
 
 class PLS_da(PLSRegression):
     def __init__ (self, n_components=2, scale=False, max_iter=500,
@@ -53,26 +59,27 @@ class PLS_da(PLSRegression):
 
         results =  super(PLS_da, self).predict(X, copy=True).ravel()
         results[results < threshold] = 0
-        results[results > threshold] = 1
+        results[results >= threshold] = 1
         results = results.astype(dtype=int)
 
         return results
 
-    # def get_params(self):
-    #     results =  super(PLS_da, self).get_params()
-    #     return results
+
 
 
 
 class PLSDA(BaseEstimator):
 
     def __init__ (self, X, Y, parameters):
+    
             super(PLSDA, self).__init__(X, Y, parameters)
 
             self.estimator_parameters = parameters['PLSDA_parameters']
             self.tune = parameters['tune']
             self.tune_parameters = parameters['PLSDA_optimize']
             self.name = "PLSDA"
+            self.optimiz = self.estimator_parameters["optimize"]
+            self.estimator_parameters.pop("optimize")
             
 
     def build (self):
@@ -104,8 +111,12 @@ class PLSDA(BaseEstimator):
 
 
         if self.tune :
-            self.optimize(X, Y, PLS_da(n_components=2, scale=False, max_iter=500,
+            if self.optimiz == 'auto':
+                super(PLSDA, self).optimize(X, Y, PLS_da(n_components=2, scale=False, max_iter=500,
                                         tol=1e-6, copy=True, threshold=0.5), self.tune_parameters)
+            elif self.optimiz == 'manual':
+                self.optimize(X, Y, PLS_da(n_components=2, scale=False, max_iter=500,
+                                            tol=1e-6, copy=True, threshold=0.5), self.tune_parameters)
             results.append(('model','model type','PLSDA qualitative (optimized)'))
 
 
@@ -115,10 +126,47 @@ class PLSDA(BaseEstimator):
                 print (self.estimator.get_params())
                 results.append(('model','model type','PLSDA qualitative'))
 
-
+        print(len(Y[Y==1]))
         self.estimator.fit(X, Y)
 
         return True, results
 
 
+    def optimize(self, X, Y, estimator, tune_parameters):
+        ''' optimizes a model using a grid search over a range of values for diverse parameters'''
+        
+        print ("Optimizing PLS-DA algorithm")
+        latent_variables = tune_parameters["n_components"]
+        mcc_final = 0
+        estimator0 = ""
+        list_latent = []
+        for n_comp in latent_variables:
+            mcc0 = 0
+            estimator1 = ""
+            threshold = 0
+            threshold1 = 0
+            for threshold in range(0,100,5):
+                threshold = threshold / 100
+                estimator.set_params(**{"n_components" : n_comp, "threshold" : threshold})
+                y_pred = cross_val_predict(estimator, X, Y, cv=5, n_jobs=-1)
+                mcc1 = mcc(Y, y_pred)
+                if mcc1 >= mcc0:
+                    mcc0 = mcc1
+                    estimator1 = copy.copy(estimator)
+                    threshold1 = (threshold)
+
+            
+            if mcc0 >= mcc_final: 
+                mcc_final = mcc0
+                estimator0 = copy.copy(estimator1)
+            list_latent.append([n_comp, threshold1, mcc0])
+        
+        print("MCC per lantent variable at best cutoff")
+        for el in list_latent:
+            print("Number of latent variables: %s \nBest cutoff: %s \nMCC: %s\n" %
+                 (el[0], el[1], el[2]))
+
+        self.estimator = estimator0
+        self.estimator.fit(X,Y)
+        print (self.estimator.get_params())
 

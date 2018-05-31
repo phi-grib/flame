@@ -284,7 +284,7 @@ class BaseEstimator:
 
         # Goodness of the fit
 
-        self.TPpred, self.FPpred, self.FNpred, self.TNpred = confusion_matrix(
+        self.TNpred, self.FPpred, self.FNpred, self.TPpred = confusion_matrix(
             Y, Yp).ravel()
         self.sensitivityPred = (self.TPpred / (self.TPpred + self.FNpred))
         self.specificityPred = (self.TNpred / (self.TNpred + self.FPpred))
@@ -301,7 +301,7 @@ class BaseEstimator:
         # Cross validation
 
         y_pred = cross_val_predict(self.estimator, X, Y, cv=self.cv, n_jobs=-1)
-        self.TP, self.FP, self.FN, self.TN = confusion_matrix(
+        self.TN, self.FP, self.FN, self.TP = confusion_matrix(
             Y, y_pred).ravel()
         self.sensitivity = (self.TP / (self.TP + self.FN))
         self.specificity = (self.TN / (self.TN + self.FP))
@@ -358,10 +358,10 @@ class BaseEstimator:
         if self.quantitative:
             metric = 'r2'
         else:
-             #metric = make_scorer(mcc)
+            metric = make_scorer(mcc)
             # metric = make_scorer(f1_score)
-            #metric = "f1"
-            metric = "accuracy"
+            # metric = "f1"
+            #metric = "accuracy"
         # if self.name == 'PLSR':  # Remember problems optimizing PLSR
         #     metric = 'neg_mean_squared_error'
         #     Y = np.asarray(pd.get_dummies(Y)).tolist() # Move this to a new PLS-DA ***
@@ -371,15 +371,12 @@ class BaseEstimator:
         print("tune_parameters")
         print("metric: " + str(metric))
         tclf = GridSearchCV(estimator, tune_parameters,
-                            scoring=metric, cv=2)
+                            scoring=metric, cv=5)
         # n_splits=10, shuffle=False,
         #   random_state=42), n_jobs= -1)
         tclf.fit(X, Y)
         self.estimator = tclf.best_estimator_
-        print ("AWSD")
-        print (self.estimator)
-        self.estimator.get_params()
-        # print self.estimator.get_params()
+        print(self.estimator.get_params())
 
     
     # Projection section

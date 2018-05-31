@@ -39,7 +39,7 @@ TSV_varnames: true                    # true if the variable names are in the fi
 
 # modeling settings
 modelingToolkit: internal             # internal | R | KNIME
-model: RF                             # RF | SVM | GNB | PLS-DA
+model: PLSDA                             # RF | SVM | GNB | PLSR | PLSDA
 modelAutoscaling: true                # true | false
 quantitative: false
 tune: true
@@ -119,9 +119,10 @@ GNB_parameters:
 
 #PLSR settings
 PLSR_parameters:
-  - scale: False
-  - tol: 1e-06
-  - n_components: 2
+   scale: False
+   tol: 1e-06
+   n_components: 2
+
 PLSR_optimize:
   n_components:
   - 1
@@ -136,6 +137,13 @@ PLSR_optimize:
 PLSDA_parameters:
   scale: false
   n_components: 2
+  threshold: 0.5
+  # Manual optimization returns the MCC for the diffent
+  # number of latent variables considered in 
+  # n_components (below) with the best threshold for
+  # optimum MCC. auto uses sk-learn gridsearch
+  # with the same paramters.
+  optimize: manual   # manual | auto  
 
 PLSDA_optimize:
   n_components:
@@ -147,8 +155,10 @@ PLSDA_optimize:
   - 6
   - 7
   threshold:
-  - 0.5
   - 0.6
+  - 0.4
+  - 0.5
+
 # conformal predictor settings
 conformal: false
 conformalSignificance: 0.2
