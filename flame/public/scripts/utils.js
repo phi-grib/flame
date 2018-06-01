@@ -29,6 +29,16 @@ function randomDir() {
     return text;
 }
 
+// checks if a string/value is a integer 
+function isInt(x) {
+    return !isNaN(x) && eval(x).toString().length == parseInt(eval(x)).toString().length
+}
+
+// checks if a string/value number is a float 
+function isFloat(x) {
+    return !isNaN(x) && !isInt(eval(x)) && x.toString().length > 0
+}
+
 // AJAX upload function
 function upload(file, temp_dir, postPredict) {
     var xhr = new XMLHttpRequest();

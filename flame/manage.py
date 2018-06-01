@@ -273,4 +273,23 @@ def action_info(model, version=None, output='text'):
                 print (val[0],' (', val[1], ') : ', val[2])
         return True, 'model informed OK'
 
-    return True, json.dumps(results)
+    new_results = []
+
+    # results must be checked to avoid numpy elements not JSON serializable
+    for i in results:
+        if 'numpy.int64' in str(type(i[2])):
+            try:
+                v = int(i[2])
+            except:
+                v = None
+            new_results.append ( (i[0],i[1],v) )
+        elif 'numpy.float64' in str(type(i[2])):
+            try:
+                v = float(i[2])
+            except:
+                v = None
+            new_results.append ( (i[0],i[1],v) )
+        else:
+            new_results.append (i)
+
+    return True, json.dumps(new_results)

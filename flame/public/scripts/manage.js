@@ -344,6 +344,7 @@ function selectedNode() {
         return data;
     });
 }
+
 /**
  * Summary. Get the version details
  * Description. Get the version details and print the result in table format.
@@ -360,7 +361,16 @@ function getInfo() {
                 result = JSON.parse(result);
                 var len = result.length;
                 for (var i = 0; i < len; i++) {
-                    $("#tBody").append("<tr class='tElement' ><td data-toggle='tooltip' data-placement='top' title='" + result[i][1] + "'>" + result[i][0] + "</td><td>" + result[i][2] + "</td></tr>");
+                    
+                    val = result[i][2];
+                    if (isFloat(val)) {
+                        val = parseFloat(val).toFixed(3);
+                    }
+
+                    $("#tBody").append("<tr class='tElement' ><td data-toggle='tooltip' data-placement='top' title='" 
+                                        + result[i][1] + "'>" 
+                                        + result[i][0] + "</td><td>" 
+                                        + val + "</td></tr>");
                 }
             }catch{
                 $("#tBody").append("<tr><td>No info provided with this version</td></tr>");
