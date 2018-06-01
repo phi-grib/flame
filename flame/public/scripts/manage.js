@@ -141,6 +141,7 @@ function addModel() {
                 });
                 doneModal();
                 loadTree();
+                hideAll();
         } else {
         }
     } else {
@@ -158,12 +159,13 @@ function uploadModel() {
 
 
 function importModel(temp_dir, name) {
-    console.log ('importing model: '+name)
-
     $.post('/importModel', { "model": name })
         .always(function (result) {
-
+            doneModal();
+            loadTree();
+            hideAll();
         });
+
 }
 
 /**

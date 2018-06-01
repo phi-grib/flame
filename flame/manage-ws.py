@@ -36,8 +36,6 @@ import util.utils as utils
 #TODO: Validate names in server to prevent curl 'attacks' like curl -d "model=@@@@@@@@" -X POST http://0.0.0.0:8081/addModel
 #The user cant addModels with rare characters
 
-
-
 def sensitivity(y_true, y_pred):
     tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
     return(tp / (tp+fn))
@@ -65,12 +63,10 @@ class FlamePredict(object):
             path = os.path.join(tempfile.gettempdir(),temp_dir)
             os.mkdir (path)
         else:
-            # path = tempfile.gettempdir()
-            path = './'
+            path = tempfile.gettempdir()
+            # path = './'
         
         destination = os.path.join(path, filename)
-        
-        print ('uploading...', filename, path, destination)
         
         with open(destination, 'wb') as f:
             shutil.copyfileobj(cherrypy.request.body, f)
@@ -170,12 +166,10 @@ class FlameImportModel(object):
     @cherrypy.tools.accept(media='text/plain')
     def POST(self, model):
 
-        # model = os.path.join(tempfile.gettempdir(),model)
-        model = os.path.join('./',model)
-        print ('in import', model)
+        model = os.path.join(tempfile.gettempdir(),model)
+        # model = os.path.join('./',model)
         result = manage.action_import(model)
-        return 'test'
-
+        return result
 
 
 @cherrypy.expose

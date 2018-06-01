@@ -164,26 +164,37 @@ def action_import(model):
     if not model:
         return False, 'empty model label'
 
-    bdir = utils.model_tree_path(model)
+    # convert model to endpoint string
+    base_model = os.path.basename(model)
+    endpoint = os.path.splitext(base_model)[0]
+    ext = os.path.splitext(base_model)[1]
+
+
+    bdir = utils.model_tree_path(endpoint)
 
     if os.path.isdir(bdir):
         return False, 'endpoint already exists'
 
-    importfile = os.path.abspath(model+'.tgz')
+    if ext != '.tgz':
+        importfile = os.path.abspath(model+'.tgz')
+    else:
+        importfile = model
+
+    print (importfile)
 
     if not os.path.isfile(importfile):
         return False, 'importing package '+importfile+' not found'
 
     try:
         os.mkdir(bdir)
-        os.chdir(bdir)
+        # os.chdir(bdir)
     except:
         return False, 'error creating directory '+bdir
 
     with tarfile.open(importfile, 'r:gz') as tar:
-        tar.extractall()
+        tar.extractall(bdir)
 
-    return True, 'endpoint '+model+' imported OK'
+    return True, 'endpoint '+endpoint+' imported OK'
 
 
 def action_export(model):
