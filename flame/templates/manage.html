@@ -29,12 +29,12 @@
   <script src="/static/scripts/popper.min.js"></script>
   <!--Tab icon and name-->
   <link rel="shortcut icon" href="/static/images/etransafe.ico" type="image/x-icon">
-  <title>Flame interface</title>
+  <title>Flame</title>
 </head>
 
 <body class="bg-light">
   <nav class="navbar navbar-expand-lg navbar-light bg-light">
-    <a class="navbar-brand">Flame interface</a>
+    <a class="navbar-brand">Flame</a>
     <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarText" aria-controls="navbarText"
       aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
@@ -65,10 +65,12 @@
           <div id="tree" class="px-3"></div>
           <div class="float-left px-3">
             <button class="btn btn-outline-primary orange mt-2" data-toggle="tooltip" data-placement="top" title="Expand all nodes" onclick="expandTree()">
-              <i class="fas fa-plus"></i> Expand
+              <!-- <i class="fas fa-plus"></i> Expand -->
+              Expand
             </button>
             <button class="btn btn-outline-primary mt-2 ml-1 blue" data-toggle="tooltip" data-placement="top" title="Collapse all nodes" onclick="collapseTree()">
-              <i class="fas fa-minus"></i> Collapse
+              <!-- <i class="fas fa-minus"></i> Collapse -->
+              Collapse
             </button>
           </div>
         </div>
@@ -89,7 +91,7 @@
         <div class="col-lg-4 col-md-12 bg-light ">
           <div id="optionsCont">
             <p class="h2">Tools</p>
-            <p id="manage" class="h3">Tools</p>
+            <p id="manage" class="font-weight-bold">none selected</p>
             <div id="opts">
               <fieldset class="form-group mt-3 ">
                 <legend>Publish</legend>

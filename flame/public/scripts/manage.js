@@ -256,8 +256,8 @@ function loadTree() {
             color: undefined,
             onhoverColor: '#edba74',
             selectedBackColor: "#e59d22",
-            expandIcon: 'fas fa-minus',
-            collapseIcon: 'fas fa-plus',
+            expandIcon: 'fas fa-plus',
+            collapseIcon: 'fas fa-minus',
             levels: 0,
             data: result
         });
@@ -319,8 +319,8 @@ function selectedNode() {
             //Set the main table 
             $("#tBody").empty();
             $("#tBody").append("<tr><td>Select a version</td></tr>");
-            $("#manage").addClass("border");
-            $("#manage").addClass("rounded");
+            // $("#manage").addClass("border");
+            // $("#manage").addClass("rounded");
             //Sets the url to launch when the export button is pressed
             query = "exportModel?model="+data.text;
             document.getElementById("exportBTN").setAttribute("href", query); 
@@ -340,8 +340,8 @@ function selectedNode() {
             document.getElementById("exportBTN").setAttribute("href", query); 
             //Load the main table 
             getInfo();
-            $("#manage").addClass("border");
-            $("#manage").addClass("rounded");
+            // $("#manage").addClass("border");
+            // $("#manage").addClass("rounded");
         }
         return data;
     });
@@ -368,11 +368,15 @@ function getInfo() {
                     if (isFloat(val)) {
                         val = parseFloat(val).toFixed(3);
                     }
-
-                    $("#tBody").append("<tr class='tElement' ><td data-toggle='tooltip' data-placement='top' title='" 
-                                        + result[i][1] + "'>" 
-                                        + result[i][0] + "</td><td>" 
+                    // $("#tBody").append("<tr class='tElement' ><td data-toggle='tooltip' data-placement='top' title='" 
+                    //                     + result[i][1] + "'>" 
+                    //                     + result[i][0] + "</td><td>" 
+                    //                     + val + "</td></tr>");
+                    $("#tBody").append("<tr class='tElement' ><td class='cssToolTip'>"
+                                        + result[i][0] + "<span>" 
+                                        + result[i][1] + "</span></td><td>" 
                                         + val + "</td></tr>");
+                    
                 }
             }catch{
                 $("#tBody").append("<tr><td>No info provided with this version</td></tr>");
@@ -419,7 +423,6 @@ function generateModal(title, text, func){
 function doneModal(msg="Completed") {
     $("#modalYes").remove();
     $("#modalBody").text(msg);
-
 }
 
 
