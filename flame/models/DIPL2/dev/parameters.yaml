@@ -1,17 +1,16 @@
 # system settings
 verbose_error: true
-numCPUs: 1
+numCPUs: 2
 mol_batch: objects                    # series | objects | auto (not implemented!)
 
 # input settings
-input_type: molecule                  # molecule | data
-normalize_method: 
-- standardize                         # null | standardize
+input_type: molecule                  # molecule | data | ext_data
+normalize_method:                     # null | standardize       
+- standardize
 
 ionize_method: null                   # null | moka
 convert3D_method: null                # null | ETKDG
-computeMD_method:                     # RDKit_properties | RDKit_md | custom
-- RDKit_md
+computeMD_method:                     # RDKit_properties | RDKit_md | padel | custom
 - RDKit_properties
 
 ext_input: false                      # external input source TRUE
@@ -22,15 +21,17 @@ model_set:                            # list of models used for producing input
   version: 2
 
 # Output 
-output_format:                        # JSON | TSV
-- JSON
-- TSV 
-output_md: false                      # if true dump the MD generated to 'output_md.tsv'
+output_format:                        # JSON | TSV  (dump results to output.tsv and errors to error.tsv)
+- JSON      
+         
+output_md: true                      # if true dump the MD generated to 'output_md.tsv'
 
 # SDFile settings
 SDFile_activity: activity             # str
 SDFile_experimental: IC50             # str
-SDFile_name: GENERIC_NAME             # str
+SDFile_name:                          # str
+- GENERIC_NAME                        
+- name
 
 # TSV settings
 TSV_activity: activity                # str
@@ -38,9 +39,9 @@ TSV_objnames: true                    # true if the object names are in the firs
 TSV_varnames: true                    # true if the variable names are in the first row
 
 # modeling settings
-modelingToolkit: internal             # internal | R | KNIME
-model: PLSDA                          # RF | SVM | GNB | PLSR | PLSDA
-modelAutoscaling: true                # true | false
+modelingToolkit: internal             # internal | R | KNIME | custom
+model: PLSDA                             # RF | SVM
+modelAutoscaling: false               # true | false
 quantitative: false
 tune: true
 
