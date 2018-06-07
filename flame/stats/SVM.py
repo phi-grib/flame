@@ -34,6 +34,9 @@ from nonconformist.acp import AggregatedCp
 from nonconformist.acp import BootstrapSampler
 from nonconformist.icp import IcpClassifier, IcpRegressor
 from nonconformist.nc import ClassifierNc, MarginErrFunc, RegressorNc
+from sklearn.neighbors import KNeighborsRegressor
+from nonconformist.nc import AbsErrorErrFunc, RegressorNormalizer
+
 class SVM(BaseEstimator):
 
     def __init__(self, X, Y, parameters):
@@ -100,16 +103,24 @@ class SVM(BaseEstimator):
 
         if self.conformal:
             if self.quantitative:
-                self.conformal_pred = AggregatedCp(IcpRegressor(RegressorNc(RegressorAdapter(self.estimator))),
-                                                   BootstrapSampler())
+                underlying_model = RegressorAdapter(self.estimator)
+                normalizing_model = RegressorAdapter(KNeighborsRegressor(n_neighbors=1))
+                normalizing_model = RegressorAdapter(self.estimator)
+                normalizer = RegressorNormalizer(underlying_model, normalizing_model, AbsErrorErrFunc())
+                nc = RegressorNc(underlying_model, AbsErrorErrFunc(), normalizer)
+                # self.conformal_pred = AggregatedCp(IcpRegressor(RegressorNc(RegressorAdapter(self.estimator))),
+                #                                   BootstrapSampler())
+
+                self.conformal_pred = AggregatedCp(IcpRegressor(nc),
+                                                    BootstrapSampler())
                 self.conformal_pred.fit(X, Y)
-                results.append(('model','model type','conformal RF quantitative'))  #overrides non-conformal
+                results.append(('model','model type','conformal SVM quantitative'))  #overrides non-conformal
 
             else:
                 self.conformal_pred = AggregatedCp(IcpClassifier(ClassifierNc(ClassifierAdapter(self.estimator),
                                                                               MarginErrFunc())), BootstrapSampler())
                 self.conformal_pred.fit(X, Y)
-                results.append(('model','model type','conformal RF qualitative'))   #overrides non-conformal
+                results.append(('model','model type','conformal SVM qualitative'))   #overrides non-conformal
 
         self.estimator.fit(X, Y)
         return True, results

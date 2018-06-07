@@ -41,13 +41,13 @@ import numpy as np
 from sklearn.metrics import make_scorer
 from sklearn.model_selection import cross_val_predict
 from sklearn.metrics import confusion_matrix
-from sklearn.metrics import mean_squared_error, matthews_corrcoef as mcc
+from sklearn.metrics import mean_squared_error, matthews_corrcoef as mcc, f1_score as f1
 import copy 
 
 
 class PLS_da(PLSRegression):
     def __init__ (self, n_components=2, scale=False, max_iter=500,
-                  tol=1e-6, copy=True, threshold=0.5 ):
+                  tol=1e-6, copy=True, threshold=None ):
             super(PLS_da, self).__init__(n_components=n_components, 
                   scale=scale, max_iter=max_iter, tol=tol, copy=copy)
             self.threshold = threshold
@@ -55,7 +55,7 @@ class PLS_da(PLSRegression):
     def predict(self, X, copy=True):
         threshold = self.threshold
         if threshold is None:
-            threshold = 0.5
+            return super(PLS_da, self).predict(X, copy=True).ravel()
 
         results =  super(PLS_da, self).predict(X, copy=True).ravel()
         results[results < threshold] = 0
@@ -116,7 +116,7 @@ class PLSDA(BaseEstimator):
                                         tol=1e-6, copy=True, threshold=0.5), self.tune_parameters)
             elif self.optimiz == 'manual':
                 self.optimize(X, Y, PLS_da(n_components=2, scale=False, max_iter=500,
-                                            tol=1e-6, copy=True, threshold=0.5), self.tune_parameters)
+                                            tol=1e-6, copy=True, threshold=None), self.tune_parameters)
             results.append(('model','model type','PLSDA qualitative (optimized)'))
 
 
@@ -142,24 +142,30 @@ class PLSDA(BaseEstimator):
         list_latent = []
         for n_comp in latent_variables:
             mcc0 = 0
+            estimator.set_params(**{"n_components" : n_comp})
+            y_pred = cross_val_predict(estimator, X, Y, cv=self.cv, n_jobs=-1)
             estimator1 = ""
-            threshold = 0
-            threshold1 = 0
+            threshold_1 = 0
             for threshold in range(0,100,5):
                 threshold = threshold / 100
-                estimator.set_params(**{"n_components" : n_comp, "threshold" : threshold})
-                y_pred = cross_val_predict(estimator, X, Y, cv=5, n_jobs=-1)
-                mcc1 = mcc(Y, y_pred)
+                y_pred2 = copy.copy(y_pred)
+                y_pred2[y_pred2 < threshold] = 0
+                y_pred2[y_pred2 >= threshold] = 1
+                mcc1 = mcc(Y, y_pred2)
+
                 if mcc1 >= mcc0:
                     mcc0 = mcc1
                     estimator1 = copy.copy(estimator)
-                    threshold1 = (threshold)
+                    estimator1.set_params(**{'threshold' : threshold})
+                    threshold_1 = (threshold)
 
-            
             if mcc0 >= mcc_final: 
                 mcc_final = mcc0
                 estimator0 = copy.copy(estimator1)
-            list_latent.append([n_comp, threshold1, mcc0])
+                self.estimator = estimator0
+
+            list_latent.append([n_comp, threshold_1, mcc0])
+        
         
         print("MCC per lantent variable at best cutoff")
         for el in list_latent:

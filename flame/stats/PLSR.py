@@ -36,6 +36,13 @@ from nonconformist.acp import BootstrapSampler
 from nonconformist.icp import IcpClassifier, IcpRegressor
 from nonconformist.nc import ClassifierNc, MarginErrFunc, RegressorNc
 
+import numpy as np
+from sklearn.model_selection import cross_val_predict
+from sklearn.metrics import r2_score
+import copy
+from sklearn.neighbors import KNeighborsRegressor
+from nonconformist.nc import AbsErrorErrFunc, RegressorNormalizer
+
 class PLS_r(PLSRegression):
     
     def predict(self, X, copy=True):
@@ -53,15 +60,14 @@ class PLSR(BaseEstimator):
             self.tune = parameters['tune']
             self.tune_parameters = parameters['PLSR_optimize']
             self.name = "PLSR"
-            
+            self.optimiz = self.estimator_parameters["optimize"]
+            self.estimator_parameters.pop("optimize")
 
     def build (self):
         if not self.quantitative:
             print("PLSR only applies to quantitative data")
             return False, "PLSR only applies to quantitative data"
-        if self.conformal:
-            print("Conformal prediction no implemented in PLSR yet")
-            return False, "Conformal prediction no implemented in PLSR yet"
+
 
         if self.failed:
             return False, "Error initiating model"
@@ -82,16 +88,33 @@ class PLSR(BaseEstimator):
         if self.cv:
             self.cv = getCrossVal(self.cv, 46 , self.n, self.p)
 
-
         if self.tune :
-            self.optimize(X, Y, PLS_r(**self.estimator_parameters), self.tune_parameters)
+            if self.optimiz == 'auto':
+                super(PLSR, self).optimize(X, Y, PLS_r(**self.estimator_parameters), self.tune_parameters)
+            elif self.optimiz == 'manual':
+                self.optimize(X, Y, PLS_r(**self.estimator_parameters), self.tune_parameters)
+            
             results.append(('model','model type','PLSR quantitative (optimized)'))
-
 
         else:
                 print ("Building  Quantitative PLSR")
                 self.estimator =  PLS_r(**self.estimator_parameters)
                 results.append(('model','model type','PLSR quantitative'))
+
+        if self.conformal:
+            underlying_model = RegressorAdapter(self.estimator)
+            normalizing_model = RegressorAdapter(KNeighborsRegressor(n_neighbors=1))
+            normalizing_model = RegressorAdapter(self.estimator)
+            normalizer = RegressorNormalizer(underlying_model, normalizing_model, AbsErrorErrFunc())
+            nc = RegressorNc(underlying_model, AbsErrorErrFunc(), normalizer)
+            self.conformal_pred = AggregatedCp(IcpRegressor(nc),
+                                                BootstrapSampler())
+
+            # self.conformal_pred = AggregatedCp(IcpRegressor(RegressorNc(RegressorAdapter(self.estimator))),
+            #                                    BootstrapSampler())
+
+            self.conformal_pred.fit(X, Y)
+            results.append(('model','model type','conformal PLSR quantitative'))  #overrides non-conformal
 
 
         self.estimator.fit(X, Y)
@@ -100,3 +123,33 @@ class PLSR(BaseEstimator):
 
 
 
+
+    def optimize(self, X, Y, estimator, tune_parameters):
+        ''' optimizes a model using a grid search over a range of values for diverse parameters'''
+        
+        print ("Optimizing PLSR algorithm")
+        latent_variables = tune_parameters["n_components"]
+        r2 = 0
+        estimator0 = ""
+        list_latent = []
+        for n_comp in latent_variables:
+            r2_0 = 0
+            estimator.set_params(**{"n_components" : n_comp})
+            y_pred = cross_val_predict(estimator, X, Y, cv=self.cv, n_jobs=-1)
+            r2_0 = r2_score(Y, y_pred)
+
+            if r2_0 >= r2:
+                r2 = r2_0
+                estimator0 = copy.copy(estimator)
+
+            list_latent.append([n_comp, r2_0])
+        
+        
+        print("r2 per lantent variable")
+        for el in list_latent:
+            print("Number of latent variables: %s \nr2: %s\n" %
+                 (el[0], el[1]))
+
+        self.estimator = estimator0
+        self.estimator.fit(X,Y)
+        print (self.estimator.get_params())
