@@ -2,7 +2,6 @@
 verbose_error: true
 numCPUs: 2
 mol_batch: objects                    # series | objects | auto (not implemented!)
-mol_batch: series                    # series | objects | auto (not implemented!)
 
 # input settings
 input_type: molecule                  # molecule | data | ext_data
@@ -42,7 +41,7 @@ TSV_varnames: true                    # true if the variable names are in the fi
 # modeling settings
 
 modelingToolkit: internal             # internal | R | KNIME
-model: RF                             # RF | SVM
+model: RF                             # RF | SVM | GNB | PLSR | PLSDA
 modelAutoscaling: true                # true | false
 quantitative: false
 tune: false
@@ -169,5 +168,5 @@ PLSDA_optimize:
   - 0.5
 
 # conformal predictor settings
-conformal: false
+conformal: true
 conformalSignificance: 0.2

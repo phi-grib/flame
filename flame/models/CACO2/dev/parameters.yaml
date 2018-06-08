@@ -41,10 +41,10 @@ TSV_varnames: true                    # true if the variable names are in the fi
 # modeling settings
 
 modelingToolkit: internal             # internal | R | KNIME
-model: RF                             # RF | SVM
+model: RF                             # RF | SVM | GNB | PLSR | PLSDA
 modelAutoscaling: false               # true | false
 quantitative: true
-tune: false
+tune: true
 
 ModelValidationCV: loo
 ModelValidationLC: false
@@ -169,4 +169,4 @@ PLSDA_optimize:
 
 # conformal predictor settings
 conformal: true
-conformalSignificance: 0.2
+conformalSignificance: 0.20
