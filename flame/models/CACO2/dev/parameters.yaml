@@ -39,11 +39,12 @@ TSV_objnames: true                    # true if the object names are in the firs
 TSV_varnames: true                    # true if the variable names are in the first row
 
 # modeling settings
+
 modelingToolkit: internal             # internal | R | KNIME
-model: RF                             # RF | SVM
+model: RF                             # RF | SVM | GNB | PLSR | PLSDA
 modelAutoscaling: false               # true | false
 quantitative: true
-tune: false
+tune: true
 
 ModelValidationCV: loo
 ModelValidationLC: false
@@ -114,6 +115,58 @@ RF_optimize:
   random_state:
   - 46
 
+#GNB settings
+GNB_parameters:
+  priors: null
+
+#PLSR settings
+PLSR_parameters:
+  scale: false
+  tol: 0.000006
+  n_components: 3
+  # Manual optimization returns the MCC for the diffent
+  # number of latent variables considered in 
+  # n_components (below) with the best threshold for
+  # optimum MCC. auto uses sk-learn gridsearch
+  # with the same paramters.
+  optimize: manual   # manual | auto  
+
+PLSR_optimize:
+  n_components:
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+
+#PLSDA settings
+PLSDA_parameters:
+  scale: false
+  tol: 0.000006
+  n_components: 2
+  threshold: null
+  # Manual optimization returns the MCC for the diffent
+  # number of latent variables considered in 
+  # n_components (below) with the best threshold for
+  # optimum MCC. auto uses sk-learn gridsearch
+  # with the same paramters.
+  optimize: manual   # manual | auto  
+
+PLSDA_optimize:
+  n_components:
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  threshold:
+  - 0.6
+  - 0.4
+  - 0.5
+
 # conformal predictor settings
 conformal: true
-conformalSignificance: 0.2
+conformalSignificance: 0.20
