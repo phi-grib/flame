@@ -2,6 +2,7 @@
 verbose_error: true
 numCPUs: 2
 mol_batch: objects                    # series | objects | auto (not implemented!)
+mol_batch: series                    # series | objects | auto (not implemented!)
 
 # input settings
 input_type: molecule                  # molecule | data | ext_data
@@ -39,11 +40,12 @@ TSV_objnames: true                    # true if the object names are in the firs
 TSV_varnames: true                    # true if the variable names are in the first row
 
 # modeling settings
-modelingToolkit: internal             # internal | R | KNIME | custom
-model: PLSDA                             # RF | SVM
-modelAutoscaling: false               # true | false
+
+modelingToolkit: internal             # internal | R | KNIME
+model: RF                             # RF | SVM
+modelAutoscaling: true                # true | false
 quantitative: false
-tune: true
+tune: false
 
 ModelValidationCV: loo
 ModelValidationLC: false
@@ -60,7 +62,7 @@ SVM_parameters:
   epsilon: 0.1
   gamma: auto
   kernel: rbf
-  probability: true
+  probability: false
   random_state: 46
   shrinking: true
   tol: 0.001

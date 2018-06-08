@@ -1,29 +1,28 @@
 
 # -*- coding: utf-8 -*-
 
-# Description    Flame Parent Model Class
+# Description    RF model classifier and regressor
 ##
-# Authors:       Jose Carlos Gómez (josecarlos.gomez@upf.edu)
-#                Manuel Pastor (manuel.pastor@upf.edu)
+# Authors:       Manuel Pastor (manuel.pastor@upf.edu)
 ##
-# Copyright 2018 Manuel Pastor
+# Copyright 2017 Manuel Pastor
 ##
-# This file is part of Flame
+# This file is part of eTOXlab.
 ##
-# Flame is free software: you can redistribute it and/or modify
+# eTOXlab is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation version 3.
 ##
-# Flame is distributed in the hope that it will be useful,
+# eTOXlab is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 ##
 # You should have received a copy of the GNU General Public License
-# along with Flame.  If not, see <http://www.gnu.org/licenses/>.
-
+# along with eTOXlab.  If not, see <http://www.gnu.org/licenses/>.
 
 from sklearn import svm
+<<<<<<< HEAD
 from stats.base_model import BaseEstimator
 from stats.base_model import getCrossVal
 from stats.scale import scale, center
@@ -38,13 +37,34 @@ from sklearn.neighbors import KNeighborsRegressor
 from nonconformist.nc import AbsErrorErrFunc, RegressorNormalizer
 
 class SVM(BaseEstimator):
+=======
+>>>>>>> master
 
-    def __init__(self, X, Y, parameters):
-            super(SVM, self).__init__(X, Y, parameters)
+from stats.base_model import *
 
-            self.estimator_parameters = parameters['SVM_parameters']
-            self.tune = parameters['tune']
-            self.tune_parameters = parameters['SVM_optimize']
+
+class SVM(BaseEstimator):
+
+    def __init__(self, X=None,
+                 Y=None,
+                 quantitative=False,
+                 autoscale=False,
+                 tune=False,
+                 cv='loo',
+                 n=2,
+                 p=1,
+                 lc=False,
+                 conformalSignificance=0.05,
+                 vpath='',
+                 estimator_parameters={},
+                 tune_parameters={},
+                 conformal=False):
+        if X is not None:
+            super(SVM, self).__init__(X, Y, quantitative, autoscale,
+                                      cv, n, p, lc, conformalSignificance, vpath, estimator_parameters, conformal)
+
+            self.tune = tune
+            self.tune_parameters = tune_parameters
             if self.quantitative:
                 self.name = "SVM-R"
                 self.estimator_parameters.pop("class_weight", None)
@@ -58,9 +78,12 @@ class SVM(BaseEstimator):
                 self.estimator_parameters.pop("epsilon", None)
                 self.name = "SVM-C"
 
+            self.failed = False
+
+        else:
+            self.failed = True
 
     def build(self):
-        '''Build a new SVM model with the X and Y numpy matrices'''
 
         if self.failed:
             return False
@@ -72,35 +95,24 @@ class SVM(BaseEstimator):
             X, self.mux = center(X)
             X, self.wgx = scale(X, self.autoscale)
 
-        results = []
-        results.append (('nobj', 'number of objects', self.nobj))
-        results.append (('nvarx', 'number of predictor variables', self.nvarx))
-
         if self.cv:
-            self.cv = getCrossVal(self.cv, 46, 
-                                  self.n, self.p)
+            self.cv = getCrossVal(self.cv, 1226, self.n, self.p)
 
         if self.tune:
             if self.quantitative:
                 self.optimize(X, Y, svm.SVR(), self.tune_parameters)
-                results.append(('model','model type','SVM quantitative (optimized)'))
-
             else:
                 self.optimize(X, Y, svm.SVC(probability=True),
                               self.tune_parameters)
-                results.append(('model','model type','SVM qualitative (optimized)'))
 
         else:
             if self.quantitative:
                 print("Building Quantitative SVM-R model")
-                self.estimator = svm.SVR(**self.estimator_parameters)
-                results.append(('model','model type','SVM quantitative'))
 
+                self.estimator = svm.SVR(**self.estimator_parameters)
             else:
                 print("Building Qualitative SVM-C")
                 self.estimator = svm.SVC(**self.estimator_parameters)
-                results.append(('model','model type','RF qualitative'))
-
         if self.conformal:
             if self.quantitative:
                 underlying_model = RegressorAdapter(self.estimator)
@@ -121,6 +133,6 @@ class SVM(BaseEstimator):
                                                                               MarginErrFunc())), BootstrapSampler())
                 self.conformal_pred.fit(X, Y)
                 results.append(('model','model type','conformal SVM qualitative'))   #overrides non-conformal
-
         self.estimator.fit(X, Y)
-        return True, results
+
+        return True

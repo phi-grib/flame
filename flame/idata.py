@@ -488,8 +488,9 @@ class Idata:
                 first_mol = False
             else:
                 if len(results[0]) != num_var:
-                    print('ERROR: (@workflow_objects) incorrect number of MD for molecule #', str(
-                        i+1), 'in file ' + input_file)
+                    print('ERROR: (@workflow_objects) MD length for molecule #', str(
+                        i+1), 'in file ' + input_file + 'does not match the MD length of the first molecule')
+                    success_list[i]=False 
                     continue
 
                 md_results = np.vstack((md_results, results[0]))

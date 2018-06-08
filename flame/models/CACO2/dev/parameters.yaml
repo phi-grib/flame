@@ -39,7 +39,8 @@ TSV_objnames: true                    # true if the object names are in the firs
 TSV_varnames: true                    # true if the variable names are in the first row
 
 # modeling settings
-modelingToolkit: internal             # internal | R | KNIME | custom
+
+modelingToolkit: internal             # internal | R | KNIME
 model: RF                             # RF | SVM
 modelAutoscaling: false               # true | false
 quantitative: true
@@ -60,7 +61,7 @@ SVM_parameters:
   epsilon: 0.1
   gamma: auto
   kernel: rbf
-  probability: true
+  probability: false
   random_state: 46
   shrinking: true
   tol: 0.001
@@ -167,5 +168,5 @@ PLSDA_optimize:
   - 0.5
 
 # conformal predictor settings
-conformal: false
+conformal: true
 conformalSignificance: 0.2

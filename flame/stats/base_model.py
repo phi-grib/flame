@@ -235,7 +235,8 @@ class BaseEstimator:
         Yp = self.estimator.predict(X)
         Ym = np.mean(Y)
         results = []
-        # Goodness of the fit
+
+        # Goodness of the fitt
 
         SSY0 = np.sum(np.square(Ym-Y))
         SSY = np.sum(np.square(Yp-Y))
@@ -284,7 +285,7 @@ class BaseEstimator:
 
         # Goodness of the fit
 
-        self.TNpred, self.FPpred, self.FNpred, self.TPpred = confusion_matrix(
+        self.TPpred, self.FPpred, self.FNpred, self.TNpred = confusion_matrix(
             Y, Yp).ravel()
         self.sensitivityPred = (self.TPpred / (self.TPpred + self.FNpred))
         self.specificityPred = (self.TNpred / (self.TNpred + self.FPpred))
@@ -301,7 +302,7 @@ class BaseEstimator:
         # Cross validation
 
         y_pred = cross_val_predict(self.estimator, X, Y, cv=self.cv, n_jobs=-1)
-        self.TN, self.FP, self.FN, self.TP = confusion_matrix(
+        self.TP, self.FP, self.FN, self.TN = confusion_matrix(
             Y, y_pred).ravel()
         self.sensitivity = (self.TP / (self.TP + self.FN))
         self.specificity = (self.TN / (self.TN + self.FP))
@@ -358,10 +359,9 @@ class BaseEstimator:
         if self.quantitative:
             metric = 'r2'
         else:
-            metric = make_scorer(mcc)
+            # metric = make_scorer(mcc)
             # metric = make_scorer(f1_score)
-            # metric = "f1"
-            #metric = "accuracy"
+            metric = "f1"
         # if self.name == 'PLSR':  # Remember problems optimizing PLSR
         #     metric = 'neg_mean_squared_error'
         #     Y = np.asarray(pd.get_dummies(Y)).tolist() # Move this to a new PLS-DA ***
@@ -376,7 +376,8 @@ class BaseEstimator:
         #   random_state=42), n_jobs= -1)
         tclf.fit(X, Y)
         self.estimator = tclf.best_estimator_
-        print(self.estimator.get_params())
+        print(tclf.best_params_)
+        # print self.estimator.get_params()
 
     
     # Projection section

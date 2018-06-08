@@ -121,3 +121,5 @@ flame/models
 flame/models/CACO2/dev/data.pkl
 *.tsv
 
+# compressed files
+*.tgz

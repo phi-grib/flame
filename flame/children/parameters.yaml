@@ -60,7 +60,7 @@ SVM_parameters:
   epsilon: 0.1
   gamma: auto
   kernel: rbf
-  probability: true
+  probability: false
   random_state: 46
   shrinking: true
   tol: 0.001
@@ -167,5 +167,5 @@ PLSDA_optimize:
   - 0.5
 
 # conformal predictor settings
-conformal: false
+conformal: true
 conformalSignificance: 0.2

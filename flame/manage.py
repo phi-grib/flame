@@ -164,26 +164,37 @@ def action_import(model):
     if not model:
         return False, 'empty model label'
 
-    bdir = utils.model_tree_path(model)
+    # convert model to endpoint string
+    base_model = os.path.basename(model)
+    endpoint = os.path.splitext(base_model)[0]
+    ext = os.path.splitext(base_model)[1]
+
+
+    bdir = utils.model_tree_path(endpoint)
 
     if os.path.isdir(bdir):
         return False, 'endpoint already exists'
 
-    importfile = os.path.abspath(model+'.tgz')
+    if ext != '.tgz':
+        importfile = os.path.abspath(model+'.tgz')
+    else:
+        importfile = model
+
+    print (importfile)
 
     if not os.path.isfile(importfile):
         return False, 'importing package '+importfile+' not found'
 
     try:
         os.mkdir(bdir)
-        os.chdir(bdir)
+        # os.chdir(bdir)
     except:
         return False, 'error creating directory '+bdir
 
     with tarfile.open(importfile, 'r:gz') as tar:
-        tar.extractall()
+        tar.extractall(bdir)
 
-    return True, 'endpoint '+model+' imported OK'
+    return True, 'endpoint '+endpoint+' imported OK'
 
 
 def action_export(model):
@@ -244,7 +255,9 @@ def action_dir():
         # results.append ((imodel,versions))
         results.append({'text': imodel, 'nodes': versions})
 
-    print(json.dumps(results))
+    return True, json.dumps(results)
+
+    #print(json.dumps(results))
 
 def action_info(model, version=None, output='text'):
     ''' Returns a text or JSON with info for a given model and version '''
@@ -271,4 +284,23 @@ def action_info(model, version=None, output='text'):
                 print (val[0],' (', val[1], ') : ', val[2])
         return True, 'model informed OK'
 
-    return True, json.dumps(results)
+    new_results = []
+
+    # results must be checked to avoid numpy elements not JSON serializable
+    for i in results:
+        if 'numpy.int64' in str(type(i[2])):
+            try:
+                v = int(i[2])
+            except:
+                v = None
+            new_results.append ( (i[0],i[1],v) )
+        elif 'numpy.float64' in str(type(i[2])):
+            try:
+                v = float(i[2])
+            except:
+                v = None
+            new_results.append ( (i[0],i[1],v) )
+        else:
+            new_results.append (i)
+
+    return True, json.dumps(new_results)
