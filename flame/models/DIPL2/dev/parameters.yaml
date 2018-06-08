@@ -11,7 +11,7 @@ normalize_method:                     # null | standardize
 ionize_method: null                   # null | moka
 convert3D_method: null                # null | ETKDG
 computeMD_method:                     # RDKit_properties | RDKit_md | padel | custom
-- RDKit_properties
+- RDKit_md
 
 ext_input: false                      # external input source TRUE
 model_set:                            # list of models used for producing input
@@ -24,7 +24,7 @@ model_set:                            # list of models used for producing input
 output_format:                        # JSON | TSV  (dump results to output.tsv and errors to error.tsv)
 - JSON      
          
-output_md: true                      # if true dump the MD generated to 'output_md.tsv'
+output_md: false                      # if true dump the MD generated to 'output_md.tsv'
 
 # SDFile settings
 SDFile_activity: activity             # str
@@ -41,7 +41,7 @@ TSV_varnames: true                    # true if the variable names are in the fi
 # modeling settings
 
 modelingToolkit: internal             # internal | R | KNIME
-model: RF                             # RF | SVM | GNB | PLSR | PLSDA
+model: RF                            # RF | SVM | GNB | PLSR | PLSDA
 modelAutoscaling: true                # true | false
 quantitative: false
 tune: false
@@ -50,6 +50,7 @@ ModelValidationCV: loo
 ModelValidationLC: false
 ModelValidationN: 2
 ModelValidationP: 1
+
 
 # SVM settings
 SVM_parameters:
@@ -168,5 +169,5 @@ PLSDA_optimize:
   - 0.5
 
 # conformal predictor settings
-conformal: true
+conformal: false
 conformalSignificance: 0.2
