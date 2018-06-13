@@ -142,7 +142,7 @@ Management commands deserve further description:
 
 ## Flame web-app
 
-You can install Flame_ws to access the model management and prediction functionalities using a simple web application.
+You can install Flame_ws (https://github.com/phi-grib/flame_ws) to access the model management and prediction functionalities using a simple web application.
 
 Please refer to the manual page of Flame_ws for further information
 
