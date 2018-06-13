@@ -142,27 +142,9 @@ Management commands deserve further description:
 
 ## Flame web-app
 
-Flame includes a simple prediction web server.
+You can install Flame_ws to access the model management and prediction functionalities using a simple web application.
 
-```sh
-python predict-ws.py 
-```	
-
-To access the web graphical interface, open a web brower and enter the address *http://localhost:8080*
-
-![Alt text](images/Flame-gui.png?raw=true "web GUI")
-
-Web API services available:
-
-(in development)
-
-| URL | HTTP verb | Input data | Return data | HTTP status codes |
-| --- | --- | --- | --- | --- |
-| /info | GET | | application/json: info_message response | 200 |
-| /dir | GET | | application/json: available_services response | 200 |
-| /predict | POST | multipart/form-data encoding: model and filename | application/json: predict_call response | 200, 500 for malformed POST message |
-
-The exact synthax of the JSON object returned by predict will be documented in detail elsewhere.
+Please refer to the manual page of Flame_ws for further information
 
 
 ## Technical details
@@ -171,7 +153,7 @@ The exact synthax of the JSON object returned by predict will be documented in d
 ### Using Flame
 
 Flame was designed to be used in different ways, using diverse interfaces. For example:
-- Using the web-GUI, starting the `predict-ws.py` web-service
+- Using the web-GUI, starting the `flame-ws.py` web-service
 - Using the `flame.py` command described above
 - As a Python package, making direct calls to the high-level objects *predict*, *build* or *manage*
 - As a Python package, making calls to the lower level objects *idata*, *apply*, *learn*, *odata*
