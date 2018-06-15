@@ -38,20 +38,18 @@ from nonconformist.nc import ClassifierNc, MarginErrFunc, RegressorNc
 
 class GNB(BaseEstimator):
 
-    def __init__ (self, X, Y, parameters):
-            super(GNB, self).__init__(X, Y, parameters)
+    def __init__(self, X, Y, parameters):
+        super(GNB, self).__init__(X, Y, parameters)
 
-            self.estimator_parameters = parameters['GNB_parameters']
+        self.estimator_parameters = parameters['GNB_parameters']
 
-            if self.quantitative:
-                return
+        if self.quantitative:
+            return
 
-            else:
-                self.name = "GNB-Classifier"
+        else:
+            self.name = "GNB-Classifier"
 
-
-
-    def build (self):
+    def build(self):
         '''Build a new qualitative GNB model with the X and Y numpy matrices'''
         if self.failed:
             return False, "Error initiating model"
@@ -64,30 +62,29 @@ class GNB(BaseEstimator):
             X, self.wgx = scale(X, self.autoscale)
 
         results = []
-        results.append (('nobj', 'number of objects', self.nobj))
-        results.append (('nvarx', 'number of predictor variables', self.nvarx))
+        results.append(('nobj', 'number of objects', self.nobj))
+        results.append(('nvarx', 'number of predictor variables', self.nvarx))
 
         if self.cv:
             self.cv = getCrossVal(self.cv, 46, self.n, self.p)
 
-
         if self.quantitative:
-            print ("GNB only applies to qualitative data")
+            print("GNB only applies to qualitative data")
             return False, "GNB only applies to qualitative data"
 
         else:
-            print ("Building GaussianNB model")
-            print (self.estimator_parameters)
+            print("Building GaussianNB model")
+            print(self.estimator_parameters)
             self.estimator = GaussianNB(**self.estimator_parameters)
-            results.append(('model','model type','GNB qualitative'))
+            results.append(('model', 'model type', 'GNB qualitative'))
 
         if self.conformal:
-            self.conformal_pred = AggregatedCp(IcpClassifier(ClassifierNc(ClassifierAdapter(self.estimator),                                                                MarginErrFunc())), BootstrapSampler())
+            self.conformal_pred = AggregatedCp(IcpClassifier(ClassifierNc(ClassifierAdapter(
+                self.estimator),                                                                MarginErrFunc())), BootstrapSampler())
             self.conformal_pred.fit(X, Y)
-            results.append(('model','model type','conformal GNB qualitative'))   #overrides non-conformal
+            # overrides non-conformal
+            results.append(
+                ('model', 'model type', 'conformal GNB qualitative'))
 
         self.estimator.fit(X, Y)
         return True, results
-
-
-

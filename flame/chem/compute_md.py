@@ -99,7 +99,7 @@ def _RDKit_descriptors(ifile):
 
     md = MoleculeDescriptors.MolecularDescriptorCalculator(nms)
     success_list = []
-
+    
     try:
         num_obj = 0
         for mol in suppl:
@@ -119,6 +119,9 @@ def _RDKit_descriptors(ifile):
 
     except:
         return False, 'Failed computing RDKit descriptors for molecule' + str(num_obj+1) + 'in file ' + ifile
+    
+    if num_obj == 0:    
+        return False, 'Unable to compute RDKit properties for molecule '+ifile
 
     return True, (xmatrix, nms, success_list)
 

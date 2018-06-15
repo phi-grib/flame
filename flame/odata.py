@@ -55,15 +55,12 @@ class Odata():
 
     def run_apply(self):
         ''' Process the results of apply, usually a list of results and serializing to JSON '''
-
         # Check if all mandatory elements are in the results matrix
         main_results = self.results['meta']['main']
-
         for key in main_results:
             if not key in self.results:
                 self.results['error'] = 'unable to find "'+key+'" in results'
                 return self.run_error()
-
         if 'TSV' in self.format:
 
             # Make sure the keys 'var_nam', 'obj_nam', 'xmatrix' actualy exist
@@ -140,6 +137,8 @@ class Odata():
                         else:
                             if isinstance(val, float):
                                 line += "%.4f" % val
+                            elif  isinstance(val, np.int64):
+                                line += "%d" % val
                             else:
                                 line += val
                         line += '\t'
@@ -151,7 +150,10 @@ class Odata():
             black_list = ['xmatrix', 'confidence', 'var_nam', 'conf_nam']
 
             temp_json = {}
-
+            
+            # Temporary solution to serialization problems for not float values
+            if "values" in self.results:
+                self.results["values"] = self.results["values"].astype(np.float)
             for key in self.results:
 
                 if key in black_list:
@@ -171,7 +173,6 @@ class Odata():
 
                 else:
                     temp_json[key] = value
-
             output = json.dumps(temp_json)
 
         return True, output

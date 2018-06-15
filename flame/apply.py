@@ -24,6 +24,10 @@ import numpy as np
 import pickle
 import util.utils as utils
 
+from sklearn.metrics import mean_squared_error, matthews_corrcoef as mcc
+from sklearn.metrics import f1_score
+from sklearn.metrics import make_scorer
+from sklearn.metrics import confusion_matrix
 
 class Apply:
 
@@ -33,6 +37,51 @@ class Apply:
         self.results = results
 
         self.results['origin'] = 'apply'
+
+    def external_validation(self):
+        if not self.parameters["quantitative"]:
+            results = []
+            Ye = np.asarray(self.results["ymatrix"])
+            Yp = np.asarray(self.results["values"])
+
+            if Ye.size == 0:
+                raise ValueError("Experimental activity vector is empty")
+            if Yp.size == 0:
+                raise ValueError("Predicted activity vector is empty")
+
+            TN, FP, FN, TP = confusion_matrix(Ye, Yp).ravel()
+            MCC = mcc(Ye, Yp)
+            sensitivity = (TP / (TP + FN))
+            specificity = (TN / (TN + FP))
+
+            results.append (('TP','True positives in external-validation', float(TP)))
+            results.append (('TN','True negatives in external-validation', float(TN)))
+            results.append (('FP','False positives in external-validation', float(FP)))
+            results.append (('FN','False negatives in external-validation', float(FN)))
+
+            results.append (('Sensitivity','Sensitivity in external-validation', float(sensitivity)))
+            results.append (('Specificity','Specificity in external-validation', float(specificity)))
+            results.append (('MCC', 'Mattews Correlation Coefficient in external-validation', float(MCC )))
+
+            self.results["external-validation"] = results
+        else:
+            results = []
+            Ye = np.asarray(self.results["ymatrix"])
+            Yp = np.asarray(self.results["values"])
+            Ym = np.mean(Ye)
+            nobj = len(Yp)
+
+            SSY0_out = np.sum(np.square(Ym - Ye))
+            SSY_out = np.sum(np.square(Ye - Yp))
+            scoringP = mean_squared_error(Ye, Yp)
+            SDEP = np.sqrt(SSY_out/(nobj))
+            Q2 = 1.00 - (SSY_out/SSY0_out)
+
+            results.append (('scoringP','Scoring P', scoringP))
+            results.append (('Q2','Determination coefficient in cross-validation', Q2))
+            results.append (('SDEP','Standard Deviation Error of the Predictions', SDEP))
+            self.results["external-validation"] = results
+            
 
     def run_internal(self):
         ''' 
@@ -67,6 +116,12 @@ class Apply:
 
         estimator.project(X, self.results)
 
+        if len(self.results["ymatrix"]) > 0:
+            print (len(self.results["ymatrix"]))
+            print (self.parameters["conformal"])
+            if not self.parameters["conformal"]:
+                self.external_validation()
+            
         # TODO: implement this for every prediction
         # zero_array = np.zeros(nobj, dtype=np.float64)
 

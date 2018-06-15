@@ -21,6 +21,9 @@
 # along with Flame.  If not, see <http://www.gnu.org/licenses/>.
 
 
+
+
+
 import numpy as np
 import os
 import copy
@@ -28,8 +31,8 @@ import glob
 from scipy import stats
 import matplotlib.pyplot as plt
 import warnings
-##warnings.filterwarnings("ignore", category=UserWarning)
-#warnings.filterwarnings("ignore", category=DeprecationWarning)
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore")
 
 from sklearn.model_selection import cross_val_predict
 from sklearn.model_selection import LeaveOneOut
@@ -69,6 +72,7 @@ from nonconformist.evaluation import class_avg_c, class_mean_errors
 from nonconformist.evaluation import reg_mean_errors, reg_median_size
 from nonconformist.evaluation import reg_mean_size
 from nonconformist.evaluation import class_mean_errors
+from stats.imbalance import *
 
 import util.utils as utils
 
@@ -81,6 +85,9 @@ class BaseEstimator:
         self.X = X
         self.Y = Y
         self.nobj, self.nvarx = np.shape(X)
+
+        if self.parameters["imbalance"] is not None and not self.parameters["quantitative"]:
+            self.X, self.Y = run_imbalance(self.parameters['imbalance'],self.X, self.Y, 46)
 
         if (self.nobj == 0) or (self.nvarx == 0):
             self.failed = True
@@ -285,7 +292,7 @@ class BaseEstimator:
 
         # Goodness of the fit
 
-        self.TPpred, self.FPpred, self.FNpred, self.TNpred = confusion_matrix(
+        self.TNpred, self.FPpred, self.FNpred, self.TPpred = confusion_matrix(
             Y, Yp).ravel()
         self.sensitivityPred = (self.TPpred / (self.TPpred + self.FNpred))
         self.specificityPred = (self.TNpred / (self.TNpred + self.FPpred))
@@ -302,7 +309,7 @@ class BaseEstimator:
         # Cross validation
 
         y_pred = cross_val_predict(self.estimator, X, Y, cv=self.cv, n_jobs=-1)
-        self.TP, self.FP, self.FN, self.TN = confusion_matrix(
+        self.TN, self.FP, self.FN, self.TP = confusion_matrix(
             Y, y_pred).ravel()
         self.sensitivity = (self.TP / (self.TP + self.FN))
         self.specificity = (self.TN / (self.TN + self.FP))
@@ -371,7 +378,7 @@ class BaseEstimator:
         print("tune_parameters")
         print("metric: " + str(metric))
         tclf = GridSearchCV(estimator, tune_parameters,
-                            scoring=metric, cv=self.cv)
+                            scoring=metric, cv=self.cv, n_jobs=-1)
         # n_splits=10, shuffle=False,
         #   random_state=42), n_jobs= -1)
         tclf.fit(X, Y)
