@@ -44,7 +44,8 @@ modelingToolkit: internal             # internal | R | KNIME
 model: RF                            # RF | SVM | GNB | PLSR | PLSDA
 modelAutoscaling: true                # true | false
 quantitative: false
-tune: false
+tune: true
+imbalance: simple_subsampling       # simple_subsampling
 
 ModelValidationCV: loo
 ModelValidationLC: false

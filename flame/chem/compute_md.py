@@ -121,6 +121,9 @@ def _RDKit_descriptors(ifile):
 
     except:
         return False, 'Failed computing RDKit descriptors for molecule' + str(num_obj+1) + 'in file ' + ifile
+    
+    if num_obj == 0:    
+        return False, 'Unable to compute RDKit properties for molecule '+ifile
 
     if num_obj == 0:
         return False, 'Unable to compute RDKit descriptors for molecule '+ifile

@@ -45,6 +45,7 @@ model: PLSR                             # RF | SVM | GNB | PLSR | PLSDA
 modelAutoscaling: true               # true | false
 quantitative: true
 tune: true
+imbalance: simple_subsampling       # simple_subsampling
 
 ModelValidationCV: loo
 ModelValidationLC: false
@@ -168,5 +169,5 @@ PLSDA_optimize:
   - 0.5
 
 # conformal predictor settings
-conformal: false
+conformal: true
 conformalSignificance: 0.20
