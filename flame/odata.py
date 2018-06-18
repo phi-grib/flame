@@ -151,9 +151,10 @@ class Odata():
 
             temp_json = {}
             
-            # Temporary solution to serialization problems for not float values
-            if "values" in self.results:
-                self.results["values"] = self.results["values"].astype(np.float)
+            # Temporary solution to serialization problems for non-float values
+            # if "values" in self.results:
+            #     self.results["values"] = self.results["values"].astype(np.float)
+
             for key in self.results:
 
                 if key in black_list:
@@ -173,6 +174,7 @@ class Odata():
 
                 else:
                     temp_json[key] = value
+
             output = json.dumps(temp_json)
 
         return True, output

@@ -293,7 +293,7 @@ class BaseEstimator:
         # Goodness of the fit
 
         self.TNpred, self.FPpred, self.FNpred, self.TPpred = confusion_matrix(
-            Y, Yp).ravel()
+            Y, Yp, labels = [0,1]).ravel()
         self.sensitivityPred = (self.TPpred / (self.TPpred + self.FNpred))
         self.specificityPred = (self.TNpred / (self.TNpred + self.FPpred))
         self.mccp = mcc(Y, Yp)
@@ -310,7 +310,7 @@ class BaseEstimator:
 
         y_pred = cross_val_predict(self.estimator, X, Y, cv=self.cv, n_jobs=-1)
         self.TN, self.FP, self.FN, self.TP = confusion_matrix(
-            Y, y_pred).ravel()
+            Y, y_pred, labels = [0,1]).ravel()
         self.sensitivity = (self.TP / (self.TP + self.FN))
         self.specificity = (self.TN / (self.TN + self.FP))
         self.mcc = mcc(Y, y_pred)

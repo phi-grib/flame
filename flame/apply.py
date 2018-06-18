@@ -49,7 +49,11 @@ class Apply:
             if Yp.size == 0:
                 raise ValueError("Predicted activity vector is empty")
 
-            TN, FP, FN, TP = confusion_matrix(Ye, Yp).ravel()
+            # the use of labels is compulsory to inform the confusion matrix that
+            # it must return a 2x2 confussion matrix. Otherwise it will fail when
+            # a single class is represented (all TP, for example) 
+            TN, FP, FN, TP = confusion_matrix(Ye, Yp, labels = [0,1]).ravel()
+
             MCC = mcc(Ye, Yp)
             sensitivity = (TP / (TP + FN))
             specificity = (TN / (TN + FP))
