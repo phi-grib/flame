@@ -64,7 +64,7 @@ class PLS_da(PLSRegression):
         results = super(PLS_da, self).predict(X, copy=True).ravel()
         results[results < threshold] = 0
         results[results >= threshold] = 1
-        results = results.astype(dtype=int)
+        results = results.astype(dtype=float)
 
         return results
 
