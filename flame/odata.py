@@ -165,7 +165,7 @@ class Odata():
             # do not output var arrays, only 'obj' arrays
             black_list = []
             for k in self.results['manifest'] :
-                if k['dimension'] != 'objs':
+                if not (k['dimension'] in ['objs','single']):
                     black_list.append(k['key'])
             
             # print (black_list)
