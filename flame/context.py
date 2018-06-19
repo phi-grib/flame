@@ -75,7 +75,7 @@ def get_external_input(task, model_set, infile):
     return True, model_res
 
 
-def predict_cmd(model):
+def predict_cmd(model, output_format=None):
     '''
     Instantiates a Predict object to run a prediction using the given input file and model 
 
@@ -83,7 +83,7 @@ def predict_cmd(model):
     which use the output of other models as input
     '''
 
-    predict = Predict(model['endpoint'], model['version'], ['JSON', 'TSV'])
+    predict = Predict(model['endpoint'], model['version'], output_format)
 
     ext_input, model_set = predict.get_model_set()
 
@@ -106,7 +106,7 @@ def predict_cmd(model):
     return success, results
 
 
-def build_cmd(model):
+def build_cmd(model, output_format=None):
     '''
     Instantiates a Build object to build a model using the given input file and model 
 
@@ -114,7 +114,7 @@ def build_cmd(model):
     which use the output of other models as input
     '''
 
-    build = Build(model['endpoint'], 'JSON')
+    build = Build(model['endpoint'], output_format)
 
     ext_input, model_set = build.get_model_set()
 

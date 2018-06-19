@@ -55,12 +55,19 @@ class Odata():
 
     def run_apply(self):
         ''' Process the results of apply, usually a list of results and serializing to JSON '''
+        
         # Check if all mandatory elements are in the results matrix
+        
         main_results = self.results['meta']['main']
+
         for key in main_results:
             if not key in self.results:
                 self.results['error'] = 'unable to find "'+key+'" in results'
                 return self.run_error()
+
+        print (self.format)
+        output = ''
+
         if 'TSV' in self.format:
 
             # Make sure the keys 'var_nam', 'obj_nam', 'xmatrix' actualy exist
