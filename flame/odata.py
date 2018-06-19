@@ -33,6 +33,44 @@ class Odata():
         self.parameters = parameters
         self.format = self.parameters['output_format']
 
+    def _output_md (self):
+        ''' dumps the molecular descriptors to a TSV file'''
+         
+        with open('output_md.tsv', 'w') as fo:
+
+            # Make sure the keys 'var_nam', 'obj_nam', 'xmatrix' actualy exist
+            # start writting MD
+            if 'var_nam' in self.results:
+                # header: obj:name + var name
+
+                header = 'name'
+                var_nam = self.results['var_nam']
+
+                for nam in var_nam:
+                    header += '\t'+nam
+                fo.write(header+'\n')
+
+            if 'xmatrix' in self.results and 'obj_nam' in self.results:
+                # extract obj_name and xmatrix
+                xmatrix = self.results['xmatrix']
+                obj_nam = self.results['obj_nam']
+
+                # iterate for objects
+                shape = np.shape(xmatrix)
+
+                if len(shape) > 1:  # 2D matrix (num_obj > 1)
+                    for x in range(shape[0]):
+                        line = obj_nam[x]
+                        for y in range(shape[1]):
+                            line += '\t'+str(xmatrix[x, y])
+                        fo.write(line+'\n')
+
+                else:             # 1D matrix (num_obj = 1)
+                    line = obj_nam[0]
+                    for y in range(shape[0]):
+                        line += '\t'+str(xmatrix[y])
+                    fo.write(line+'\n')
+
     def run_learn(self):
         ''' Process the results of lear, usually a report on the model quality '''
 
@@ -51,6 +89,10 @@ class Odata():
                     print (val[0],' (', val[1], ') : ', val[2])
 
         # TODO: process learn output and produce meaniningfull JSON/TSV
+
+        if self.parameters['output_md']:
+            self._output_md()
+            
         return True, 'building OK'
 
     def run_apply(self):
@@ -65,48 +107,14 @@ class Odata():
                 self.results['error'] = 'unable to find "'+key+'" in results'
                 return self.run_error()
 
-        print (self.format)
         output = ''
 
+        if self.parameters['output_md']:
+            self._output_md()
+
+        # print ('format output', self.format)
+
         if 'TSV' in self.format:
-
-            # Make sure the keys 'var_nam', 'obj_nam', 'xmatrix' actualy exist
-            # start writting MD
-
-            if self.parameters['output_md']:
-
-                with open('output_md.tsv', 'w') as fo:
-
-                    if 'var_nam' in self.results:
-                        # header: obj:name + var name
-
-                        header = 'name'
-                        var_nam = self.results['var_nam']
-
-                        for nam in var_nam:
-                            header += '\t'+nam
-                        fo.write(header+'\n')
-
-                    if 'xmatrix' in self.results and 'obj_nam' in self.results:
-                        # extract obj_name and xmatrix
-                        xmatrix = self.results['xmatrix']
-                        obj_nam = self.results['obj_nam']
-
-                        # iterate for objects
-                        shape = np.shape(xmatrix)
-
-                        if len(shape) > 1:  # 2D matrix (num_obj > 1)
-                            for x in range(shape[0]):
-                                line = obj_nam[x]
-                                for y in range(shape[1]):
-                                    line += '\t'+str(xmatrix[x, y])
-                                fo.write(line+'\n')
-
-                        else:             # 1D matrix (num_obj = 1)
-                            line = obj_nam[0]
-                            for y in range(shape[0]):
-                                line += '\t'+str(xmatrix[y])
-                            fo.write(line+'\n')
 
             # label and smiles
             key_list = ['obj_nam']
@@ -144,17 +152,19 @@ class Odata():
                         else:
                             if isinstance(val, float):
                                 line += "%.4f" % val
-                            elif  isinstance(val, np.int64):
-                                line += "%d" % val
                             else:
-                                line += val
+                                line += str(val)
                         line += '\t'
                     fo.write(line+'\n')
 
         if 'JSON' in self.format:
             # do not output var arrays, only obj arrays
-            # TODO: replace this hardcoded list with var type from manifest
-            black_list = ['xmatrix', 'confidence', 'var_nam', 'conf_nam']
+            black_list = []
+            for k in self.results['manifest'] :
+                if k['dimension'] != 'objs':
+                    black_list.append(k['key'])
+            
+            # print (black_list)
 
             temp_json = {}
             
@@ -169,6 +179,8 @@ class Odata():
 
                 value = self.results[key]
 
+                # print (key, value, type(value))
+                
                 if 'numpy.ndarray' in str(type(value)):
 
                     if 'bool_' in str(type(value[0])):

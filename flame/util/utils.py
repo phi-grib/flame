@@ -139,6 +139,7 @@ def id_generator(size=10, chars=string.ascii_uppercase + string.digits):
 
 
 def add_result(results, var, _key, _label, _type, _dimension='objs', _description=None, _relevance=None):
+    
 
     if 'manifest' not in results:
         results['manifest'] = []

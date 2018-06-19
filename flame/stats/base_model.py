@@ -383,7 +383,7 @@ class BaseEstimator:
         #   random_state=42), n_jobs= -1)
         tclf.fit(X, Y)
         self.estimator = tclf.best_estimator_
-        print(tclf.best_params_)
+        print("best parameters: ", tclf.best_params_)
         # print self.estimator.get_params()
 
     

@@ -205,7 +205,7 @@ def CF_QualVal(X, Y, estimator, conformalSignificance):
     print('Error rate: {}'.format(class_mean_errors(predictions,
                                                     Y,
                                                     0.15)))
-    print(class_one_c(predictions, Y, 0.15))
+    print('Class one: ', class_one_c(predictions, Y, 0.15))
     return icp
     # icp_cv = RegIcpCvHelper(icp)
 

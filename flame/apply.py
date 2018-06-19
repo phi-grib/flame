@@ -39,8 +39,14 @@ class Apply:
         self.results['origin'] = 'apply'
 
     def external_validation(self):
+        ''' when experimental values are available for the predicted compounds, apply external validation '''
+
+        if not 'ymatrix' in self.results:
+            return
+
+        ext_val_results  = []
+
         if not self.parameters["quantitative"]:
-            results = []
             Ye = np.asarray(self.results["ymatrix"])
             Yp = np.asarray(self.results["values"])
 
@@ -54,22 +60,29 @@ class Apply:
             # a single class is represented (all TP, for example) 
             TN, FP, FN, TP = confusion_matrix(Ye, Yp, labels = [0,1]).ravel()
 
+            # protect to avoid warnings in special cases (div by zero)
             MCC = mcc(Ye, Yp)
-            sensitivity = (TP / (TP + FN))
-            specificity = (TN / (TN + FP))
 
-            results.append (('TP','True positives in external-validation', float(TP)))
-            results.append (('TN','True negatives in external-validation', float(TN)))
-            results.append (('FP','False positives in external-validation', float(FP)))
-            results.append (('FN','False negatives in external-validation', float(FN)))
+            if (TP+FN) > 0:
+                sensitivity = (TP / (TP + FN))
+            else:
+                sensitivity = 0.0
 
-            results.append (('Sensitivity','Sensitivity in external-validation', float(sensitivity)))
-            results.append (('Specificity','Specificity in external-validation', float(specificity)))
-            results.append (('MCC', 'Mattews Correlation Coefficient in external-validation', float(MCC )))
+            if (TN+FP) > 0:
+                specificity = (TN / (TN + FP))
+            else:
+                specificity = 0.0
 
-            self.results["external-validation"] = results
+            ext_val_results.append (('TP','True positives in external-validation', float(TP)))
+            ext_val_results.append (('TN','True negatives in external-validation', float(TN)))
+            ext_val_results.append (('FP','False positives in external-validation', float(FP)))
+            ext_val_results.append (('FN','False negatives in external-validation', float(FN)))
+
+            ext_val_results.append (('Sensitivity','Sensitivity in external-validation', float(sensitivity)))
+            ext_val_results.append (('Specificity','Specificity in external-validation', float(specificity)))
+            ext_val_results.append (('MCC', 'Mattews Correlation Coefficient in external-validation', float(MCC )))
+
         else:
-            results = []
             Ye = np.asarray(self.results["ymatrix"])
             Yp = np.asarray(self.results["values"])
             Ym = np.mean(Ye)
@@ -81,10 +94,11 @@ class Apply:
             SDEP = np.sqrt(SSY_out/(nobj))
             Q2 = 1.00 - (SSY_out/SSY0_out)
 
-            results.append (('scoringP','Scoring P', scoringP))
-            results.append (('Q2','Determination coefficient in cross-validation', Q2))
-            results.append (('SDEP','Standard Deviation Error of the Predictions', SDEP))
-            self.results["external-validation"] = results
+            ext_val_results.append (('scoringP','Scoring P', scoringP))
+            ext_val_results.append (('Q2','Determination coefficient in cross-validation', Q2))
+            ext_val_results.append (('SDEP','Standard Deviation Error of the Predictions', SDEP))
+
+        utils.add_result(self.results, ext_val_results, 'external-validation', 'external validation', 'method', 'single', 'External validation results')
             
 
     def run_internal(self):
@@ -120,11 +134,12 @@ class Apply:
 
         estimator.project(X, self.results)
 
-        if len(self.results["ymatrix"]) > 0:
-            print (len(self.results["ymatrix"]))
-            print (self.parameters["conformal"])
-            if not self.parameters["conformal"]:
-                self.external_validation()
+        # if len(self.results["ymatrix"]) > 0:
+        #     # print (len(self.results["ymatrix"]))
+        #     # print (self.parameters["conformal"])
+
+        if not self.parameters["conformal"]:
+            self.external_validation()
             
         # TODO: implement this for every prediction
         # zero_array = np.zeros(nobj, dtype=np.float64)
