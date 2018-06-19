@@ -158,7 +158,11 @@ class Odata():
                     fo.write(line+'\n')
 
         if 'JSON' in self.format:
-            # do not output var arrays, only obj arrays
+
+            # TODO: output also 'method' keys, like the 'external-validation' or others
+            # by setting up at the client side some interface able to show them 
+             
+            # do not output var arrays, only 'obj' arrays
             black_list = []
             for k in self.results['manifest'] :
                 if k['dimension'] != 'objs':
@@ -167,10 +171,6 @@ class Odata():
             # print (black_list)
 
             temp_json = {}
-            
-            # Temporary solution to serialization problems for non-float values
-            # if "values" in self.results:
-            #     self.results["values"] = self.results["values"].astype(np.float)
 
             for key in self.results:
 
