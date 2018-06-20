@@ -23,6 +23,7 @@
 import os
 import sys
 import pickle
+import shutil
 import json
 import tempfile
 import multiprocessing as mp
@@ -594,10 +595,15 @@ class Idata:
         nobj = self.results['obj_num']
         ncpu = min(nobj, self.parameters['numCPUs'])
 
+        # copy the input file to a temp file which will be cleaned at the end
+        temp_path = tempfile.mkdtemp()
+        shutil.copy (self.ifile,temp_path)
+        lfile = os.path.join(temp_path,os.path.basename(self.ifile))
+
         # Execute the workflow in 1 or n CPUs
         if ncpu > 1:
 
-            success, results = sdfu.split_SDFile(self.ifile, ncpu)
+            success, results = sdfu.split_SDFile(lfile, ncpu)
 
             if not success:
                 self.results['error'] = 'unable to split input molecule'
@@ -618,9 +624,9 @@ class Idata:
         else:
 
             if self.parameters['mol_batch'] == 'series':
-                success, results = self.workflow_series(self.ifile)
+                success, results = self.workflow_series(lfile)
             else:
-                success, results = self.workflow_objects(self.ifile)
+                success, results = self.workflow_objects(lfile)
 
         # series processing (1 or n CPUs) can produce a success == False if
         # any of the series/pieces contains an error. Abort the processing...
@@ -648,6 +654,9 @@ class Idata:
             if i and not j:
                 self.ammend_objects(success_inform, success_workflow)
                 break
+
+        # remove the temp directory with all the temp files inside
+        shutil.rmtree(temp_path)
 
         utils.add_result(
             self.results, results[0], 'xmatrix', 'X matrix', 'method', 'vars', 'Molecular descriptors')

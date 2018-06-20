@@ -144,7 +144,7 @@ class PLSR(BaseEstimator):
 
             list_latent.append([n_comp, r2_0])
 
-        print("r2 per lantent variable")
+        print("r2 per latent variable")
         for el in list_latent:
             print("Number of latent variables: %s \nr2: %s\n" %
                   (el[0], el[1]))
