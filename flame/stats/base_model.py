@@ -27,6 +27,7 @@
 import numpy as np
 import os
 import copy
+import time
 import glob
 from scipy import stats
 import matplotlib.pyplot as plt
@@ -375,15 +376,19 @@ class BaseEstimator:
         #     Y = np.asarray(Y)
 
         tune_parameters = [tune_parameters]
+
+        start = time.time()
         print("tune_parameters")
         print("metric: " + str(metric))
         tclf = GridSearchCV(estimator, tune_parameters,
-                            scoring=metric, cv=self.cv, n_jobs=1)
+                            scoring=metric, cv=self.cv, n_jobs = -1)
         # n_splits=10, shuffle=False,
         #   random_state=42), n_jobs= -1)
         tclf.fit(X, Y)
         self.estimator = tclf.best_estimator_
         print("best parameters: ", tclf.best_params_)
+        end = time.time()
+        print ("found in: ", end-start, " seconds")
         # print self.estimator.get_params()
 
     

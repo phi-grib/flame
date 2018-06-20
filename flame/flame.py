@@ -129,6 +129,9 @@ def main():
     elif args.command == 'manage':
         manage_cmd(args)
 
+# import multiprocessing
 
 if __name__ == '__main__':
+    # used to reproduce speed problems in Linux platforms
+    # multiprocessing.set_start_method('spawn')
     main()
