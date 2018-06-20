@@ -141,7 +141,7 @@ class PLSDA(BaseEstimator):
         for n_comp in latent_variables:
             mcc0 = 0
             estimator.set_params(**{"n_components": n_comp})
-            y_pred = cross_val_predict(estimator, X, Y, cv=self.cv, n_jobs=-1)
+            y_pred = cross_val_predict(estimator, X, Y, cv=self.cv, n_jobs=1)
             estimator1 = ""
             threshold_1 = 0
             for threshold in range(0, 100, 5):

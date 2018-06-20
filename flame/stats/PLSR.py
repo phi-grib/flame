@@ -135,7 +135,7 @@ class PLSR(BaseEstimator):
         for n_comp in latent_variables:
             r2_0 = 0
             estimator.set_params(**{"n_components": n_comp})
-            y_pred = cross_val_predict(estimator, X, Y, cv=self.cv, n_jobs=-1)
+            y_pred = cross_val_predict(estimator, X, Y, cv=self.cv, n_jobs=1)
             r2_0 = r2_score(Y, y_pred)
 
             if r2_0 >= r2:

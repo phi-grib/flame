@@ -260,7 +260,7 @@ class BaseEstimator:
         # Cross-validation
 
         y_pred = cross_val_predict(copy.copy(self.estimator), copy.copy(X),
-                                   copy.copy(Y), cv=self.cv, n_jobs=-1)
+                                   copy.copy(Y), cv=self.cv, n_jobs=1)
         SSY0_out = np.sum(np.square(Ym - Y))
         SSY_out = np.sum(np.square(Y - y_pred))
         self.scoringP = mean_squared_error(Y, y_pred)
@@ -308,7 +308,7 @@ class BaseEstimator:
 
         # Cross validation
 
-        y_pred = cross_val_predict(self.estimator, X, Y, cv=self.cv, n_jobs=-1)
+        y_pred = cross_val_predict(self.estimator, X, Y, cv=self.cv, n_jobs=1)
         self.TN, self.FP, self.FN, self.TP = confusion_matrix(
             Y, y_pred, labels = [0,1]).ravel()
         self.sensitivity = (self.TP / (self.TP + self.FN))
@@ -378,7 +378,7 @@ class BaseEstimator:
         print("tune_parameters")
         print("metric: " + str(metric))
         tclf = GridSearchCV(estimator, tune_parameters,
-                            scoring=metric, cv=self.cv, n_jobs=-1)
+                            scoring=metric, cv=self.cv, n_jobs=1)
         # n_splits=10, shuffle=False,
         #   random_state=42), n_jobs= -1)
         tclf.fit(X, Y)

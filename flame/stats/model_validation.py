@@ -112,6 +112,11 @@ def plot_learning_curve(estimator, title, X, y, ylim=None, cv=None,
     n_jobs : integer, optional
         Number of jobs to run in parallel (default 1).
     """
+
+    # workaround to issue with multithreading, n_jobs must be set to 1 to avoid very slow
+    # processing in Windows
+    n_jobs = 1
+
     plt.figure()
     plt.title(title)
     if ylim is not None:
