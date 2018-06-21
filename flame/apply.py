@@ -22,6 +22,7 @@
 
 import numpy as np
 import pickle
+import os
 from flame.util import utils
 
 from sklearn.metrics import mean_squared_error, matthews_corrcoef as mcc
@@ -125,7 +126,7 @@ class Apply:
             return
 
         try:
-            model_file = self.parameters['model_path'] + '/model.pkl'
+            model_file = os.path.join(self.parameters['model_path'],'model.pkl')
             with open(model_file, "rb") as input_file:
                 estimator = pickle.load(input_file)
         except:
