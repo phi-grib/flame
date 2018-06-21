@@ -26,48 +26,87 @@ import sys
 import yaml
 import random
 import string
+import pathlib
 
 
-def __read_configuration():
-    ''' Reads configuration file "config.yaml". Do not call directly, read configuration variable instead '''
+# def _read_configuration():
+#     '''
+#     Reads configuration file "config.yaml". Do not call directly,
+#     read configuration variable instead
+#     '''
+
+#     conf = {}
+#     source_dir = os.path.dirname(os.path.abspath(__file__))[:-5]  # removing '/utils'
+
+#     with open(os.path.join(source_dir, 'config.yaml'), 'r') as config_file:
+#         conf = yaml.load(config_file)
+
+#     # if the name of a path starts with '.' we will prepend the path with the source dir
+#     if conf['model_repository_path'][0] == '.':
+
+#         # TODO: I dislike the use of "/" here... but os.path.append does not work well
+#         conf['model_repository_path'] = source_dir + \
+#             '/' + conf['model_repository_path'][1:]
+
+#     #print (conf)
+#     return conf
+
+
+def _read_configuration():
+    '''
+    Reads configuration file "config.yaml". Do not call directly,
+    read configuration variable instead
+    '''
     conf = {}
-    source_dir = os.path.dirname(os.path.abspath(__file__))[
-        :-5]  # removing '/utils'
 
+    # flame source dir. (two directories up)
+    source_dir = pathlib.Path(__file__).resolve().parents[1]
+    
+    # load configuration data from yaml
     with open(os.path.join(source_dir, 'config.yaml'), 'r') as config_file:
         conf = yaml.load(config_file)
 
-    # if the name of a path starts with '.' we will prepend the path with the source dir
-    if conf['model_repository_path'][0] == '.':
-
-        # TODO: I dislike the use of "/" here... but os.path.append does not work well
-        conf['model_repository_path'] = source_dir + \
-            '/' + conf['model_repository_path'][1:]
-
-    #print (conf)
+    model_path = pathlib.Path(conf['model_repository_path'])
+    
+    conf['model_repository_path'] = str(model_path.resolve())
 
     return conf
 
-
 # read configuraton file and store in a variable to prevent reading files more
 # than strictly necessary
-configuration = __read_configuration()
+configuration = _read_configuration()
+
+
+def set_model_repository(path):
+    """
+    Set the model repository path.
+    This is the dir where flame is going to create and load models
+    """
+    new_path = pathlib.Path(path)
+    configuration['model_repository_path'] = str(new_path.resolve())
 
 
 def model_repository_path():
-    ''' Returns the path to the root of the model repository, containing all models and versions '''
+    '''
+    Returns the path to the root of the model repository,
+    containing all models and versions
+    '''
 
     return configuration['model_repository_path']
 
 
 def model_tree_path(model):
-    ''' Returns the path to the model given as argumen, containg all versions '''
+    '''
+    Returns the path to the model given as argumen, containg all versions
+    '''
 
     return os.path.join(model_repository_path(), model)
 
 
 def model_path(model, version):
-    ''' Returns the path to the model and version given as arguments '''
+    '''
+    Returns the path to the model and version given as arguments
+    '''
 
     modpath = model_tree_path(model)
 
@@ -80,13 +119,12 @@ def model_path(model, version):
 
 
 def module_path(model, version):
-    ''' 
+    '''
+    Returns the path to the model and version given as arguments,
+    in Python synthax (separated by ".").
 
-    Returns the path to the model and version given as arguments, in Python synthax (separated by "."). 
-
-    Also adds the model repository path to the Python path, so the relative module path can be 
-    understood and the module imported 
-
+    Also adds the model repository path to the Python path, so the relative
+    module path can be understood and the module imported.
     '''
 
     modreppath = model_repository_path()
@@ -107,7 +145,9 @@ def module_path(model, version):
 
 
 def md5sum(filename, blocksize=65536):
-    ''' Returns the MD5 sum of the file given as argument '''
+    '''
+    Returns the MD5 sum of the file given as argument
+    '''
 
     hash = hashlib.md5()
 
@@ -119,7 +159,9 @@ def md5sum(filename, blocksize=65536):
 
 
 def intver(raw_version):
-    ''' Returns an int describing at best the model version provided as argument '''
+    '''
+    Returns an int describing at best the model version provided as argument
+    '''
 
     if raw_version is None:
         return 0

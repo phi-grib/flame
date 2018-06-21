@@ -29,6 +29,14 @@ import pickle
 from flame.util import utils
 
 
+def set_model_dir(path):
+    """
+    Set the model repository path.
+    This is the dir where flame is going to create and load models
+    """
+    utils.set_model_repository(path)
+
+
 def action_new(model):
     '''
     Create a new model tree, using the given name.
