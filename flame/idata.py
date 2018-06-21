@@ -33,9 +33,9 @@ from rdkit import Chem
 
 from standardiser import standardise
 
-import chem.sdfileutils as sdfu
-import chem.compute_md as computeMD
-import chem.convert_3d as convert3D
+import flame.chem.sdfileutils as sdfu
+import flame.chem.compute_md as computeMD
+import flame.chem.convert_3d as convert3D
 
 from flame.util import utils
 

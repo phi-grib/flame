@@ -22,12 +22,14 @@
 # You should have received a copy of the GNU General Public License
 # along with Flame.  If not, see <http://www.gnu.org/licenses/>.
 
+from flame.stats.base_model import BaseEstimator
+from flame.stats.base_model import getCrossVal
+from flame.stats.scale import scale, center
+from flame.stats.model_validation import CF_QuanVal
+
 import copy
 from sklearn.cross_decomposition import PLSCanonical, PLSRegression, CCA
-from stats.base_model import BaseEstimator
-from stats.base_model import getCrossVal
-from stats.scale import scale, center
-from stats.model_validation import CF_QuanVal
+
 
 from nonconformist.base import ClassifierAdapter, RegressorAdapter
 from nonconformist.acp import AggregatedCp
