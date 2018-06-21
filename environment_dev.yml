@@ -1,4 +1,4 @@
-name: flame
+name: flame_dev
 channels:
   - rdkit
   - defaults

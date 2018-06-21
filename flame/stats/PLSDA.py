@@ -27,6 +27,7 @@
 # Study more in deep
 import warnings
 warnings.filterwarnings('ignore')
+import copy
 
 from sklearn.cross_decomposition import PLSCanonical, PLSRegression, CCA
 from stats.base_model import BaseEstimator
@@ -46,7 +47,7 @@ from sklearn.metrics import make_scorer
 from sklearn.model_selection import cross_val_predict
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import mean_squared_error, matthews_corrcoef as mcc, f1_score as f1
-import copy
+
 
 
 class PLS_da(PLSRegression):

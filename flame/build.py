@@ -23,8 +23,8 @@
 import os
 import importlib
 
-import util.utils as utils
-from control import Control
+from flame.util import utils
+from flame.control import Control
 
 
 class Build:

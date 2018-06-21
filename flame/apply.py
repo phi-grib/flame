@@ -22,7 +22,7 @@
 
 import numpy as np
 import pickle
-import util.utils as utils
+from flame.util import utils
 
 from sklearn.metrics import mean_squared_error, matthews_corrcoef as mcc
 from sklearn.metrics import f1_score

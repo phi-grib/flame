@@ -22,9 +22,9 @@
 
 import argparse
 
-import util.utils as utils
-import context
-import manage
+from flame.util import utils
+import flame.context as context
+import flame.manage as manage
 
 # TEMP: only to allow EBI model to run
 
@@ -42,7 +42,10 @@ def specificity(y_true, y_pred):
 
 
 def manage_cmd(args):
-    ''' Instantiates a Build object to build a model using the given input file (training series) and model (name of endpoint, eg. 'CACO2') '''
+    '''
+    Instantiates a Build object to build a model using the given input
+    file (training series) and model (name of endpoint, eg. 'CACO2')
+    '''
 
     version = utils.intver(args.version)
 

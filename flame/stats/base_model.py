@@ -22,7 +22,8 @@
 
 
 
-
+from flame.util import utils
+from flame.stats.imbalance import *
 
 import numpy as np
 import os
@@ -73,9 +74,7 @@ from nonconformist.evaluation import class_avg_c, class_mean_errors
 from nonconformist.evaluation import reg_mean_errors, reg_median_size
 from nonconformist.evaluation import reg_mean_size
 from nonconformist.evaluation import class_mean_errors
-from stats.imbalance import *
 
-import util.utils as utils
 
 class BaseEstimator:
     def __init__(self, X, Y, parameters):

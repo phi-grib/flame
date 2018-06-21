@@ -25,13 +25,11 @@ import os
 import pickle
 import numpy as np
 
-from stats.RF import RF
-from stats.SVM import SVM
-from stats.GNB import GNB
-from stats.PLSR import PLSR
-from stats.PLSDA import PLSDA
-
-
+from flame.stats.RF import RF
+from flame.stats.SVM import SVM
+from flame.stats.GNB import GNB
+from flame.stats.PLSR import PLSR
+from flame.stats.PLSDA import PLSDA
 
 
 class Learn:
@@ -48,31 +46,33 @@ class Learn:
         self.results['origin'] = 'learn'
 
     def run_custom(self):
-        ''' build a model using custom code to be defined in the learn child classes'''
+        '''
+        Build a model using custom code to be defined in the learn child
+        classes.
+        '''
 
         self.results['error'] = 'not implemented'
         return
 
     def run_internal(self):
-        ''' 
+        '''
+        Builds a model using the internally defined machine learning tools.
 
-        builds a model using the internally defined machine learning tools
-        
-        All input parameters are extracted from self.parameters
+        All input parameters are extracted from self.parameters.
 
-        The main output is an instance of basemodel saved in the model folder as a pickle  
-        (model.pkl) and used for prediction
+        The main output is an instance of basemodel saved in
+        the model folder as a pickle (model.pkl) and used for prediction.
 
-        The results of building and validation are added to results, but also saved to the model 
-        folder as a pickle (info.pkl) for being displayed in manage tools
-
-        ''' 
+        The results of building and validation are added to results,
+        but also saved to the model folder as a pickle (info.pkl)
+        for being displayed in manage tools.
+        '''
 
         registered_methods = [('RF', RF),
                               ('SVM', SVM),
                               ('GNB', GNB),
                               ('PLSR', PLSR),
-                              ('PLSDA', PLSDA),] # expand with new methods here
+                              ('PLSDA', PLSDA), ]  # expand with new methods here
 
         # instanciate an appropriate child of base_model
         model = None
@@ -80,7 +80,7 @@ class Learn:
             if imethod[0] == self.parameters['model']:
                 model = imethod[1](self.X, self.Y, self.parameters)
                 break
-        
+
         if not model:
             self.results['error'] = 'modeling method not recognised'
             return
@@ -102,18 +102,20 @@ class Learn:
         # TODO: compute AD (when applicable)
 
         # save model
-        with open(os.path.join(self.parameters['model_path'],'model.pkl'), 'wb') as handle:
+        with open(os.path.join(self.parameters['model_path'], 'model.pkl'), 'wb') as handle:
             pickle.dump(model, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
         # save model info for informative purposes
-        with open(os.path.join(self.parameters['model_path'],'info.pkl'), 'wb') as handle:
+        with open(os.path.join(self.parameters['model_path'], 'info.pkl'), 'wb') as handle:
             pickle.dump(self.results['model_build'], handle)
             pickle.dump(self.results['model_validate'], handle)
 
         return
 
     def run(self):
-        ''' builds the model using the appropriate toolkit (internal or custom) '''
+        '''
+        Builds the model using the appropriate toolkit (internal or custom).
+        '''
 
         toolkit = self.parameters['modelingToolkit']
 

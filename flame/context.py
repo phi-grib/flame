@@ -23,13 +23,13 @@
 
 import os
 import shutil
-import util.utils as utils
-
+from flame.util import utils
+from flame.predict import Predict
+from flame.build import Build
 
 import multiprocessing as mp
 
-from predict import Predict
-from build import Build
+
 
 # if the number of models is higher, try to run in multithread
 MAX_MODELS_SINGLE_CPU = 4
