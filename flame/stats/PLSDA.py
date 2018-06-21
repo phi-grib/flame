@@ -25,15 +25,15 @@
 
 # To ignore warnings comming from data precision in Cross-validation
 # Study more in deep
-import warnings
-warnings.filterwarnings('ignore')
+
+from flame.stats.base_model import BaseEstimator
+from flame.stats.base_model import getCrossVal
+from flame.stats.scale import scale, center
+from flame.stats.model_validation import CF_QuanVal
+
 import copy
 
 from sklearn.cross_decomposition import PLSCanonical, PLSRegression, CCA
-from stats.base_model import BaseEstimator
-from stats.base_model import getCrossVal
-from stats.scale import scale, center
-from stats.model_validation import CF_QuanVal
 
 from nonconformist.base import ClassifierAdapter, RegressorAdapter
 from nonconformist.acp import AggregatedCp
@@ -48,6 +48,8 @@ from sklearn.model_selection import cross_val_predict
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import mean_squared_error, matthews_corrcoef as mcc, f1_score as f1
 
+import warnings
+warnings.filterwarnings('ignore')
 
 
 class PLS_da(PLSRegression):
