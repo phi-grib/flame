@@ -29,34 +29,38 @@ import string
 import pathlib
 
 
-# def _read_configuration():
-#     '''
-#     Reads configuration file "config.yaml". Do not call directly,
-#     read configuration variable instead
-#     '''
-
-#     conf = {}
-#     source_dir = os.path.dirname(os.path.abspath(__file__))[:-5]  # removing '/utils'
-
-#     with open(os.path.join(source_dir, 'config.yaml'), 'r') as config_file:
-#         conf = yaml.load(config_file)
-
-#     # if the name of a path starts with '.' we will prepend the path with the source dir
-#     if conf['model_repository_path'][0] == '.':
-
-#         # TODO: I dislike the use of "/" here... but os.path.append does not work well
-#         conf['model_repository_path'] = source_dir + \
-#             '/' + conf['model_repository_path'][1:]
-
-#     #print (conf)
-#     return conf
-
-
 def _read_configuration():
     '''
     Reads configuration file "config.yaml". Do not call directly,
     read configuration variable instead
     '''
+
+    conf = {}
+    source_dir = os.path.dirname(os.path.abspath(__file__))[:-5] # removing '/utils'
+
+    with open(os.path.join(source_dir, 'config.yaml'), 'r') as config_file:
+        conf = yaml.load(config_file)
+
+    # if the name of a path starts with '.' we will
+    # prepend the path with the source dir
+    if conf['model_repository_path'][0] == '.':
+
+        # TODO: I dislike the use of "/" here...
+        #  but os.path.append does not work well
+        conf['model_repository_path'] = source_dir + \
+            '/' + conf['model_repository_path'][1:]
+
+    # print (conf)
+    return conf
+
+
+def _read_configuration_WIP():
+    '''
+    <<< WIP>>>>
+    Reads configuration file "config.yaml". Do not call directly,
+    read configuration variable instead
+    '''
+    raise NotImplementedError
     conf = {}
 
     # flame source dir. (two directories up)
