@@ -18,7 +18,6 @@ Download the repository:
 
 ```bash
 git clone https://github.com/phi-grib/flame.git
-
 ```
 
 Go to the repository directory 
@@ -47,7 +46,17 @@ Conda environments can be easily updated using a new version of the environment 
 conda env update -f new_environment.yml
 ```
 
+Flame must be installed as a regular Python package. From the flame directory type (note the dot at the end):
 
+```bash
+pip install . 
+```
+
+For development, use the -e flag. This will made accesible the latest changes to other components (eg. flame_ws)
+
+```bash
+pip install -e .
+```
 
 ## Main features
 
@@ -69,14 +78,14 @@ You can run the following commands from any terminal, in a computer where flame 
 Let's start creating a new model:
 
 ```sh
-python flame.py -c manage -a new -e MyModel
+flame -c manage -a new -e MyModel
 ```
 
 This creates a new entry in the model repository and the development version of the model, populating these entries with default options.
 The contents of the model repository are shown using the command.
 
 ```sh
-python flame.py -c manage -a list
+flame -c manage -a list
 ```
 
 Building a model only requires entering an input file formatted for training one of the supported machine-learning methods. In the case of QSAR models, the input file can be an SDFile, where the biological property is annotated in one of the fields. 
@@ -84,32 +93,32 @@ Building a model only requires entering an input file formatted for training one
 The details of how Flame normalizes the structures, obtains molecular descriptors and applies the machine-learning algorithm are defined in a parameters file (*parameter.yaml*) which now contains default options. These can be changed as we will describe later, but for now let's use the defaults to obtain a Random Forest model on a series of 100 compounds annotated with a biological property in the field \<activity\>: 
 	
 ```sh
-python flame.py -c build -e MyModel -f series.sdf
+flame -c build -e MyModel -f series.sdf
 ```	
 After a few seconds, the model is built and a summary of the model quality is presented in the screen.
 This model is immediately accessible for predicting the properties of new compounds. This can be done locally using the command:
 ```sh
-python flame.py -c predict -e MyModel -v 0 -f query.sdf
+flame -c predict -e MyModel -v 0 -f query.sdf
 ```	
 And this will show the properties predicted for the compounds in the query SDFile. 
 
 In the above command we specified the model version used for the prediction. So far we only have a model in the development folder (version 0). This version will be overwritten every time we develop a new model for this endpoint. Let's imagine that we are very satisfied with our model and want to store it for future use. We can obtain a persistent copy of it with the command
 ```sh
-python flame.py -c manage -a publish -e MyModel
+flame -c manage -a publish -e MyModel
 ```	
 This will create model version 1. We can list existing versions for a given endpoint using the list command mentioned below
 ```sh
-python flame.py -c manage -e MyModel -a list
+flame -c manage -e MyModel -a list
 ```	
 Now, the output says we have a published version of model MyModel. 
 
 Imagine that the model is so good you want to send it elsewhere, for example a company that wants to obtain predictions for confidential compounds in their own computing facilities. The model can be exported using the command
 ```sh
-python flame.py -c manage -a export -e MyModel
+flame -c manage -a export -e MyModel
 ```	
 This creates a very compact file with the extension .tgz in the local directory. It can be sent by e-mail or uploaded to a repository in the cloud from where the company can download it. In order to use it, the company can easily install the new model using the command
 ```sh
-python flame.py -c manage -a import -e MyModel
+flame -c manage -a import -e MyModel
 ```	
 And then the model is immediately operative and able to produce exactly the same predictions we obtain in the development environment  
 
@@ -131,13 +140,13 @@ Management commands deserve further description:
 
 | Command | Example | Description |
 | --- | --- | ---|
-| new | *python -c manage -a new -e NEWMODEL* | Creates a new entry in the model repository named NEWMODEL  |
-| kill | *python -c manage -a kill -e NEWMODEL* | Removes NEWMODEL from the model repository. **Use with extreme care**, since the program will not ask confirmation and the removal will be permanent and irreversible  |
-| publish | *python -c manage -a publish -e NEWMODEL* | Clones the development version, creating a new version in the model repository. Versions are assigned sequential numbers |
-| remove | *python -c manage -a remove -e NEWMODEL -v 2* | Removes the version specified from the NEWMODEL model repository |
-| list | *python -c manage -a list* | Lists the models present in the repository and the published version for each one. If the name of a model is provided, lists only the published versions for this model  |
-| export | *python -c manage -a export -e NEWMODEL* | Exports the model entry NEWMODE, creating a tar compressed file *NEWMODEL.tgz* which contains all the versions. This file can be imported by another flame instance (installed in a different host or company) with the *-c manage import* command |
-| import | *python -c manage -a import -e NEWMODEL* | Imports file *NEWMODEL.tgz*, typically generated using command *-c manage -a export* creating model NEWMODEL in the local model repository |
+| new | *flame -c manage -a new -e NEWMODEL* | Creates a new entry in the model repository named NEWMODEL  |
+| kill | *flame -c manage -a kill -e NEWMODEL* | Removes NEWMODEL from the model repository. **Use with extreme care**, since the program will not ask confirmation and the removal will be permanent and irreversible  |
+| publish | *flame -c manage -a publish -e NEWMODEL* | Clones the development version, creating a new version in the model repository. Versions are assigned sequential numbers |
+| remove | *flame -c manage -a remove -e NEWMODEL -v 2* | Removes the version specified from the NEWMODEL model repository |
+| list | *flame -c manage -a list* | Lists the models present in the repository and the published version for each one. If the name of a model is provided, lists only the published versions for this model  |
+| export | *flame -c manage -a export -e NEWMODEL* | Exports the model entry NEWMODE, creating a tar compressed file *NEWMODEL.tgz* which contains all the versions. This file can be imported by another flame instance (installed in a different host or company) with the *-c manage import* command |
+| import | *flame -c manage -a import -e NEWMODEL* | Imports file *NEWMODEL.tgz*, typically generated using command *-c manage -a export* creating model NEWMODEL in the local model repository |
 
 
 ## Flame web-app
@@ -176,7 +185,7 @@ Models can be published to obtain persistent versions, usable for predicton in t
 
 Models built in Flame can be used for obtaining predictions using diverse methods. We can use the command mode interface with a simple call:
 ```sh
-python flame.py -c predict -e MyModel -v 1 -f query.sdf
+flame -c predict -e MyModel -v 1 -f query.sdf
 ```
 This allows to integate the prediction in scripts, or workflow tools like KNIME and Pipeline Pilot.
 
