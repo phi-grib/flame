@@ -23,13 +23,12 @@
 
 import os
 import shutil
-import util.utils as utils
-
+from flame.util import utils
+from flame.predict import Predict
+from flame.build import Build
 
 import multiprocessing as mp
 
-from predict import Predict
-from build import Build
 
 # if the number of models is higher, try to run in multithread
 MAX_MODELS_SINGLE_CPU = 4
@@ -37,7 +36,7 @@ MAX_MODELS_SINGLE_CPU = 4
 
 def get_external_input(task, model_set, infile):
     '''
-    Manage obtention of input data from external 
+    Manage obtention of input data from external
     data sources (e.g. models or MD servers)
     '''
 
@@ -77,10 +76,11 @@ def get_external_input(task, model_set, infile):
 
 def predict_cmd(model, output_format=None):
     '''
-    Instantiates a Predict object to run a prediction using the given input file and model 
+    Instantiates a Predict object to run a prediction using the given input
+    file and model.
 
-    This method must be self-contained and suitable for being called in cascade, by models
-    which use the output of other models as input
+    This method must be self-contained and suitable for being called in
+    cascade, by models which use the output of other models as input.
     '''
 
     predict = Predict(model['endpoint'], model['version'], output_format)
@@ -108,10 +108,11 @@ def predict_cmd(model, output_format=None):
 
 def build_cmd(model, output_format=None):
     '''
-    Instantiates a Build object to build a model using the given input file and model 
+    Instantiates a Build object to build a model using the given
+    input file and model. 
 
-    This method must be self-contained and suitable for being called in cascade, by models
-    which use the output of other models as input
+    This method must be self-contained and suitable for being called in
+    cascade, by models which use the output of other models as input
     '''
 
     build = Build(model['endpoint'], output_format)

@@ -20,9 +20,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Flame.  If not, see <http://www.gnu.org/licenses/>.
 
-
-
-
+from flame.util import utils
+from flame.stats.imbalance import *
+from flame.stats.model_validation import *
+from flame.stats.scale import center, scale
 
 import numpy as np
 import os
@@ -46,8 +47,6 @@ from sklearn.metrics import f1_score
 from sklearn.metrics import make_scorer
 from sklearn.metrics import confusion_matrix
 from sklearn.model_selection import train_test_split
-from stats.model_validation import *
-from stats.scale import center, scale
 
 # nonconformist imports
 
@@ -73,13 +72,11 @@ from nonconformist.evaluation import class_avg_c, class_mean_errors
 from nonconformist.evaluation import reg_mean_errors, reg_median_size
 from nonconformist.evaluation import reg_mean_size
 from nonconformist.evaluation import class_mean_errors
-from stats.imbalance import *
 
-import util.utils as utils
 
 class BaseEstimator:
     def __init__(self, X, Y, parameters):
-    
+
         self.failed = False
         self.parameters = parameters
 
@@ -88,7 +85,8 @@ class BaseEstimator:
         self.nobj, self.nvarx = np.shape(X)
 
         if self.parameters["imbalance"] is not None and not self.parameters["quantitative"]:
-            self.X, self.Y = run_imbalance(self.parameters['imbalance'],self.X, self.Y, 46)
+            self.X, self.Y = run_imbalance(
+                self.parameters['imbalance'], self.X, self.Y, 46)
 
         if (self.nobj == 0) or (self.nvarx == 0):
             self.failed = True
@@ -106,7 +104,6 @@ class BaseEstimator:
         self.learning_curve = parameters['ModelValidationLC']
         self.conformal = self.parameters['conformal']
         self.conformalSignificance = self.parameters['conformalSignificance']
- 
 
     # Validation methods section
 
@@ -141,8 +138,10 @@ class BaseEstimator:
         self.conformal_accuracy = float("{0:.2f}".format(accuracies))
         self.conformal_mean_interval = float("{0:.2f}".format(interval_means))
 
-        results.append (('Conformal_mean_interval','Conformal mean interval', self.conformal_mean_interval))
-        results.append (('Conformal_accuracy','Conformal accuracy', self.conformal_accuracy))
+        results.append(('Conformal_mean_interval',
+                        'Conformal mean interval', self.conformal_mean_interval))
+        results.append(
+            ('Conformal_accuracy', 'Conformal accuracy', self.conformal_accuracy))
 
         return True, results
 
@@ -200,11 +199,11 @@ class BaseEstimator:
         self.TP = np.int(np.mean(c1_correct_all))
         self.FN = np.int(np.mean(c1_incorrect_all))
         not_predicted_all = np.int(np.mean(not_predicted_all))
-        
-        results.append (('TP','True positives in cross-validation', self.TP))
-        results.append (('TN','True negatives in cross-validation', self.TN))
-        results.append (('FP','False positives in cross-validation', self.FP))
-        results.append (('FN','False negatives in cross-validation', self.FN))
+
+        results.append(('TP', 'True positives in cross-validation', self.TP))
+        results.append(('TN', 'True negatives in cross-validation', self.TN))
+        results.append(('FP', 'False positives in cross-validation', self.FP))
+        results.append(('FN', 'False negatives in cross-validation', self.FN))
 
         self.sensitivity = (self.TP / (self.TP + self.FN))
         self.specificity = (self.TN / (self.TN + self.FP))
@@ -213,24 +212,29 @@ class BaseEstimator:
                     np.sqrt((self.TP + self.FP) * (self.TP + self.FN) *
                             (self.TN + self.FP) * (self.TN + self.FN)))
 
-        results.append (('Sensitivity','Sensitivity in cross-validation', self.sensitivity))
-        results.append (('Specificity','Specificity in cross-validation', self.specificity))
-        results.append (('MCC', 'Mattews Correlation Coefficient in cross-validation', self.mcc ))
+        results.append(
+            ('Sensitivity', 'Sensitivity in cross-validation', self.sensitivity))
+        results.append(
+            ('Specificity', 'Specificity in cross-validation', self.specificity))
+        results.append(
+            ('MCC', 'Mattews Correlation Coefficient in cross-validation', self.mcc))
 
         self.conformal_coverage = (self.TN + self.FP + self.TP + self.FN) / (
             (self.TN + self.FP + self.TP + self.FN) + not_predicted_all)
-        
+
         self.conformal_accuracy = float(
             self.TN + self.TP) / float(self.FP + self.FN + self.TN + self.TP)
-        
-        results.append (('Conformal_coverage','Conformal coverage', self.conformal_coverage))
-        results.append (('Conformal_accuracy','Conformal accuracy', self.conformal_accuracy))
+
+        results.append(
+            ('Conformal_coverage', 'Conformal coverage', self.conformal_coverage))
+        results.append(
+            ('Conformal_accuracy', 'Conformal accuracy', self.conformal_accuracy))
 
         return True, results
 
     def quantitativeValidation(self):
         ''' performs validation for quantitative models '''
-        
+
         X = self.X.copy()
         Y = self.Y.copy()
 
@@ -254,9 +258,10 @@ class BaseEstimator:
         self.SDEC = np.sqrt(SSY/nobj)
         self.R2 = 1.00 - (SSY/SSY0)
 
-        results.append (('scoringR','Scoring P', self.scoringR))
-        results.append (('R2','Determination coefficient', self.R2))
-        results.append (('SDEC','Standard Deviation Error of the Calculations', self.SDEC))
+        results.append(('scoringR', 'Scoring P', self.scoringR))
+        results.append(('R2', 'Determination coefficient', self.R2))
+        results.append(
+            ('SDEC', 'Standard Deviation Error of the Calculations', self.SDEC))
 
         # Cross-validation
 
@@ -268,14 +273,16 @@ class BaseEstimator:
         self.SDEP = np.sqrt(SSY_out/(nobj))
         self.Q2 = 1.00 - (SSY_out/SSY0_out)
 
-        results.append (('scoringP','Scoring P', self.scoringP))
-        results.append (('Q2','Determination coefficient in cross-validation', self.Q2))
-        results.append (('SDEP','Standard Deviation Error of the Predictions', self.SDEP))
+        results.append(('scoringP', 'Scoring P', self.scoringP))
+        results.append(
+            ('Q2', 'Determination coefficient in cross-validation', self.Q2))
+        results.append(
+            ('SDEP', 'Standard Deviation Error of the Predictions', self.SDEP))
 
         return True, results
 
     def qualitativeValidation(self):
-        ''' performs validation for qualitative models '''        
+        ''' performs validation for qualitative models '''
 
         X = self.X.copy()
         Y = self.Y.copy()
@@ -294,36 +301,42 @@ class BaseEstimator:
         # Goodness of the fit
 
         self.TNpred, self.FPpred, self.FNpred, self.TPpred = confusion_matrix(
-            Y, Yp, labels = [0,1]).ravel()
+            Y, Yp, labels=[0, 1]).ravel()
         self.sensitivityPred = (self.TPpred / (self.TPpred + self.FNpred))
         self.specificityPred = (self.TNpred / (self.TNpred + self.FPpred))
         self.mccp = mcc(Y, Yp)
 
-        results.append (('TPpred','True positives', self.TPpred))
-        results.append (('TNpred','True negatives', self.TNpred))
-        results.append (('FPpred','False positives', self.FPpred))
-        results.append (('FNpred','False negatives', self.FNpred))
-        results.append (('SensitivityPed','Sensitivity in fitting', self.sensitivityPred))
-        results.append (('SpecificityPred','Specificity in fitting',self.specificityPred))
-        results.append (('MCCpred', 'Mattews Correlation Coefficient', self.mccp ))
+        results.append(('TPpred', 'True positives', self.TPpred))
+        results.append(('TNpred', 'True negatives', self.TNpred))
+        results.append(('FPpred', 'False positives', self.FPpred))
+        results.append(('FNpred', 'False negatives', self.FNpred))
+        results.append(
+            ('SensitivityPed', 'Sensitivity in fitting', self.sensitivityPred))
+        results.append(
+            ('SpecificityPred', 'Specificity in fitting', self.specificityPred))
+        results.append(
+            ('MCCpred', 'Mattews Correlation Coefficient', self.mccp))
 
         # Cross validation
 
         y_pred = cross_val_predict(self.estimator, X, Y, cv=self.cv, n_jobs=1)
         self.TN, self.FP, self.FN, self.TP = confusion_matrix(
-            Y, y_pred, labels = [0,1]).ravel()
+            Y, y_pred, labels=[0, 1]).ravel()
         self.sensitivity = (self.TP / (self.TP + self.FN))
         self.specificity = (self.TN / (self.TN + self.FP))
         self.mcc = mcc(Y, y_pred)
 
-        results.append (('TP','True positives in cross-validation', self.TP))
-        results.append (('TN','True negatives in cross-validation', self.TN))
-        results.append (('FP','False positives in cross-validation', self.FP))
-        results.append (('FN','False negatives in cross-validation', self.FN))
+        results.append(('TP', 'True positives in cross-validation', self.TP))
+        results.append(('TN', 'True negatives in cross-validation', self.TN))
+        results.append(('FP', 'False positives in cross-validation', self.FP))
+        results.append(('FN', 'False negatives in cross-validation', self.FN))
 
-        results.append (('Sensitivity','Sensitivity in cross-validation', self.sensitivity))
-        results.append (('Specificity','Specificity in cross-validation',self.specificity))
-        results.append (('MCC', 'Mattews Correlation Coefficient in cross-validation', self.mcc ))
+        results.append(
+            ('Sensitivity', 'Sensitivity in cross-validation', self.sensitivity))
+        results.append(
+            ('Specificity', 'Specificity in cross-validation', self.specificity))
+        results.append(
+            ('MCC', 'Mattews Correlation Coefficient in cross-validation', self.mcc))
 
         return True, results
 
@@ -359,10 +372,9 @@ class BaseEstimator:
 
         # return (Yp)
 
-
     def optimize(self, X, Y, estimator, tune_parameters):
         ''' optimizes a model using a grid search over a range of values for diverse parameters'''
-        
+
         metric = ""
         if self.quantitative:
             metric = 'r2'
@@ -381,17 +393,16 @@ class BaseEstimator:
         print("tune_parameters")
         print("metric: " + str(metric))
         tclf = GridSearchCV(estimator, tune_parameters,
-                            scoring=metric, cv=self.cv, n_jobs = -1)
+                            scoring=metric, cv=self.cv, n_jobs=-1)
         # n_splits=10, shuffle=False,
         #   random_state=42), n_jobs= -1)
         tclf.fit(X, Y)
         self.estimator = tclf.best_estimator_
         print("best parameters: ", tclf.best_params_)
         end = time.time()
-        print ("found in: ", end-start, " seconds")
+        print("found in: ", end-start, " seconds")
         # print self.estimator.get_params()
 
-    
     # Projection section
 
     def regularProject(self, Xb, results):

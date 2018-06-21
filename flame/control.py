@@ -20,7 +20,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Flame.  If not, see <http://www.gnu.org/licenses/>.
 
-import util.utils as util
+from flame.util import utils
 import os
 import yaml
 
@@ -29,24 +29,27 @@ class Control:
 
     def __init__(self, model, version):
 
-        self.yaml_file = util.model_path(model, version) + '/parameters.yaml'
+        self.yaml_file = utils.model_path(model, version) + '/parameters.yaml'
 
         success, parameters = self.load_parameters(model)
 
-        # TODO: study the pros and cons of copying the children template instead
+        # TODO: study the pros and cons of copying the
+        # children template instead
         if not success:
-            print(
-                'CRITICAL ERROR: unable to load parameter file. Running with fallback defaults')
+            print('CRITICAL ERROR: unable to load parameter file.'
+                  'Running with fallback defaults')
             parameters = self.get_defaults()
 
         self.parameters = parameters
         self.parameters['endpoint'] = model
         self.parameters['version'] = version
-        self.parameters['model_path'] = util.model_path(model, version)
-        self.parameters['md5'] = util.md5sum(self.yaml_file)
+        self.parameters['model_path'] = utils.model_path(model, version)
+        self.parameters['md5'] = utils.md5sum(self.yaml_file)
 
     def load_parameters(self, model):
-        ''' Loads parameters from a yaml file '''
+        '''
+        Loads parameters from a yaml file
+        '''
 
         if not os.path.isfile(self.yaml_file):
             return False, None
@@ -63,12 +66,17 @@ class Control:
     #     yaml.dump(open(self.yaml_file,'w'), parameters)
 
     def get_parameters(self):
-        ''' Commodity function to access stored parameters '''
+        '''
+        Commodity function to access stored parameters
+        '''
 
         return self.parameters
 
     def get_model_set(self):
-        ''' Returns a Boolean indicating if the model uses external input sources and a list with these sources '''
+        '''
+        Returns a Boolean indicating if the model uses external input
+        sources and a list with these sources.
+        '''
 
         ext_input = False
         model_set = None
@@ -83,7 +91,10 @@ class Control:
         return ext_input, model_set
 
     def get_defaults(self):
-        ''' Fallback for setting parameters even when no "config.yaml" file is found '''
+        '''
+        Fallback for setting parameters even when
+        no "config.yaml" file is found
+        '''
 
         self.yaml_file = os.path.join(os.path.dirname(
             os.path.abspath(__file__)), 'children', 'parameters.yaml')

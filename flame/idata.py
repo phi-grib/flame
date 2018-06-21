@@ -34,11 +34,11 @@ from rdkit import Chem
 
 from standardiser import standardise
 
-import chem.sdfileutils as sdfu
-import chem.compute_md as computeMD
-import chem.convert_3d as convert3D
+import flame.chem.sdfileutils as sdfu
+import flame.chem.compute_md as computeMD
+import flame.chem.convert_3d as convert3D
 
-import util.utils as utils
+from flame.util import utils
 
 
 class Idata:
@@ -70,11 +70,11 @@ class Idata:
 
     def extractInformation(self, ifile):
         '''
+        Extracts molecule names, biological anotations and experimental values
+        from an SDFile.
 
-        Extracts molecule names, biological anotations and experimental values from an SDFile.
-
-        Anotations must be added using method utils.add_result, so they are also inserted into the results manifest
-
+        Anotations must be added using method utils.add_result,
+        so they are also inserted into the results manifest.
         '''
 
         try:
@@ -138,26 +138,32 @@ class Idata:
                          'smiles', 'objs', 'Structure of the molecule in SMILES format')
 
         if not utils.is_empty(obj_bio):
-            utils.add_result(self.results, np.array(obj_bio, dtype=np.float64), 'ymatrix', 'Activity',
-                             'decoration', 'objs', 'Biological anotation to be predicted by the model')
+            utils.add_result(self.results, np.array(obj_bio, dtype=np.float64),
+                             'ymatrix', 'Activity',
+                             'decoration', 'objs',
+                             'Biological anotation to be predicted by the model')
+
         if not utils.is_empty(obj_exp):
-            utils.add_result(self.results, np.array(obj_exp, dtype=np.float64), 'experim', 'Experim.',
-                             'decoration', 'objs', 'Experimental anotation present in the input file')
+            utils.add_result(self.results, np.array(obj_exp, dtype=np.float64),
+                             'experim', 'Experim.',
+                             'decoration', 'objs',
+                             'Experimental anotation present in the input file')
 
         return success_list
 
     def normalize(self, ifile, method):
         '''
+        Generates a simplified SDFile with MolBlock and an internal ID for
+        further processing.
 
-        Generates a simplified SDFile with MolBlock and an internal ID for further processing
-
-        Also, when defined in control, applies chemical standardization protocols, like the 
-        one provided by Francis Atkinson (EBI), accessible from:
+        Also, when defined in control, applies chemical standardization
+        protocols, like the one provided by Francis Atkinson (EBI),
+        accessible from:
 
             https://github.com/flatkinson/standardiser
 
-        Returns a tuple containing the result of the method and (if True) the name of the 
-        output molecule and an error message otherwyse
+        Returns a tuple containing the result of the method and (if True)
+        the name of the output molecule and an error message otherwyse
 
         '''
 
@@ -180,8 +186,8 @@ class Idata:
 
                 # molecule not recognised by RDKit
                 if m is None:
-                    print('ERROR: (@normalize) Unable to process molecule #', str(
-                        mcount+1), 'in file ' + ifile)
+                    print('ERROR: (@normalize) Unable to process molecule #',
+                        str(mcount+1), 'in file ' + ifile)
 
                     continue
 
@@ -216,8 +222,9 @@ class Idata:
         return success, ofile
 
     def ionize(self, ifile, method):
-        ''' 
-        Adjust the ionization status of the molecular structure, using a given pH.
+        '''
+        Adjust the ionization status of the molecular structure,
+        using a given pH.
         '''
 
         if not method:
@@ -233,7 +240,7 @@ class Idata:
         return success, results
 
     def convert3D(self, ifile, method):
-        ''' 
+        '''
         Assigns 3D structures to the molecular structures provided as input.
         '''
 
@@ -249,11 +256,10 @@ class Idata:
         return success, results
 
     def computeMD_custom(self, ifile):
-        ''' 
+        '''
+        Empty method for computing molecular descriptors.
 
-        Empty method for computing molecular descriptors
-
-        ifile is a molecular file in SDFile format
+        ifile is a molecular file in SDFile format.
 
         returns a boolean anda a tupla of two elements:
         [0] xmatrix (nparray np.float64)
@@ -261,17 +267,17 @@ class Idata:
         [2] list of booleans indicating if the computation succeeded for each molecule
 
         example:    return True, (xmatrix, md_nam, success_list)
-
         '''
 
         return False, 'not implemented'
 
     def computeMD(self, ifile, method):
         '''
-        Uses the molecular structures for computing an array of values (int or float) 
+        Uses the molecular structures for computing an array
+        of values (int or float).
 
-        input is the name of a molecule or a series of molecules and a label of the method
-        output is boolean anda a tupla of two elements:
+        input is the name of a molecule or a series of molecules and a label
+        of the method output is boolean anda a tupla of two elements:
         [0] xmatrix (nparray np.float64)
         [1] list of variable names (str)
 
@@ -330,7 +336,7 @@ class Idata:
 
     def consolidate(self, results, nobj):
         ''' 
-        Mix the results obtained by multiple CPUs into a single result file 
+        Mix the results obtained by multiple CPUs into a single result file.
         '''
 
         first = True
@@ -375,7 +381,8 @@ class Idata:
 
     def save(self):
         ''' 
-        Saves the results in serialized form, together with the MD5 signature of the control class and the input file
+        Saves the results in serialized form, together with the MD5 signature
+        of the control class and the input file.
         '''
 
         # uncomment to avoid saving results
@@ -402,7 +409,8 @@ class Idata:
 
     def load(self):
         ''' 
-        Loads the results in serialized form, together with the MD5 signature of the control class and the input file
+        Loads the results in serialized form, together with the MD5 signature
+        of the control class and the input file.
         '''
 
         if 'ext_input' in self.parameters and self.parameters['ext_input']:
@@ -434,12 +442,11 @@ class Idata:
 
     def workflow_objects(self, input_file):
         '''      
-
-        Executes in sequence methods required to generate MD, starting from a single molecular file
+        Executes in sequence methods required to generate MD,
+        starting from a single molecular file.
 
         input : ifile, a molecular file in SDFile format
-        output: results is a numpy bidimensional array containing MD     
-
+        output: results is a numpy bidimensional array containing MD
         '''
 
         success_list = []
@@ -491,7 +498,7 @@ class Idata:
                 if len(results[0]) != num_var:
                     print('ERROR: (@workflow_objects) MD length for molecule #', str(
                         i+1), 'in file ' + input_file + 'does not match the MD length of the first molecule')
-                    success_list[i]=False 
+                    success_list[i] = False
                     continue
 
                 md_results = np.vstack((md_results, results[0]))
@@ -502,8 +509,8 @@ class Idata:
 
     def workflow_series(self, input_file):
         '''      
-
-        Executes in sequence methods required to generate MD, starting from a single molecular file
+        Executes in sequence methods required to generate MD,
+        starting from a single molecular file
 
         input : ifile, a molecular file in SDFile format
         output: results contains two lists
@@ -529,16 +536,16 @@ class Idata:
 
     def ammend_objects(self, inform, workflow):
         ''' 
+        The arguments inform and workflow are lists of booleans describing
+        when the objects were successfully informed (inform)
+        or completed the workflow.
 
-        The arguments inform and workflow are lists of booleans describing when the objects
-        were successfully informed (inform) or completed the workflow
+        This functions is called only when a disagreement if found, revealing
+        that any object failed to be processed, and that the xmatrix will 
+        have less rows than expected.
 
-        This functions is called only when a disagreement if found, revealing that any object
-        failed to be processed, and that the xmatrix will have less rows than expected
-
-        The function ammends all keys describing objects, removing those appearing as "false"
-        in workflow and not in inform
-
+        The function ammends all keys describing objects,
+        removing those appearing as "false" in workflow and not in inform.
         '''
 
         # list objects to remove
@@ -552,7 +559,6 @@ class Idata:
             if inform[i] and workflow[i]:
                 obj_num += 1
 
-        #print (remove_index)
         if 'obj_num' in self.results:
             self.results['obj_num'] = obj_num
 
@@ -597,8 +603,8 @@ class Idata:
 
         # copy the input file to a temp file which will be cleaned at the end
         temp_path = tempfile.mkdtemp()
-        shutil.copy (self.ifile,temp_path)
-        lfile = os.path.join(temp_path,os.path.basename(self.ifile))
+        shutil.copy(self.ifile, temp_path)
+        lfile = os.path.join(temp_path, os.path.basename(self.ifile))
 
         # Execute the workflow in 1 or n CPUs
         if ncpu > 1:
@@ -642,14 +648,17 @@ class Idata:
             self.results['error'] = 'number of molecules informed and processed does not match'
             return
 
-        # check if molecules not informed succeded to be complete MD generation
-        # this should never happen, because they do not pass the normalization step
+        # Check if molecules not informed succeded
+        # to be complete MD generation.
+        # This should never happen, because they
+        # do not pass the normalization step
         for i, j in zip(success_inform, success_workflow):
             if j and not i:
                 self.results['error'] = 'unknown error in molecule inform'
                 return
 
-        # check if a molecule informed did not succeed to complete MD generation
+        # check if a molecule informed did not 
+        # succeed to complete MD generation
         for i, j in zip(success_inform, success_workflow):
             if i and not j:
                 self.ammend_objects(success_inform, success_workflow)
@@ -659,10 +668,12 @@ class Idata:
         shutil.rmtree(temp_path)
 
         utils.add_result(
-            self.results, results[0], 'xmatrix', 'X matrix', 'method', 'vars', 'Molecular descriptors')
+            self.results, results[0], 'xmatrix', 'X matrix',
+            'method', 'vars', 'Molecular descriptors')
 
         utils.add_result(
-            self.results, results[1], 'var_nam', 'Var names', 'method', 'vars', 'Names of the X variables')
+            self.results, results[1], 'var_nam',
+            'Var names', 'method', 'vars', 'Names of the X variables')
 
         return
 
@@ -815,14 +826,15 @@ class Idata:
         return
 
     def run(self):
-        '''         
-        Process input file to obtain metadata (size, type, number of objects, name of objects, etc.) as well
-        as for generating MD
+        ''' 
+        Process input file to obtain metadata (size, type, number of objects,
+        name of objects, etc.) as well as for generating MD.
 
-        The results are saved in a MD5 stamped pickle, to avoid recomputing model input from the same input
-        file
+        The results are saved in a MD5 stamped pickle, to avoid recomputing
+        model input from the same input file.
 
-        This methods supports multiprocessing, splitting original files in a chunck per CPU        
+        This methods supports multiprocessing, splitting original files in a
+        chunck per CPU        
         '''
 
         # check for the presence of a valid pickle file
@@ -845,7 +857,7 @@ class Idata:
 
             # trick to avoid RDKit dumping warnings to the console
             if not self.parameters['verbose_error']:
-                stderr_fileno = sys.stderr.fileno()       # saves current syserr
+                stderr_fileno = sys.stderr.fileno()  # saves current syserr
                 stderr_save = os.dup(stderr_fileno)
                 # open a specific RDKit log file
                 stderr_fd = open('errorRDKit.log', 'w')
@@ -869,7 +881,7 @@ class Idata:
             self.results['error'] = 'unknown input data format'
 
         # save in a pickle file stamped with MD5 hash of file and control
-        if not 'error' in self.results:
+        if 'error' not in self.results:
             self.save()
 
         return self.results
