@@ -24,8 +24,11 @@
 import pandas as pd
 import numpy as np
 
-"""Simple subsampling, adjusts the number of negative samples to the positive one"""
+
 def simple_subsampling(X, Y, random_seed):
+    """
+    Simple subsampling, adjusts the number of negative samples to the positive one
+    """
     
     frame = pd.DataFrame(X)
     frame["act"] = Y
@@ -43,6 +46,7 @@ def simple_subsampling(X, Y, random_seed):
     if Y_s.size == 0  or X_s.size == 0:
         raise ValueError("Error creating subsampled matrices")
     return X_s, Y_s
+
 
 def run_imbalance(method, X, Y, random_seed=46):
     X_s = []

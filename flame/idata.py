@@ -37,7 +37,7 @@ import chem.sdfileutils as sdfu
 import chem.compute_md as computeMD
 import chem.convert_3d as convert3D
 
-import util.utils as utils
+from flame.util import utils
 
 
 class Idata:

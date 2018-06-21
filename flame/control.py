@@ -20,7 +20,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Flame.  If not, see <http://www.gnu.org/licenses/>.
 
-import util.utils as util
+from flame.util import utils
 import os
 import yaml
 
@@ -29,7 +29,7 @@ class Control:
 
     def __init__(self, model, version):
 
-        self.yaml_file = util.model_path(model, version) + '/parameters.yaml'
+        self.yaml_file = utils.model_path(model, version) + '/parameters.yaml'
 
         success, parameters = self.load_parameters(model)
 
@@ -42,8 +42,8 @@ class Control:
         self.parameters = parameters
         self.parameters['endpoint'] = model
         self.parameters['version'] = version
-        self.parameters['model_path'] = util.model_path(model, version)
-        self.parameters['md5'] = util.md5sum(self.yaml_file)
+        self.parameters['model_path'] = utils.model_path(model, version)
+        self.parameters['md5'] = utils.md5sum(self.yaml_file)
 
     def load_parameters(self, model):
         ''' Loads parameters from a yaml file '''

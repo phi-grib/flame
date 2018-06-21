@@ -26,11 +26,15 @@ import shutil
 import tarfile
 import json
 import pickle
-import util.utils as utils
+from flame.util import utils
 
 
 def action_new(model):
-    ''' create a new model tree, using the given name. This creates the development version "dev", copying inside default child classes '''
+    '''
+    Create a new model tree, using the given name.
+    This creates the development version "dev",
+    copying inside default child classes
+    '''
 
     if not model:
         return False, 'empty model label'
@@ -65,7 +69,9 @@ def action_new(model):
 
 
 def action_kill(model):
-    ''' removes the model tree described by the argument '''
+    '''
+    removes the model tree described by the argument
+    '''
 
     if not model:
         return False, 'empty model label'
@@ -81,7 +87,10 @@ def action_kill(model):
 
 
 def action_publish(model):
-    ''' clone the development "dev" version as a new model version, assigning a sequential version number '''
+    '''
+    clone the development "dev" version as a new model version,
+     assigning a sequential version number
+    '''
 
     if not model:
         return False, 'empty model label'
@@ -113,7 +122,10 @@ def action_publish(model):
 
 
 def action_remove(model, version):
-    ''' Remove the version indicated as argument from the model tree indicated as argument '''
+    '''
+    Remove the version indicated as argument from the model tree indicated
+    as argument
+    '''
 
     if not model:
         return False, 'empty model label'
@@ -131,7 +143,10 @@ def action_remove(model, version):
 
 
 def action_list(model):
-    ''' Lists available models (if no argument is provided) and model versions (if "model" is provided as argument) '''
+    '''
+    Lists available models (if no argument is provided)
+     and model versions (if "model" is provided as argument)
+    '''
 
     # TODO: if no argument is provided, also list all models
     if not model:
@@ -151,7 +166,6 @@ def action_list(model):
     for x in os.listdir(bdir):
         if x.startswith("ver"):
 
-
             num_versions += 1
             print(model, ':', x)
 
@@ -159,7 +173,9 @@ def action_list(model):
 
 
 def action_import(model):
-    ''' Creates a new model tree from a tarbal file with the name "model.tgz" '''
+    '''
+    Creates a new model tree from a tarbal file with the name "model.tgz"
+    '''
 
     if not model:
         return False, 'empty model label'
@@ -168,7 +184,6 @@ def action_import(model):
     base_model = os.path.basename(model)
     endpoint = os.path.splitext(base_model)[0]
     ext = os.path.splitext(base_model)[1]
-
 
     bdir = utils.model_tree_path(endpoint)
 
@@ -180,7 +195,7 @@ def action_import(model):
     else:
         importfile = model
 
-    print (importfile)
+    print(importfile)
 
     if not os.path.isfile(importfile):
         return False, 'importing package '+importfile+' not found'
@@ -198,7 +213,10 @@ def action_import(model):
 
 
 def action_export(model):
-    ''' Exports the whole model tree indicated in the argument as a single tarball file with the same name '''
+    '''
+    Exports the whole model tree indicated in the argument as a single
+    tarball file with the same name.
+    '''
 
     if not model:
         return False, 'empty model label'
@@ -229,7 +247,10 @@ def action_export(model):
 
 # TODO: implement refactoring, starting with simple methods
 def action_refactoring(file):
-    ''' NOT IMPLEMENTED, call to import externally generated models (eg. in KNIME or R) '''
+    '''
+    NOT IMPLEMENTED,
+    call to import externally generated models (eg. in KNIME or R)
+    '''
 
     print('refactoring')
 
@@ -237,7 +258,9 @@ def action_refactoring(file):
 
 
 def action_dir():
-    ''' Returns a JSON with the list of models and versions '''
+    '''
+    Returns a JSON with the list of models and versions
+    '''
 
     results = []
     rdir = utils.model_repository_path()
@@ -257,31 +280,34 @@ def action_dir():
 
     return True, json.dumps(results)
 
-    #print(json.dumps(results))
+    # print(json.dumps(results))
+
 
 def action_info(model, version=None, output='text'):
-    ''' Returns a text or JSON with info for a given model and version '''
+    '''
+    Returns a text or JSON with info for a given model and version
+    '''
 
     if not model:
         return False, 'empty model label'
 
-    if version==None:
+    if version == None:
         return False, 'no version provided'
 
     rdir = utils.model_path(model, version)
-    if not os.path.isfile(os.path.join(rdir,'info.pkl')):
+    if not os.path.isfile(os.path.join(rdir, 'info.pkl')):
         return False, 'info not found'
 
-    with open(os.path.join(rdir,'info.pkl'),'rb') as handle:
-        results = pickle.load (handle)
-        results += pickle.load (handle)
+    with open(os.path.join(rdir, 'info.pkl'), 'rb') as handle:
+        results = pickle.load(handle)
+        results += pickle.load(handle)
 
-    if output=='text':
+    if output == 'text':
         for val in results:
-            if len(val)<3:
-                print (val)
+            if len(val) < 3:
+                print(val)
             else:
-                print (val[0],' (', val[1], ') : ', val[2])
+                print(val[0], ' (', val[1], ') : ', val[2])
         return True, 'model informed OK'
 
     new_results = []
@@ -293,14 +319,14 @@ def action_info(model, version=None, output='text'):
                 v = int(i[2])
             except:
                 v = None
-            new_results.append ( (i[0],i[1],v) )
+            new_results.append((i[0], i[1], v))
         elif 'numpy.float64' in str(type(i[2])):
             try:
                 v = float(i[2])
             except:
                 v = None
-            new_results.append ( (i[0],i[1],v) )
+            new_results.append((i[0], i[1], v))
         else:
-            new_results.append (i)
+            new_results.append(i)
 
     return True, json.dumps(new_results)

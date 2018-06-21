@@ -22,7 +22,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Flame.  If not, see <http://www.gnu.org/licenses/>.
 
-
+import copy
 from sklearn.cross_decomposition import PLSCanonical, PLSRegression, CCA
 from stats.base_model import BaseEstimator
 from stats.base_model import getCrossVal
@@ -38,7 +38,7 @@ from nonconformist.nc import ClassifierNc, MarginErrFunc, RegressorNc
 import numpy as np
 from sklearn.model_selection import cross_val_predict
 from sklearn.metrics import r2_score
-import copy
+
 from sklearn.neighbors import KNeighborsRegressor
 from nonconformist.nc import AbsErrorErrFunc, RegressorNormalizer
 
