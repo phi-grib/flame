@@ -52,16 +52,11 @@ def action_new(model):
     # check if there is already a tree for this endpoint
     if os.path.isdir(ndir):
         return False, 'This endpoint already exists'
-    try:
-        os.mkdir(ndir)
-    except:
-        return False, 'unable to create directory : '+ndir
-
+    
+    os.mkdir(ndir)
+   
     ndir += '/dev'
-    try:
-        os.mkdir(ndir)
-    except:
-        return False, 'unable to create directory '+ndir
+    os.mkdir(ndir)
 
     try:
         wkd = os.path.dirname(os.path.abspath(__file__))
@@ -268,6 +263,8 @@ def action_refactoring(file):
 def action_dir():
     '''
     Returns a JSON with the list of models and versions
+
+    FIX: exception when no models
     '''
 
     results = []

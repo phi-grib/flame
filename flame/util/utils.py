@@ -45,7 +45,6 @@ def _read_configuration():
     Reads configuration file "config.yaml". Do not call directly,
     read configuration variable instead
     '''
-
     conf = {}
     # source_dir = os.path.dirname(os.path.abspath(__file__))[:-5] 
   
@@ -85,10 +84,6 @@ def _read_configuration_WIP() -> dict:
 
     return conf
 
-# read configuration file and store in a variable to prevent reading files more
-# than strictly necessary
-configuration = _read_configuration()
-
 
 def set_model_repository(path):
     """
@@ -103,7 +98,7 @@ def set_model_repository(path):
     configuration['model_repository_path'] = str(new_path.resolve()) 
 
     with open(get_conf_yml_path(), 'w') as f:
-        yaml.dump(configuration, f)
+        yaml.dump(configuration, f, default_flow_style=False)
 
 
 def model_repository_path():
@@ -111,7 +106,7 @@ def model_repository_path():
     Returns the path to the root of the model repository,
     containing all models and versions
     '''
-
+    configuration = _read_configuration()
     return configuration['model_repository_path']
 
 
