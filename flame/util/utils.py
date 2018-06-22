@@ -57,8 +57,11 @@ def _read_configuration():
 def _read_configuration_WIP():
     '''
     <<< WIP>>>>
-    Reads configuration file "config.yaml". Do not call directly,
-    read configuration variable instead
+    Reads configuration file "config.yaml".
+
+    Look for configuration.yaml location and load the conf
+    in a dictionary.
+
     '''
     raise NotImplementedError
     conf = {}
