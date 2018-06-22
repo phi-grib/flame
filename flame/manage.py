@@ -20,13 +20,13 @@
 # You should have received a copy of the GNU General Public License
 # along with Flame. If not, see <http://www.gnu.org/licenses/>.
 
+from flame.util import utils
 import os
 import sys
 import shutil
 import tarfile
 import json
 import pickle
-from flame.util import utils
 
 
 def set_model_dir(path):

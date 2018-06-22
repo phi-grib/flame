@@ -29,6 +29,17 @@ import string
 import pathlib
 
 
+def get_conf_yml_path():
+    '''
+    Returns path of the configuration yml file
+
+    TODO: be sure that the conf.yaml exists and raise
+    err if doesn't
+    '''
+    source_dir = pathlib.Path(__file__).resolve().parents[1]
+    return os.path.join(source_dir, 'config.yaml')
+
+
 def _read_configuration():
     '''
     Reads configuration file "config.yaml". Do not call directly,
@@ -36,25 +47,21 @@ def _read_configuration():
     '''
 
     conf = {}
-    source_dir = os.path.dirname(os.path.abspath(__file__))[:-5] # removing '/utils'
+    # source_dir = os.path.dirname(os.path.abspath(__file__))[:-5] 
+    # removing '/utils'
 
-    with open(os.path.join(source_dir, 'config.yaml'), 'r') as config_file:
+    with open(get_conf_yml_path, 'r') as config_file:
         conf = yaml.load(config_file)
 
     # if the name of a path starts with '.' we will
     # prepend the path with the source dir
-    if conf['model_repository_path'][0] == '.':
-
-        # TODO: I dislike the use of "/" here...
-        #  but os.path.append does not work well
-        conf['model_repository_path'] = source_dir + \
-            '/' + conf['model_repository_path'][1:]
-
+    mod_abs_path = pathlib.Path(conf['model_repository_path']).resolve()
+    conf['model_repository_path'] = mod_abs_path
     # print (conf)
     return conf
 
 
-def _read_configuration_WIP():
+def _read_configuration_WIP() -> dict:
     '''
     <<< WIP>>>>
     Reads configuration file "config.yaml".
@@ -79,7 +86,7 @@ def _read_configuration_WIP():
 
     return conf
 
-# read configuraton file and store in a variable to prevent reading files more
+# read configuration file and store in a variable to prevent reading files more
 # than strictly necessary
 configuration = _read_configuration()
 
@@ -90,7 +97,14 @@ def set_model_repository(path):
     This is the dir where flame is going to create and load models
     """
     new_path = pathlib.Path(path)
-    configuration['model_repository_path'] = str(new_path.resolve())
+
+    with open(get_conf_yml_path()) as f:
+        configuration = yaml.load(f)
+
+    configuration['model_repository_path'] = str(new_path.resolve()) 
+
+    with open('config.yaml', 'w') as f:
+        yaml.dump(configuration, f)
 
 
 def model_repository_path():
