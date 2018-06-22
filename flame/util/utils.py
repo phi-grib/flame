@@ -48,9 +48,8 @@ def _read_configuration():
 
     conf = {}
     # source_dir = os.path.dirname(os.path.abspath(__file__))[:-5] 
-    # removing '/utils'
-
-    with open(get_conf_yml_path, 'r') as config_file:
+  
+    with open(get_conf_yml_path(), 'r') as config_file:
         conf = yaml.load(config_file)
 
     # if the name of a path starts with '.' we will
@@ -98,12 +97,12 @@ def set_model_repository(path):
     """
     new_path = pathlib.Path(path)
 
-    with open(get_conf_yml_path()) as f:
+    with open(get_conf_yml_path(), 'r') as f:
         configuration = yaml.load(f)
 
     configuration['model_repository_path'] = str(new_path.resolve()) 
 
-    with open('config.yaml', 'w') as f:
+    with open(get_conf_yml_path(), 'w') as f:
         yaml.dump(configuration, f)
 
 
