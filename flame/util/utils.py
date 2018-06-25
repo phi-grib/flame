@@ -143,7 +143,7 @@ def module_path(model, version):
     '''
 
     modreppath = model_repository_path()
-    if not modreppath in sys.path:
+    if modreppath not in sys.path:
         sys.path.insert(0, modreppath)
 
     # print (sys.path)
