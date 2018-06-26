@@ -35,7 +35,7 @@ def get_conf_yml_path():
 
     Returns:
     --------
-    str, path where conf.yaml is 
+    str, path where conf.yaml is
 
     TODO: be sure that the conf.yaml exists and raise
     err if doesn't
@@ -197,13 +197,18 @@ def add_result(results, var, _key, _label, _type, _dimension='objs', _descriptio
 
     results[_key] = var
 
-    manifest_item = {'key': _key,                      # key in results
-                     'label': _label,                  # descriptive text
-                     'type': _type,                    # label, decoration, smiles, result, confidence, method
-                     'dimension': _dimension,          # can be single | vars | objs
+    # key in results
+    # descriptive text
+    # label, decoration, smiles, result, confidence, method
+    # can be single | vars | objs
+    # main | None
+    manifest_item = {'key': _key,
+                     'label': _label,
+                     'type': _type,
+                     'dimension': _dimension,
                      # descriptive text (long)
                      'description': _description,
-                     'relevance': _relevance           # main | None
+                     'relevance': _relevance
                      }
 
     manifest.append(manifest_item)

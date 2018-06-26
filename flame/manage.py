@@ -102,10 +102,12 @@ def action_publish(model):
         return False, 'model not found'
 
     v = None
-    try:
-        v = [int(x[-6:]) for x in os.listdir(bdir) if x.startswith("ver")]
-    except:
-        pass
+    v = [int(x[-6:]) for x in os.listdir(bdir) if x.startswith("ver")]
+
+    # try:
+    #     v = [int(x[-6:]) for x in os.listdir(bdir) if x.startswith("ver")]
+    # except:
+    #     pass
 
     if not v:
         max_version = 0
@@ -293,7 +295,7 @@ def action_info(model, version=None, output='text'):
     Returns a text or JSON with info for a given model and version
     '''
 
-    if not model:
+    if model is None:
         return False, 'empty model label'
 
     if version == None:
