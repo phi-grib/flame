@@ -46,8 +46,8 @@ def _read_configuration():
     read configuration variable instead
     '''
     conf = {}
-    # source_dir = os.path.dirname(os.path.abspath(__file__))[:-5] 
-  
+    # source_dir = os.path.dirname(os.path.abspath(__file__))[:-5]
+
     with open(get_conf_yml_path(), 'r') as config_file:
         conf = yaml.load(config_file)
 
@@ -73,29 +73,36 @@ def _read_configuration_WIP() -> dict:
 
     # flame source dir. (two directories up)
     source_dir = pathlib.Path(__file__).resolve().parents[1]
-    
+
     # load configuration data from yaml
     with open(os.path.join(source_dir, 'config.yaml'), 'r') as config_file:
         conf = yaml.load(config_file)
 
     model_path = pathlib.Path(conf['model_repository_path'])
-    
+
     conf['model_repository_path'] = str(model_path.resolve())
 
     return conf
 
 
-def set_model_repository(path):
+def set_model_repository(path=None):
     """
     Set the model repository path.
-    This is the dir where flame is going to create and load models
-    """
-    new_path = pathlib.Path(path)
+    This is the dir where flame is going to create and load models.
 
+    if path is None, model dir will be the default in the flame root
+    """
     with open(get_conf_yml_path(), 'r') as f:
         configuration = yaml.load(f)
 
-    configuration['model_repository_path'] = str(new_path.resolve()) 
+    if path is None:  # set do default path
+        model_root_path = os.path.join(
+            pathlib.Path(__file__).resolve().parents[1],
+            'models/')
+        configuration['model_repository_path'] = str(model_root_path)
+    else:
+        new_path = pathlib.Path(path)
+        configuration['model_repository_path'] = str(new_path.resolve())
 
     with open(get_conf_yml_path(), 'w') as f:
         yaml.dump(configuration, f, default_flow_style=False)
@@ -196,7 +203,6 @@ def id_generator(size=10, chars=string.ascii_uppercase + string.digits):
 
 
 def add_result(results, var, _key, _label, _type, _dimension='objs', _description=None, _relevance=None):
-    
 
     if 'manifest' not in results:
         results['manifest'] = []
@@ -211,7 +217,8 @@ def add_result(results, var, _key, _label, _type, _dimension='objs', _descriptio
                      'label': _label,                  # descriptive text
                      'type': _type,                    # label, decoration, smiles, result, confidence, method
                      'dimension': _dimension,          # can be single | vars | objs
-                     'description': _description,      # descriptive text (long)
+                     # descriptive text (long)
+                     'description': _description,
                      'relevance': _relevance           # main | None
                      }
 

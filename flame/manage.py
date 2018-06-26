@@ -30,7 +30,7 @@ import pickle
 import pathlib
 
 
-def set_model_dir(path):
+def set_model_repository(path=None):
     """
     Set the model repository path.
     This is the dir where flame is going to create and load models
