@@ -261,13 +261,9 @@ def action_refactoring(file):
     return True, 'OK'
 
 
-# BUG
 def action_dir():
     '''
     Returns a JSON with the list of models and versions
-
-    FIX: exception when no models
-    FIX: exception when lists not a dir
     '''
 
     models_path = pathlib.Path(utils.model_repository_path())
