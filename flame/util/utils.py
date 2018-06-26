@@ -31,7 +31,11 @@ import pathlib
 
 def get_conf_yml_path():
     '''
-    Returns path of the configuration yml file
+    recovers the path of the configuration yml file
+
+    Returns:
+    --------
+    str, path where conf.yaml is 
 
     TODO: be sure that the conf.yaml exists and raise
     err if doesn't
@@ -42,8 +46,11 @@ def get_conf_yml_path():
 
 def _read_configuration():
     '''
-    Reads configuration file "config.yaml". Do not call directly,
-    read configuration variable instead
+    Reads configuration file "config.yaml".
+
+    Returns:
+    --------
+    dict
     '''
     conf = {}
     with open(get_conf_yml_path(), 'r') as config_file:
@@ -62,12 +69,17 @@ def set_model_repository(path=None):
     Set the model repository path.
     This is the dir where flame is going to create and load models.
 
-    if path is None, model dir will be the default in the flame root
+    if path is None, model dir will be set to the default in the
+    flame root directory.
+
+    Returns:
+    --------
+    None
     """
     with open(get_conf_yml_path(), 'r') as f:
         configuration = yaml.load(f)
 
-    if path is None:  # set do default path
+    if path is None:  # set to default path
         model_root_path = os.path.join(
             pathlib.Path(__file__).resolve().parents[1],
             'models/')
