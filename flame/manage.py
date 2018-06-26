@@ -27,6 +27,7 @@ import shutil
 import tarfile
 import json
 import pickle
+import pathlib
 
 
 def set_model_dir(path):
@@ -52,9 +53,9 @@ def action_new(model):
     # check if there is already a tree for this endpoint
     if os.path.isdir(ndir):
         return False, 'This endpoint already exists'
-    
+
     os.mkdir(ndir)
-   
+
     ndir += '/dev'
     os.mkdir(ndir)
 
@@ -260,17 +261,23 @@ def action_refactoring(file):
     return True, 'OK'
 
 
+# BUG
 def action_dir():
     '''
     Returns a JSON with the list of models and versions
 
     FIX: exception when no models
+    FIX: exception when lists not a dir
     '''
 
-    results = []
-    rdir = utils.model_repository_path()
+    models_path = pathlib.Path(utils.model_repository_path())
 
-    for imodel in os.listdir(rdir):
+    dirs = [x for x in models_path.iterdir() if x.is_dir()]
+    # if dir contains dev/ -> is model (NAIVE APPROACH)
+    model_dirs = [str(x) for x in dirs if list(x.glob('dev'))]
+
+    results = []
+    for imodel in model_dirs:
 
         # versions = ['dev']
         versions = [{'text': 'dev'}]
@@ -283,7 +290,7 @@ def action_dir():
         # results.append ((imodel,versions))
         results.append({'text': imodel, 'nodes': versions})
 
-    return True, json.dumps(results)
+    return json.dumps(results)
 
     # print(json.dumps(results))
 
