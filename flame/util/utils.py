@@ -46,42 +46,14 @@ def _read_configuration():
     read configuration variable instead
     '''
     conf = {}
-    # source_dir = os.path.dirname(os.path.abspath(__file__))[:-5]
-
     with open(get_conf_yml_path(), 'r') as config_file:
         conf = yaml.load(config_file)
 
     # if the name of a path starts with '.' we will
     # prepend the path with the source dir
-    mod_abs_path = pathlib.Path(conf['model_repository_path']).resolve()
-    conf['model_repository_path'] = mod_abs_path
+    model_abs_path = pathlib.Path(conf['model_repository_path']).resolve()
+    conf['model_repository_path'] = str(model_abs_path)
     # print (conf)
-    return conf
-
-
-def _read_configuration_WIP() -> dict:
-    '''
-    <<< WIP>>>>
-    Reads configuration file "config.yaml".
-
-    Look for configuration.yaml location and load the conf
-    in a dictionary.
-
-    '''
-    raise NotImplementedError
-    conf = {}
-
-    # flame source dir. (two directories up)
-    source_dir = pathlib.Path(__file__).resolve().parents[1]
-
-    # load configuration data from yaml
-    with open(os.path.join(source_dir, 'config.yaml'), 'r') as config_file:
-        conf = yaml.load(config_file)
-
-    model_path = pathlib.Path(conf['model_repository_path'])
-
-    conf['model_repository_path'] = str(model_path.resolve())
-
     return conf
 
 

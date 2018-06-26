@@ -59,17 +59,14 @@ def action_new(model):
     ndir += '/dev'
     os.mkdir(ndir)
 
-    try:
-        wkd = os.path.dirname(os.path.abspath(__file__))
-        children_names = ['apply', 'idata', 'odata', 'learn']
-        for cname in children_names:
-            shutil.copy(wkd+'/children/'+cname+'_child.py',
-                        ndir+'/'+cname+'_child.py')
-        shutil.copy(wkd+'/children/parameters.yaml', ndir)
-    except:
-        return False, 'unable to copy children classes at '+ndir
+    wkd = os.path.dirname(os.path.abspath(__file__))
+    children_names = ['apply', 'idata', 'odata', 'learn']
+    for cname in children_names:
+        shutil.copy(wkd+'/children/'+cname+'_child.py',
+                    ndir+'/'+cname+'_child.py')
+    shutil.copy(wkd+'/children/parameters.yaml', ndir)
 
-    return True, 'new endpoint '+model+' created'
+    return 'new endpoint '+model+' created'
 
 
 def action_kill(model):
