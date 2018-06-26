@@ -20,4 +20,5 @@ install:
 
 script:
   # Your test script goes here 
-  py.test -v
+  - source activate flame
+  - py.test -v
