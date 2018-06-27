@@ -11,5 +11,9 @@ setup(name='flame',
       packages=find_packages(),
       entry_points={
         'console_scripts': ['flame=flame.flame_scr:main'],
-        }
+        },
+      package_data={
+        # If any package contains *.txt or *.rst files, include them:
+        '': ['*.yaml', '*.yml'],
+        },
       )

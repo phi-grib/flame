@@ -125,3 +125,6 @@ flame/models/CACO2/dev/data.pkl
 *.tgz
 flame/Untitled.ipynb
 flame/CS1_models.ipynb
+
+#pytest
+.pytest_cache/
