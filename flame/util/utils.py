@@ -40,6 +40,9 @@ def get_conf_yml_path():
     TODO: be sure that the conf.yaml exists and raise
     err if doesn't
     '''
+    # conf is in /flame/flame/conf.yaml
+    # __file__ is /flame/flame/util/utils.py
+    # jump two parents back with .parents[1]
     source_dir = pathlib.Path(__file__).resolve().parents[1]
     return os.path.join(source_dir, 'config.yaml')
 
