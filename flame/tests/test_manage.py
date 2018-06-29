@@ -9,5 +9,5 @@ def test_manage_new_model():
     manage.action_new('TESTMODEL')
     home_dirs = list(pathlib.Path('/home/testmodels').iterdir())
 
-    case = pathlib.Path('/home/TESTMODEL')
+    case = pathlib.Path('/home/testmodels/TESTMODEL')
     assert case in home_dirs
