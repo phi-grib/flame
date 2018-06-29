@@ -1,3 +1,4 @@
+[![Build Status](https://travis-ci.org/phi-grib/flame.svg?branch=master)](https://travis-ci.org/phi-grib/flame)
 # Flame
 
 Flame is a flexible framework supporting predictive modeling within the eTRANSAFE (http://etransafe.eu) project. 
