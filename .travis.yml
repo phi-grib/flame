@@ -21,4 +21,4 @@ install:
 script:
   # Your test script goes here 
   - source activate flame
-  - sudo py.test -v
+  - py.test -v
