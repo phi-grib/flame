@@ -66,7 +66,7 @@ def action_new(model):
                     ndir+'/'+cname+'_child.py')
     shutil.copy(wkd+'/children/parameters.yaml', ndir)
 
-    return 'new endpoint '+model+' created'
+    return True, 'new endpoint '+model+' created'
 
 
 def action_kill(model):
@@ -285,7 +285,7 @@ def action_dir():
         # results.append ((imodel,versions))
         results.append({'text': imodel, 'nodes': versions})
 
-    return json.dumps(results)
+    return True, json.dumps(results)
 
     # print(json.dumps(results))
 
