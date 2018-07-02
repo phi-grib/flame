@@ -29,65 +29,70 @@ import string
 import pathlib
 
 
+def get_conf_yml_path():
+    '''
+    recovers the path of the configuration yml file
+
+    Returns:
+    --------
+    str, path where conf.yaml is
+
+    TODO: be sure that the conf.yaml exists and raise
+    err if doesn't
+    '''
+    # conf is in /flame/flame/conf.yaml
+    # __file__ is /flame/flame/util/utils.py
+    # jump two parents back with .parents[1]
+    source_dir = pathlib.Path(__file__).resolve().parents[1]
+    return os.path.join(source_dir, 'config.yaml')
+
+
 def _read_configuration():
     '''
-    Reads configuration file "config.yaml". Do not call directly,
-    read configuration variable instead
+    Reads configuration file "config.yaml".
+
+    Returns:
+    --------
+    dict
     '''
-
     conf = {}
-    source_dir = os.path.dirname(os.path.abspath(__file__))[:-5] # removing '/utils'
-
-    with open(os.path.join(source_dir, 'config.yaml'), 'r') as config_file:
+    with open(get_conf_yml_path(), 'r') as config_file:
         conf = yaml.load(config_file)
 
     # if the name of a path starts with '.' we will
     # prepend the path with the source dir
-    if conf['model_repository_path'][0] == '.':
-
-        # TODO: I dislike the use of "/" here...
-        #  but os.path.append does not work well
-        conf['model_repository_path'] = source_dir + \
-            '/' + conf['model_repository_path'][1:]
-
+    model_abs_path = pathlib.Path(conf['model_repository_path']).resolve()
+    conf['model_repository_path'] = str(model_abs_path)
     # print (conf)
     return conf
 
 
-def _read_configuration_WIP():
-    '''
-    <<< WIP>>>>
-    Reads configuration file "config.yaml". Do not call directly,
-    read configuration variable instead
-    '''
-    raise NotImplementedError
-    conf = {}
-
-    # flame source dir. (two directories up)
-    source_dir = pathlib.Path(__file__).resolve().parents[1]
-    
-    # load configuration data from yaml
-    with open(os.path.join(source_dir, 'config.yaml'), 'r') as config_file:
-        conf = yaml.load(config_file)
-
-    model_path = pathlib.Path(conf['model_repository_path'])
-    
-    conf['model_repository_path'] = str(model_path.resolve())
-
-    return conf
-
-# read configuraton file and store in a variable to prevent reading files more
-# than strictly necessary
-configuration = _read_configuration()
-
-
-def set_model_repository(path):
+def set_model_repository(path=None):
     """
     Set the model repository path.
-    This is the dir where flame is going to create and load models
+    This is the dir where flame is going to create and load models.
+
+    if path is None, model dir will be set to the default in the
+    flame root directory.
+
+    Returns:
+    --------
+    None
     """
-    new_path = pathlib.Path(path)
-    configuration['model_repository_path'] = str(new_path.resolve())
+    with open(get_conf_yml_path(), 'r') as f:
+        configuration = yaml.load(f)
+
+    if path is None:  # set to default path
+        model_root_path = os.path.join(
+            pathlib.Path(__file__).resolve().parents[1],
+            'models/')
+        configuration['model_repository_path'] = str(model_root_path)
+    else:
+        new_path = pathlib.Path(path)
+        configuration['model_repository_path'] = str(new_path.resolve())
+
+    with open(get_conf_yml_path(), 'w') as f:
+        yaml.dump(configuration, f, default_flow_style=False)
 
 
 def model_repository_path():
@@ -95,7 +100,7 @@ def model_repository_path():
     Returns the path to the root of the model repository,
     containing all models and versions
     '''
-
+    configuration = _read_configuration()
     return configuration['model_repository_path']
 
 
@@ -132,7 +137,7 @@ def module_path(model, version):
     '''
 
     modreppath = model_repository_path()
-    if not modreppath in sys.path:
+    if modreppath not in sys.path:
         sys.path.insert(0, modreppath)
 
     # print (sys.path)
@@ -185,7 +190,6 @@ def id_generator(size=10, chars=string.ascii_uppercase + string.digits):
 
 
 def add_result(results, var, _key, _label, _type, _dimension='objs', _description=None, _relevance=None):
-    
 
     if 'manifest' not in results:
         results['manifest'] = []
@@ -196,12 +200,18 @@ def add_result(results, var, _key, _label, _type, _dimension='objs', _descriptio
 
     results[_key] = var
 
-    manifest_item = {'key': _key,                      # key in results
-                     'label': _label,                  # descriptive text
-                     'type': _type,                    # label, decoration, smiles, result, confidence, method
-                     'dimension': _dimension,          # can be single | vars | objs
-                     'description': _description,      # descriptive text (long)
-                     'relevance': _relevance           # main | None
+    # key in results
+    # descriptive text
+    # label, decoration, smiles, result, confidence, method
+    # can be single | vars | objs
+    # main | None
+    manifest_item = {'key': _key,
+                     'label': _label,
+                     'type': _type,
+                     'dimension': _dimension,
+                     # descriptive text (long)
+                     'description': _description,
+                     'relevance': _relevance
                      }
 
     manifest.append(manifest_item)

@@ -20,16 +20,17 @@
 # You should have received a copy of the GNU General Public License
 # along with Flame. If not, see <http://www.gnu.org/licenses/>.
 
+from flame.util import utils
 import os
 import sys
 import shutil
 import tarfile
 import json
 import pickle
-from flame.util import utils
+import pathlib
 
 
-def set_model_dir(path):
+def set_model_repository(path=None):
     """
     Set the model repository path.
     This is the dir where flame is going to create and load models
@@ -52,28 +53,20 @@ def action_new(model):
     # check if there is already a tree for this endpoint
     if os.path.isdir(ndir):
         return False, 'This endpoint already exists'
-    try:
-        os.mkdir(ndir)
-    except:
-        return False, 'unable to create directory : '+ndir
+
+    os.mkdir(ndir)
 
     ndir += '/dev'
-    try:
-        os.mkdir(ndir)
-    except:
-        return False, 'unable to create directory '+ndir
+    os.mkdir(ndir)
 
-    try:
-        wkd = os.path.dirname(os.path.abspath(__file__))
-        children_names = ['apply', 'idata', 'odata', 'learn']
-        for cname in children_names:
-            shutil.copy(wkd+'/children/'+cname+'_child.py',
-                        ndir+'/'+cname+'_child.py')
-        shutil.copy(wkd+'/children/parameters.yaml', ndir)
-    except:
-        return False, 'unable to copy children classes at '+ndir
+    wkd = os.path.dirname(os.path.abspath(__file__))
+    children_names = ['apply', 'idata', 'odata', 'learn']
+    for cname in children_names:
+        shutil.copy(wkd+'/children/'+cname+'_child.py',
+                    ndir+'/'+cname+'_child.py')
+    shutil.copy(wkd+'/children/parameters.yaml', ndir)
 
-    return True, 'new endpoint '+model+' created'
+    return 'new endpoint '+model+' created'
 
 
 def action_kill(model):
@@ -109,10 +102,12 @@ def action_publish(model):
         return False, 'model not found'
 
     v = None
-    try:
-        v = [int(x[-6:]) for x in os.listdir(bdir) if x.startswith("ver")]
-    except:
-        pass
+    v = [int(x[-6:]) for x in os.listdir(bdir) if x.startswith("ver")]
+
+    # try:
+    #     v = [int(x[-6:]) for x in os.listdir(bdir) if x.startswith("ver")]
+    # except:
+    #     pass
 
     if not v:
         max_version = 0
@@ -270,10 +265,14 @@ def action_dir():
     Returns a JSON with the list of models and versions
     '''
 
-    results = []
-    rdir = utils.model_repository_path()
+    models_path = pathlib.Path(utils.model_repository_path())
 
-    for imodel in os.listdir(rdir):
+    dirs = [x for x in models_path.iterdir() if x.is_dir()]
+    # if dir contains dev/ -> is model (NAIVE APPROACH)
+    model_dirs = [str(x) for x in dirs if list(x.glob('dev'))]
+
+    results = []
+    for imodel in model_dirs:
 
         # versions = ['dev']
         versions = [{'text': 'dev'}]
@@ -286,7 +285,7 @@ def action_dir():
         # results.append ((imodel,versions))
         results.append({'text': imodel, 'nodes': versions})
 
-    return True, json.dumps(results)
+    return json.dumps(results)
 
     # print(json.dumps(results))
 
@@ -296,7 +295,7 @@ def action_info(model, version=None, output='text'):
     Returns a text or JSON with info for a given model and version
     '''
 
-    if not model:
+    if model is None:
         return False, 'empty model label'
 
     if version == None:

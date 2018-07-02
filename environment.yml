@@ -15,6 +15,7 @@ dependencies:
   - rdkit=2017.09.3.0
   - pyyaml
   - requests
+  - pytest
   - pip:
      - "https://github.com/phi-grib/standardiser/archive/master.zip"
      - "https://github.com/josecarlosgomezt/nonconformist/archive/master.zip"
