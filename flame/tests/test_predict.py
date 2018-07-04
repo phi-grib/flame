@@ -1,6 +1,7 @@
 import pytest
 
 import io
+import os
 import json
 
 import numpy as np
@@ -29,7 +30,8 @@ def build_model():
 
 @pytest.fixture
 def fixed_results():
-    with open('results_file.json') as f:
+
+    with open(os.path.join(os.path.dirname(__file__), 'results_file.json')) as f:
         results = json.load(f)
     return np.array(results['values'])
 
