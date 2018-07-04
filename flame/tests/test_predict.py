@@ -9,7 +9,7 @@ from flame import manage
 from flame import build
 from flame import predict
 
-MODEL_REPOSITORY = '/home/biel/Documents/TESTS'
+MODEL_REPOSITORY = '/home/testmodels'
 MODEL_NAME = 'FULLMODEL'
 SDF_FILE_NAME = 'minicaco.sdf'
 
