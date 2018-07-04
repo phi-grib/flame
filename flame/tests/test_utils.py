@@ -2,8 +2,10 @@
 import pytest
 import pathlib
 import os
+import sys
 
 from flame.util import utils
+from flame import manage
 
 
 def test_read_congiguration():
@@ -24,3 +26,29 @@ def test_custom_model_repository_path():
     model_path = utils.model_repository_path()
     realpath = str(pathlib.Path('.').resolve())
     assert model_path == realpath
+
+
+def test_module_path_sys_append():
+    """
+    Tests if model directory is in sys.path to use importlib.module_import()
+    for child model classes.
+    """
+    models_dir = '/home/testmodels'
+    manage.set_model_repository(models_dir)
+    manage.action_new('TESTMODEL')
+    utils.module_path('TESTMODEL', 0)
+    assert sys.path[0] == models_dir
+
+
+def test_module_path_module_name():
+    """
+    Tests if importlib.module_import() works
+    """
+    models_dir = '/home/testmodels'
+    manage.set_model_repository(models_dir)
+    manage.action_new('TESTMODEL')
+    module_name = utils.module_path('TESTMODEL', 0)
+    assert module_name == 'TESTMODEL.dev'
+
+
+
