@@ -36,26 +36,19 @@ def fixed_results():
     return np.array(results['values'])
 
 
-@pytest.fixture
-def predict_model():
-    predictor = predict.Predict(MODEL_NAME, 0)
-    _, results_str = predictor.run(SDF_FILE_NAME)
-    prediction_results = json.load(io.StringIO(results_str))
-    return np.array(prediction_results['values'])
+def test_new_build_predict(make_model, build_model, fixed_results):
+    """test until comparing results. Caution with 'rtol'"""
 
-
-def test_new_build_predict(make_model, build_model,
-                           fixed_results, predict_model):
-    """
-    test until comparing results. Caution with 'rtol'
-    """
-
-    make_status, _ = make_model
-    assert make_status is True
+    make_status, message = make_model
+    assert (make_status is True) or (message == 'This endpoint already exists')
 
     build_status, _ = build_model
     assert build_status is True
 
-    results = predict_model
+    predictor = predict.Predict(MODEL_NAME, 0)
+    _, results_str = predictor.run(SDF_FILE_NAME)
 
-    assert all(np.isclose(fixed_results, results, rtol=1.e-2))
+    prediction_results_dict = json.load(io.StringIO(results_str))
+    result_values = np.array(prediction_results_dict['values'])
+
+    assert all(np.isclose(fixed_results, result_values, rtol=1.e-2))
