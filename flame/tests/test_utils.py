@@ -9,7 +9,6 @@ from flame import manage
 
 MODEL_REPOSITORY = '/home/testmodels'
 MODEL_NAME = 'TESTMODEL'
-SDF_FILE_NAME = 'minicaco.sdf'
 
 
 def test_read_congiguration():
@@ -53,6 +52,3 @@ def test_module_path_module_name():
     manage.action_new(MODEL_NAME)
     module_name = utils.module_path(MODEL_NAME, 0)
     assert module_name == (MODEL_NAME + '.dev')
-
-
-

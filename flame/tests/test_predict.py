@@ -12,7 +12,8 @@ from flame import predict
 
 MODEL_REPOSITORY = '/home/testmodels'
 MODEL_NAME = 'FULLMODEL'
-SDF_FILE_NAME = 'minicaco.sdf'
+SDF_FILE_NAME = os.path.join(os.path.dirname(__file__), 'minicaco.sdf')
+FIXED_RESULTS = os.path.join(os.path.dirname(__file__), 'results_file.json')
 
 
 @pytest.fixture
@@ -31,7 +32,7 @@ def build_model():
 @pytest.fixture
 def fixed_results():
 
-    with open(os.path.join(os.path.dirname(__file__), 'results_file.json')) as f:
+    with open(FIXED_RESULTS) as f:
         results = json.load(f)
     return np.array(results['values'])
 

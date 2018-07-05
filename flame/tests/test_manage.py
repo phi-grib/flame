@@ -6,7 +6,6 @@ from flame import manage
 
 MODEL_REPOSITORY = '/home/testmodels'
 MODEL_NAME = 'TESTMODEL'
-SDF_FILE_NAME = 'minicaco.sdf'
 
 
 def test_manage_new_model():
