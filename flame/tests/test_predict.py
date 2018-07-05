@@ -10,7 +10,7 @@ from flame import manage
 from flame import build
 from flame import predict
 
-MODEL_REPOSITORY = '/home/testmodels'
+MODEL_REPOSITORY = '/home/biel/Documents/TESTS'
 MODEL_NAME = 'FULLMODEL'
 SDF_FILE_NAME = 'minicaco.sdf'
 
@@ -44,10 +44,8 @@ def predict_model():
     return np.array(prediction_results['values'])
 
 
-def test_new_build_predict(make_model,
-                           build_model,
-                           fixed_results,
-                           predict_model):
+def test_new_build_predict(make_model, build_model,
+                           fixed_results, predict_model):
     """
     test until comparing results. Caution with 'rtol'
     """

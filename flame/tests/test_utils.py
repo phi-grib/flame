@@ -7,6 +7,10 @@ import sys
 from flame.util import utils
 from flame import manage
 
+MODEL_REPOSITORY = '/home/biel/Documents/TESTS'
+MODEL_NAME = 'TESTMODEL'
+SDF_FILE_NAME = 'minicaco.sdf'
+
 
 def test_read_congiguration():
     assert isinstance(utils._read_configuration(), dict)
@@ -33,10 +37,10 @@ def test_module_path_sys_append():
     Tests if model directory is in sys.path to use importlib.module_import()
     for child model classes.
     """
-    models_dir = '/home/testmodels'
+    models_dir = MODEL_REPOSITORY
     manage.set_model_repository(models_dir)
-    manage.action_new('TESTMODEL')
-    utils.module_path('TESTMODEL', 0)
+    manage.action_new(MODEL_NAME)
+    utils.module_path(MODEL_NAME, 0)
     assert sys.path[0] == models_dir
 
 
@@ -44,11 +48,11 @@ def test_module_path_module_name():
     """
     Tests if importlib.module_import() works
     """
-    models_dir = '/home/testmodels'
+    models_dir = MODEL_REPOSITORY
     manage.set_model_repository(models_dir)
-    manage.action_new('TESTMODEL')
-    module_name = utils.module_path('TESTMODEL', 0)
-    assert module_name == 'TESTMODEL.dev'
+    manage.action_new(MODEL_NAME)
+    module_name = utils.module_path(MODEL_NAME, 0)
+    assert module_name == (MODEL_NAME + '.dev')
 
 
 
