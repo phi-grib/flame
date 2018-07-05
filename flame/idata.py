@@ -80,7 +80,7 @@ class Idata:
         try:
             suppl = Chem.SDMolSupplier(ifile)
         except Exception as e:
-            self.results['error'] = f'unable to open {ifile}: {e}'
+            self.results['error'] = f'unable to open {ifile}. {e}'
             return
 
         obj_nam = []
