@@ -4,7 +4,7 @@ import pathlib
 import os
 from flame import manage
 
-MODEL_REPOSITORY = '/home/biel/Documents/TESTS'
+MODEL_REPOSITORY = '/home/testmodels'
 MODEL_NAME = 'TESTMODEL'
 SDF_FILE_NAME = 'minicaco.sdf'
 
