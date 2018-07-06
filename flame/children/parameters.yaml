@@ -95,7 +95,7 @@ RF_parameters:
   max_depth: null
   max_features: sqrt
   n_estimators: 200
-  n_jobs: -1
+  n_jobs: 1
   oob_score: true
   random_state: 46
 

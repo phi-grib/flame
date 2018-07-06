@@ -38,7 +38,7 @@ def fixed_results():
 
 
 def test_new_build_predict(make_model, build_model, fixed_results):
-    """test until comparing results. Caution with 'rtol'"""
+    """test predict comparing results"""
 
     make_status, message = make_model
     assert (make_status is True) or (message == 'This endpoint already exists')
@@ -52,4 +52,4 @@ def test_new_build_predict(make_model, build_model, fixed_results):
     prediction_results_dict = json.load(io.StringIO(results_str))
     result_values = np.array(prediction_results_dict['values'])
 
-    assert all(np.isclose(fixed_results, result_values, rtol=1.e-2))
+    assert all(np.isclose(fixed_results, result_values, rtol=1e-4))
