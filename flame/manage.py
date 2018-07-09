@@ -264,12 +264,15 @@ def action_dir():
     '''
     Returns a JSON with the list of models and versions
     '''
-
+    # get de model repo path
     models_path = pathlib.Path(utils.model_repository_path())
 
+    # get directories in model repo path
     dirs = [x for x in models_path.iterdir() if x.is_dir()]
+
     # if dir contains dev/ -> is model (NAIVE APPROACH)
-    model_dirs = [str(x) for x in dirs if list(x.glob('dev'))]
+    # get last dir name [-1]: model name
+    model_dirs = [d.parts[-1] for d in dirs if list(d.glob('dev'))]
 
     results = []
     for imodel in model_dirs:

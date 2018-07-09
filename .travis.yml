@@ -23,6 +23,6 @@ before_script:
 script:
   # Your test script goes here 
   - source activate flame
-  - py.test -v
+  - py.test -vv
 
 sudo: required

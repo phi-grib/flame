@@ -107,7 +107,7 @@ ENV/
 .vscode/
 
 # Molecules
-*.sdf
+#*.sdf
 mols
 
 # Pickle files and models

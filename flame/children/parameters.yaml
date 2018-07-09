@@ -1,6 +1,6 @@
 # system settings
 verbose_error: true
-numCPUs: 2
+numCPUs: 1
 mol_batch: series                    # series | objects | auto (not implemented!)
 
 # input settings
@@ -98,7 +98,7 @@ RF_parameters:
   max_depth: null
   max_features: sqrt
   n_estimators: 200
-  n_jobs: -1
+  n_jobs: 1
   oob_score: true
   random_state: 46
 
