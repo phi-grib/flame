@@ -62,11 +62,11 @@ def action_new(model):
     wkd = os.path.dirname(os.path.abspath(__file__))
     children_names = ['apply', 'idata', 'odata', 'learn']
     for cname in children_names:
-        shutil.copy(wkd+'/children/'+cname+'_child.py',
-                    ndir+'/'+cname+'_child.py')
-    shutil.copy(wkd+'/children/parameters.yaml', ndir)
+        shutil.copy(wkd + '/children/' + cname + '_child.py',
+                    ndir + '/' + cname + '_child.py')
+    shutil.copy(wkd + '/children/parameters.yaml', ndir)
 
-    return True, 'new endpoint '+model+' created'
+    return True, 'new endpoint ' + model + ' created'
 
 
 def action_kill(model):
@@ -84,7 +84,7 @@ def action_kill(model):
 
     shutil.rmtree(ndir, ignore_errors=True)
 
-    return True, 'model '+model+' removed'
+    return True, 'model ' + model + ' removed'
 
 
 def action_publish(model):
@@ -114,14 +114,15 @@ def action_publish(model):
     else:
         max_version = max(v)
 
-    new_dir = bdir+'/ver%0.6d' % (max_version+1)
+    new_dir = bdir + '/ver%0.6d' % (max_version + 1)
 
     if os.path.isdir(new_dir):
         return False, 'version already exists'
 
-    shutil.copytree(bdir+'/dev', new_dir)
+    shutil.copytree(bdir + '/dev', new_dir)
 
-    return True, 'development version published as version '+str(max_version+1)
+    return True, 'development version published as version ' + \
+        str(max_version + 1)
 
 
 def action_remove(model, version):
@@ -142,7 +143,7 @@ def action_remove(model, version):
 
     shutil.rmtree(rdir, ignore_errors=True)
 
-    return True, 'version '+str(version)+' of model '+model+' removed'
+    return True, 'version ' + str(version) + ' of model ' + model + ' removed'
 
 
 def action_list(model):
@@ -161,7 +162,7 @@ def action_list(model):
             num_models += 1
             print(x)
 
-        return True, str(num_models)+' models found in the repository'
+        return True, str(num_models) + ' models found in the repository'
 
     bdir = utils.model_tree_path(model)
 
@@ -172,7 +173,8 @@ def action_list(model):
             num_versions += 1
             print(model, ':', x)
 
-    return True, 'model '+model+' has '+str(num_versions)+' published versions'
+    return True, 'model ' + model + ' has ' + \
+        str(num_versions) + ' published versions'
 
 
 def action_import(model):
@@ -194,25 +196,25 @@ def action_import(model):
         return False, 'endpoint already exists'
 
     if ext != '.tgz':
-        importfile = os.path.abspath(model+'.tgz')
+        importfile = os.path.abspath(model + '.tgz')
     else:
         importfile = model
 
     print(importfile)
 
     if not os.path.isfile(importfile):
-        return False, 'importing package '+importfile+' not found'
+        return False, 'importing package ' + importfile + ' not found'
 
     try:
         os.mkdir(bdir)
         # os.chdir(bdir)
-    except:
-        return False, 'error creating directory '+bdir
+    except BaseException:
+        return False, 'error creating directory ' + bdir
 
     with tarfile.open(importfile, 'r:gz') as tar:
         tar.extractall(bdir)
 
-    return True, 'endpoint '+endpoint+' imported OK'
+    return True, 'endpoint ' + endpoint + ' imported OK'
 
 
 def action_export(model):
@@ -225,7 +227,7 @@ def action_export(model):
         return False, 'empty model label'
 
     current_path = os.getcwd()
-    exportfile = current_path+'/'+model+'.tgz'
+    exportfile = current_path + '/' + model + '.tgz'
 
     bdir = utils.model_tree_path(model)
 
@@ -234,8 +236,7 @@ def action_export(model):
 
     os.chdir(bdir)
 
-    itemend = os.listdir()
-    itemend.sort()
+    itemend = sorted(os.listdir())
 
     with tarfile.open(exportfile, 'w:gz') as tar:
         for iversion in itemend:
@@ -245,7 +246,7 @@ def action_export(model):
 
     os.chdir(current_path)
 
-    return True, 'endpoint '+model+' exported as '+model+'.tgz'
+    return True, 'endpoint ' + model + ' exported as ' + model + '.tgz'
 
 
 # TODO: implement refactoring, starting with simple methods
@@ -301,7 +302,7 @@ def action_info(model, version=None, output='text'):
     if model is None:
         return False, 'empty model label'
 
-    if version == None:
+    if version is None:
         return False, 'no version provided'
 
     rdir = utils.model_path(model, version)
@@ -327,13 +328,13 @@ def action_info(model, version=None, output='text'):
         if 'numpy.int64' in str(type(i[2])):
             try:
                 v = int(i[2])
-            except:
+            except BaseException:
                 v = None
             new_results.append((i[0], i[1], v))
         elif 'numpy.float64' in str(type(i[2])):
             try:
                 v = float(i[2])
-            except:
+            except BaseException:
                 v = None
             new_results.append((i[0], i[1], v))
         else:

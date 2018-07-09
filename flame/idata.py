@@ -60,7 +60,7 @@ class Idata:
         if ('ext_input' in parameters) and (parameters['ext_input']):
             self.idata = input_source
             self.ifile = None
-            randomName = 'flame-'+utils.id_generator()
+            randomName = 'flame-' + utils.id_generator()
             self.dest_path = os.path.join(tempfile.gettempdir(), randomName)
 
         else:
@@ -195,7 +195,7 @@ class Idata:
                 # molecule not recognised by RDKit
                 if m is None:
                     print('ERROR: (@normalize) Unable to process molecule #',
-                          str(mcount+1), 'in file ' + ifile)
+                          str(mcount + 1), 'in file ' + ifile)
 
                     continue
 
@@ -212,15 +212,15 @@ class Idata:
                         return False, f"Standardiser error: {e}"
 
                 else:
-                    print('ERROR: (@normalize) method ' +
-                          method+' not recognized')
+                    print('ERROR: (@normalize) method '
+                          f'{method} not recognized')
                     parent = Chem.MolToMolBlock(m)
 
                 # in any case, write parent plus internal ID (flameID)
                 fo.write(parent)
 
                 flameID = 'fl%0.10d' % mcount
-                fo.write('>  <flameID>\n'+flameID+'\n\n')
+                fo.write('>  <flameID>\n' + flameID + '\n\n')
 
                 mcount += 1
 
@@ -593,7 +593,7 @@ class Idata:
                         del ilist[i]
 
         message = 'Failed to process ' + \
-            str(len(warning_list))+' molecules : '+str(warning_list)
+            str(len(warning_list)) + ' molecules : ' + str(warning_list)
         message += '\nWill show results for the rest of the series...'
         message += '\nCheck the error.log file for further details'
 
@@ -699,7 +699,7 @@ class Idata:
         '''
 
         if not os.path.isfile(self.ifile):
-            self.results['error'] = 'unable to open file '+self.ifile
+            self.results['error'] = 'unable to open file ' + self.ifile
             return
 
         with open(self.ifile, 'r') as fi:

@@ -28,14 +28,15 @@ class Odata():
 
     def __init__(self, parameters, results):
 
-        # previous results (eg. object names, molecular descriptors) are retained
+        # previous results (eg. object names, molecular descriptors) are
+        # retained
         self.results = results
         self.parameters = parameters
         self.format = self.parameters['output_format']
 
-    def _output_md (self):
+    def _output_md(self):
         ''' dumps the molecular descriptors to a TSV file'''
-         
+
         with open('output_md.tsv', 'w') as fo:
 
             # Make sure the keys 'var_nam', 'obj_nam', 'xmatrix' actualy exist
@@ -47,8 +48,8 @@ class Odata():
                 var_nam = self.results['var_nam']
 
                 for nam in var_nam:
-                    header += '\t'+nam
-                fo.write(header+'\n')
+                    header += '\t' + nam
+                fo.write(header + '\n')
 
             if 'xmatrix' in self.results and 'obj_nam' in self.results:
                 # extract obj_name and xmatrix
@@ -62,49 +63,50 @@ class Odata():
                     for x in range(shape[0]):
                         line = obj_nam[x]
                         for y in range(shape[1]):
-                            line += '\t'+str(xmatrix[x, y])
-                        fo.write(line+'\n')
+                            line += '\t' + str(xmatrix[x, y])
+                        fo.write(line + '\n')
 
                 else:             # 1D matrix (num_obj = 1)
                     line = obj_nam[0]
                     for y in range(shape[0]):
-                        line += '\t'+str(xmatrix[y])
-                    fo.write(line+'\n')
+                        line += '\t' + str(xmatrix[y])
+                    fo.write(line + '\n')
 
     def run_learn(self):
         ''' Process the results of lear, usually a report on the model quality '''
 
         if 'model_build' in self.results:
             for val in self.results['model_build']:
-                if len(val)<3:
-                    print (val)
+                if len(val) < 3:
+                    print(val)
                 else:
-                    print (val[0],' (', val[1], ') : ', val[2])
+                    print(val[0], ' (', val[1], ') : ', val[2])
 
         if 'model_validate' in self.results:
             for val in self.results['model_validate']:
-                if len(val)<3:
-                    print (val)
+                if len(val) < 3:
+                    print(val)
                 else:
-                    print (val[0],' (', val[1], ') : ', val[2])
+                    print(val[0], ' (', val[1], ') : ', val[2])
 
         # TODO: process learn output and produce meaniningfull JSON/TSV
 
         if self.parameters['output_md']:
             self._output_md()
-            
+
         return True, 'building OK'
 
     def run_apply(self):
         ''' Process the results of apply, usually a list of results and serializing to JSON '''
-        
+
         # Check if all mandatory elements are in the results matrix
-        
+
         main_results = self.results['meta']['main']
 
         for key in main_results:
             if not key in self.results:
-                self.results['error'] = 'unable to find "'+key+'" in results'
+                self.results['error'] = 'unable to find "' + \
+                    key + '" in results'
                 return self.run_error()
 
         output = ''
@@ -133,8 +135,8 @@ class Odata():
             with open('output.tsv', 'w') as fo:
                 header = ''
                 for label in key_list:
-                    header += label+'\t'
-                fo.write(header+'\n')
+                    header += label + '\t'
+                fo.write(header + '\n')
 
                 obj_num = int(self.results['obj_num'])
 
@@ -147,7 +149,7 @@ class Odata():
                         else:
                             val = self.results[key][i]
 
-                        if val == None:
+                        if val is None:
                             line += '-'
                         else:
                             if isinstance(val, float):
@@ -155,19 +157,19 @@ class Odata():
                             else:
                                 line += str(val)
                         line += '\t'
-                    fo.write(line+'\n')
+                    fo.write(line + '\n')
 
         if 'JSON' in self.format:
 
             # TODO: output also 'method' keys, like the 'external-validation' or others
-            # by setting up at the client side some interface able to show them 
-             
+            # by setting up at the client side some interface able to show them
+
             # do not output var arrays, only 'obj' arrays
             black_list = []
-            for k in self.results['manifest'] :
-                if not (k['dimension'] in ['objs','single']):
+            for k in self.results['manifest']:
+                if not (k['dimension'] in ['objs', 'single']):
                     black_list.append(k['key'])
-            
+
             # print (black_list)
 
             temp_json = {}
@@ -180,14 +182,15 @@ class Odata():
                 value = self.results[key]
 
                 # print (key, value, type(value))
-                
+
                 if 'numpy.ndarray' in str(type(value)):
 
                     if 'bool_' in str(type(value[0])):
                         temp_json[key] = [
                             'True' if x else 'False' for x in value]
                     else:
-                        # this removes NaN and and creates a plain list from ndarrays
+                        # this removes NaN and and creates a plain list from
+                        # ndarrays
                         temp_json[key] = [x if not np.isnan(
                             x) else None for x in value]
 
@@ -208,7 +211,7 @@ class Odata():
         if 'TSV' in self.format:
             with open('error.tsv', 'w') as fo:
                 for key, value in error_json.items():
-                    fo.write(key+'\t'+value+'\n')
+                    fo.write(key + '\t' + value + '\n')
 
         if 'JSON' in self.format:
             return False, json.dumps(error_json)

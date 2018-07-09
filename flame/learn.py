@@ -125,6 +125,6 @@ class Learn:
             self.run_custom()
         else:
             self.results['error'] = 'modeling Toolkit ' + \
-                toolkit+' is not supported yet'
+                toolkit + ' is not supported yet'
 
         return self.results
