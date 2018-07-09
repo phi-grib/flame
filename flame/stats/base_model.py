@@ -425,7 +425,7 @@ class BaseEstimator:
         print("tune_parameters")
         print("metric: " + str(metric))
         tclf = GridSearchCV(estimator, tune_parameters,
-                            scoring=metric, cv=10, n_jobs=4)
+                            scoring=metric, cv=self.cv, n_jobs=4)
         # n_splits=10, shuffle=False,
         #   random_state=42), n_jobs= -1)
         tclf.fit(X, Y)
