@@ -447,7 +447,8 @@ class Idata:
                 self.results['meta']['endpoint'] = self.parameters['endpoint']
                 self.results['meta']['version'] = self.parameters['version']
 
-        except:
+        except Exception as e:
+            print(e)
             return False
 
         print('>>> recycling data >>>'
