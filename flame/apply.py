@@ -140,7 +140,7 @@ class Apply:
         # retrieve data and dimensions from results
         try:
             nobj, nvarx = np.shape(X)
-        except BaseException as e:
+        except Exception as e:
             self.results['error'] = f'Failed to generate MD: {e}'
             return
 
@@ -153,7 +153,7 @@ class Apply:
                 self.parameters['model_path'], 'model.pkl')
             with open(model_file, "rb") as input_file:
                 estimator = pickle.load(input_file)
-        except BaseException as e:
+        except Exception as e:
             self.results['error'] = f'No valid model estimator found: {e}'
             return
 

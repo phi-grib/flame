@@ -57,7 +57,7 @@ class Control:
         try:
             with open(self.yaml_file, 'r') as pfile:
                 parameters = yaml.load(pfile)
-        except BaseException:
+        except Exception:
             return False, None
 
         return True, parameters

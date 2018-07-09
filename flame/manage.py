@@ -208,8 +208,8 @@ def action_import(model):
     try:
         os.mkdir(bdir)
         # os.chdir(bdir)
-    except BaseException:
-        return False, 'error creating directory ' + bdir
+    except Exception as e:
+        return False, f'error creating directory {bdir}: {e}' 
 
     with tarfile.open(importfile, 'r:gz') as tar:
         tar.extractall(bdir)
@@ -328,13 +328,13 @@ def action_info(model, version=None, output='text'):
         if 'numpy.int64' in str(type(i[2])):
             try:
                 v = int(i[2])
-            except BaseException:
+            except Exception:
                 v = None
             new_results.append((i[0], i[1], v))
         elif 'numpy.float64' in str(type(i[2])):
             try:
                 v = float(i[2])
-            except BaseException:
+            except Exception:
                 v = None
             new_results.append((i[0], i[1], v))
         else:
