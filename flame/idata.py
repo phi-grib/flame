@@ -44,8 +44,8 @@ from flame.util import utils
 class Idata:
 
     def __init__(self, parameters, input_source):
-
-        self.parameters = parameters      # control object defining the processing
+        # control object defining the processing:
+        self.parameters = parameters
         # path for temp files (fallback default)
         self.dest_path = '.'
 
@@ -95,13 +95,15 @@ class Idata:
             # Do not even try to process molecules not recognised by RDKit.
             # They will be removed at the normalization step
             if mol is None:
-                print('ERROR: (@extractInformaton) Unable to process molecule #', str(
-                    obj_num+1), 'in file ' + ifile)
+                print('ERROR: (@extractInformaton) Unable to process molecule'
+                      f' #{str(obj_num+1)} in file {ifile}')
+
                 success_list.append(False)
                 continue
 
-            name = sdfu.getName(
-                mol, count=obj_num, field=self.parameters['SDFile_name'], suppl=suppl)
+            name = sdfu.getName(mol, count=obj_num,
+                                field=self.parameters['SDFile_name'],
+                                suppl=suppl)
 
             activity_num = None
             exp = None
@@ -110,7 +112,7 @@ class Idata:
                 activity_str = mol.GetProp(self.parameters['SDFile_activity'])
                 try:
                     activity_num = float(activity_str)
-                except:
+                except Exception as e:
                     activity_num = None
 
             if mol.HasProp(self.parameters['SDFile_experimental']):
@@ -119,7 +121,7 @@ class Idata:
             # generate a SMILES
             try:
                 sml = Chem.MolToSmiles(mol)
-            except:
+            except Exception as e:
                 sml = None
 
             obj_nam.append(name)
@@ -131,11 +133,16 @@ class Idata:
             obj_num += 1
 
         utils.add_result(self.results, obj_num, 'obj_num', 'Num mol', 'method',
-                         'single', 'Number of molecules present in the input file')
+                         'single',
+                         'Number of molecules present in the input file')
+
         utils.add_result(self.results, obj_nam, 'obj_nam', 'Mol name', 'label',
-                         'objs', 'Name of the molecule, as present in the input file')
+                         'objs',
+                         'Name of the molecule, as present in the input file')
+
         utils.add_result(self.results, obj_sml, 'SMILES', 'SMILES',
-                         'smiles', 'objs', 'Structure of the molecule in SMILES format')
+                         'smiles', 'objs',
+                         'Structure of the molecule in SMILES format')
 
         if not utils.is_empty(obj_bio):
             utils.add_result(self.results, np.array(obj_bio, dtype=np.float64),
@@ -172,8 +179,9 @@ class Idata:
 
         try:
             suppl = Chem.SDMolSupplier(ifile)
-        except:
-            return False, 'Error at processing input file for standardizing structures'
+        except Exception as e:
+            return (False,
+                    f'Error processing input file for standardizing: {e}')
 
         success = True
         filename, fileext = os.path.splitext(ifile)
@@ -187,7 +195,7 @@ class Idata:
                 # molecule not recognised by RDKit
                 if m is None:
                     print('ERROR: (@normalize) Unable to process molecule #',
-                        str(mcount+1), 'in file ' + ifile)
+                          str(mcount+1), 'in file ' + ifile)
 
                     continue
 
@@ -200,8 +208,8 @@ class Idata:
                             parent = Chem.MolToMolBlock(m)
                         else:
                             return False, e.name
-                    except:
-                        return False, "Unknown standardiser error"
+                    except Exception as e:
+                        return False, f"Standardiser error: {e}"
 
                 else:
                     print('ERROR: (@normalize) method ' +
@@ -261,10 +269,11 @@ class Idata:
 
         ifile is a molecular file in SDFile format.
 
-        returns a boolean anda a tupla of two elements:
+        returns a boolean and a a tupla of two elements:
         [0] xmatrix (nparray np.float64)
         [1] list of variable names (str)
-        [2] list of booleans indicating if the computation succeeded for each molecule
+        [2] list of booleans indicating if the computation succeeded for each
+            molecule
 
         example:    return True, (xmatrix, md_nam, success_list)
         '''
@@ -319,8 +328,9 @@ class Idata:
                     if (len(ishape) > 1):
                         # for 2D arrays, shape[0] is the number of objects
                         if ishape[0] != shape[0]:
-                            print('ERROR: number of objects processed by md method "' +
-                                  imethod[0]+'" does not match those computed by other methods')
+                            print('ERROR: number of objects processed by '
+                                  f'md method "{imethod[0]}" does not match '
+                                  'those computed by other methods')
                             continue
 
                     combined_md = np.hstack((combined_md, results[0]))
@@ -335,7 +345,7 @@ class Idata:
         return True, (combined_md, combined_nm, combined_sc)
 
     def consolidate(self, results, nobj):
-        ''' 
+        '''
         Mix the results obtained by multiple CPUs into a single result file.
         '''
 
@@ -345,11 +355,13 @@ class Idata:
 
         for iresults in results:
 
-            # iresults is a tupla of Boolean (iresults[0]) and results (iresults[1])
-            if iresults[0] == False:
+            # iresults is a tupla of Boolean (iresults[0])
+            # and results (iresults[1])
+            if iresults[0] is False:
                 return False, iresults[1]
 
-            # internal is a tupla of 3 elements (xmatrix, var_nam, success_list)
+            # internal is a tupla of 3 elements
+            # (xmatrix, var_nam, success_list)
             internal = iresults[1]
             ixmatrix = internal[0]
 
@@ -370,7 +382,8 @@ class Idata:
                     if shape[1] != ishape[1]:
                         return False, "inconsistent number of variables"
                 else:
-                    # for vectors obtained with a single object, numvar is shape[0]
+                    # for vectors obtained with a single object,
+                    #  numvar is shape[0]
                     if shape[0] != ishape[0]:
                         return False, "inconsistent number of variables"
 
@@ -380,7 +393,7 @@ class Idata:
         return True, (xmatrix, var_nam, success_list)
 
     def save(self):
-        ''' 
+        '''
         Saves the results in serialized form, together with the MD5 signature
         of the control class and the input file.
         '''
@@ -404,11 +417,12 @@ class Idata:
 
                 pickle.dump(self.results, fo)
 
-        except:
+        except Exception as e:
+            print(e)
             pass
 
     def load(self):
-        ''' 
+        '''
         Loads the results in serialized form, together with the MD5 signature
         of the control class and the input file.
         '''
@@ -436,12 +450,13 @@ class Idata:
         except:
             return False
 
-        print('>>> recycling data >>>', os.path.join(self.dest_path, 'data.pkl'))
+        print('>>> recycling data >>>'
+              f', {os.path.join(self.dest_path, "data.pkl")}')
 
         return True
 
     def workflow_objects(self, input_file):
-        '''      
+        '''
         Executes in sequence methods required to generate MD,
         starting from a single molecular file.
 
@@ -473,20 +488,20 @@ class Idata:
 
             if not success_list[i]:   # molecule was empty, do not process
 
-                print('ERROR: (@workflow_objects) Unable to process molecule #', str(
-                    i+1), 'in file ' + ifile)
+                print('ERROR: (@workflow_objects) Unable to '
+                      f'process molecule #{str(i+1)} in file {ifile}')
 
                 continue
 
             success, results = self.workflow_series(ifile)
 
-            # since the workflow was run for a single molecule, results[2] is ignored, because it must match
-            # the value in success
+            # since the workflow was run for a single molecule,
+            # results[2] is ignored, because it must match the value in success
             success_list[i] = success
 
             if not success:           # failed in the workflow
-                print('ERROR: (@workflow_objects) Workflow failed for molecule #', str(
-                    i+1), 'in file ' + input_file)
+                print('ERROR: (@workflow_objects) Workflow failed '
+                      f'for molecule #{str(i+1)} in file {input_file}')
                 continue
 
             if first_mol:  # first molecule
@@ -496,28 +511,27 @@ class Idata:
                 first_mol = False
             else:
                 if len(results[0]) != num_var:
-                    print('ERROR: (@workflow_objects) MD length for molecule #', str(
-                        i+1), 'in file ' + input_file + 'does not match the MD length of the first molecule')
+                    print('ERROR: (@workflow_objects) MD length for '
+                          f'molecule #{str(i+1)} in file {input_file} '
+                          'does not match the MD length of the first molecule')
                     success_list[i] = False
                     continue
-
                 md_results = np.vstack((md_results, results[0]))
-
-        #print (success_list)
 
         return True, (md_results, va_results, success_list)
 
     def workflow_series(self, input_file):
-        '''      
+        '''
         Executes in sequence methods required to generate MD,
         starting from a single molecular file
 
         input : ifile, a molecular file in SDFile format
         output: results contains two lists
                 results[0] a numpy bidimensional array containing MD
-                results[1] a list of strings containing the names of the MD vars
-                results[2] a list of booleans indicating for which objects the MD computations succeeded    
-
+                results[1] a list of strings containing the names
+                           of the MD vars
+                results[2] a list of booleans indicating for
+                           which objects the MD computations succeeded
         '''
 
         success, results = self.normalize(
@@ -535,13 +549,13 @@ class Idata:
         return success, results
 
     def ammend_objects(self, inform, workflow):
-        ''' 
+        '''
         The arguments inform and workflow are lists of booleans describing
         when the objects were successfully informed (inform)
         or completed the workflow.
 
         This functions is called only when a disagreement if found, revealing
-        that any object failed to be processed, and that the xmatrix will 
+        that any object failed to be processed, and that the xmatrix will
         have less rows than expected.
 
         The function ammends all keys describing objects,
@@ -645,7 +659,8 @@ class Idata:
         success_workflow = results[2]
 
         if len(success_inform) != len(success_workflow):
-            self.results['error'] = 'number of molecules informed and processed does not match'
+            self.results['error'] = ('number of molecules informed '
+                                     'and processed does not match')
             return
 
         # Check if molecules not informed succeded
@@ -657,7 +672,7 @@ class Idata:
                 self.results['error'] = 'unknown error in molecule inform'
                 return
 
-        # check if a molecule informed did not 
+        # check if a molecule informed did not
         # succeed to complete MD generation
         for i, j in zip(success_inform, success_workflow):
             if i and not j:
@@ -710,7 +725,9 @@ class Idata:
                         smiles.append(value_list[col])
                         del value_list[col]
 
-                    if index == 1:  # for the fist row, just copy the value list to the xmatrix
+                    if index == 1:
+                        # for the fist row,
+                        # just copy the value list to the xmatrix
                         xmatrix = np.array(value_list, dtype=np.float64)
                     else:
                         xmatrix = np.vstack(
@@ -726,34 +743,43 @@ class Idata:
             col = var_nam.index(self.parameters['TSV_activity'])
             ymatrix = xmatrix[:, col]
             xmatrix = np.delete(xmatrix, col, 1)
-            utils.add_result(self.results, ymatrix, 'ymatrix', 'Activity', 'decoration',
-                             'objs', 'Biological anotation to be predicted by the model')
 
-        utils.add_result(self.results, obj_num, 'obj_num', 'Num mol', 'method',
-                         'single', 'Number of molecules present in the input file')
+            utils.add_result(self.results, ymatrix,
+                             'ymatrix', 'Activity', 'decoration', 'objs',
+                             'Biological anotation to be predicted by the model')
+
+        utils.add_result(self.results, obj_num,
+                         'obj_num', 'Num mol', 'method', 'single',
+                         'Number of molecules present in the input file')
+
         utils.add_result(self.results, xmatrix, 'xmatrix',
                          'X matrix', 'method', 'vars', 'Molecular descriptors')
 
         if self.parameters['TSV_varnames']:
+
             utils.add_result(self.results, var_nam, 'var_nam', 'Var names',
                              'method', 'vars', 'Names of the X variables')
 
         if not self.parameters['TSV_objnames']:
+
             for i in range(obj_num):
                 obj_nam.append('obj%.10f' % i)
 
-        utils.add_result(self.results, obj_nam, 'obj_nam', 'Mol name', 'label',
-                         'objs', 'Name of the molecule, as present in the input file')
+        utils.add_result(self.results, obj_nam,
+                         'obj_nam', 'Mol name', 'label', 'objs',
+                         'Name of the molecule, as present in the input file')
 
         if len(smiles) > 0:
-            utils.add_result(self.results, smiles, 'SMILES', 'SMILES',
-                             'smiles', 'objs', 'Structure of the molecule in SMILES format')
+            utils.add_result(self.results, smiles,
+                             'SMILES', 'SMILES', 'smiles', 'objs',
+                             'Structure of the molecule in SMILES format')
 
         return
 
     def _run_ext_data(self):
         '''
-        version of Run for inter-process input (calling another model to obtain input)
+        version of Run for inter-process input
+        (calling another model to obtain input)
         '''
 
         # idata is a list of JSON from 1-n sources
@@ -793,14 +819,18 @@ class Idata:
                         num_obj = len(i_result[item_key])
                     else:  # append laterally
                         if len(i_result[item_key]) != num_obj:
-                            self.results['error'] = 'incompatible size of results obtained from external sources'
+                            self.results['error'] = ('incompatible size of '
+                                                     'results obtained from'
+                                                     ' external sources')
                             return
 
                         combined_md = np.c_[combined_md, np.array(
                             i_result[item_key], dtype=np.float64)]
 
-                    combined_md_names.append(
-                        item_key+':'+i_meta['endpoint']+':'+str(i_meta['version']))
+                    md_name_str = (f"{item_key}:{i_meta['endpoint']}:"
+                                   f"{str(i_meta['version'])}")
+
+                    combined_md_names.append(md_name_str)
 
                 if item['type'] == 'confidence':
                     item_key = item['key']
@@ -811,22 +841,31 @@ class Idata:
                         combined_cf = np.c_[combined_cf, np.array(
                             i_result[item_key], dtype=np.float64)]
 
-                    combined_cf_names.append(
-                        item_key+':'+i_meta['endpoint']+':'+str(i_meta['version']))
+                    cf_name_str = (f"{item_key}:{i_meta['endpoint']}:"
+                                   f"{str(i_meta['version'])}")
+
+                    combined_cf_names.append(cf_name_str)
 
         utils.add_result(self.results, combined_md, 'xmatrix', 'X matrix',
-                         'results', 'objs', 'Combined output from external sources')
+                         'results', 'objs',
+                         'Combined output from external sources')
+
         utils.add_result(self.results, combined_cf, 'confidence', 'Confidence',
-                         'confidence', 'objs', 'Combined confidence from external sources')
-        utils.add_result(self.results, combined_md_names, 'var_nam', 'Var. names',
-                         'method', 'vars', 'Variable names from external sources')
-        utils.add_result(self.results, combined_cf_names, 'conf_nam', 'Conf. names',
-                         'method', 'vars', 'Confidence indexes from external sources')
+                         'confidence', 'objs',
+                         'Combined confidence from external sources')
+
+        utils.add_result(self.results, combined_md_names, 'var_nam',
+                         'Var. names', 'method', 'vars',
+                         'Variable names from external sources')
+
+        utils.add_result(self.results, combined_cf_names, 'conf_nam',
+                         'Conf. names', 'method', 'vars',
+                         'Confidence indexes from external sources')
 
         return
 
     def run(self):
-        ''' 
+        '''
         Process input file to obtain metadata (size, type, number of objects,
         name of objects, etc.) as well as for generating MD.
 
@@ -834,7 +873,7 @@ class Idata:
         model input from the same input file.
 
         This methods supports multiprocessing, splitting original files in a
-        chunck per CPU        
+        chunck per CPU
         '''
 
         # check for the presence of a valid pickle file
