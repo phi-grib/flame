@@ -430,14 +430,17 @@ class Idata:
         if 'ext_input' in self.parameters and self.parameters['ext_input']:
             return False
 
-        try:
-            with open(os.path.join(self.dest_path, 'data.pkl'), 'rb') as fi:
+        data_pkl_file = os.path.join(self.dest_path, 'data.pkl')
+        # check if data.pkl exists, if do then load
+        if os.path.isfile(data_pkl_file):
+            with open(data_pkl_file, 'rb') as fi:
                 md5_parameters = pickle.load(fi)
                 if md5_parameters != self.parameters['md5']:
                     return False
 
                 md5_input = pickle.load(fi)
                 if md5_input != utils.md5sum(self.ifile):
+                    print('md5 checksum failed!')
                     return False
 
                 self.results = pickle.load(fi)
@@ -447,14 +450,13 @@ class Idata:
                 self.results['meta']['endpoint'] = self.parameters['endpoint']
                 self.results['meta']['version'] = self.parameters['version']
 
-        except Exception as e:
-            print(e)
+            print(f'>>> recycling data >>>, {data_pkl_file}')
+            return True
+
+        else:
+            # if data.pkl doesn't exists, return false. ?¿
+            print('No data.pkl found...')
             return False
-
-        print('>>> recycling data >>>'
-              f', {os.path.join(self.dest_path, "data.pkl")}')
-
-        return True
 
     def workflow_objects(self, input_file):
         '''
