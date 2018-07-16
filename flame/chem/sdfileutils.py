@@ -44,7 +44,6 @@ def split_SDFile(ifile, num_chunks):
 
     # Count number of molecules in input file
     suppl = Chem.SDMolSupplier(ifile)
-
     num_mols = len(suppl)
 
     # Inital checking for early return

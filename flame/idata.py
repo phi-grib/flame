@@ -466,7 +466,6 @@ class Idata:
         input : ifile, a molecular file in SDFile format
         output: results is a numpy bidimensional array containing MD
         '''
-
         success_list = []
         md_results = []
         va_results = []
@@ -514,9 +513,11 @@ class Idata:
                 first_mol = False
             else:
                 if len(results[0]) != num_var:
+
                     print('ERROR: (@workflow_objects) MD length for '
                           f'molecule #{str(i+1)} in file {input_file} '
                           'does not match the MD length of the first molecule')
+
                     success_list[i] = False
                     continue
                 md_results = np.vstack((md_results, results[0]))
@@ -610,7 +611,8 @@ class Idata:
         '''
 
         # extract useful information from file
-
+        # ...and check if the file is readable by  a previously called
+        # fucntion that haves the same file reader...
         success_inform = self.extractInformation(self.ifile)
         if 'error' in self.results:
             return
