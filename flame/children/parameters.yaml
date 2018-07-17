@@ -173,3 +173,181 @@ PLSDA_optimize:
 # conformal predictor settings
 conformal: true
 conformalSignificance: 0.2
+
+
+
+# MetaData for web interface. [type, object_type, values, description, dependencies, comments, group]
+webData:
+  input_type:
+    advanced: regular
+    object_type: string
+    values:
+      - molecule
+      - data
+      - ext_data
+    description: Type of input data.
+    dependencies: null
+    comments: ""
+    group: data
+
+
+  mol_batch:
+    advanced: regular
+    object_type: string
+    values:
+      - series
+      - objects
+      #- auto  # Not implemented yet.
+    description: How molecules are going to be processed
+    dependencies: null
+    comments: ""
+    group: data
+
+  modelAutoscaling:
+    advanced: regular
+    object_type: boolean
+    values:
+      - true
+      - false
+    description: Whether to perform or not scaling on the data
+    dependencies: null
+    comments: ""
+    group: data
+
+  normalize_method:
+    advanced: regular
+    object_type: string
+    values:
+      - null
+      - standardize
+    description: Selection of a standardization method
+    dependencies: 
+      - input_type:molecule
+    comments: ""
+    group: data
+
+  # ionize_method:
+  #   advanced: regular
+  #   object_type: string
+  #   values:
+  #     - null
+  #     - moka
+  #   description: Selection of a ionization method
+  #   dependencies: 
+  #     -input_type:molecule
+  #   comments: ""
+  #   group: data
+
+  normalize_method:
+    advanced: regular
+    object_type: string
+    values:
+      - null
+      - standardize
+    description: Selection of a standardization method
+    dependencies: 
+      - input_type:molecule
+    comments: ""
+    group: data
+
+  convert3D_method:
+    advanced: regular
+    object_type: string
+    values:
+      - null
+      - ETKDG
+    description: Selection of a 3D conversion method
+    dependencies: 
+      - input_type:molecule
+    comments: ""
+    group: data
+
+  SDFile_activity:
+    advanced: regular
+    object_type: string
+    values: null
+    description: Name of the activity field in the SDF file
+    dependencies: 
+      - input_type:molecule
+    comments: This data is provided my the user input file at the web interface
+    group: data
+
+  SDFile_name:
+    advanced: regular
+    object_type: string
+    values: null
+    description: Name of the identifier field in the SDF file
+    dependencies: 
+      - input_type:molecule
+    comments: This data is provided my the user input file at the web interface
+    group: data
+
+  TSV_activity:
+    advanced: regular
+    object_type: string
+    values: null
+    description: Name of the activity field in the TSV file
+    dependencies: 
+      - input_type:data
+    comments: This data is provided my the user input file at the web interface
+    group: data 
+
+  TSV_objnames:
+    advanced: regular
+    object_type: boolean
+    values: 
+      - true
+      - false
+    description: True if object names in first column of data matrix.
+    dependencies: 
+      - input_type:data
+    comments: ""
+    group: data 
+
+  TSV_varnames:
+    advanced: regular
+    object_type: boolean
+    values: 
+      - true
+      - false
+    description: True if variable names in first row of data matrix.
+    dependencies: 
+      - input_type:data
+    comments: ""
+    group: data 
+
+  computeMD:
+    advanced: regular
+    object_type: string
+    values: 
+      - RDKit_properties, 
+      - RDKit_md
+#      - padel
+#      - custom
+    description: Selection of molecular descriptors to be used in model generation.
+    dependencies: 
+      - ext_input:false
+      - input_type:molecule
+    comments: ""
+    group: data 
+
+  ext_input:
+    advanced: advanced
+    object_type: boolean
+    values: 
+      - true
+      - false
+    description: Whether to use or not external input source (from other models).
+    dependencies: null
+    comments: ""
+    group: data    
+
+  model_set:
+    advanced: advanced
+    object_type: string
+    values: null
+    description: Selection of available models to get the input from.
+    dependencies: 
+      - ext_input:true
+    comments: Values are obtained from available models.
+    group: data    

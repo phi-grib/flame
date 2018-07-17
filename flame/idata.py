@@ -681,7 +681,6 @@ class Idata:
         '''
         version of Run for data input (TSV tabular format)
         '''
-
         if not os.path.isfile(self.ifile):
             self.results['error'] = 'unable to open file '+self.ifile
             return
@@ -720,9 +719,9 @@ class Idata:
         obj_num = index
         if self.parameters['TSV_varnames']:
             obj_num -= 1
-
         # extract any named as "TSV_activity" as the ymatrix
         if self.parameters['TSV_activity'] in var_nam:
+            print ("HERE")
             col = var_nam.index(self.parameters['TSV_activity'])
             ymatrix = xmatrix[:, col]
             xmatrix = np.delete(xmatrix, col, 1)
@@ -748,7 +747,6 @@ class Idata:
         if len(smiles) > 0:
             utils.add_result(self.results, smiles, 'SMILES', 'SMILES',
                              'smiles', 'objs', 'Structure of the molecule in SMILES format')
-
         return
 
     def _run_ext_data(self):

@@ -256,7 +256,7 @@ class BaseEstimator:
         results.append(
             ('Specificity', 'Specificity in cross-validation', self.specificity))
         results.append(
-            ('MCC', 'Mattews Correlation Coefficient in cross-validation', self.mcc))
+            ('MCC', 'Matthews Correlation Coefficient in cross-validation', self.mcc))
 
         self.conformal_coverage = (self.TN + self.FP + self.TP + self.FN) / (
             (self.TN + self.FP + self.TP + self.FN) + not_predicted_all)
@@ -347,11 +347,12 @@ class BaseEstimator:
         results.append(
             ('SpecificityPred', 'Specificity in fitting', self.specificityPred))
         results.append(
-            ('MCCpred', 'Mattews Correlation Coefficient', self.mccp))
+            ('MCCpred', 'Matthews Correlation Coefficient', self.mccp))
 
         # Cross validation
 
         y_pred = cross_val_predict(self.estimator, X, Y, cv=self.cv, n_jobs=1)
+
         self.TN, self.FP, self.FN, self.TP = confusion_matrix(
             Y, y_pred, labels=[0, 1]).ravel()
         self.sensitivity = (self.TP / (self.TP + self.FN))
@@ -368,7 +369,7 @@ class BaseEstimator:
         results.append(
             ('Specificity', 'Specificity in cross-validation', self.specificity))
         results.append(
-            ('MCC', 'Mattews Correlation Coefficient in cross-validation', self.mcc))
+            ('MCC', 'Matthews Correlation Coefficient in cross-validation', self.mcc))
 
         return True, results
 
@@ -411,9 +412,9 @@ class BaseEstimator:
         if self.quantitative:
             metric = 'r2'
         else:
-            # metric = make_scorer(mcc)
+             metric = make_scorer(mcc)
             # metric = make_scorer(f1_score)
-            metric = "f1"
+             #metric = "f1"
         # if self.name == 'PLSR':  # Remember problems optimizing PLSR
         #     metric = 'neg_mean_squared_error'
         #     Y = np.asarray(pd.get_dummies(Y)).tolist() # Move this to a new PLS-DA ***
@@ -425,7 +426,7 @@ class BaseEstimator:
         print("tune_parameters")
         print("metric: " + str(metric))
         tclf = GridSearchCV(estimator, tune_parameters,
-                            scoring=metric, cv=self.cv, n_jobs=4)
+                            scoring=metric, cv=3, n_jobs=4)
         # n_splits=10, shuffle=False,
         #   random_state=42), n_jobs= -1)
         tclf.fit(X, Y)
