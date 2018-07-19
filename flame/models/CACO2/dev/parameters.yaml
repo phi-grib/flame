@@ -1,6 +1,6 @@
 # system settings
 verbose_error: true
-numCPUs: 2
+numCPUs: 1
 mol_batch: series                    # series | objects | auto (not implemented!)
 
 # input settings
@@ -11,7 +11,10 @@ normalize_method:                     # null | standardize
 ionize_method: null                   # null | moka
 convert3D_method: null                # null | ETKDG
 computeMD_method:                     # RDKit_properties | RDKit_md | padel | custom
-- RDKit_md
+#- RDKit_properties
+#- RDKit_md
+- RDKit_properties
+
 
 ext_input: false                      # external input source TRUE
 model_set:                            # list of models used for producing input
@@ -22,7 +25,7 @@ model_set:                            # list of models used for producing input
 
 # Output 
 output_format:                        # JSON | TSV  (dump results to output.tsv and errors to error.tsv)
-- JSON      
+- JSON   
          
 output_md: true                      # if true dump the MD generated to 'output_md.tsv'
 
@@ -41,16 +44,19 @@ TSV_varnames: true                    # true if the variable names are in the fi
 # modeling settings
 
 modelingToolkit: internal             # internal | R | KNIME
-model: PLSR                             # RF | SVM | GNB | PLSR | PLSDA
-modelAutoscaling: true               # true | false
+model: RF                           # RF | SVM | GNB | PLSR | PLSDA
+modelAutoscaling: true                # true | false
 quantitative: true
-tune: true
-imbalance: simple_subsampling       # simple_subsampling
+tune: false
+imbalance: null                       # simple_subsampling
+feature_selection: null               # Kbest | null
+feature_number: auto                  # auto: Sets max features to 10% of entries | Number
 
 ModelValidationCV: loo
 ModelValidationLC: false
 ModelValidationN: 2
 ModelValidationP: 1
+
 
 # SVM settings
 SVM_parameters:
@@ -95,8 +101,8 @@ RF_parameters:
   class_weight: balanced
   max_depth: null
   max_features: sqrt
-  n_estimators: 200
-  n_jobs: -1
+  n_estimators: 250
+  n_jobs: 1
   oob_score: true
   random_state: 46
 
@@ -107,10 +113,10 @@ RF_optimize:
   max_features:
   - sqrt
   - log2
-  n_estimators: !!python/object/apply:builtins.range
+  n_estimators:
+  - 25
   - 50
-  - 200
-  - 50
+  - 75
   oob_score:
   - true
   random_state:
@@ -146,8 +152,8 @@ PLSR_optimize:
 PLSDA_parameters:
   scale: false
   tol: 0.000006
-  n_components: 2
-  threshold: null
+  n_components: 6
+  threshold: 0.4
   # Manual optimization returns the MCC for the diffent
   # number of latent variables considered in 
   # n_components (below) with the best threshold for
@@ -170,4 +176,4 @@ PLSDA_optimize:
 
 # conformal predictor settings
 conformal: true
-conformalSignificance: 0.20
+conformalSignificance: 0.2

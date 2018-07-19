@@ -75,10 +75,6 @@ class PLSR(BaseEstimator):
         X = self.X.copy()
         Y = self.Y.copy()
 
-        if self.autoscale:
-            X, self.mux = center(X)
-            X, self.wgx = scale(X, self.autoscale)
-            print("autoscaling")
 
         results = []
         results.append(('nobj', 'number of objects', self.nobj))

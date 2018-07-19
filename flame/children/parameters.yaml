@@ -44,7 +44,10 @@ model: RF                             # RF | SVM | GNB | PLSR | PLSDA
 modelAutoscaling: false               # true | false
 quantitative: true
 tune: false
-imbalance: simple_subsampling       # simple_subsampling
+imbalance: null                       # simple_subsampling
+feature_selection: null               # Kbest | null
+feature_number: auto                  # auto: Sets max features to 10% of entries | Number
+
 
 ModelValidationCV: loo
 ModelValidationLC: false
@@ -107,9 +110,9 @@ RF_optimize:
   - sqrt
   - log2
   n_estimators: !!python/object/apply:builtins.range
+  - 25
   - 50
-  - 200
-  - 50
+  - 75
   oob_score:
   - true
   random_state:

@@ -93,7 +93,7 @@ class Odata():
         if self.parameters['output_md']:
             self._output_md()
             
-        return True, 'building OK'
+        return True, self.results # 'building OK'
 
     def run_apply(self):
         ''' Process the results of apply, usually a list of results and serializing to JSON '''

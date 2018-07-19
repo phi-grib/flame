@@ -60,12 +60,23 @@ def _RDKit_properties(ifile):
                     num_obj+1), 'in file ' + ifile)
                 success_list.append(False)
                 continue
+
+            
             # xmatrix [num_obj] = properties.ComputeProperties(mol)
             if num_obj == 0:
-                xmatrix = properties.ComputeProperties(mol)
+                descriptors = properties.ComputeProperties(mol)
+                if np.isnan(xmatrix).any():
+                    success_list.append(False)
+                    continue
+                else:
+                    xmatrix = descriptors
             else:
+                descriptors = properties.ComputeProperties(mol)
+                if np.isnan(descriptors).any():
+                    success_list.append(False)
+                    continue
                 xmatrix = np.vstack(
-                    (xmatrix, properties.ComputeProperties(mol)))
+                    (xmatrix, descriptors))
 
             # ##### DEBUG
             # if properties.ComputeProperties(mol)[0]>400.0:
@@ -113,8 +124,15 @@ def _RDKit_descriptors(ifile):
 
             if num_obj == 0:
                 xmatrix = md.CalcDescriptors(mol)
+                if np.isnan(xmatrix).any():
+                    success_list.append(False)
+                    continue
             else:
-                xmatrix = np.vstack((xmatrix, md.CalcDescriptors(mol)))
+                descriptors = md.CalcDescriptors(mol)
+                if np.isnan(descriptors).any():
+                    success_list.append(False)
+                    continue
+                xmatrix = np.vstack((xmatrix, descriptors))
 
             success_list.append(True)
             num_obj += 1

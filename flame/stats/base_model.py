@@ -24,12 +24,14 @@ from flame.util import utils
 from flame.stats.imbalance import *
 from flame.stats.model_validation import *
 from flame.stats.scale import center, scale
+from flame.stats.feature_selection import *
 
 import numpy as np
 import os
 import copy
 import time
 import glob
+import gc
 from scipy import stats
 import matplotlib.pyplot as plt
 import warnings
@@ -47,6 +49,7 @@ from sklearn.metrics import f1_score
 from sklearn.metrics import make_scorer
 from sklearn.metrics import confusion_matrix
 from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import MinMaxScaler 
 
 # nonconformist imports
 
@@ -80,6 +83,9 @@ class BaseEstimator:
         self.failed = False
         self.parameters = parameters
 
+        self.X_original = X
+        self.Y_original = Y
+        self.variable_mask = []
         self.X = X
         self.Y = Y
         self.nobj, self.nvarx = np.shape(X)
@@ -87,6 +93,7 @@ class BaseEstimator:
         if self.parameters["imbalance"] is not None and not self.parameters["quantitative"]:
             self.X, self.Y = run_imbalance(
                 self.parameters['imbalance'], self.X, self.Y, 46)
+
 
         if (self.nobj == 0) or (self.nvarx == 0):
             self.failed = True
@@ -103,8 +110,40 @@ class BaseEstimator:
         self.p = self.parameters['ModelValidationP']
         self.learning_curve = parameters['ModelValidationLC']
         self.conformal = self.parameters['conformal']
+        self.feature_selection = self.parameters["feature_selection"]
         self.conformalSignificance = self.parameters['conformalSignificance']
+        if self.autoscale:
+            self.X, self.mux = center(self.X)
+            self.X, self.wgx = scale(self.X, self.autoscale)
+            scaler =  MinMaxScaler(copy=True, feature_range=(0,1))
+            self.scaler = scaler.fit(self.X)
+            self.X = scaler.transform(self.X)
+            ### Alternative way to make all values positives (sum the minimum of each column to the column)
+            # list_min = np.min(self.X, axis=0)
+            # newX = copy.copy(self.X)
+            # for i in range(len(self.X[0])):
+            #     newX[:, i] = np.array(self.X[:, i] -list_min[i])
 
+        if self.feature_selection:
+            self.n_features = 10
+            if self.parameters["feature_number"] == "auto":
+                if self.nvarx > (self.nobj * 0.1) and not self.nobj < 100:
+                    self.n_features = int(self.nobj * 0.1)
+                elif self.nobj < 100:
+                    self.n_features = 10
+                else:
+                    self.n_features = self.nvarx
+            else:
+                self.n_features = int(self.parameters["feature_number"])
+            self.variable_mask = selectkBest(self.X, self.Y, self.n_features, self.quantitative)
+            self.X = self.scaler.inverse_transform(self.X)
+            self.X = self.X[:, self.variable_mask]
+            self.scaler = self.scaler.fit(self.X)
+            self.X = self.scaler.transform(self.X)
+            self.mux = self.mux.reshape(1, -1)[:, self.variable_mask]
+            self.wgx = self.wgx.reshape(1, -1)[:, self.variable_mask]
+
+            
     # Validation methods section
 
     def CF_quantitative_validation(self):
@@ -240,10 +279,6 @@ class BaseEstimator:
 
         nobj = self.nobj
 
-        if self.autoscale:
-            X = X - self.mux
-            X = X * self.wgx
-
         Yp = self.estimator.predict(X)
         Ym = np.mean(Y)
         results = []
@@ -287,9 +322,6 @@ class BaseEstimator:
         X = self.X.copy()
         Y = self.Y.copy()
 
-        if self.autoscale:
-            X = X - self.mux
-            X = X * self.wgx
 
         Yp = self.estimator.predict(X)
 
@@ -393,15 +425,18 @@ class BaseEstimator:
         print("tune_parameters")
         print("metric: " + str(metric))
         tclf = GridSearchCV(estimator, tune_parameters,
-                            scoring=metric, cv=self.cv, n_jobs=-1)
+                            scoring=metric, cv=self.cv, n_jobs=4)
         # n_splits=10, shuffle=False,
         #   random_state=42), n_jobs= -1)
         tclf.fit(X, Y)
-        self.estimator = tclf.best_estimator_
+        self.estimator = copy.copy(tclf.best_estimator_)
         print("best parameters: ", tclf.best_params_)
         end = time.time()
         print("found in: ", end-start, " seconds")
         # print self.estimator.get_params()
+        del(tclf)
+        gc.collect()
+        len(gc.get_objects()) 
 
     # Projection section
 
@@ -449,9 +484,20 @@ class BaseEstimator:
             results['error'] = 'failed to load classifier'
             return
 
+        if self.feature_selection:
+            print ("feature selection")
+            Xb = Xb[:, self.variable_mask]
+
         if self.autoscale:
+            print (Xb.shape)
+
             Xb = Xb-self.mux
             Xb = Xb*self.wgx
+            print (Xb.shape)
+
+            Xb = self.scaler.transform(Xb)
+
+
 
         if not self.conformal:
             self.regularProject(Xb, results)
