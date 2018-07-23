@@ -79,20 +79,39 @@ class Apply:
                     specificity = 0.0
 
                 ext_val_results.append(
-                    ('TP_ex', 'True positives in external-validation', float(TP)))
-                ext_val_results.append(
-                    ('TN_ex', 'True negatives in external-validation', float(TN)))
-                ext_val_results.append(
-                    ('FP_ex', 'False positives in external-validation', float(FP)))
-                ext_val_results.append(
-                    ('FN_ex', 'False negatives in external-validation', float(FN)))
+                    ('TP_ex',
+                     'True positives in external-validation',
+                     float(TP)))
 
                 ext_val_results.append(
-                    ('Sensitivity_ex', 'Sensitivity in external-validation', float(sensitivity)))
+                    ('TN_ex',
+                     'True negatives in external-validation',
+                     float(TN)))
+
                 ext_val_results.append(
-                    ('Specificity_ex', 'Specificity in external-validation', float(specificity)))
+                    ('FP_ex',
+                     'False positives in external-validation',
+                     float(FP)))
+
                 ext_val_results.append(
-                    ('MCC_ex', 'Mattews Correlation Coefficient in external-validation', float(MCC)))
+                    ('FN_ex',
+                     'False negatives in external-validation',
+                     float(FN)))
+
+                ext_val_results.append(
+                    ('Sensitivity_ex',
+                     'Sensitivity in external-validation',
+                     float(sensitivity)))
+
+                ext_val_results.append(
+                    ('Specificity_ex',
+                     'Specificity in external-validation',
+                     float(specificity)))
+
+                ext_val_results.append(
+                    ('MCC_ex',
+                     'Mattews Correlation Coefficient in external-validation',
+                     float(MCC)))
 
             else:
                 Ye = np.asarray(self.results["ymatrix"])
@@ -118,8 +137,9 @@ class Apply:
                 ext_val_results.append(
                     ('SDEP_ex', 'Standard Deviation Error of the Predictions', SDEP))
 
-            utils.add_result(self.results, ext_val_results, 'external-validation',
-                             'external validation', 'method', 'single', 'External validation results')
+            utils.add_result(self.results, ext_val_results,
+                             'external-validation', 'external validation',
+                             'method', 'single', 'External validation results')
 
         else:
             if not self.parameters["quantitative"]:
