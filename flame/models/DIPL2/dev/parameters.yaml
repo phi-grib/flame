@@ -11,7 +11,10 @@ normalize_method:                     # null | standardize
 ionize_method: null                   # null | moka
 convert3D_method: null                # null | ETKDG
 computeMD_method:                     # RDKit_properties | RDKit_md | padel | custom
+#- RDKit_properties
 - RDKit_md
+- RDKit_properties
+
 
 ext_input: false                      # external input source TRUE
 model_set:                            # list of models used for producing input
@@ -22,7 +25,7 @@ model_set:                            # list of models used for producing input
 
 # Output 
 output_format:                        # JSON | TSV  (dump results to output.tsv and errors to error.tsv)
-- JSON      
+- JSON   
          
 output_md: false                      # if true dump the MD generated to 'output_md.tsv'
 
@@ -41,11 +44,13 @@ TSV_varnames: true                    # true if the variable names are in the fi
 # modeling settings
 
 modelingToolkit: internal             # internal | R | KNIME
-model: RF                            # RF | SVM | GNB | PLSR | PLSDA
+model: RF                          # RF | SVM | GNB | PLSR | PLSDA
 modelAutoscaling: true                # true | false
 quantitative: false
 tune: true
-imbalance: simple_subsampling       # simple_subsampling
+imbalance: simple_subsampling                       # simple_subsampling
+feature_selection: Kbest               # Kbest | null
+feature_number: auto                  # auto: Sets max features to 10% of entries | Number
 
 ModelValidationCV: loo
 ModelValidationLC: false
@@ -96,8 +101,8 @@ RF_parameters:
   class_weight: balanced
   max_depth: null
   max_features: sqrt
-  n_estimators: 200
-  n_jobs: -1
+  n_estimators: 50
+  n_jobs: 1
   oob_score: true
   random_state: 46
 
@@ -108,7 +113,7 @@ RF_optimize:
   max_features:
   - sqrt
   - log2
-  n_estimators: !!python/object/apply:builtins.range
+  n_estimators:
   - 50
   - 200
   - 50
@@ -170,5 +175,6 @@ PLSDA_optimize:
   - 0.5
 
 # conformal predictor settings
-conformal: false
+conformal: true
 conformalSignificance: 0.2
+

@@ -68,9 +68,6 @@ class SVM(BaseEstimator):
         X = self.X.copy()
         Y = self.Y.copy()
 
-        if self.autoscale:
-            X, self.mux = center(X)
-            X, self.wgx = scale(X, self.autoscale)
 
         results = []
         results.append(('nobj', 'number of objects', self.nobj))
@@ -107,7 +104,7 @@ class SVM(BaseEstimator):
             if self.quantitative:
                 underlying_model = RegressorAdapter(self.estimator)
                 normalizing_model = RegressorAdapter(
-                    KNeighborsRegressor(n_neighbors=1))
+                    KNeighborsRegressor(n_neighbors=5))
                 normalizing_model = RegressorAdapter(self.estimator)
                 normalizer = RegressorNormalizer(
                     underlying_model, normalizing_model, AbsErrorErrFunc())
