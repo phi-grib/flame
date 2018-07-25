@@ -123,18 +123,6 @@ flame/models/CACO2/dev/data.pkl
 
 # compressed files
 *.tgz
-flame/Untitled.ipynb
-flame/CS1_models.ipynb
 
 #pytest
 .pytest_cache/
-flame/CS1_models3.csv
-flame/CS1_UPF_07_18.csv
-flame/CS1_models.py
-flame/CS1_models1.csv
-flame/CS1_models2.csv
-flame/CS1_models2.py
-flame/CS1_models_conformal1.csv
-flame/CS1_models_conformal2.csv
-flame/CS1_models_conformal3.csv
-flame/check_results.ipynb
