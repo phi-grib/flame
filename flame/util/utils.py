@@ -63,7 +63,7 @@ def _read_configuration():
     # prepend the path with the source dir
     model_abs_path = pathlib.Path(conf['model_repository_path']).resolve()
     conf['model_repository_path'] = str(model_abs_path)
-    # print (conf)
+    #print (conf)
     return conf
 
 
