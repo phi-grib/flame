@@ -27,7 +27,7 @@ import yaml
 import random
 import string
 import pathlib
-
+import re
 
 def get_conf_yml_path():
     '''
@@ -77,6 +77,7 @@ def _read_configuration():
         model_abs_path = pathlib.Path(model_path).resolve()
         conf['model_repository_path'] = str(model_abs_path)
         return conf
+
 
 def set_model_repository(path=None):
     """
@@ -188,19 +189,22 @@ def intver(raw_version):
 
     try:
         version = int(raw_version)
-    except:
+    except BaseException:
         version = 0
 
     return version
 
 
 def id_generator(size=10, chars=string.ascii_uppercase + string.digits):
-    ''' Return a random ID (used for temp files) with uppercase letters and numbers '''
+    '''
+    Return a random ID (used for temp files) with uppercase letters and numbers
+    '''
 
     return ''.join(random.choice(chars) for _ in range(size))
 
 
-def add_result(results, var, _key, _label, _type, _dimension='objs', _description=None, _relevance=None):
+def add_result(results, var, _key, _label, _type, _dimension='objs',
+               _description=None, _relevance=None):
 
     if 'manifest' not in results:
         results['manifest'] = []
