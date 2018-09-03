@@ -31,14 +31,14 @@ import flame.manage as manage
 
 def sensitivity(y_true, y_pred):
     tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
-    return(tp / (tp+fn))
+    return(tp / (tp + fn))
 
 # TEMP: only to allow EBI model to run
 
 
 def specificity(y_true, y_pred):
     tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
-    return(tn / (tn+fp))
+    return(tn / (tn + fp))
 
 
 def manage_cmd(args):
@@ -133,6 +133,7 @@ def main():
         manage_cmd(args)
 
 # import multiprocessing
+
 
 if __name__ == '__main__':
     # used to reproduce speed problems in Linux platforms

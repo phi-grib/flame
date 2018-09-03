@@ -46,7 +46,7 @@ class Build:
     def get_model_set(self):
         '''
         Returns a Boolean indicating if the model uses external
-        input sources and a list with these sources 
+        input sources and a list with these sources
         '''
         return self.control.get_model_set()
 
@@ -62,18 +62,19 @@ class Build:
         # path to endpoint
         epd = utils.model_path(self.model, 0)
         if not os.path.isdir(epd):
-            results['error'] = 'unable to find model: '+self.model
+            results['error'] = 'unable to find model: ' + self.model
 
         if 'error' not in results:
-            # uses the child classes within the 'model' folder, to allow customization of
-            # the processing applied to each model
+            # uses the child classes within the 'model' folder,
+            #  to allow customization of the processing applied to each model
             modpath = utils.module_path(self.model, 0)
 
-            idata_child = importlib.import_module(modpath+".idata_child")
-            learn_child = importlib.import_module(modpath+".learn_child")
-            odata_child = importlib.import_module(modpath+".odata_child")
+            idata_child = importlib.import_module(modpath + ".idata_child")
+            learn_child = importlib.import_module(modpath + ".learn_child")
+            odata_child = importlib.import_module(modpath + ".odata_child")
 
-            # run idata object, in charge of generate model data from local copy of input
+            # run idata object, in charge of generate model data from local
+            # copy of input
             idata = idata_child.IdataChild(self.parameters, input_source)
             results = idata.run()
 

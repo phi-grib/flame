@@ -39,7 +39,7 @@ class Predict:
         self.parameters = self.control.get_parameters()
 
         # set parameter overriding value in
-        if output_format != None:
+        if output_format is not None:
             self.parameters['output_format'] = output_format
 
         return
@@ -61,16 +61,16 @@ class Predict:
         epd = utils.model_path(self.model, self.version)
         if not os.path.isdir(epd):
             results['error'] = 'unable to find model: ' + \
-                self.model+' version: '+str(self.version)
+                self.model + ' version: ' + str(self.version)
 
         if not 'error' in results:
             # uses the child classes within the 'model' folder, to allow customization of
             # the processing applied to each model
             modpath = utils.module_path(self.model, self.version)
 
-            idata_child = importlib.import_module(modpath+".idata_child")
-            apply_child = importlib.import_module(modpath+".apply_child")
-            odata_child = importlib.import_module(modpath+".odata_child")
+            idata_child = importlib.import_module(modpath + ".idata_child")
+            apply_child = importlib.import_module(modpath + ".apply_child")
+            odata_child = importlib.import_module(modpath + ".odata_child")
 
             # run idata object, in charge of generate model data from input
             idata = idata_child.IdataChild(self.parameters, input_source)
@@ -81,6 +81,7 @@ class Predict:
             apply = apply_child.ApplyChild(self.parameters, results)
             results = apply.run()
 
-        # run odata object, in charge of formatting the prediction results or any error
+        # run odata object, in charge of formatting the prediction results or
+        # any error
         odata = odata_child.OdataChild(self.parameters, results)
         return odata.run()

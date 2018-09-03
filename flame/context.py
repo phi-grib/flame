@@ -109,7 +109,7 @@ def predict_cmd(model, output_format=None):
 def build_cmd(model, output_format=None):
     '''
     Instantiates a Build object to build a model using the given
-    input file and model. 
+    input file and model.
 
     This method must be self-contained and suitable for being called in
     cascade, by models which use the output of other models as input

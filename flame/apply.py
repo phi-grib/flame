@@ -30,6 +30,7 @@ from sklearn.metrics import f1_score
 from sklearn.metrics import make_scorer
 from sklearn.metrics import confusion_matrix
 
+
 class Apply:
 
     def __init__(self, parameters, results):
@@ -42,11 +43,11 @@ class Apply:
     def external_validation(self):
         ''' when experimental values are available for the predicted compounds, apply external validation '''
 
-        if not 'ymatrix' in self.results:
+        if 'ymatrix' not in self.results:
             return
 
-        ext_val_results  = []
-        
+        ext_val_results = []
+
         if not self.parameters["conformal"]:
 
             if not self.parameters["quantitative"]:
@@ -60,8 +61,9 @@ class Apply:
 
                 # the use of labels is compulsory to inform the confusion matrix that
                 # it must return a 2x2 confussion matrix. Otherwise it will fail when
-                # a single class is represented (all TP, for example) 
-                TN, FP, FN, TP = confusion_matrix(Ye, Yp, labels = [0,1]).ravel()
+                # a single class is represented (all TP, for example)
+                TN, FP, FN, TP = confusion_matrix(
+                    Ye, Yp, labels=[0, 1]).ravel()
 
                 # protect to avoid warnings in special cases (div by zero)
                 MCC = mcc(Ye, Yp)
@@ -76,14 +78,40 @@ class Apply:
                 else:
                     specificity = 0.0
 
-                ext_val_results.append (('TP_ex','True positives in external-validation', float(TP)))
-                ext_val_results.append (('TN_ex','True negatives in external-validation', float(TN)))
-                ext_val_results.append (('FP_ex','False positives in external-validation', float(FP)))
-                ext_val_results.append (('FN_ex','False negatives in external-validation', float(FN)))
+                ext_val_results.append(
+                    ('TP_ex',
+                     'True positives in external-validation',
+                     float(TP)))
 
-                ext_val_results.append (('Sensitivity_ex','Sensitivity in external-validation', float(sensitivity)))
-                ext_val_results.append (('Specificity_ex','Specificity in external-validation', float(specificity)))
-                ext_val_results.append (('MCC_ex', 'Mattews Correlation Coefficient in external-validation', float(MCC )))
+                ext_val_results.append(
+                    ('TN_ex',
+                     'True negatives in external-validation',
+                     float(TN)))
+
+                ext_val_results.append(
+                    ('FP_ex',
+                     'False positives in external-validation',
+                     float(FP)))
+
+                ext_val_results.append(
+                    ('FN_ex',
+                     'False negatives in external-validation',
+                     float(FN)))
+
+                ext_val_results.append(
+                    ('Sensitivity_ex',
+                     'Sensitivity in external-validation',
+                     float(sensitivity)))
+
+                ext_val_results.append(
+                    ('Specificity_ex',
+                     'Specificity in external-validation',
+                     float(specificity)))
+
+                ext_val_results.append(
+                    ('MCC_ex',
+                     'Mattews Correlation Coefficient in external-validation',
+                     float(MCC)))
 
             else:
                 Ye = np.asarray(self.results["ymatrix"])
@@ -103,18 +131,22 @@ class Apply:
                 SDEP = np.sqrt(SSY_out/(nobj))
                 Q2 = 1.00 - (SSY_out/SSY0_out)
 
-                ext_val_results.append (('scoringP_ex','Scoring P', scoringP))
-                ext_val_results.append (('Q2_ex','Determination coefficient in cross-validation', Q2))
-                ext_val_results.append (('SDEP_ex','Standard Deviation Error of the Predictions', SDEP))
+                ext_val_results.append(('scoringP_ex', 'Scoring P', scoringP))
+                ext_val_results.append(
+                    ('Q2_ex', 'Determination coefficient in cross-validation', Q2))
+                ext_val_results.append(
+                    ('SDEP_ex', 'Standard Deviation Error of the Predictions', SDEP))
 
-            utils.add_result(self.results, ext_val_results, 'external-validation', 'external validation', 'method', 'single', 'External validation results')
-            
+            utils.add_result(self.results, ext_val_results,
+                             'external-validation', 'external validation',
+                             'method', 'single', 'External validation results')
+
         else:
             if not self.parameters["quantitative"]:
 
                 Ye = np.asarray(self.results["ymatrix"])
-                Yp = np.concatenate((np.asarray(self.results['c0']).reshape(-1,1)
-                , np.asarray(self.results['c1']).reshape(-1,1)), axis=1)
+                Yp = np.concatenate((np.asarray(self.results['c0']).reshape(
+                    -1, 1), np.asarray(self.results['c1']).reshape(-1, 1)), axis=1)
 
                 if Ye.size == 0:
                     raise ValueError("Experimental activity vector is empty")
@@ -165,17 +197,25 @@ class Apply:
                     specificity = (TN / (TN + FP))
                 else:
                     specificity = 0.0
-                ext_val_results.append (('TP','True positives in external-validation', float(TP)))
-                ext_val_results.append (('TN','True negatives in external-validation', float(TN)))
-                ext_val_results.append (('FP','False positives in external-validation', float(FP)))
-                ext_val_results.append (('FN','False negatives in external-validation', float(FN)))
-                ext_val_results.append (('Coverage','Conformal coverage in external-validation', float(coverage)))
+                ext_val_results.append(
+                    ('TP', 'True positives in external-validation', float(TP)))
+                ext_val_results.append(
+                    ('TN', 'True negatives in external-validation', float(TN)))
+                ext_val_results.append(
+                    ('FP', 'False positives in external-validation', float(FP)))
+                ext_val_results.append(
+                    ('FN', 'False negatives in external-validation', float(FN)))
+                ext_val_results.append(
+                    ('Coverage', 'Conformal coverage in external-validation', float(coverage)))
 
-
-                ext_val_results.append (('Sensitivity','Sensitivity in external-validation', float(sensitivity)))
-                ext_val_results.append (('Specificity','Specificity in external-validation', float(specificity)))
-                ext_val_results.append (('MCC', 'Mattews Correlation Coefficient in external-validation', float(MCC )))
-                utils.add_result(self.results, ext_val_results, 'external-validation', 'external validation', 'method', 'single', 'External validation results')
+                ext_val_results.append(
+                    ('Sensitivity', 'Sensitivity in external-validation', float(sensitivity)))
+                ext_val_results.append(
+                    ('Specificity', 'Specificity in external-validation', float(specificity)))
+                ext_val_results.append(
+                    ('MCC', 'Mattews Correlation Coefficient in external-validation', float(MCC)))
+                utils.add_result(self.results, ext_val_results, 'external-validation',
+                                 'external validation', 'method', 'single', 'External validation results')
             else:
 
                 Ye = np.asarray(self.results["ymatrix"])
@@ -183,20 +223,22 @@ class Apply:
                 Yp_upper = self.results['upper_limit']
 
                 mean_interval = np.mean(np.abs(Yp_lower) - np.abs(Yp_upper))
-                inside_interval = (Yp_lower.reshape(-1, 1) < Ye) & (Yp_upper.reshape(-1, 1) > Ye)
+                inside_interval = (Yp_lower.reshape(-1, 1) <
+                                   Ye) & (Yp_upper.reshape(-1, 1) > Ye)
                 accuracy = len(inside_interval)/len(Ye)
                 conformal_accuracy = float("{0:.2f}".format(accuracy))
-                conformal_mean_interval = float("{0:.2f}".format(mean_interval))
+                conformal_mean_interval = float(
+                    "{0:.2f}".format(mean_interval))
 
                 ext_val_results.append(('Conformal_mean_interval',
-                                'Conformal mean interval', conformal_mean_interval))
+                                        'Conformal mean interval', conformal_mean_interval))
                 ext_val_results.append(
                     ('Conformal_accuracy', 'Conformal accuracy', conformal_accuracy))
-                utils.add_result(self.results, ext_val_results, 'external-validation', 'external validation', 'method', 'single', 'External validation results')
-
+                utils.add_result(self.results, ext_val_results, 'external-validation',
+                                 'external validation', 'method', 'single', 'External validation results')
 
     def run_internal(self):
-        ''' 
+        '''
 
         Runs prediction tasks using internally defined methods
 
@@ -210,8 +252,8 @@ class Apply:
         # retrieve data and dimensions from results
         try:
             nobj, nvarx = np.shape(X)
-        except:
-            self.results['error'] = 'Failed to generate MD'
+        except Exception as e:
+            self.results['error'] = f'Failed to generate MD: {e}'
             return
 
         if (nobj == 0) or (nvarx == 0):
@@ -219,11 +261,12 @@ class Apply:
             return
 
         try:
-            model_file = os.path.join(self.parameters['model_path'],'model.pkl')
+            model_file = os.path.join(
+                self.parameters['model_path'], 'model.pkl')
             with open(model_file, "rb") as input_file:
                 estimator = pickle.load(input_file)
-        except:
-            self.results['error'] = 'No valid model estimator found'
+        except Exception as e:
+            self.results['error'] = f'No valid model estimator found: {e}'
             return
 
         estimator.project(X, self.results)
@@ -234,7 +277,7 @@ class Apply:
 
         # if not self.parameters["conformal"]:
         self.external_validation()
-            
+
         # TODO: implement this for every prediction
         # zero_array = np.zeros(nobj, dtype=np.float64)
 
@@ -265,23 +308,25 @@ class Apply:
         ''' Template to be overriden in apply_child.py
 
             Input: must be already present in self.results
-            Output: add prediction results to self.results using the utils.add_result() method 
+            Output: add prediction results to self.results using 
+                    the utils.add_result() method
 
         '''
 
-        self.results['error'] = 'custom prediction must be defined in the model apply_chlid class'
+        self.results['error'] = ('custom prediction must be defined '
+                                 'in the model apply_chlid class')
         return
 
     def run(self):
-        ''' 
+        '''
 
-        Runs prediction tasks using the information present in self.results. 
+        Runs prediction tasks using the information present in self.results.
 
-        Depending on the modelingToolkit defined in self.parameters this task will use internal methods
-        or make use if imported code in R/KNIME
+        Depending on the modelingToolkit defined in self.parameters this
+        task will use internal methods or make use if imported code in R/KNIME
 
-        The custom option allows advanced uses to write their own function 'run_custom' method in 
-        the model apply_child.py
+        The custom option allows advanced uses to write their own function
+        'run_custom' method in the model apply_child.py
 
         '''
 
@@ -294,6 +339,7 @@ class Apply:
         elif self.parameters['modelingToolkit'] == 'custom':
             self.run_custom()
         else:
-            self.results['error'] = 'Unknown prediction toolkit to run ', self.parameters['modelingToolkit']
+            self.results['error'] = ('Unknown prediction toolkit to run ',
+                                     self.parameters['modelingToolkit'])
 
         return self.results
