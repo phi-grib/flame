@@ -55,17 +55,28 @@ def _read_configuration():
     --------
     dict
     '''
-    conf = {}
     with open(get_conf_yml_path(), 'r') as config_file:
         conf = yaml.load(config_file)
 
-    # if the name of a path starts with '.' we will
-    # prepend the path with the source dir
-    model_abs_path = pathlib.Path(conf['model_repository_path']).resolve()
-    conf['model_repository_path'] = str(model_abs_path)
-    #print (conf)
-    return conf
+    model_path = conf['model_repository_path']
 
+    if sys.platform == 'windows':
+        return conf
+
+    else:
+        rex = re.compile('^.:')
+        # finds C: or D:
+        match = rex.findall(model_path)
+        if match:
+            raise ValueError('windows path found in config.yml:'
+                             f'"{model_path}".'
+                             '\nPlease write a correct path in config.yml.')
+
+        # if the name of a path starts with '.' we will
+        # prepend the path with the source dir
+        model_abs_path = pathlib.Path(model_path).resolve()
+        conf['model_repository_path'] = str(model_abs_path)
+        return conf
 
 def set_model_repository(path=None):
     """
