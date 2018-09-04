@@ -28,6 +28,8 @@ import random
 import string
 import pathlib
 import re
+import warnings
+
 
 def get_conf_yml_path():
     '''
@@ -47,9 +49,10 @@ def get_conf_yml_path():
     return os.path.join(source_dir, 'config.yaml')
 
 
-def _read_configuration():
+def _read_configuration() -> dict:
     '''
-    Reads configuration file "config.yaml".
+    Reads configuration file "config.yaml" and checks
+    sanity of model repository path.
 
     Returns:
     --------
@@ -58,25 +61,31 @@ def _read_configuration():
     with open(get_conf_yml_path(), 'r') as config_file:
         conf = yaml.load(config_file)
 
-    model_path = conf['model_repository_path']
+    model_path = pathlib.Path(conf['model_repository_path'])
+    # check if path exists
+    while not model_path.exists():
+        warnings.warn(f"Model repository path '{model_path}'"
+                      " in config file doesn't exists.")
 
-    if sys.platform == 'windows':
-        return conf
+        print("\nEnter a correct model repository path:")
+        user_path = input()
+        model_path = pathlib.Path(user_path)
+
+    # finds C: or D:
+    rex = re.compile('^.:')
+    match_windows = rex.findall(str(model_path))
+
+    # extra check if on linux and path starts with char followed by ':' 
+    if sys.platform == 'linux' and match_windows:
+        raise ValueError('Windows path found in config.yml model repository path:'
+                         f'"{model_path}".'
+                         '\nPlease write a correct path.')
 
     else:
-        rex = re.compile('^.:')
-        # finds C: or D:
-        match = rex.findall(model_path)
-        if match:
-            raise ValueError('windows path found in config.yml:'
-                             f'"{model_path}".'
-                             '\nPlease write a correct path in config.yml.')
-
-        # if the name of a path starts with '.' we will
-        # prepend the path with the source dir
         model_abs_path = pathlib.Path(model_path).resolve()
-        conf['model_repository_path'] = str(model_abs_path)
-        return conf
+    
+    conf['model_repository_path'] = str(model_abs_path)
+    return conf
 
 
 def set_model_repository(path=None):
