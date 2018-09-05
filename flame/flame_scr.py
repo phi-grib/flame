@@ -50,6 +50,8 @@ def manage_cmd(args):
     version = utils.intver(args.version)
 
     if args.action == 'new':
+        # check if config model repo path is correct 
+        utils.check_repository_path()
         success, results = manage.action_new(args.endpoint)
     elif args.action == 'kill':
         success, results = manage.action_kill(args.endpoint)

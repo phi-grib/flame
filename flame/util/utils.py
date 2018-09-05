@@ -54,6 +54,7 @@ def _read_configuration() -> dict:
     Reads configuration file "config.yaml" and checks
     sanity of model repository path.
 
+
     Returns:
     --------
     dict
@@ -62,6 +63,26 @@ def _read_configuration() -> dict:
         conf = yaml.load(config_file)
 
     model_path = pathlib.Path(conf['model_repository_path'])
+
+    model_abs_path = pathlib.Path(model_path).resolve()
+
+    conf['model_repository_path'] = str(model_abs_path)
+    return conf
+
+
+def check_repository_path() -> None:
+    """
+    Checks existence and sanity of modle repository path in config file
+    Use only in flame_scr, it uses user input so it's a CLI tools
+    """
+    print('>>>flame: reading config file...')
+
+    config_path = get_conf_yml_path()
+    with open(config_path, 'r') as config_file:
+        config = yaml.load(config_file)
+
+    print('>>>flame: reading and sanitizing model repository path')
+    model_path = pathlib.Path(config['model_repository_path'])
     # check if path exists
     while not model_path.exists():
         warnings.warn(f"Model repository path '{model_path}'"
@@ -71,21 +92,19 @@ def _read_configuration() -> dict:
         user_path = input()
         model_path = pathlib.Path(user_path)
 
+    config['model_repository_path'] = str(model_path.resolve())
+    with open(config_path, 'w') as config_file:
+        yaml.dump(config, config_file)
+
     # finds C: or D:
     rex = re.compile('^.:')
     match_windows = rex.findall(str(model_path))
 
-    # extra check if on linux and path starts with char followed by ':' 
+    # extra check if on linux and path starts with char followed by ':'
     if sys.platform == 'linux' and match_windows:
         raise ValueError('Windows path found in config.yml model repository path:'
                          f'"{model_path}".'
                          '\nPlease write a correct path.')
-
-    else:
-        model_abs_path = pathlib.Path(model_path).resolve()
-    
-    conf['model_repository_path'] = str(model_abs_path)
-    return conf
 
 
 def set_model_repository(path=None):
