@@ -94,8 +94,9 @@ def check_repository_path() -> None:
 
     config['model_repository_path'] = str(model_path.resolve())
     with open(config_path, 'w') as config_file:
-        yaml.dump(config, config_file)
+        yaml.dump(config, config_file, default_flow_style=False)
 
+    print('>>>flame: Model repository path updated succesfully')
     # finds C: or D:
     rex = re.compile('^.:')
     match_windows = rex.findall(str(model_path))
