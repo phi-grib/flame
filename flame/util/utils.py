@@ -79,7 +79,7 @@ def _read_configuration() -> dict:
 
 def check_repository_path() -> None:
     """
-    Checks existence and sanity of modle repository path in config file
+    Checks existence of module repository path in config file
     Use only in flame_scr, it uses user input so it's a CLI tools
     """
     LOG.info('reading configuration')
@@ -103,24 +103,26 @@ def check_repository_path() -> None:
 
     model_abs_path = str(model_path.resolve())
 
-    LOG.debug(f'Model repo path changed from {old_model_path} to {model_abs_path}')
+    LOG.debug('Model repo path changed from '
+              f'{old_model_path} to {model_abs_path}')
 
     config['model_repository_path'] = model_abs_path
 
     # write new config to config file
     with open(config_path, 'w') as config_file:
         yaml.dump(config, config_file, default_flow_style=False)
-
     LOG.info('Model repository path updated succesfully')
+
     # finds C: or D:
     rex = re.compile('^.:')
     match_windows = rex.findall(str(model_path))
 
     # extra check if on linux and path starts with char followed by ':'
     if sys.platform == 'linux' and match_windows:
-        raise ValueError('Windows path found in config.yml model repository path:'
+        raise ValueError('Windows path found in config.yml
+                         'model repository path:'
                          f'"{model_path}".'
-                         '\nPlease write a correct path.')
+                         '\nPlease write a correct path manually')
 
 
 def set_model_repository(path=None):
