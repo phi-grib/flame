@@ -119,7 +119,7 @@ def check_repository_path() -> None:
 
     # extra check if on linux and path starts with char followed by ':'
     if sys.platform == 'linux' and match_windows:
-        raise ValueError('Windows path found in config.yml
+        raise ValueError('Windows path found in config.yml'
                          'model repository path:'
                          f'"{model_path}".'
                          '\nPlease write a correct path manually')
