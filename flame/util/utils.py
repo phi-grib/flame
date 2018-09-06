@@ -30,6 +30,10 @@ import pathlib
 import re
 import warnings
 
+from flame.util import get_logger
+
+LOG = get_logger(__name__)
+
 
 def get_conf_yml_path():
     '''
@@ -59,6 +63,7 @@ def _read_configuration() -> dict:
     --------
     dict
     '''
+    # LOG.info('reading configuration')
     with open(get_conf_yml_path(), 'r') as config_file:
         conf = yaml.load(config_file)
 
@@ -66,7 +71,9 @@ def _read_configuration() -> dict:
 
     model_abs_path = pathlib.Path(model_path).resolve()
 
+    # LOG.debug(f'changed path from {model_path} to {model_abs_path}')
     conf['model_repository_path'] = str(model_abs_path)
+    # LOG.info('Configuration loaded')
     return conf
 
 
@@ -75,28 +82,36 @@ def check_repository_path() -> None:
     Checks existence and sanity of modle repository path in config file
     Use only in flame_scr, it uses user input so it's a CLI tools
     """
-    print('>>>flame: reading config file...')
+    LOG.info('reading configuration')
 
     config_path = get_conf_yml_path()
     with open(config_path, 'r') as config_file:
         config = yaml.load(config_file)
 
-    print('>>>flame: reading and sanitizing model repository path')
-    model_path = pathlib.Path(config['model_repository_path'])
+    LOG.info('sanitizing model repository path')
+
+    old_model_path = config['model_repository_path']
+    model_path = pathlib.Path(old_model_path)
     # check if path exists
     while not model_path.exists():
-        warnings.warn(f"Model repository path '{model_path}'"
-                      " in config file doesn't exists.")
+        LOG.warning(f"Model repository path '{model_path}'"
+                    " in config file doesn't exists.")
 
         print("\nEnter a correct model repository path:")
         user_path = input()
         model_path = pathlib.Path(user_path)
 
-    config['model_repository_path'] = str(model_path.resolve())
+    model_abs_path = str(model_path.resolve())
+
+    LOG.debug(f'Model repo path changed from {old_model_path} to {model_abs_path}')
+
+    config['model_repository_path'] = model_abs_path
+
+    # write new config to config file
     with open(config_path, 'w') as config_file:
         yaml.dump(config, config_file, default_flow_style=False)
 
-    print('>>>flame: Model repository path updated succesfully')
+    LOG.info('Model repository path updated succesfully')
     # finds C: or D:
     rex = re.compile('^.:')
     match_windows = rex.findall(str(model_path))

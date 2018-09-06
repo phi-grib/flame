@@ -22,10 +22,11 @@
 
 import argparse
 
-from flame.util import utils
+from flame.util import utils, get_logger
 import flame.context as context
 import flame.manage as manage
 
+import logging
 # TEMP: only to allow EBI model to run
 
 
@@ -50,7 +51,7 @@ def manage_cmd(args):
     version = utils.intver(args.version)
 
     if args.action == 'new':
-        # check if config model repo path is correct 
+        # check if config model repo path is correct
         utils.check_repository_path()
         success, results = manage.action_new(args.endpoint)
     elif args.action == 'kill':
@@ -102,7 +103,17 @@ def main():
                         help='Action type: \'predict\' or \'build\' or \'manage\'',
                         required=True)
 
+    parser.add_argument('-log', '--loglevel',
+                        help='Logger level of verbosity',
+                        required=False)
+
     args = parser.parse_args()
+
+    if args.loglevel:
+        numeric_level = getattr(logging, args.loglevel.upper(), None)
+        if not isinstance(numeric_level, int):
+            raise ValueError('Invalid log level: {}'.format(args.loglevel))
+        logging.basicConfig(level=numeric_level)
 
     if args.command == 'predict':
 
@@ -135,6 +146,7 @@ def main():
         manage_cmd(args)
 
 # import multiprocessing
+
 
 if __name__ == '__main__':
     # used to reproduce speed problems in Linux platforms

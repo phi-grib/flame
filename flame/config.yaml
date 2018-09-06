@@ -1,6 +1,5 @@
-
-model_repository_path : C:/Users/mpastor/soft/flame/flame/models
-provider : UPF
-homepage : http://phi.upf.edu
-admin_name : Manuel Pastor
-admin_email : manuel.pastor@upf.edu
+admin_email: manuel.pastor@upf.edu
+admin_name: Manuel Pastor
+homepage: http://phi.upf.edu
+model_repository_path: /home/biel/Desktop/TESTS
+provider: UPF
