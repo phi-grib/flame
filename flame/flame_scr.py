@@ -27,6 +27,9 @@ import flame.context as context
 import flame.manage as manage
 
 import logging
+
+LOG = get_logger(__name__)
+
 # TEMP: only to allow EBI model to run
 
 
@@ -108,6 +111,10 @@ def main():
                         required=False)
 
     args = parser.parse_args()
+
+    # init logger Level and set general config
+    # another way around would be create a handler with the level
+    # and append it to the global instance of logger
 
     if args.loglevel:
         numeric_level = getattr(logging, args.loglevel.upper(), None)

@@ -20,7 +20,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Flame. If not, see <http://www.gnu.org/licenses/>.
 
-from flame.util import utils
+from flame.util import utils, get_logger
 import os
 import sys
 import shutil
@@ -30,12 +30,16 @@ import pickle
 import pathlib
 
 
+LOG = get_logger(__name__)
+
+
 def set_model_repository(path=None):
     """
     Set the model repository path.
     This is the dir where flame is going to create and load models
     """
     utils.set_model_repository(path)
+    LOG.info(f'Model repository updated to {path}')
 
 
 def action_new(model):
@@ -52,6 +56,7 @@ def action_new(model):
 
     # check if there is already a tree for this endpoint
     if os.path.isdir(ndir):
+        LOG.error(f'Endpoint {model} already exists')
         return False, 'This endpoint already exists'
 
     os.mkdir(ndir)
@@ -66,6 +71,7 @@ def action_new(model):
                     ndir+'/'+cname+'_child.py')
     shutil.copy(wkd+'/children/parameters.yaml', ndir)
 
+    LOG.info(f'New endpoint {model} created')
     return True, 'new endpoint '+model+' created'
 
 

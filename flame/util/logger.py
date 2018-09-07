@@ -1,11 +1,21 @@
 import logging
 
+try:
+    import coloredlogs
+except ImportError as e:
+    pass
+
 
 def get_logger(name) -> logging.Logger:
 
     # create logger
     logger = logging.getLogger(name)
     # logger.setLevel(logging.DEBUG)
+
+    # create formatter
+    formatter = logging.Formatter(
+        '[%(asctime)s] - %(name)s - %(levelname)s - %(message)s')
+    # datefmt='%d-%m-%Y %I:%M %p')
 
     # create console handler and set level to debug
     # if not already created
@@ -14,17 +24,10 @@ def get_logger(name) -> logging.Logger:
         ch = logger.handlers[-1]
     else:
         ch = logging.StreamHandler()
-
-    # ch.setLevel(logging.DEBUG)
-
-    # create formatter
-    formatter = logging.Formatter(
-        '[%(asctime)s] - %(name)s - %(levelname)s - %(message)s',
-        datefmt='%d-%m-%Y %I:%M %p')
+        # ch.setLevel(logging.DEBUG)
 
     # add formatter to ch
     ch.setFormatter(formatter)
-
     # add ch to logger
     logger.addHandler(ch)
     logger.propagate = False
@@ -32,7 +35,7 @@ def get_logger(name) -> logging.Logger:
     return logger
 
 
-# 'application' code examples
+# app code examples:
 
 # logger.debug('debug message')
 # logger.info('info message')
