@@ -90,6 +90,7 @@ def action_kill(model):
 
     shutil.rmtree(ndir, ignore_errors=True)
 
+    LOG.info(f'Model {model} removed')
     return True, 'model '+model+' removed'
 
 
