@@ -1,4 +1,42 @@
 from setuptools import setup, find_packages
+from setuptools.command.install import install
+from setuptools.command.develop import develop
+
+import pathlib
+import sys
+import platform
+import os
+
+
+class CustomInstall(install):
+    def run(self):
+        install.run(self)
+
+        if platform.system() == 'Windows':
+          repo_path = pathlib.Path('C:/Users/Biel/Desktop/MODELS2')  #placeholder
+        elif platform.system() == 'Darwin':  # mac os
+          repo_path = pathlib.Path('~').expanduser() / 'flame_models'  #placeholder
+        elif platform.system() == 'Linux':
+          repo_path = pathlib.Path('~').expanduser() / 'flame_models' #placeholder
+        repo_path.mkdir()
+
+class CustomDevelopInstall(develop):
+   def run(self):
+        develop.run(self)
+
+        if platform.system() == 'Windows':
+          repo_path = pathlib.Path('C:/Users/Biel/Desktop/MODELS2')  #placeholder
+        elif platform.system() == 'Darwin':  # mac os
+          repo_path = pathlib.Path('~').expanduser() / 'flame_models'  #placeholder
+        elif platform.system() == 'Linux':
+          repo_path = pathlib.Path('~').expanduser() / 'flame_models' #placeholder
+        
+        repo_path.mkdir()
+
+
+
+models_path = '/home/biel/documents/'
+
 
 setup(name='flame',
       version='0.1',
@@ -16,4 +54,8 @@ setup(name='flame',
         # If any package contains *.txt or *.rst files, include them:
         '': ['*.yaml', '*.yml'],
         },
+      cmdclass={
+        'install': CustomInstall,
+        'develop': CustomDevelopInstall
+        }
       )
