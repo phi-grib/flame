@@ -6,12 +6,12 @@ import pathlib
 import sys
 import platform
 import os
-
+import shutil
 
 class CustomInstall(install):
     def run(self):
         install.run(self)
-
+        install.announce(self, 'Creating model repository folder...')
         if platform.system() == 'Windows':
           repo_path = pathlib.Path('C:/Users/Biel/Desktop/MODELS2')  #placeholder
         elif platform.system() == 'Darwin':  # mac os
@@ -23,16 +23,18 @@ class CustomInstall(install):
 class CustomDevelopInstall(develop):
    def run(self):
         develop.run(self)
+        develop.announce(self, 'Creating model repository folder...', 2)
 
         if platform.system() == 'Windows':
-          repo_path = pathlib.Path('C:/Users/Biel/Desktop/MODELS2')  #placeholder
+          repo_path = pathlib.Path('C:/Users/Biel/Desktop/MODELS4')  #placeholder
         elif platform.system() == 'Darwin':  # mac os
           repo_path = pathlib.Path('~').expanduser() / 'flame_models'  #placeholder
         elif platform.system() == 'Linux':
           repo_path = pathlib.Path('~').expanduser() / 'flame_models' #placeholder
         
         repo_path.mkdir()
-
+        develop.announce(self, 'Copying conguration file...', 2)
+        shutil.copy('./flame/config.yaml', repo_path)
 
 
 models_path = '/home/biel/documents/'
