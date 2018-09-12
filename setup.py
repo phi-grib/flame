@@ -28,9 +28,16 @@ class CustomInstall(install):
 
     def run(self):
         install.run(self)
-        install.announce(self, 'Creating model repository folder...')
+        install.announce(self, 'Creating model repository folder...', 2)
         repo_path = self.get_repo_path()
         repo_path.mkdir()
+        install.announce(self, f'Folder created at {str(repo_path)}', 2)
+        # Modify conf.yaml with new default path
+
+        from flame.manage import set_model_repository
+
+        set_model_repository(repo_path)
+        install.announce(self, f'Flame configuration updated succesfully', 2)
 
 
 class CustomDevelopInstall(develop):
@@ -55,8 +62,12 @@ class CustomDevelopInstall(develop):
         develop.announce(self, 'Creating model repository folder...', 2)
         repo_path = self.get_repo_path()
         repo_path.mkdir()
-        develop.announce(self, 'Copying conguration file...', 2)
-        shutil.copy('./flame/config.yaml', repo_path)
+        develop.announce(self, f'Folder created at {str(repo_path)}', 2)
+
+        from flame.manage import set_model_repository
+
+        set_model_repository(repo_path)
+        develop.announce(self, f'Flame configuration updated succesfully', 2)
 
 
 setup(
