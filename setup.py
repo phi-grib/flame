@@ -8,30 +8,34 @@ import platform
 import os
 import shutil
 
+
 class CustomInstall(install):
     def run(self):
         install.run(self)
         install.announce(self, 'Creating model repository folder...')
         if platform.system() == 'Windows':
-          repo_path = pathlib.Path('C:/Users/Biel/Desktop/MODELS2')  #placeholder
+            repo_path = pathlib.Path(
+                'C:/Users/Biel/Desktop/MODELS2')  # placeholder
         elif platform.system() == 'Darwin':  # mac os
-          repo_path = pathlib.Path('~').expanduser() / 'flame_models'  #placeholder
+            repo_path = pathlib.Path('~').expanduser() / 'flame_models'
         elif platform.system() == 'Linux':
-          repo_path = pathlib.Path('~').expanduser() / 'flame_models' #placeholder
+            repo_path = pathlib.Path('~').expanduser() / 'flame_models'
         repo_path.mkdir()
 
+
 class CustomDevelopInstall(develop):
-   def run(self):
+    def run(self):
         develop.run(self)
         develop.announce(self, 'Creating model repository folder...', 2)
 
         if platform.system() == 'Windows':
-          repo_path = pathlib.Path('C:/Users/Biel/Desktop/MODELS4')  #placeholder
+            repo_path = pathlib.Path(
+                'C:/Users/Biel/Desktop/MODELS4')  # placeholder
         elif platform.system() == 'Darwin':  # mac os
-          repo_path = pathlib.Path('~').expanduser() / 'flame_models'  #placeholder
+            repo_path = pathlib.Path('~').expanduser() / 'flame_models'
         elif platform.system() == 'Linux':
-          repo_path = pathlib.Path('~').expanduser() / 'flame_models' #placeholder
-        
+            repo_path = pathlib.Path('~').expanduser() / 'flame_models'
+
         repo_path.mkdir()
         develop.announce(self, 'Copying conguration file...', 2)
         shutil.copy('./flame/config.yaml', repo_path)
@@ -50,14 +54,14 @@ setup(name='flame',
       author_email='manuel.pastor@upf.edu',
       packages=find_packages(),
       entry_points={
-        'console_scripts': ['flame=flame.flame_scr:main'],
-        },
+          'console_scripts': ['flame=flame.flame_scr:main'],
+      },
       package_data={
-        # If any package contains *.txt or *.rst files, include them:
-        '': ['*.yaml', '*.yml'],
-        },
+          # If any package contains *.txt or *.rst files, include them:
+          '': ['*.yaml', '*.yml'],
+      },
       cmdclass={
-        'install': CustomInstall,
-        'develop': CustomDevelopInstall
-        }
+          'install': CustomInstall,
+          'develop': CustomDevelopInstall
+      }
       )
