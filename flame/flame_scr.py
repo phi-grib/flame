@@ -21,6 +21,7 @@
 # along with Flame. If not, see <http://www.gnu.org/licenses/>.
 
 import argparse
+import pathlib
 
 from flame.util import utils
 import flame.context as context
@@ -50,7 +51,7 @@ def manage_cmd(args):
     version = utils.intver(args.version)
 
     if args.action == 'new':
-        # check if config model repo path is correct 
+        # check if config model repo path is correct
         utils.check_repository_path()
         success, results = manage.action_new(args.endpoint)
     elif args.action == 'kill':
@@ -71,8 +72,11 @@ def manage_cmd(args):
         success, results = manage.action_dir()
     elif args.action == 'info':
         success, results = manage.action_info(args.endpoint, version)
-
-    print('flame : ', success, results)
+    elif args.action == 'change_model_dir':
+        path = pathlib.Path(args.path).resolve()
+        manage.set_model_repository(path)
+        results = f'model set to {path}'
+    print('flame : ', results)
 
 
 def main():
@@ -101,6 +105,10 @@ def main():
                         choices=['predict', 'build', 'manage'],
                         help='Action type: \'predict\' or \'build\' or \'manage\'',
                         required=True)
+
+    parser.add_argument('-p', '--path',
+                        help='Define path for model repo',
+                        required=False)
 
     args = parser.parse_args()
 
@@ -132,9 +140,13 @@ def main():
         print('flame build : ', success, results)
 
     elif args.command == 'manage':
+        if (args.action == 'change_model_dir') and (args.path is None):
+            print('Please enter a path where to change the model repository')
+            return 
         manage_cmd(args)
 
 # import multiprocessing
+
 
 if __name__ == '__main__':
     # used to reproduce speed problems in Linux platforms
