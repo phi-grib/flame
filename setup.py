@@ -18,11 +18,11 @@ class CustomInstall(install):
         """ Returns the path of the model repo dir """
         if platform.system() == 'Windows':
             # placeholders
-            repo_path = pathlib.Path('~').expanduser() / 'flame_models'
+            repo_path = pathlib.Path('~/flame_models').expanduser()
         elif platform.system() == 'Darwin':  # mac os
-            repo_path = pathlib.Path('~').expanduser() / 'flame_models'
+            repo_path = pathlib.Path('~/flame_models').expanduser()
         elif platform.system() == 'Linux':
-            repo_path = pathlib.Path('~').expanduser() / 'flame_models'
+            repo_path = pathlib.Path('~/flame_models').expanduser()
 
         return repo_path
 
@@ -30,9 +30,14 @@ class CustomInstall(install):
         install.run(self)
         install.announce(self, 'Creating model repository folder...', 2)
         repo_path = self.get_repo_path()
-        repo_path.mkdir()
-        install.announce(self, f'Folder created at {str(repo_path)}', 2)
-        # Modify conf.yaml with new default path
+
+        if repo_path.exists():
+            install.warn(self, f'{repo_path} already exists')
+        else:
+            repo_path.mkdir()
+            install.announce(self, f'Folder created at {str(repo_path)}', 2)
+        # Modify conf.yaml with new default path using
+        # the just installed flame manage
 
         from flame.manage import set_model_repository
 
@@ -49,11 +54,11 @@ class CustomDevelopInstall(develop):
         """ Returns the path of the model repo dir """
         if platform.system() == 'Windows':
             # placeholders
-            repo_path = pathlib.Path('~').expanduser() / 'flame_models'
+            repo_path = pathlib.Path('~/flame_models').expanduser()
         elif platform.system() == 'Darwin':  # mac os
-            repo_path = pathlib.Path('~').expanduser() / 'flame_models'
+            repo_path = pathlib.Path('~/flame_models').expanduser()
         elif platform.system() == 'Linux':
-            repo_path = pathlib.Path('~').expanduser() / 'flame_models'
+            repo_path = pathlib.Path('~/flame_models').expanduser()
 
         return repo_path
 
@@ -61,8 +66,11 @@ class CustomDevelopInstall(develop):
         develop.run(self)
         develop.announce(self, 'Creating model repository folder...', 2)
         repo_path = self.get_repo_path()
-        repo_path.mkdir()
-        develop.announce(self, f'Folder created at {str(repo_path)}', 2)
+        if repo_path.exists():
+            develop.warn(self, f'{repo_path} already exists')
+        else:
+            repo_path.mkdir()
+            develop.announce(self, f'Folder created at {str(repo_path)}', 2)
 
         from flame.manage import set_model_repository
 
