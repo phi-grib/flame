@@ -72,13 +72,14 @@ def manage_cmd(args):
         success, results = manage.action_dir()
     elif args.action == 'info':
         success, results = manage.action_info(args.endpoint, version)
+
     elif args.action == 'change_model_dir':
         path = pathlib.Path(args.path).resolve()
         if path.exists():
             manage.set_model_repository(path)
             results = f'Model repository set to {path}'
         else:
-            results = f"{path} doesn't exists"
+            results = f"{path} doesn't exists. Please enter a correct path"
     print('flame : ', results)
 
 
@@ -110,7 +111,7 @@ def main():
                         required=True)
 
     parser.add_argument('-p', '--path',
-                        help='Define path for model repo',
+                        help='Defines de new path for models repository.',
                         required=False)
 
     args = parser.parse_args()
