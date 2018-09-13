@@ -74,8 +74,11 @@ def manage_cmd(args):
         success, results = manage.action_info(args.endpoint, version)
     elif args.action == 'change_model_dir':
         path = pathlib.Path(args.path).resolve()
-        manage.set_model_repository(path)
-        results = f'model set to {path}'
+        if path.exists():
+            manage.set_model_repository(path)
+            results = f'Model repository set to {path}'
+        else:
+            results = f"{path} doesn't exists"
     print('flame : ', results)
 
 
