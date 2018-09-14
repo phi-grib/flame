@@ -13,31 +13,44 @@ def config(path=None) -> None:
     if the path is not provided.
     """
     if path is None:  # set default
-
         default_models_path = Path(appdirs.user_data_dir('flame_models'))
-        print(f'Setting model repository (default) to {default_models_path}')
 
-        if default_models_path.exists():
-            print(f'{default_models_path} already exists. '
-                  'Would you like to set is as model repository anyway?(y/n)')
-
-            userinput = input()
-
-            if userinput.lower() not in ['yes', 'no', 'y', 'n']:
+        print(f'Setting model repository (default) to {default_models_path}'
+              'Would you like to continue?(y/n)')
+        
+        userinput = input()
+        
+        if userinput.lower() not in ['yes', 'no', 'y', 'n']:
                 print('Please write "yes", "no", "y" or "n"')
                 return
 
-            elif userinput.lower() in ['yes', 'y']:
+        elif userinput.lower() in ['yes', 'y']:
+            if default_models_path.exists():
+                print(f'{default_models_path} already exists. '
+                      'Would you like to set is as model repository anyway?(y/n)')
+
+                userinput = input()
+
+                if userinput.lower() not in ['yes', 'no', 'y', 'n']:
+                    print('Please write "yes", "no", "y" or "n"')
+                    return
+
+                elif userinput.lower() in ['yes', 'y']:
+                    utils.set_model_repository(default_models_path)
+
+                else:
+                    print('aborting...')
+                    return
+
+            else:  # models_path doesn't exists
+                default_models_path.mkdir(parents=True)
                 utils.set_model_repository(default_models_path)
 
-            else:
-                return
+            print(f'model repository set to {default_models_path}')
 
-        else:  # models_path doesn't exists
-            default_models_path.mkdir(parents=True)
-            utils.set_model_repository(default_models_path)
-
-        print(f'model repository set to {default_models_path}')
+        elif userinput.lower() in ['no', 'n']:
+            print('aborting...')
+            return
 
     else:  # path input by user
         in_path = Path(path).expanduser()
@@ -61,6 +74,7 @@ def config(path=None) -> None:
                 utils.set_model_repository(in_path)
 
             else:
+                print('aborting...')
                 return
 
         else:  # in_path exists
