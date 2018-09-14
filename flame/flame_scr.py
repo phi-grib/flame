@@ -24,6 +24,7 @@ import argparse
 import pathlib
 
 from flame.util import utils
+from flame.util import config
 import flame.context as context
 import flame.manage as manage
 
@@ -104,7 +105,7 @@ def main():
 
     parser.add_argument('-c', '--command',
                         action='store',
-                        choices=['predict', 'build', 'manage'],
+                        choices=['predict', 'build', 'manage', 'config'],
                         help='Action type: \'predict\' or \'build\' or \'manage\'',
                         required=True)
 
@@ -146,6 +147,9 @@ def main():
             print('Please enter a path where to change the model repository')
             return
         manage_cmd(args)
+    
+    elif args.command == 'config':
+        config(args.path)
 
 # import multiprocessing
 
