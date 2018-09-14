@@ -16,7 +16,7 @@ def config(path=None) -> None:
         default_models_path = Path(appdirs.user_data_dir('flame_models'))
 
         print(f'Setting model repository (default) to {default_models_path}'
-              'Would you like to continue?(y/n)')
+              '\nWould you like to continue?(y/n)')
         
         userinput = input()
         
