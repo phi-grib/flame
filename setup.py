@@ -15,7 +15,7 @@ class CustomInstall(install):
     """
 
     def get_repo_path(self) -> pathlib.Path:
-        """ Returns the path of the model repo dir """
+        """ Returns a hardcoded path of the model repo dir """
         if platform.system() == 'Windows':
             # placeholders
             repo_path = pathlib.Path('~/flame_models').expanduser()
@@ -29,8 +29,10 @@ class CustomInstall(install):
     def run(self):
         install.run(self)
         install.announce(self, 'Creating model repository folder...', 2)
-        repo_path = self.get_repo_path()
 
+        import appdirs
+        repo_path = appdirs.user_data_dir('flame')
+        repo_path = pathlib.Path(repo_path)
         if repo_path.exists():
             install.warn(self, f'{repo_path} already exists')
         else:
@@ -38,7 +40,6 @@ class CustomInstall(install):
             install.announce(self, f'Folder created at {str(repo_path)}', 2)
         # Modify conf.yaml with new default path using
         # the just installed flame manage
-
         from flame.manage import set_model_repository
 
         set_model_repository(repo_path)
@@ -62,7 +63,7 @@ class CustomDevelopInstall(develop):
             develop.warn(self, f'{repo_path} already exists')
         else:
             repo_path.mkdir(parents=True)
-            develop.announce(self, f'Folder created at {str(repo_path)}', 2)
+            develop.announce(self, f'Folder created at {repo_path}', 2)
 
         from flame.manage import set_model_repository
 
@@ -89,5 +90,5 @@ setup(
         'install': CustomInstall,
         'develop': CustomDevelopInstall
     },
-    install_requires=['appdirs', 'numpy', 'pandas']
+    install_requires=['appdirs']
 )
