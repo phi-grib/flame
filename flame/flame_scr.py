@@ -51,8 +51,6 @@ def manage_cmd(args):
     version = utils.intver(args.version)
 
     if args.action == 'new':
-        # check if config model repo path is correct
-        utils.check_repository_path()
         success, results = manage.action_new(args.endpoint)
     elif args.action == 'kill':
         success, results = manage.action_kill(args.endpoint)
@@ -146,7 +144,7 @@ def main():
     elif args.command == 'manage':
         if (args.action == 'change_model_dir') and (args.path is None):
             print('Please enter a path where to change the model repository')
-            return 
+            return
         manage_cmd(args)
 
 # import multiprocessing
