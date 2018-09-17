@@ -108,6 +108,12 @@ def check_repository_path() -> None:
                          '\nPlease write a correct path.')
 
 
+def write_config(config: dict) -> None:
+    """Writes the configuration to disk"""
+    with open(get_conf_yml_path(), 'w') as f:
+        yaml.dump(config, f, default_flow_style=False)
+
+
 def set_model_repository(path=None):
     """
     Set the model repository path.
@@ -132,8 +138,7 @@ def set_model_repository(path=None):
         new_path = pathlib.Path(path)
         configuration['model_repository_path'] = str(new_path.resolve())
 
-    with open(get_conf_yml_path(), 'w') as f:
-        yaml.dump(configuration, f, default_flow_style=False)
+    write_config(configuration)
 
 
 def model_repository_path():

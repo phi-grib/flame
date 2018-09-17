@@ -5,24 +5,40 @@ import appdirs
 from flame.util import utils
 
 
-def config(path=None) -> None:
+def change_config_status() -> None:
+    """Changes config status in config.yml to True"""
+    config = utils._read_configuration()
+
+    if config['config_status']:
+        return
+    else:
+        config['config_status'] = True
+
+    utils.write_config(config)
+
+
+def config(path: str=None) -> None:
     """Configures model repository.
 
     Loads config.yaml and writes a correct model repository path
     with the path provided by the user or a default from appdirs
     if the path is not provided.
     """
+
+    # ---- CLI interface -----
+
     if path is None:  # set default
-        default_models_path = Path(appdirs.user_data_dir('flame_models'))
+        default_models_path = Path(
+            appdirs.user_data_dir('flame_models', 'flame'))
 
         print(f'Setting model repository (default) to {default_models_path}'
               '\nWould you like to continue?(y/n)')
-        
+
         userinput = input()
-        
+
         if userinput.lower() not in ['yes', 'no', 'y', 'n']:
-                print('Please write "yes", "no", "y" or "n"')
-                return
+            print('Please write "yes", "no", "y" or "n"')
+            return
 
         elif userinput.lower() in ['yes', 'y']:
             if default_models_path.exists():

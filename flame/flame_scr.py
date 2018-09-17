@@ -22,9 +22,10 @@
 
 import argparse
 import pathlib
+import sys
 
 from flame.util import utils
-from flame.util import config
+from flame.util import config, change_config_status
 import flame.context as context
 import flame.manage as manage
 
@@ -41,6 +42,24 @@ def sensitivity(y_true, y_pred):
 def specificity(y_true, y_pred):
     tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
     return(tn / (tn+fp))
+
+
+def configuration_warning() -> None:
+    """ Checks if flame has been configured
+     reading the config.yml and checking the config_status flag
+    """
+    config = utils._read_configuration()
+
+    if not isinstance(config['config_status'], bool):
+        raise ValueError('Wrong type found in config status.')
+
+    if config['config_status']:
+        return
+    elif not config['config_status']:
+        print("Flame hasn't been configured yet. "
+              "Model repository may be wrong. "
+              "Please use 'flame -c config' before using flame")
+        sys.exit()  # force exit???
 
 
 def manage_cmd(args):
@@ -72,13 +91,6 @@ def manage_cmd(args):
     elif args.action == 'info':
         success, results = manage.action_info(args.endpoint, version)
 
-    elif args.action == 'change_model_dir':
-        path = pathlib.Path(args.path).resolve()
-        if path.exists():
-            manage.set_model_repository(path)
-            results = f'Model repository set to {path}'
-        else:
-            results = f"{path} doesn't exists. Please enter a correct path"
     print('flame : ', results)
 
 
@@ -127,6 +139,7 @@ def main():
                  'version': version,
                  'infile': args.infile}
 
+        configuration_warning()
         success, results = context.predict_cmd(model)
         print('flame predict : ', success, results)
 
@@ -139,18 +152,17 @@ def main():
         model = {'endpoint': args.endpoint,
                  'infile': args.infile}
 
+        configuration_warning()
         success, results = context.build_cmd(model)
         print('flame build : ', success, results)
 
     elif args.command == 'manage':
-        if (args.action == 'change_model_dir') and (args.path is None):
-            print('Please enter a path where to change the model repository')
-            return
+        configuration_warning()
         manage_cmd(args)
-    
+
     elif args.command == 'config':
         config(args.path)
-
+        change_config_status()
 # import multiprocessing
 
 
