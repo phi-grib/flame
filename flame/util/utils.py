@@ -153,8 +153,7 @@ def set_model_repository(path=None):
         new_path = pathlib.Path(path)
         configuration['model_repository_path'] = str(new_path.resolve())
 
-    with open(get_conf_yml_path(), 'w') as f:
-        yaml.dump(configuration, f, default_flow_style=False)
+    write_config(configuration)
 
 
 def model_repository_path():
