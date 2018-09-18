@@ -116,7 +116,7 @@ def check_repository_path() -> None:
             yaml.dump(config, config_file, default_flow_style=False)
 
         LOG.info('Model repository path updated')
-    
+
     # # finds C: or D:
     # rex = re.compile('^.:')
     # match_windows = rex.findall(str(model_path))
@@ -127,6 +127,12 @@ def check_repository_path() -> None:
     #                      'model repository path:'
     #                      f'"{model_path}".'
     #                      '\nPlease write a correct path manually')
+
+
+def write_config(config: dict) -> None:
+    """Writes the configuration to disk"""
+    with open(get_conf_yml_path(), 'w') as f:
+        yaml.dump(config, f, default_flow_style=False)
 
 
 def set_model_repository(path=None):
