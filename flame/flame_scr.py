@@ -21,8 +21,11 @@
 # along with Flame. If not, see <http://www.gnu.org/licenses/>.
 
 import argparse
+import pathlib
+import sys
 
 from flame.util import utils
+from flame.util import config, change_config_status
 import flame.context as context
 import flame.manage as manage
 
@@ -39,6 +42,24 @@ def sensitivity(y_true, y_pred):
 def specificity(y_true, y_pred):
     tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
     return(tn / (tn+fp))
+
+
+def configuration_warning() -> None:
+    """ Checks if flame has been configured
+     reading the config.yml and checking the config_status flag
+    """
+    config = utils._read_configuration()
+
+    if not isinstance(config['config_status'], bool):
+        raise ValueError('Wrong type found in config status.')
+
+    if config['config_status']:
+        return
+    elif not config['config_status']:
+        print("Flame hasn't been configured yet. "
+              "Model repository may be wrong. "
+              "Please use 'flame -c config' before using flame")
+        sys.exit()  # force exit???
 
 
 def manage_cmd(args):
@@ -70,7 +91,7 @@ def manage_cmd(args):
     elif args.action == 'info':
         success, results = manage.action_info(args.endpoint, version)
 
-    print('flame : ', success, results)
+    print('flame : ', results)
 
 
 def main():
@@ -96,9 +117,13 @@ def main():
 
     parser.add_argument('-c', '--command',
                         action='store',
-                        choices=['predict', 'build', 'manage'],
+                        choices=['predict', 'build', 'manage', 'config'],
                         help='Action type: \'predict\' or \'build\' or \'manage\'',
                         required=True)
+
+    parser.add_argument('-p', '--path',
+                        help='Defines de new path for models repository.',
+                        required=False)
 
     args = parser.parse_args()
 
@@ -114,6 +139,7 @@ def main():
                  'version': version,
                  'infile': args.infile}
 
+        configuration_warning()
         success, results = context.predict_cmd(model)
         print('flame predict : ', success, results)
 
@@ -126,13 +152,19 @@ def main():
         model = {'endpoint': args.endpoint,
                  'infile': args.infile}
 
+        configuration_warning()
         success, results = context.build_cmd(model)
         print('flame build : ', success, results)
 
     elif args.command == 'manage':
+        configuration_warning()
         manage_cmd(args)
 
+    elif args.command == 'config':
+        config(args.path)
+        change_config_status()
 # import multiprocessing
+
 
 if __name__ == '__main__':
     # used to reproduce speed problems in Linux platforms

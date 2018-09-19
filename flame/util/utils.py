@@ -27,6 +27,8 @@ import yaml
 import random
 import string
 import pathlib
+import re
+import warnings
 
 
 def get_conf_yml_path():
@@ -47,24 +49,69 @@ def get_conf_yml_path():
     return os.path.join(source_dir, 'config.yaml')
 
 
-def _read_configuration():
+def _read_configuration() -> dict:
     '''
-    Reads configuration file "config.yaml".
+    Reads configuration file "config.yaml" and checks
+    sanity of model repository path.
+
 
     Returns:
     --------
     dict
     '''
-    conf = {}
     with open(get_conf_yml_path(), 'r') as config_file:
         conf = yaml.load(config_file)
 
-    # if the name of a path starts with '.' we will
-    # prepend the path with the source dir
-    model_abs_path = pathlib.Path(conf['model_repository_path']).resolve()
+    model_path = pathlib.Path(conf['model_repository_path'])
+
+    model_abs_path = pathlib.Path(model_path).resolve()
+
     conf['model_repository_path'] = str(model_abs_path)
-    # print (conf)
     return conf
+
+
+def check_repository_path() -> None:
+    """
+    Checks existence and sanity of modle repository path in config file
+    Use only in flame_scr, it uses user input so it's a CLI tools
+    """
+    print('>>>flame: reading config file...')
+
+    config_path = get_conf_yml_path()
+    with open(config_path, 'r') as config_file:
+        config = yaml.load(config_file)
+
+    print('>>>flame: reading and sanitizing model repository path')
+    model_path = pathlib.Path(config['model_repository_path'])
+    # check if path exists
+    while not model_path.exists():
+        warnings.warn(f"Model repository path '{model_path}'"
+                      " in config file doesn't exists.")
+
+        print("\nEnter a correct model repository path:")
+        user_path = input()
+        model_path = pathlib.Path(user_path)
+
+    config['model_repository_path'] = str(model_path.resolve())
+    with open(config_path, 'w') as config_file:
+        yaml.dump(config, config_file, default_flow_style=False)
+
+    print('>>>flame: Model repository path updated succesfully')
+    # finds C: or D:
+    rex = re.compile('^.:')
+    match_windows = rex.findall(str(model_path))
+
+    # extra check if on linux and path starts with char followed by ':'
+    if sys.platform == 'linux' and match_windows:
+        raise ValueError('Windows path found in config.yml model repository path:'
+                         f'"{model_path}".'
+                         '\nPlease write a correct path.')
+
+
+def write_config(config: dict) -> None:
+    """Writes the configuration to disk"""
+    with open(get_conf_yml_path(), 'w') as f:
+        yaml.dump(config, f, default_flow_style=False)
 
 
 def set_model_repository(path=None):
@@ -91,8 +138,7 @@ def set_model_repository(path=None):
         new_path = pathlib.Path(path)
         configuration['model_repository_path'] = str(new_path.resolve())
 
-    with open(get_conf_yml_path(), 'w') as f:
-        yaml.dump(configuration, f, default_flow_style=False)
+    write_config(configuration)
 
 
 def model_repository_path():
@@ -177,19 +223,22 @@ def intver(raw_version):
 
     try:
         version = int(raw_version)
-    except:
+    except BaseException:
         version = 0
 
     return version
 
 
 def id_generator(size=10, chars=string.ascii_uppercase + string.digits):
-    ''' Return a random ID (used for temp files) with uppercase letters and numbers '''
+    '''
+    Return a random ID (used for temp files) with uppercase letters and numbers
+    '''
 
     return ''.join(random.choice(chars) for _ in range(size))
 
 
-def add_result(results, var, _key, _label, _type, _dimension='objs', _description=None, _relevance=None):
+def add_result(results, var, _key, _label, _type, _dimension='objs',
+               _description=None, _relevance=None):
 
     if 'manifest' not in results:
         results['manifest'] = []

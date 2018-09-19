@@ -53,10 +53,32 @@ Flame must be installed as a regular Python package. From the flame directory ty
 pip install . 
 ```
 
+or
+
+```bash
+python setup.py install
+```
+
 For development, use the -e flag. This will made accesible the latest changes to other components (eg. flame_ws)
 
 ```bash
 pip install -e .
+```
+
+## Configuration
+
+After installation is completed, run the configuration command to configure the directory where flame will place the models.
+
+```bash
+flame -c conf
+```
+
+will use a default directory structure following the XDG specification in GNU/Linux, %APPDATA% in windows and `~/Library/Application Support/flame_models` in Mac OS X.
+
+To specify a custom path use the `-p` parameter:
+
+```bash
+flame -c config -p /my/custom/path
 ```
 
 ## Main features
