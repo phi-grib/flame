@@ -1,6 +1,6 @@
 admin_email: manuel.pastor@upf.edu
 admin_name: Manuel Pastor
-config_status: false
+config_status: False
 homepage: http://phi.upf.edu
-model_repository_path: /home/biel/.local/share/flame_models
+model_repository_path: ~/
 provider: UPF
