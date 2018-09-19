@@ -5,8 +5,8 @@ mol_batch: series                    # series | objects | auto (not implemented!
 
 # input settings
 input_type: molecule                  # molecule | data | ext_data
-normalize_method:                     # null | standardize       
-- standardize
+normalize_method: standardize                     # null | standardize       
+
 
 ionize_method: null                   # null | moka
 convert3D_method: null                # null | ETKDG
