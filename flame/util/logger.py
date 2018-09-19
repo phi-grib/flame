@@ -1,4 +1,6 @@
 import logging
+import appdirs
+from pathlib import Path
 
 try:
     import coloredlogs
@@ -7,7 +9,7 @@ except ImportError as e:
 
 
 def get_logger(name) -> logging.Logger:
-
+    """ inits a logger and returns it"""
     # create logger
     logger = logging.getLogger(name)
     # logger.setLevel(logging.DEBUG)
@@ -17,7 +19,7 @@ def get_logger(name) -> logging.Logger:
         '[%(asctime)s] - %(name)s - %(levelname)s - %(message)s')
     # datefmt='%d-%m-%Y %I:%M %p')
 
-    # create console handler and set level to debug
+    # create console handler
     # if not already created
 
     if logger.handlers:
