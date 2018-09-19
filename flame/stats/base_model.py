@@ -490,11 +490,8 @@ class BaseEstimator:
             Xb = Xb[:, self.variable_mask]
 
         if self.autoscale:
-            print (Xb.shape)
-
             Xb = Xb-self.mux
             Xb = Xb*self.wgx
-            print (Xb.shape)
 
             Xb = self.scaler.transform(Xb)
 
