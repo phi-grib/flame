@@ -13,6 +13,7 @@ convert3D_method: null                # null | ETKDG
 computeMD_method:                     # RDKit_properties | RDKit_md | padel | custom
 - padel
 
+
 ext_input: false                      # external input source TRUE
 model_set:                            # list of models used for producing input
 - endpoint: MAGENTA                   # - model name
@@ -22,7 +23,7 @@ model_set:                            # list of models used for producing input
 
 # Output 
 output_format:                        # JSON | TSV  (dump results to output.tsv and errors to error.tsv)
-- JSON      
+- JSON   
          
 output_md: true                      # if true dump the MD generated to 'output_md.tsv'
 
@@ -39,16 +40,21 @@ TSV_objnames: true                    # true if the object names are in the firs
 TSV_varnames: true                    # true if the variable names are in the first row
 
 # modeling settings
+
 modelingToolkit: internal             # internal | R | KNIME
-model: RF                             # RF | SVM
-modelAutoscaling: false               # true | false
+model: PLSR                           # RF | SVM | GNB | PLSR | PLSDA
+modelAutoscaling: true                # true | false
 quantitative: true
 tune: false
+imbalance: null                       # simple_subsampling
+feature_selection: null               # Kbest | null
+feature_number: auto                  # auto: Sets max features to 10% of entries | Number
 
 ModelValidationCV: loo
 ModelValidationLC: false
 ModelValidationN: 2
 ModelValidationP: 1
+
 
 # SVM settings
 SVM_parameters:
@@ -93,8 +99,8 @@ RF_parameters:
   class_weight: balanced
   max_depth: null
   max_features: sqrt
-  n_estimators: 200
-  n_jobs: -1
+  n_estimators: 250
+  n_jobs: 1
   oob_score: true
   random_state: 46
 
@@ -105,14 +111,66 @@ RF_optimize:
   max_features:
   - sqrt
   - log2
-  n_estimators: !!python/object/apply:builtins.range
+  n_estimators:
+  - 25
   - 50
-  - 200
-  - 50
+  - 75
   oob_score:
   - true
   random_state:
   - 46
+
+#GNB settings
+GNB_parameters:
+  priors: null
+
+#PLSR settings
+PLSR_parameters:
+  scale: false
+  tol: 0.000006
+  n_components: 3
+  # Manual optimization returns the MCC for the diffent
+  # number of latent variables considered in 
+  # n_components (below) with the best threshold for
+  # optimum MCC. auto uses sk-learn gridsearch
+  # with the same paramters.
+  optimize: manual   # manual | auto  
+
+PLSR_optimize:
+  n_components:
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+
+#PLSDA settings
+PLSDA_parameters:
+  scale: false
+  tol: 0.000006
+  n_components: 6
+  threshold: 0.4
+  # Manual optimization returns the MCC for the diffent
+  # number of latent variables considered in 
+  # n_components (below) with the best threshold for
+  # optimum MCC. auto uses sk-learn gridsearch
+  # with the same paramters.
+  optimize: manual   # manual | auto  
+
+PLSDA_optimize:
+  n_components:
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  threshold:
+  - 0.6
+  - 0.4
+  - 0.5
 
 # conformal predictor settings
 conformal: true

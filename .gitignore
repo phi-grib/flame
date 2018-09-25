@@ -107,7 +107,7 @@ ENV/
 .vscode/
 
 # Molecules
-*.sdf
+#*.sdf
 mols
 
 # Pickle files and models
@@ -121,3 +121,12 @@ mols
 flame/models/CACO2/dev/data.pkl
 *.tsv
 
+# compressed files
+*.tgz
+
+#pytest
+.pytest_cache/
+
+#config file
+flame/config.yaml
+flame/config.yml

@@ -1,4 +1,4 @@
-name: flame
+name: flame_dev
 channels:
   - rdkit
   - defaults
@@ -20,6 +20,8 @@ dependencies:
   - statsmodels=0.8.0
   - rdkit=2017.09.3.0
   - pyyaml
+  - requests
+  - pytest
   - pip:
-     - "https://github.com/flatkinson/standardiser/archive/master.zip"
-
+     - "https://github.com/phi-grib/standardiser/archive/master.zip"
+     - "https://github.com/josecarlosgomezt/nonconformist/archive/master.zip"

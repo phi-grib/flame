@@ -112,6 +112,11 @@ def plot_learning_curve(estimator, title, X, y, ylim=None, cv=None,
     n_jobs : integer, optional
         Number of jobs to run in parallel (default 1).
     """
+
+    # workaround to issue with multithreading, n_jobs must be set to 1 to avoid very slow
+    # processing in Windows
+    n_jobs = 1
+
     plt.figure()
     plt.title(title)
     if ylim is not None:
@@ -205,7 +210,7 @@ def CF_QualVal(X, Y, estimator, conformalSignificance):
     print('Error rate: {}'.format(class_mean_errors(predictions,
                                                     Y,
                                                     0.15)))
-    print(class_one_c(predictions, Y, 0.15))
+    print('Class one: ', class_one_c(predictions, Y, 0.15))
     return icp
     # icp_cv = RegIcpCvHelper(icp)
 

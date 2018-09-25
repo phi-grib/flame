@@ -1,5 +1,6 @@
-model_repository_path : /opt/models
-provider : UPF
-homepage : http://phi.upf.edu
-admin_name : Manuel Pastor
-admin_email : manuel.pastor@upf.edu
+admin_email: manuel.pastor@upf.edu
+admin_name: Manuel Pastor
+config_status: False
+homepage: http://phi.upf.edu
+model_repository_path: ~/
+provider: UPF

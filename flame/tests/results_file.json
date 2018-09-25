@@ -1,0 +1,157 @@
+{
+    "manifest": [
+        {
+            "key": "obj_num",
+            "label": "Num mol",
+            "type": "method",
+            "dimension": "single",
+            "description": "Number of molecules present in the input file",
+            "relevance": null
+        },
+        {
+            "key": "obj_nam",
+            "label": "Mol name",
+            "type": "label",
+            "dimension": "objs",
+            "description": "Name of the molecule, as present in the input file",
+            "relevance": null
+        },
+        {
+            "key": "SMILES",
+            "label": "SMILES",
+            "type": "smiles",
+            "dimension": "objs",
+            "description": "Structure of the molecule in SMILES format",
+            "relevance": null
+        },
+        {
+            "key": "ymatrix",
+            "label": "Activity",
+            "type": "decoration",
+            "dimension": "objs",
+            "description": "Biological anotation to be predicted by the model",
+            "relevance": null
+        },
+        {
+            "key": "xmatrix",
+            "label": "X matrix",
+            "type": "method",
+            "dimension": "vars",
+            "description": "Molecular descriptors",
+            "relevance": null
+        },
+        {
+            "key": "var_nam",
+            "label": "Var names",
+            "type": "method",
+            "dimension": "vars",
+            "description": "Names of the X variables",
+            "relevance": null
+        },
+        {
+            "key": "values",
+            "label": "Prediction",
+            "type": "result",
+            "dimension": "objs",
+            "description": "Results of the prediction",
+            "relevance": "main"
+        },
+        {
+            "key": "lower_limit",
+            "label": "Lower limit",
+            "type": "confidence",
+            "dimension": "objs",
+            "description": "Lower limit of the conformal prediction",
+            "relevance": null
+        },
+        {
+            "key": "upper_limit",
+            "label": "Upper limit",
+            "type": "confidence",
+            "dimension": "objs",
+            "description": "Upper limit of the conformal prediction",
+            "relevance": null
+        }
+    ],
+    "meta": {
+        "main": [
+            "values"
+        ],
+        "endpoint": "TEST_NUMS",
+        "version": 0
+    },
+    "obj_num": 10,
+    "obj_nam": [
+        "furosemide",
+        "guanabenz",
+        "fleroxacin",
+        "mibefradil",
+        "verapamil",
+        "guanoxan",
+        "saquinavir",
+        "lidocaine",
+        "enalapril",
+        "theophylline"
+    ],
+    "SMILES": [
+        "NS(=O)(=O)c1cc(C(=O)O)c(NCc2ccco2)cc1Cl",
+        "N=C(N)NN=Cc1c(Cl)cccc1Cl",
+        "CN1CCN(c2c(F)cc3c(=O)c(C(=O)O)cn(CCF)c3c2F)CC1",
+        "COCC(=O)OC1(CCN(C)CCCc2nc3ccccc3[nH]2)CCc2cc(F)ccc2C1C(C)C",
+        "COc1ccc(CCN(C)CCCC(C#N)(c2ccc(OC)c(OC)c2)C(C)C)cc1OC",
+        "N=C(N)NCC1COc2ccccc2O1",
+        "CC(C)(C)NC(=O)C1CC2CCCCC2CN1CC(O)C(Cc1ccccc1)NC(=O)C(CC(N)=O)NC(=O)c1ccc2ccccc2n1",
+        "CCN(CC)CC(=O)Nc1c(C)cccc1C",
+        "CCOC(=O)C(CCc1ccccc1)NC(C)C(=O)N1CCCC1C(=O)O",
+        "Cn1c(=O)c2nc[nH]c2n(C)c1=O"
+    ],
+    "ymatrix": [
+        -6.5,
+        -4.5,
+        -4.81,
+        -4.87,
+        -4.58,
+        -4.71,
+        -6.26,
+        -4.21,
+        -5.64,
+        -4.35
+    ],
+    "origin": "apply",
+    "values": [
+        -5.0152323996857096,
+        -4.585871523241017,
+        -4.958716320639386,
+        -5.065604188413199,
+        -4.71084984194043,
+        -4.722899525559162,
+        -5.974749999999994,
+        -4.601504610000285,
+        -5.039374999999995,
+        -4.713643059553197
+    ],
+    "lower_limit": [
+        -7.012664799371414,
+        -5.825581879819422,
+        -6.285522464235434,
+        -6.324189743804816,
+        -6.667853349059367,
+        -5.995284377448124,
+        -13.403998967293472,
+        -6.501293854139918,
+        -8.365697815958093,
+        -6.290334552061355
+    ],
+    "upper_limit": [
+        -3.0178000000000047,
+        -3.346161166662611,
+        -3.6319101770433386,
+        -3.8070186330215834,
+        -2.7538463348214925,
+        -3.4505146736701997,
+        1.4544989672934836,
+        -2.701715365860651,
+        -1.7130521840418977,
+        -3.1369515670450396
+    ]
+}
