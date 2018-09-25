@@ -1,15 +1,22 @@
 import logging
-import appdirs
+from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
+import appdirs
+
+
 try:
-    import coloredlogs
+    import coloredlogs  # add color in the future with this
 except ImportError as e:
     pass
 
 
 def get_logger(name) -> logging.Logger:
     """ inits a logger and returns it"""
+
+    from flame.util.utils import model_repository_path
+    LOG_FILENAME = Path(model_repository_path()) / "flame_logs.log"
+
     # create logger
     logger = logging.getLogger(name)
     # logger.setLevel(logging.DEBUG)
@@ -22,17 +29,25 @@ def get_logger(name) -> logging.Logger:
     # create console handler
     # if not already created
 
-    if logger.handlers:
+    fh = RotatingFileHandler(LOG_FILENAME)
+    fh.setLevel('DEBUG')
+    fh.setFormatter(formatter)
+    logger.addHandler(fh)
+
+    if len(logger.handlers) > 1:
+        # take the second handler 
         ch = logger.handlers[-1]
     else:
         ch = logging.StreamHandler()
-        # ch.setLevel(logging.DEBUG)
+
+    ch.setLevel('INFO')
 
     # add formatter to ch
     ch.setFormatter(formatter)
+
     # add ch to logger
     logger.addHandler(ch)
-    logger.propagate = False
+    # logger.propagate = False
 
     return logger
 
