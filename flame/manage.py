@@ -51,7 +51,7 @@ def action_new(model):
 
     if not model:
         return False, 'empty model label'
-    
+
     # Model directory with /dev (default) level
     ndir = pathlib.Path(utils.model_tree_path(model)) / 'dev'
 
@@ -72,7 +72,7 @@ def action_new(model):
         src_path = wkd / 'children' / filename
         dst_path = ndir / filename
         shutil.copy(src_path, dst_path)
-    
+
     LOG.debug(f'copied class skeletons from {src_path} to {dst_path}')
     # copy parameter yml file
     params_path = wkd / 'children/parameters.yaml'
@@ -93,6 +93,7 @@ def action_kill(model):
     ndir = utils.model_tree_path(model)
 
     if not os.path.isdir(ndir):
+        LOG.error(f'Model {model} not found')
         return False, 'model not found'
 
     shutil.rmtree(ndir, ignore_errors=True)
@@ -113,15 +114,11 @@ def action_publish(model):
     bdir = utils.model_tree_path(model)
 
     if not os.path.isdir(bdir):
+        LOG.error(f'Model {model} not found')
         return False, 'model not found'
 
-    v = None
+    # gets version number
     v = [int(x[-6:]) for x in os.listdir(bdir) if x.startswith("ver")]
-
-    # try:
-    #     v = [int(x[-6:]) for x in os.listdir(bdir) if x.startswith("ver")]
-    # except:
-    #     pass
 
     if not v:
         max_version = 0
@@ -131,10 +128,12 @@ def action_publish(model):
     new_dir = bdir+'/ver%0.6d' % (max_version+1)
 
     if os.path.isdir(new_dir):
+        LOG.error(f'Versin {v} of model {model} not found')
         return False, 'version already exists'
 
-    shutil.copytree(bdir+'/dev', new_dir)
-
+    src_path = bdir+'/dev'
+    shutil.copytree(src_path, new_dir)
+    LOG.debug(f'New model version created from {src_path} to {new_dir}')
     return True, 'development version published as version '+str(max_version+1)
 
 
@@ -155,7 +154,7 @@ def action_remove(model, version):
         return False, 'version not found'
 
     shutil.rmtree(rdir, ignore_errors=True)
-
+    LOG.debug(f'version {version} of model {model} has removed')
     return True, 'version '+str(version)+' of model '+model+' removed'
 
 
@@ -335,7 +334,7 @@ def action_info(model, version=None, output='text'):
         return True, 'model informed OK'
 
     new_results = []
-    
+
     # results must be checked to avoid numpy elements not JSON serializable
     for i in results:
         if 'numpy.int64' in str(type(i[2])):
