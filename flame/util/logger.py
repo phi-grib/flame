@@ -4,51 +4,63 @@ from pathlib import Path
 
 import appdirs
 
-
 try:
     import coloredlogs  # add color in the future with this
 except ImportError as e:
     pass
 
 
+def get_log_file() -> Path:
+    log_filename_path = appdirs.user_log_dir(appname='flame')
+    log_filename_path = Path(log_filename_path)
+    if not log_filename_path.exists():
+        log_filename_path.mkdir(parents=True)
+    log_filename = log_filename_path / 'flame.log'
+
+    # check if exists to not erase current file
+    if not log_filename.exists():    
+        log_filename.touch()
+    return log_filename
+
+
 def get_logger(name) -> logging.Logger:
-    """ inits a logger and returns it"""
-
-    from flame.util.utils import model_repository_path
-    LOG_FILENAME = Path(model_repository_path()) / "flame_logs.log"
-
+    """ inits a logger and adds the handlers.
+    If the logger is already created doesn't adds new handlers
+    since those are set at interpreter level and already exists."""
+    # Create the log file
+    log_file = get_log_file()
     # create logger
     logger = logging.getLogger(name)
-    # logger.setLevel(logging.DEBUG)
+    # set base logger level to DEBUG but fine tu the handlers
+    # for custom level
+    logger.setLevel(logging.DEBUG)
 
     # create formatter
     formatter = logging.Formatter(
         '[%(asctime)s] - %(name)s - %(levelname)s - %(message)s')
     # datefmt='%d-%m-%Y %I:%M %p')
 
-    # create console handler
+    # create console and file handler
     # if not already created
+    if not logger.handlers:
+        # 512 Kb file log
+        fh = RotatingFileHandler(log_file, maxBytes=524_288, backupCount=5)
+        fh.setLevel('DEBUG')
+        # add formatter to handler
+        fh.setFormatter(formatter)
+        # add handler to logger
+        logger.addHandler(fh)
 
-    fh = RotatingFileHandler(LOG_FILENAME)
-    fh.setLevel('DEBUG')
-    fh.setFormatter(formatter)
-    logger.addHandler(fh)
-
-    if len(logger.handlers) > 1:
-        # take the second handler 
-        ch = logger.handlers[-1]
-    else:
         ch = logging.StreamHandler()
+        ch.setLevel('INFO')
+        ch.setFormatter(formatter)
+        logger.addHandler(ch)
 
-    ch.setLevel('INFO')
-
-    # add formatter to ch
-    ch.setFormatter(formatter)
-
-    # add ch to logger
-    logger.addHandler(ch)
+    # if there already handlers just return the logger
+    # since its already configured
+    else:
+        return logger
     # logger.propagate = False
-
     return logger
 
 

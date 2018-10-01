@@ -328,7 +328,7 @@ def action_info(model, version=None, output='text'):
         return True, 'model informed OK'
 
     new_results = []
-
+    
     # results must be checked to avoid numpy elements not JSON serializable
     for i in results:
         if 'numpy.int64' in str(type(i[2])):

@@ -99,6 +99,7 @@ def manage_cmd(args):
         success, results = manage.action_info(args.endpoint, version)
 
     print('flame : ', results)
+    LOG.info(results)
 
 
 def main():
@@ -128,8 +129,8 @@ def main():
                         help='Action type: \'predict\' or \'build\' or \'manage\'',
                         required=True)
 
-    parser.add_argument('-log', '--loglevel',
-                        help='Logger level of verbosity',)
+    # parser.add_argument('-log', '--loglevel',
+    #                     help='Logger level of verbosity',)
 
     parser.add_argument('-p', '--path',
                         help='Defines de new path for models repository.',
@@ -141,11 +142,11 @@ def main():
     # another way around would be create a handler with the level
     # and append it to the global instance of logger
 
-    if args.loglevel:
-        numeric_level = getattr(logging, args.loglevel.upper(), None)
-        if not isinstance(numeric_level, int):
-            raise ValueError('Invalid log level: {}'.format(args.loglevel))
-        logging.basicConfig(level=numeric_level)
+    # if args.loglevel:
+    #     numeric_level = getattr(logging, args.loglevel.upper(), None)
+    #     if not isinstance(numeric_level, int):
+    #         raise ValueError('Invalid log level: {}'.format(args.loglevel))
+    #     logging.basicConfig(level=numeric_level)
 
     if args.command == 'predict':
 
