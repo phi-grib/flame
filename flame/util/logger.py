@@ -18,7 +18,7 @@ def get_log_file() -> Path:
     log_filename = log_filename_path / 'flame.log'
 
     # check if exists to not erase current file
-    if not log_filename.exists():    
+    if not log_filename.exists():
         log_filename.touch()
     return log_filename
 
@@ -35,9 +35,15 @@ def get_logger(name) -> logging.Logger:
     # for custom level
     logger.setLevel(logging.DEBUG)
 
-    # create formatter
-    formatter = logging.Formatter(
-        '[%(asctime)s] - %(name)s - %(levelname)s - %(message)s')
+    # create formatter fdor file handler (more explicit)
+    file_formatter = logging.Formatter(
+        '[%(asctime)s] - %(name)s - %(levelname)s - %(message)s'
+    )
+
+    # formater for stream handler (less info)
+    stdout_formatter = logging.Formatter(
+        '%(levelname)s - %(message)s'
+    )
     # datefmt='%d-%m-%Y %I:%M %p')
 
     # create console and file handler
@@ -47,13 +53,13 @@ def get_logger(name) -> logging.Logger:
         fh = RotatingFileHandler(log_file, maxBytes=524_288, backupCount=5)
         fh.setLevel('DEBUG')
         # add formatter to handler
-        fh.setFormatter(formatter)
+        fh.setFormatter(file_formatter)
         # add handler to logger
         logger.addHandler(fh)
 
         ch = logging.StreamHandler()
         ch.setLevel('INFO')
-        ch.setFormatter(formatter)
+        ch.setFormatter(stdout_formatter)
         logger.addHandler(ch)
 
     # if there already handlers just return the logger

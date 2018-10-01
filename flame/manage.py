@@ -20,7 +20,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Flame. If not, see <http://www.gnu.org/licenses/>.
 
-from flame.util import utils, get_logger
 import os
 import sys
 import shutil
@@ -29,6 +28,7 @@ import json
 import pickle
 import pathlib
 
+from flame.util import utils, get_logger
 
 LOG = get_logger(__name__)
 
@@ -51,25 +51,32 @@ def action_new(model):
 
     if not model:
         return False, 'empty model label'
-
-    ndir = utils.model_tree_path(model)
+    
+    # Model directory with /dev (default) level
+    ndir = pathlib.Path(utils.model_tree_path(model)) / 'dev'
 
     # check if there is already a tree for this endpoint
-    if os.path.isdir(ndir):
-        LOG.error(f'Endpoint {model} already exists')
+    if ndir.exists():
+        LOG.warning(f'Endpoint {model} already exists')
         return False, 'This endpoint already exists'
 
-    os.mkdir(ndir)
+    ndir.mkdir(parents=True)
+    LOG.debug(f'{ndir} created')
 
-    ndir += '/dev'
-    os.mkdir(ndir)
-
-    wkd = os.path.dirname(os.path.abspath(__file__))
+    # Copy classes skeletons to ndir
+    wkd = pathlib.Path(os.path.dirname(os.path.abspath(__file__)))
     children_names = ['apply', 'idata', 'odata', 'learn']
+
     for cname in children_names:
-        shutil.copy(wkd+'/children/'+cname+'_child.py',
-                    ndir+'/'+cname+'_child.py')
-    shutil.copy(wkd+'/children/parameters.yaml', ndir)
+        filename = cname + '_child.py'
+        src_path = wkd / 'children' / filename
+        dst_path = ndir / filename
+        shutil.copy(src_path, dst_path)
+    
+    LOG.debug(f'copied class skeletons from {src_path} to {dst_path}')
+    # copy parameter yml file
+    params_path = wkd / 'children/parameters.yaml'
+    shutil.copy(params_path, ndir)
 
     LOG.info(f'New endpoint {model} created')
     return True, 'new endpoint '+model+' created'

@@ -99,7 +99,6 @@ def manage_cmd(args):
         success, results = manage.action_info(args.endpoint, version)
 
     print('flame : ', results)
-    LOG.info(results)
 
 
 def main():
