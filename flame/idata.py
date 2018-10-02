@@ -38,14 +38,17 @@ import flame.chem.sdfileutils as sdfu
 import flame.chem.compute_md as computeMD
 import flame.chem.convert_3d as convert3D
 
-from flame.util import utils
+from flame.util import utils, get_logger
+
+LOG = get_logger(__name__)
 
 
 class Idata:
 
     def __init__(self, parameters, input_source):
 
-        self.parameters = parameters      # control object defining the processing
+        # control object defining the processing
+        self.parameters = parameters
         # path for temp files (fallback default)
         self.dest_path = '.'
 
@@ -57,7 +60,9 @@ class Idata:
                      }
         }    # create empty context index ('manifest')
 
+        # why double checking???
         if ('ext_input' in parameters) and (parameters['ext_input']):
+            LOG.debug('"ext_input" found in parameters')
             self.idata = input_source
             self.ifile = None
             randomName = 'flame-'+utils.id_generator()
@@ -79,7 +84,10 @@ class Idata:
 
         try:
             suppl = Chem.SDMolSupplier(ifile)
+            LOG.debug(f'mol supplier created from {ifile}')
         except Exception as e:
+            LOG.error('Unable to create mol supplier with the exception: '
+                      f'{e}')
             self.results['error'] = f'unable to open {ifile}. {e}'
             return
 
@@ -95,6 +103,7 @@ class Idata:
             # Do not even try to process molecules not recognised by RDKit.
             # They will be removed at the normalization step
             if mol is None:
+                LOG.error(f'Unable to process molecule #{obj_num+1}')
                 print('ERROR: (@extractInformaton) Unable to process molecule #', str(
                     obj_num+1), 'in file ' + ifile)
                 success_list.append(False)
@@ -110,7 +119,8 @@ class Idata:
                 activity_str = mol.GetProp(self.parameters['SDFile_activity'])
                 try:
                     activity_num = float(activity_str)
-                except:
+                except Exception as e:
+                    LOG.error(f'{e} while casting activity to float')
                     activity_num = None
 
             if mol.HasProp(self.parameters['SDFile_experimental']):
@@ -119,9 +129,11 @@ class Idata:
             # generate a SMILES
             try:
                 sml = Chem.MolToSmiles(mol)
-            except:
+            except Exception as e:
+                LOG.error(f'{e} while converting mol to smiles')
                 sml = None
 
+            # it's not clear what this is
             obj_nam.append(name)
             obj_bio.append(activity_num)
             obj_exp.append(exp)
@@ -130,12 +142,18 @@ class Idata:
             success_list.append(True)
             obj_num += 1
 
-        utils.add_result(self.results, obj_num, 'obj_num', 'Num mol', 'method',
-                         'single', 'Number of molecules present in the input file')
-        utils.add_result(self.results, obj_nam, 'obj_nam', 'Mol name', 'label',
-                         'objs', 'Name of the molecule, as present in the input file')
+        utils.add_result(self.results, obj_num, 'obj_num', 'Num mol',
+                         'method', 'single',
+                         'Number of molecules present in the input file')
+        utils.add_result(self.results, obj_nam, 'obj_nam', 'Mol name',
+                         'label', 'objs',
+                         'Name of the molecule, as present in the input file')
         utils.add_result(self.results, obj_sml, 'SMILES', 'SMILES',
-                         'smiles', 'objs', 'Structure of the molecule in SMILES format')
+                         'smiles', 'objs',
+                         'Structure of the molecule in SMILES format')
+
+        LOG.debug(f'processed {obj_num} molecules'
+                  f' from a supplier of {len(suppl)}')
 
         if not utils.is_empty(obj_bio):
             utils.add_result(self.results, np.array(obj_bio, dtype=np.float64),
@@ -172,7 +190,10 @@ class Idata:
 
         try:
             suppl = Chem.SDMolSupplier(ifile)
-        except:
+            LOG.debug(f'mol supplier created from {ifile}')
+        except Exception as e:
+            LOG.error('Unable to create mol supplier with the exception: '
+                      f'{e}')
             return False, 'Error at processing input file for standardizing structures'
 
         success = True
@@ -187,23 +208,37 @@ class Idata:
                 # molecule not recognised by RDKit
                 if m is None:
                     print('ERROR: (@normalize) Unable to process molecule #',
-                        str(mcount+1), 'in file ' + ifile)
+                          str(mcount+1), 'in file ' + ifile)
 
                     continue
+
+                name = sdfu.getName(m,
+                                    count=mcount,
+                                    field=self.parameters['SDFile_name'],
+                                    suppl=suppl)
 
                 # if standardize
                 if 'standardize' in method:
                     try:
                         parent = standardise.run(Chem.MolToMolBlock(m))
                     except standardise.StandardiseException as e:
+                        LOG.error(f'standardize exceptio: {e}'
+                                  f' when processing mol #{mcount} {name}')
+
                         if e.name == "no_non_salt":
                             parent = Chem.MolToMolBlock(m)
+                            LOG.debug(f'skiped standardize for mol'
+                                      f' #{mcount} {name}')
+
                         else:
                             return False, e.name
-                    except:
-                        return False, "Unknown standardiser error"
+                    except Exception as e:
+                        LOG.error(f'exception {e} while standardizing')
+                        return False, f"Unknown standardiser error {e}"
 
                 else:
+                    LOG.error(
+                        f'normalize method {method} not recognized. Skipping normalization.')
                     print('ERROR: (@normalize) method ' +
                           method+' not recognized')
                     parent = Chem.MolToMolBlock(m)
@@ -657,7 +692,7 @@ class Idata:
                 self.results['error'] = 'unknown error in molecule inform'
                 return
 
-        # check if a molecule informed did not 
+        # check if a molecule informed did not
         # succeed to complete MD generation
         for i, j in zip(success_inform, success_workflow):
             if i and not j:
