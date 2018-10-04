@@ -126,3 +126,7 @@ flame/models/CACO2/dev/data.pkl
 
 #pytest
 .pytest_cache/
+
+#config file
+flame/config.yaml
+flame/config.yml
