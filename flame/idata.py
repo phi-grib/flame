@@ -262,7 +262,7 @@ class Idata:
         Adjust the ionization status of the molecular structure,
         using a given pH.
         '''
-        raise NotImplementedError
+        
         if not method:
             return True, ifile
 
@@ -334,7 +334,7 @@ class Idata:
         if not imethod:
             LOG.error(f'method not member of available method: {registered_methods.keys()}')
             raise ValueError('molecular descriptor method not availablem')
-            
+
         for imethod in registered_methods:
             if imethod[0] in method:
 
