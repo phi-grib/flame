@@ -115,8 +115,9 @@ class Idata:
                 except Exception as e:
                     activity_num = None
             else:
-                raise ValueError(f'SDFile_activity prop "{self.parameters['SDFile_activity']}"'
-                                 ' not found in input sdf')
+                raise ValueError(f"SDFile_activity prop label '{self.parameters['SDFile_activity']}'"
+                                 " not found in input SDF. Change SDFile_activity param in parameter.yml"
+                                 " to match the target prop in SDF")
 
             if mol.HasProp(self.parameters['SDFile_experimental']):
                 exp = mol.GetProp(self.parameters['SDFile_experimental'])
