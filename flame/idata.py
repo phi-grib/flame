@@ -106,12 +106,17 @@ class Idata:
             activity_num = None
             exp = None
 
+            # FIXIT defence when prop is not in parameter file
             if mol.HasProp(self.parameters['SDFile_activity']):
                 activity_str = mol.GetProp(self.parameters['SDFile_activity'])
-                try:
+                try: 
+                    # cast val to float to be sure it is num
                     activity_num = float(activity_str)
-                except:
+                except Exception as e:
                     activity_num = None
+            else:
+                raise ValueError(f'SDFile_activity prop "{self.parameters['SDFile_activity']}"'
+                                 ' not found in input sdf')
 
             if mol.HasProp(self.parameters['SDFile_experimental']):
                 exp = mol.GetProp(self.parameters['SDFile_experimental'])
