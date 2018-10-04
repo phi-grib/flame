@@ -325,15 +325,15 @@ class Idata:
 
         is_empty = True
 
-        registered_methods = dict([('RDKit_properties', computeMD._RDKit_properties),
+        registered_methods = [('RDKit_properties', computeMD._RDKit_properties),
                               ('RDKit_md', computeMD._RDKit_descriptors),
                               ('padel', computeMD._padel_descriptors),
-                              ('custom', self.computeMD_custom)])
+                              ('custom', self.computeMD_custom)]
 
-        imethod = registered_methods.get(method, None)
-        if not imethod:
-            LOG.error(f'method not member of available method: {registered_methods.keys()}')
-            raise ValueError('molecular descriptor method not availablem')
+        # imethod = registered_methods.get(method[0], None)
+        # if not imethod:
+        #     LOG.error(f'method not member of available method: {registered_methods.keys()}')
+        #     raise ValueError('molecular descriptor method not availablem')
 
         for imethod in registered_methods:
             if imethod[0] in method:
