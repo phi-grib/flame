@@ -25,17 +25,24 @@ import numpy as np
 from rdkit import Chem
 from rdkit.Chem import AllChem
 
+from flame.util import get_logger
 
-def _ETKDG(ifile):
+LOG = get_logger(__name__)
+
+
+def _ETKDG(ifile) -> (bool, str):
     """ Assigns 3D structures to the molecular structures provided as input.
     """
+    LOG.info('Converting to ETKDG 3D structures')
     try:
         suppl = Chem.SDMolSupplier(ifile)
     except:
+        # not true, UNABLE TO CREATE SUPPLIER
         return False, 'unable to compute 3D structures'
 
     filename, fileext = os.path.splitext(ifile)
     ofile = filename + '_3d' + fileext
+    LOG.debug(f'3D stucture ouput file is: {ofile}')
 
     num_obj = 0
     with open(ofile, 'w') as fo:

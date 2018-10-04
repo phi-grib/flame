@@ -187,7 +187,7 @@ class Idata:
 
         if not method:
             return True, ifile
-
+        LOG.info('Starting normalization...')
         try:
             suppl = Chem.SDMolSupplier(ifile)
             LOG.debug(f'mol supplier created from {ifile}')
@@ -217,7 +217,8 @@ class Idata:
                                     field=self.parameters['SDFile_name'],
                                     suppl=suppl)
 
-                # if standardize
+                # this should be out of the loop
+                # since all the molecules will have the same method
                 if 'standardize' in method:
                     try:
                         parent = standardise.run(Chem.MolToMolBlock(m))
@@ -261,7 +262,7 @@ class Idata:
         Adjust the ionization status of the molecular structure,
         using a given pH.
         '''
-
+        raise NotImplementedError
         if not method:
             return True, ifile
 
@@ -303,10 +304,10 @@ class Idata:
 
         example:    return True, (xmatrix, md_nam, success_list)
         '''
-
+        raise NotImplementedError
         return False, 'not implemented'
 
-    def computeMD(self, ifile, method):
+    def computeMD(self, ifile, method) -> (np.array, list):
         '''
         Uses the molecular structures for computing an array
         of values (int or float).
@@ -317,18 +318,23 @@ class Idata:
         [1] list of variable names (str)
 
         '''
-
+        LOG.info(f'Computing molecular descriptors with method {method}...')
         combined_md = None
         combined_nm = None
         combined_sc = None
 
         is_empty = True
 
-        registered_methods = [('RDKit_properties', computeMD._RDKit_properties),
+        registered_methods = dict([('RDKit_properties', computeMD._RDKit_properties),
                               ('RDKit_md', computeMD._RDKit_descriptors),
                               ('padel', computeMD._padel_descriptors),
-                              ('custom', self.computeMD_custom)]
+                              ('custom', self.computeMD_custom)])
 
+        imethod = registered_methods.get(method, None)
+        if not imethod:
+            LOG.error(f'method not member of available method: {registered_methods.keys()}')
+            raise ValueError('molecular descriptor method not availablem')
+            
         for imethod in registered_methods:
             if imethod[0] in method:
 
@@ -345,7 +351,7 @@ class Idata:
 
                     shape = np.shape(combined_md)
 
-                    is_empty = False
+                    is_empty = False  
 
                 else:  # append laterally
 
