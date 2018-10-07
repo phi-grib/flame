@@ -122,7 +122,7 @@ class Idata:
                     # cast val to float to be sure it is num
                     activity_num = float(activity_str)
                 except Exception as e:
-                    LOG.error(f'{e} while casting activity to float')
+                    LOG.error(f'while casting activity to float an exception has ocurred: {e}')
                     activity_num = None
             else:
                 raise ValueError(f"SDFile_activity prop label '{self.parameters['SDFile_activity']}'"
@@ -136,7 +136,7 @@ class Idata:
             try:
                 sml = Chem.MolToSmiles(mol)
             except Exception as e:
-                LOG.error(f'{e} while converting mol to smiles')
+                LOG.error(f'while converting mol to smiles an exception has ocurred: {e}')
                 sml = None
 
             # it's not clear what this is
@@ -159,7 +159,7 @@ class Idata:
                          'Structure of the molecule in SMILES format')
 
         LOG.debug(f'processed {obj_num} molecules'
-                  f' from a supplier of {len(suppl)}')
+                  f' from a supplier of {len(suppl)} without issues')
 
         if not utils.is_empty(obj_bio):
             utils.add_result(self.results, np.array(obj_bio, dtype=np.float64),
@@ -205,7 +205,7 @@ class Idata:
         success = True
         filename, fileext = os.path.splitext(ifile)
         ofile = filename + '_std' + fileext
-
+        LOG.debug(f'writing standarized molecules to {ofile}')
         with open(ofile, 'w') as fo:
             mcount = 0
             # merror = 0
@@ -213,6 +213,7 @@ class Idata:
 
                 # molecule not recognised by RDKit
                 if m is None:
+                    LOG.error(f'Unable to process molecule #{mcount+1} in {ifile}')
                     print('ERROR: (@normalize) Unable to process molecule #',
                           str(mcount+1), 'in file ' + ifile)
 
@@ -244,10 +245,8 @@ class Idata:
                         return False, f"Unknown standardiser error {e}"
 
                 else:
-                    LOG.error(
-                        f'normalize method {method} not recognized. Skipping normalization.')
-                    print('ERROR: (@normalize) method ' +
-                          method+' not recognized')
+                    LOG.error(f'normalize method {method} not recognized.' 
+                              'Skipping normalization.')
                     parent = Chem.MolToMolBlock(m)
 
                 # in any case, write parent plus internal ID (flameID)
@@ -292,6 +291,7 @@ class Idata:
         success = False
         results = 'not converted to 3D'
 
+        LOG.info('converting structures to 3D with method ETKDG...')
         if 'ETKDG' in method:
             success, results = convert3D._ETKDG(ifile)
 
@@ -323,8 +323,9 @@ class Idata:
         [0] xmatrix (nparray np.float64)
         [1] list of variable names (str)
 
+        FIXIT
         '''
-        LOG.info(f'Computing molecular descriptors with method {method}...')
+        LOG.info(f'Computing molecular descriptors with methods {method}...')
         combined_md = None
         combined_nm = None
         combined_sc = None
@@ -341,6 +342,7 @@ class Idata:
         #     LOG.error(f'method not member of available method: {registered_methods.keys()}')
         #     raise ValueError('molecular descriptor method not availablem')
 
+
         for imethod in registered_methods:
             if imethod[0] in method:
 
@@ -353,7 +355,7 @@ class Idata:
 
                     combined_md = results[0]  # np.array of values
                     combined_nm = results[1]  # list of variable names
-                    combined_sc = results[2]  # list of true/false
+                    combined_sc = results[2]  # list of true/false, what?
 
                     shape = np.shape(combined_md)
 

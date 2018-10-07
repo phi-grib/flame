@@ -30,8 +30,11 @@ from rdkit.Chem import rdMolDescriptors
 from rdkit.Chem import Descriptors
 from rdkit.ML.Descriptors import MoleculeDescriptors
 
+from flame.util import get_logger
 
-def _RDKit_properties(ifile):
+LOG = get_logger(__name__)
+
+def _RDKit_properties(ifile) -> (bool, (np.array, list, list)):
     ''' 
     computes RDKit properties for the file provided as argument
 
@@ -40,32 +43,33 @@ def _RDKit_properties(ifile):
     '''
     try:
         suppl = Chem.SDMolSupplier(ifile)
-    except:
-        return False, 'unable to compute RDKit properties'
+    except Exception as e:
+        LOG.error(f'Unable to create supplier with exception {e}')
+        return False, 'unable to create supplier'
 
+    LOG.info('computing RDKit properties...')
     properties = rdMolDescriptors.Properties()
 
-    md_nam = []
+    md_name = []
     success_list = []
     xmatrix = []
 
-    for nam in properties.GetPropertyNames():
-        md_nam.append(nam)
+    for prop_name in properties.GetPropertyNames():
+        md_name.append(prop_name)
 
     try:
         num_obj = 0
         for mol in suppl:
             if mol is None:
-                print('ERROR: (@_RDKit_properties) Unable to process molecule #', str(
-                    num_obj+1), 'in file ' + ifile)
+                LOG.error(f'Unable to process molecule #{num_obj+1} in {ifile}')
                 success_list.append(False)
                 continue
-
             
             # xmatrix [num_obj] = properties.ComputeProperties(mol)
             if num_obj == 0:
                 descriptors = properties.ComputeProperties(mol)
-                if np.isnan(xmatrix).any():
+                # what is going on here??
+                if np.isnan(xmatrix).any():  
                     success_list.append(False)
                     continue
                 else:
@@ -78,35 +82,35 @@ def _RDKit_properties(ifile):
                 xmatrix = np.vstack(
                     (xmatrix, descriptors))
 
-            # ##### DEBUG
-            # if properties.ComputeProperties(mol)[0]>400.0:
-            #     print ('**** simulated error for DEBUG in compute_md.py ****')
-            #     return False, 'Failed compute RDKit properties'
-            # REMOVE!!!!
             success_list.append(True)
             num_obj += 1
 
-    except:
+    LOG.debug(f'Descriptors matrix (xmatrix) created with shape {xmatrix.shape}')
+    except Exception as e:
+        LOG.error(f'Failed computing RDKit properties for molecule #{num_obj+1} in {ifile}'
+                  f' with exception: {e}')
         return False, 'Failed computing RDKit properties for molecule' + str(num_obj+1) + 'in file ' + ifile
 
     if num_obj == 0:
         return False, 'Unable to compute RDKit properties for molecule '+ifile
 
-    return True, (xmatrix, md_nam, success_list)
+    return True, (xmatrix, md_name, success_list)
 
 
-def _RDKit_descriptors(ifile):
+def _RDKit_descriptors(ifile) -> (bool, (np.array, list, list)):
     ''' 
     computes RDKit descriptors for the file provided as argument
 
     output is a boolean and a tupla with the xmatrix and the variable names
-
     '''
     try:
         suppl = Chem.SDMolSupplier(ifile)
     except:
+        LOG.error(f'Unable to create supplier with exception {e}')
         return False, 'Unable to compute RDKit MD'
 
+    LOG.info('Computing RDKit descriptors...')
+    #what is this??
     nms = [x[0] for x in Descriptors._descList]
 
     md = MoleculeDescriptors.MolecularDescriptorCalculator(nms)
@@ -117,6 +121,7 @@ def _RDKit_descriptors(ifile):
         num_obj = 0
         for mol in suppl:
             if mol is None:
+                LOG.error(f'Unable to process molecule #{num_obj+1} in {ifile}')
                 print('ERROR: (@_RDKit_descriptors) Unable to process molecule #', str(
                     num_obj+1), 'in file ' + ifile)
                 success_list.append(False)
