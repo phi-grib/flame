@@ -485,7 +485,8 @@ class Idata:
         except:
             return False
 
-        print('>>> recycling data >>>', os.path.join(self.dest_path, 'data.pkl'))
+        dest_path_pkl = os.path.join(self.dest_path, 'data.pkl')
+        LOG.info(f'Recycling data from {dest_path_pkl}')
 
         return True
 

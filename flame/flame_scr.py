@@ -34,16 +34,14 @@ import logging
 
 LOG = get_logger(__name__)
 
+
 # TEMP: only to allow EBI model to run
-
-
 def sensitivity(y_true, y_pred):
     tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
     return(tp / (tp+fn))
 
+
 # TEMP: only to allow EBI model to run
-
-
 def specificity(y_true, y_pred):
     tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
     return(tn / (tn+fp))
@@ -155,11 +153,16 @@ def main():
 
         version = utils.intver(args.version)
 
+        # wrong, input file is not part of the model
         model = {'endpoint': args.endpoint,
                  'version': version,
                  'infile': args.infile}
 
         configuration_warning()
+
+        LOG.info(f'Starting prediction with model {args.endpoint}'
+                 f' version {version} for file {args.infile}')
+
         success, results = context.predict_cmd(model)
         print('flame predict : ', success, results)
 
@@ -173,6 +176,10 @@ def main():
                  'infile': args.infile}
 
         configuration_warning()
+
+        LOG.info(f'Starting building model {args.endpoint}'
+                 f' with file {args.infile}')
+
         success, results = context.build_cmd(model)
         print('flame build : ', success, results)
 
