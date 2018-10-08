@@ -61,7 +61,8 @@ def _RDKit_properties(ifile) -> (bool, (np.ndarray, list, list)):
         num_obj = 0
         for mol in suppl:
             if mol is None:
-                LOG.error(f'Unable to process molecule #{num_obj+1} in {ifile}')
+                LOG.error(
+                    f'Unable to process molecule #{num_obj+1} in {ifile}')
                 success_list.append(False)
                 continue
 
@@ -97,7 +98,7 @@ def _RDKit_properties(ifile) -> (bool, (np.ndarray, list, list)):
     return True, (xmatrix, md_name, success_list)
 
 
-def _RDKit_properties(ifile) -> (bool, (np.ndarray, list, list)):
+def _RDKit_properties2(ifile) -> (bool, (np.ndarray, list, list)):
     ''' 
     computes RDKit properties for the file provided as argument
 
@@ -109,19 +110,41 @@ def _RDKit_properties(ifile) -> (bool, (np.ndarray, list, list)):
         LOG.error(f'Unable to create supplier with exception {e}')
         return False, 'unable to create supplier'
 
-    LOG.info('computing RDKit properties...')
-
     properties = rdMolDescriptors.Properties()
 
-    # get from here num of properties
-    descriptor_names = [prop_name for prop_name in properties.GetPropertyNames()]
-    n_descriptors = len(descriptor_names)
-    
-    matrix_shape = (len(suppl), n_descriptors)
-    descriptor_matrix = np.zeros(matrix_shape)
+    props_names = [propname for propname in properties.GetPropertyNames()]
+    n_props = len(props_names)
 
-    
-    return True, (xmatrix, md_name, success_list)
+    matrix_shape = (len(suppl), n_props)
+    props_matrix = np.zeros(matrix_shape)
+
+    LOG.info('computing RDKit properties...')
+
+    success_list = []
+    for i, mol in enumerate(suppl):
+        # check mol
+        if mol is None:
+            LOG.error(f'Unable to process molecule #{i+1} in {ifile}')
+            success_list.append(False)
+            continue
+
+        # fill in properties matrix
+        try:
+            props_matrix[i, :] = properties.ComputeProperties(mol)
+        except Exception as e:
+            LOG.error(f'Failed to compute RDKit properties for mol {i+1}'
+                      f' in {ifile} with exception {e}')
+            success_list.append(False)
+
+        success_list.append(True)
+
+    # check if any descriptor has NaNs
+    # returns False when row has NaN
+    mols_wth_nan = ~ np.isnan(props_matrix).any(axis=1)
+    # add False to succes list mol idx where props has NaNs
+    success_list = (np.array(success_list) & mols_wth_nan).tolist()
+
+    return True, (props_matrix, props_names, success_list)
 
 
 def _RDKit_descriptors(ifile) -> (bool, (np.ndarray, list, list)):

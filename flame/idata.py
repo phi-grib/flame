@@ -371,7 +371,7 @@ class Idata:
                     # for 2D arrays, shape[0] is the number of objects
                     if ishape[0] != shape[0]:
                         print('ERROR: number of objects processed by md method "' +
-                                imethod[0]+'" does not match those computed by other methods')
+                                method+'" does not match those computed by other methods')
                         continue
 
                 combined_md = np.hstack((combined_md, results[0]))
