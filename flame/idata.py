@@ -316,7 +316,7 @@ class Idata:
         raise NotImplementedError
         return False, 'not implemented'
 
-    def computeMD(self, ifile, methods) -> (np.ndarray, list):
+    def computeMD(self, ifile: str, methods: list) -> (bool, (np.ndarray, list, list)):
         '''
         Uses the molecular structures for computing an array
         of values (int or float).
@@ -329,12 +329,7 @@ class Idata:
         FIXIT
         '''
         LOG.info(f'Computing molecular descriptors with methods {methods}...')
-        combined_md = None
-        combined_nm = None
-        combined_sc = None
-
-        is_empty = True
-
+        
         registered_methods = dict([('RDKit_properties', computeMD._RDKit_properties),
                                    ('RDKit_md', computeMD._RDKit_descriptors),
                                    ('padel', computeMD._padel_descriptors),
@@ -344,45 +339,50 @@ class Idata:
         if not all(m in registered_methods for m in methods):
             # find the non member methods
             no_recog_meth = [m for m in methods if m not in registered_methods]
-            LOG.error(f'Method {no_recog_meth} not recognized')
+            LOG.error(f'Methods {no_recog_meth} not recognized')
 
-        for imethod in registered_methods.items():
-            if imethod[0] in methods:
+            if len(no_recog_meth) == len(methods):
+                # then no md method is correct... so error
+                raise ValueError(f'Methods {no_recog_meth} not recognized.'
+                                 ' No valid method found.')
 
-                success, results = imethod[1](ifile)
+        is_empty = True
 
-                if not success:
-                    return success, results
+        for method in methods:
+            success, results = registered_methods[method](ifile)
 
-                if is_empty:  # first md computed, just copy
+            if not success:  # if computing returns False in status
+                return success, results
 
-                    combined_md = results[0]  # np.array of values
-                    combined_nm = results[1]  # list of variable names
-                    combined_sc = results[2]  # list of true/false, what?
+            if is_empty:  # first md computed, just copy
 
-                    shape = np.shape(combined_md)
+                combined_md = results[0]  # np.array of values
+                combined_nm = results[1]  # list of variable names
+                combined_sc = results[2]  # list of true/false, what?
 
-                    is_empty = False
+                shape = np.shape(combined_md)
 
-                else:  # append laterally
+                is_empty = False
 
-                    ishape = np.shape(results[0])
+            else:  # append laterally
+                ishape = np.shape(results[0])
 
-                    if (len(ishape) > 1):
-                        # for 2D arrays, shape[0] is the number of objects
-                        if ishape[0] != shape[0]:
-                            print('ERROR: number of objects processed by md method "' +
-                                  imethod[0]+'" does not match those computed by other methods')
-                            continue
+                if (len(ishape) > 1):
+                    # for 2D arrays, shape[0] is the number of objects
+                    if ishape[0] != shape[0]:
+                        print('ERROR: number of objects processed by md method "' +
+                                imethod[0]+'" does not match those computed by other methods')
+                        continue
 
-                    combined_md = np.hstack((combined_md, results[0]))
-                    combined_nm.extend(results[1])
+                combined_md = np.hstack((combined_md, results[0]))
+                combined_nm.extend(results[1])
 
-                    new_sc = []
-                    for i in range(len(combined_sc)):
-                        new_sc.append(combined_sc and results[2][i])
-
-                    combined_sc = new_sc
+                # wut is this???
+                # combine sucess results into oine list with AND
+                # All results must be True to get True
+                # scc stands for success
+                new_sc = [scc and results[2][i] for i, scc in enumerate(combined_sc)]
+                combined_sc = new_sc
 
         return True, (combined_md, combined_nm, combined_sc)
 

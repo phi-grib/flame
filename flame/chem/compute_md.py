@@ -34,12 +34,12 @@ from flame.util import get_logger
 
 LOG = get_logger(__name__)
 
-def _RDKit_properties(ifile) -> (bool, (np.array, list, list)):
+
+def _RDKit_properties(ifile) -> (bool, (np.ndarray, list, list)):
     ''' 
     computes RDKit properties for the file provided as argument
 
     output is a boolean and a tupla with the xmatrix and the variable names
-
     '''
     try:
         suppl = Chem.SDMolSupplier(ifile)
@@ -48,14 +48,14 @@ def _RDKit_properties(ifile) -> (bool, (np.array, list, list)):
         return False, 'unable to create supplier'
 
     LOG.info('computing RDKit properties...')
+
     properties = rdMolDescriptors.Properties()
 
-    md_name = []
+    # get from here num of properties
+    md_name = [prop_name for prop_name in properties.GetPropertyNames()]
+
     success_list = []
     xmatrix = []
-
-    for prop_name in properties.GetPropertyNames():
-        md_name.append(prop_name)
 
     try:
         num_obj = 0
@@ -64,12 +64,12 @@ def _RDKit_properties(ifile) -> (bool, (np.array, list, list)):
                 LOG.error(f'Unable to process molecule #{num_obj+1} in {ifile}')
                 success_list.append(False)
                 continue
-            
+
             # xmatrix [num_obj] = properties.ComputeProperties(mol)
             if num_obj == 0:
                 descriptors = properties.ComputeProperties(mol)
                 # what is going on here??
-                if np.isnan(xmatrix).any():  
+                if np.isnan(xmatrix).any():
                     success_list.append(False)
                     continue
                 else:
@@ -82,7 +82,7 @@ def _RDKit_properties(ifile) -> (bool, (np.array, list, list)):
                 xmatrix = np.vstack(
                     (xmatrix, descriptors))
 
-            success_list.append(True)   
+            success_list.append(True)
             num_obj += 1
 
     except Exception as e:
@@ -97,7 +97,34 @@ def _RDKit_properties(ifile) -> (bool, (np.array, list, list)):
     return True, (xmatrix, md_name, success_list)
 
 
-def _RDKit_descriptors(ifile) -> (bool, (np.array, list, list)):
+def _RDKit_properties(ifile) -> (bool, (np.ndarray, list, list)):
+    ''' 
+    computes RDKit properties for the file provided as argument
+
+    output is a boolean and a tupla with the xmatrix and the variable names
+    '''
+    try:
+        suppl = Chem.SDMolSupplier(ifile)
+    except Exception as e:
+        LOG.error(f'Unable to create supplier with exception {e}')
+        return False, 'unable to create supplier'
+
+    LOG.info('computing RDKit properties...')
+
+    properties = rdMolDescriptors.Properties()
+
+    # get from here num of properties
+    descriptor_names = [prop_name for prop_name in properties.GetPropertyNames()]
+    n_descriptors = len(descriptor_names)
+    
+    matrix_shape = (len(suppl), n_descriptors)
+    descriptor_matrix = np.zeros(matrix_shape)
+
+    
+    return True, (xmatrix, md_name, success_list)
+
+
+def _RDKit_descriptors(ifile) -> (bool, (np.ndarray, list, list)):
     ''' 
     computes RDKit descriptors for the file provided as argument
 
@@ -110,7 +137,7 @@ def _RDKit_descriptors(ifile) -> (bool, (np.array, list, list)):
         return False, 'Unable to compute RDKit MD'
 
     LOG.info('Computing RDKit descriptors...')
-    #what is this??
+    # what is this??
     nms = [x[0] for x in Descriptors._descList]
 
     md = MoleculeDescriptors.MolecularDescriptorCalculator(nms)
@@ -121,7 +148,8 @@ def _RDKit_descriptors(ifile) -> (bool, (np.array, list, list)):
         num_obj = 0
         for mol in suppl:
             if mol is None:
-                LOG.error(f'Unable to process molecule #{num_obj+1} in {ifile}')
+                LOG.error(
+                    f'Unable to process molecule #{num_obj+1} in {ifile}')
                 print('ERROR: (@_RDKit_descriptors) Unable to process molecule #', str(
                     num_obj+1), 'in file ' + ifile)
                 success_list.append(False)
@@ -129,7 +157,8 @@ def _RDKit_descriptors(ifile) -> (bool, (np.array, list, list)):
 
             if num_obj == 0:
                 xmatrix = md.CalcDescriptors(mol)
-                LOG.debug(f'first descriptor vector computet with length {len(xmatrix)}')
+                LOG.debug(
+                    f'first descriptor vector computet with length {len(xmatrix)}')
                 if np.isnan(xmatrix).any():
                     # what is the deal if there is any NaN?
                     success_list.append(False)
@@ -146,12 +175,16 @@ def _RDKit_descriptors(ifile) -> (bool, (np.array, list, list)):
 
     except:  # if any mol fails the whole try except will break
         return False, 'Failed computing RDKit descriptors for molecule' + str(num_obj+1) + 'in file ' + ifile
-    
+
     LOG.debug(f'computed RDKit descriptors matrix with shape {xmatrix.shape}')
-    if num_obj == 0:    
+    if num_obj == 0:
         return False, 'Unable to compute RDKit properties for molecule '+ifile
 
     return True, (xmatrix, nms, success_list)
+
+
+def _RDKit_morganFPS():
+    raise NotImplementedError
 
 
 def _padel_descriptors(ifile):
@@ -165,7 +198,6 @@ def _padel_descriptors(ifile):
 
     # TODO: this cannot be hardcoded! maybe read from the component registry?
     uri = "http://localhost:5000/padel/api/v0.1/calc/json"
-
 
     tmpdir = os.path.abspath(tempfile.mkdtemp(dir=os.path.dirname(ifile)))
     shutil.copy(ifile, tmpdir)
@@ -222,7 +254,7 @@ def _padel_descriptors(ifile):
                 md = np.array(nvalue_list, dtype=np.float64)
 
                 # md = np.nan_to_num(md)
-                # detected a rare bug producing extremely large PaDel 
+                # detected a rare bug producing extremely large PaDel
                 # descriptors (>1.0e300), leading to overflows
                 # apply a conservative top cutoff of 1.0e10
                 # md [ md > 1.0e10 ] = 1.0e10
