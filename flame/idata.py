@@ -118,11 +118,12 @@ class Idata:
             # FIXIT defence when prop is not in parameter file
             if mol.HasProp(self.parameters['SDFile_activity']):
                 activity_str = mol.GetProp(self.parameters['SDFile_activity'])
-                try: 
+                try:
                     # cast val to float to be sure it is num
                     activity_num = float(activity_str)
                 except Exception as e:
-                    LOG.error(f'while casting activity to float an exception has ocurred: {e}')
+                    LOG.error(
+                        f'while casting activity to float an exception has ocurred: {e}')
                     activity_num = None
             else:
                 raise ValueError(f"SDFile_activity prop label '{self.parameters['SDFile_activity']}'"
@@ -136,7 +137,8 @@ class Idata:
             try:
                 sml = Chem.MolToSmiles(mol)
             except Exception as e:
-                LOG.error(f'while converting mol to smiles an exception has ocurred: {e}')
+                LOG.error(
+                    f'while converting mol to smiles an exception has ocurred: {e}')
                 sml = None
 
             # it's not clear what this is
@@ -213,7 +215,8 @@ class Idata:
 
                 # molecule not recognised by RDKit
                 if m is None:
-                    LOG.error(f'Unable to process molecule #{mcount+1} in {ifile}')
+                    LOG.error(
+                        f'Unable to process molecule #{mcount+1} in {ifile}')
                     print('ERROR: (@normalize) Unable to process molecule #',
                           str(mcount+1), 'in file ' + ifile)
 
@@ -245,7 +248,7 @@ class Idata:
                         return False, f"Unknown standardiser error {e}"
 
                 else:
-                    LOG.error(f'normalize method {method} not recognized.' 
+                    LOG.error(f'normalize method {method} not recognized.'
                               'Skipping normalization.')
                     parent = Chem.MolToMolBlock(m)
 
@@ -267,7 +270,7 @@ class Idata:
         Adjust the ionization status of the molecular structure,
         using a given pH.
         '''
-        
+
         if not method:
             return True, ifile
 
@@ -313,38 +316,38 @@ class Idata:
         raise NotImplementedError
         return False, 'not implemented'
 
-    def computeMD(self, ifile, method) -> (np.array, list):
+    def computeMD(self, ifile, methods) -> (np.ndarray, list):
         '''
         Uses the molecular structures for computing an array
         of values (int or float).
 
         input is the name of a molecule or a series of molecules and a label
-        of the method output is boolean anda a tupla of two elements:
+        of the methods output is boolean anda a tupla of two elements:
         [0] xmatrix (nparray np.float64)
         [1] list of variable names (str)
 
         FIXIT
         '''
-        LOG.info(f'Computing molecular descriptors with methods {method}...')
+        LOG.info(f'Computing molecular descriptors with methods {methods}...')
         combined_md = None
         combined_nm = None
         combined_sc = None
 
         is_empty = True
 
-        registered_methods = [('RDKit_properties', computeMD._RDKit_properties),
-                              ('RDKit_md', computeMD._RDKit_descriptors),
-                              ('padel', computeMD._padel_descriptors),
-                              ('custom', self.computeMD_custom)]
+        registered_methods = dict([('RDKit_properties', computeMD._RDKit_properties),
+                                   ('RDKit_md', computeMD._RDKit_descriptors),
+                                   ('padel', computeMD._padel_descriptors),
+                                   ('custom', self.computeMD_custom)])
 
-        # imethod = registered_methods.get(method[0], None)
-        # if not imethod:
-        #     LOG.error(f'method not member of available method: {registered_methods.keys()}')
-        #     raise ValueError('molecular descriptor method not availablem')
+        # check if input methods are members of registered methods
+        if not all(m in registered_methods for m in methods):
+            # find the non member methods
+            no_recog_meth = [m for m in methods if m not in registered_methods]
+            LOG.error(f'Method {no_recog_meth} not recognized')
 
-
-        for imethod in registered_methods:
-            if imethod[0] in method:
+        for imethod in registered_methods.items():
+            if imethod[0] in methods:
 
                 success, results = imethod[1](ifile)
 
@@ -359,7 +362,7 @@ class Idata:
 
                     shape = np.shape(combined_md)
 
-                    is_empty = False  
+                    is_empty = False
 
                 else:  # append laterally
 
