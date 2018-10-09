@@ -98,7 +98,7 @@ def _RDKit_properties(ifile) -> (bool, (np.ndarray, list, list)):
     return True, (xmatrix, md_name, success_list)
 
 
-def _RDKit_properties2(ifile) -> (bool, (np.ndarray, list, list)):
+def _RDKit_properties2(ifile) -> dict:
     ''' 
     computes RDKit properties for the file provided as argument
 
@@ -143,13 +143,19 @@ def _RDKit_properties2(ifile) -> (bool, (np.ndarray, list, list)):
     # returns False when row has NaN
     mols_wth_nan = ~ np.isnan(props_matrix).any(axis=1)
     # add False to succes list in mol idx where properties results has NaNs
-    success_list = (np.array(success_list) & mols_wth_nan).tolist()
+    success_arr = np.array(success_list) & mols_wth_nan
 
-    return True, (props_matrix, props_names, success_list)
+    results_dict = {
+        'matrix': props_matrix,
+        'names': props_names,
+        'succes_arr': success_arr
+    }
+
+    return results_dict
 
 
 def _RDKit_descriptors(ifile) -> (bool, (np.ndarray, list, list)):
-    ''' 
+    '''
     computes RDKit descriptors for the file provided as argument
 
     output is a boolean and a tupla with the xmatrix and the variable names
@@ -207,7 +213,7 @@ def _RDKit_descriptors(ifile) -> (bool, (np.ndarray, list, list)):
     return True, (xmatrix, nms, success_list)
 
 
-def _RDKit_descriptors2(ifile) -> (bool, (np.ndarray, list, list)):
+def _RDKit_descriptors2(ifile) -> dict:
     """ Computes RDKit descriptors
     """
     try:
@@ -221,6 +227,7 @@ def _RDKit_descriptors2(ifile) -> (bool, (np.ndarray, list, list)):
     md_calculator = MoleculeDescriptors.MolecularDescriptorCalculator(descrip_names)
     # rows: n mols, cols: n descriptors
     matrix_shape = (len(suppl), len(descrip_names))
+    # init matrix
     descrip_matrix = np.zeros(matrix_shape)
 
     LOG.info('Computing RDKit descriptors...')
@@ -247,9 +254,15 @@ def _RDKit_descriptors2(ifile) -> (bool, (np.ndarray, list, list)):
     # returns False when row has NaN
     mols_wth_nan = ~ np.isnan(descrip_matrix).any(axis=1)
     # add False to succes list in mol idx where properties results has NaNs
-    success_list = (np.array(success_list) & mols_wth_nan).tolist()
+    success_arr = (np.array(success_list) & mols_wth_nan)
 
-    return True, (descrip_matrix, descrip_names, success_list)
+    results_dict = {
+        'matrix': descrip_matrix,
+        'names': descrip_names,
+        'succes_arr': success_arr
+    }
+
+    return results_dict
 
 
 def _RDKit_morganFPS():

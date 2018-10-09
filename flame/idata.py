@@ -329,7 +329,7 @@ class Idata:
         FIXIT
         '''
         LOG.info(f'Computing molecular descriptors with methods {methods}...')
-        
+
         registered_methods = dict([('RDKit_properties', computeMD._RDKit_properties),
                                    ('RDKit_md', computeMD._RDKit_descriptors),
                                    ('padel', computeMD._padel_descriptors),
@@ -371,7 +371,7 @@ class Idata:
                     # for 2D arrays, shape[0] is the number of objects
                     if ishape[0] != shape[0]:
                         print('ERROR: number of objects processed by md method "' +
-                                method+'" does not match those computed by other methods')
+                              method+'" does not match those computed by other methods')
                         continue
 
                 combined_md = np.hstack((combined_md, results[0]))
@@ -381,13 +381,92 @@ class Idata:
                 # combine sucess results into oine list with AND
                 # All results must be True to get True
                 # scc stands for success
-                new_sc = [scc and results[2][i] for i, scc in enumerate(combined_sc)]
+                new_sc = [scc and results[2][i]
+                          for i, scc in enumerate(combined_sc)]
                 combined_sc = new_sc
 
         return True, (combined_md, combined_nm, combined_sc)
 
+    def computeMDNEW(self, ifile: str, methods: list) -> (bool, (np.ndarray, list, list)):
+        LOG.info(f'Computing molecular descriptors with methods {methods}...')
+
+        registered_methods = dict([('RDKit_properties', computeMD._RDKit_properties2),
+                                   ('RDKit_md', computeMD._RDKit_descriptors2),
+                                   ('padel', computeMD._padel_descriptors),
+                                   ('custom', self.computeMD_custom)])
+
+        # check if input methods are members of registered methods
+        if not all(m in registered_methods for m in methods):
+            # find the non member methods
+            no_recog_meth = [m for m in methods if m not in registered_methods]
+            LOG.error(f'Methods {no_recog_meth} not recognized')
+
+            if len(no_recog_meth) == len(methods):
+                # then no md method is correct... so error
+                raise ValueError(f'Methods {no_recog_meth} not recognized.'
+                                 ' No valid method found.')
+
+        xmatrix_ls = []
+        var_names = []
+        succes_lists = []
+        for method in methods:
+            results = registered_methods[method](ifile)
+
+            xmatrix_ls.append(results['matrix'])
+            var_names.extend(results['names'])
+            succes_lists.append(results['succes_arr'])
+
+        # horizontally concat results
+        xmatrix = self._concat_descriptors_matrix(xmatrix_ls)
+
+        # filter molecules with failed status during computing descriptors
+        xmatrix_filtered = self._filter_matrix(xmatrix, succes_lists)
+        return xmatrix_filtered
+
+    @staticmethod
+    def _filter_matrix(matrix: np.ndarray, succes_list: list) -> np.ndarray:
+        """Filters matrix via boolean mask.
+        The boolean mask is the logical AND combination of all the masks in
+        `succes_list`.
+
+        This way we get rid of molecules with NaNs or that have failed during 
+        supplier reading in any descriptor computation.
+        """
+        # using all bcause of arbitrary list length
+        filter_mask = np.all(succes_list, axis=0)
+
+        if matrix.shape[0] != len(filter_mask):
+            raise ValueError('Matrix and filter mask do not have the'
+                             ' same shape on filter axis')
+
+        filtered_matrix = matrix[filter_mask, :]
+        return filtered_matrix
+
+    @staticmethod
+    def _concat_descriptors_matrix(matrices: list) -> np.ndarray:
+        """ Concatenates horizontaly an arbritary number of matrices.
+        Used to concat multiple descriptors results into a one array.
+        """
+        # type check input
+        if not all(isinstance(m, np.ndarray) for m in matrices):
+            raise TypeError('input matrices must be numpy arrays')
+
+        try:
+            xmatrix = np.concatenate(matrices, axis=1)
+
+            LOG.debug('concatenated matrices with shapes: '
+                      f'{[m.shape for m in matrices]} into a'
+                      f'matrix with shape {xmatrix.shape}')
+
+        except ValueError as e:
+            LOG.critical('Cannot concatenate matrix with different shapes: '
+                         f'{[m.shape[0] for m in matrices]}')
+            raise ValueError('Cannot concatenate matrix with different shapes: '
+                             f'{[m.shape[0] for m in matrices]}')
+        return xmatrix
+
     def consolidate(self, results, nobj):
-        ''' 
+        '''
         Mix the results obtained by multiple CPUs into a single result file.
         '''
 
