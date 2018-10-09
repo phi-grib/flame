@@ -106,9 +106,10 @@ def _RDKit_properties2(ifile) -> (bool, (np.ndarray, list, list)):
     '''
     try:
         suppl = Chem.SDMolSupplier(ifile)
-    except Exception as e:
-        LOG.error(f'Unable to create supplier with exception {e}')
-        return False, 'unable to create supplier'
+    except Exception as err:
+        LOG.error(f'Unable to create supplier with exception {err}')
+        raise err
+        # return False, 'unable to create supplier'
 
     properties = rdMolDescriptors.Properties()
 
@@ -141,7 +142,7 @@ def _RDKit_properties2(ifile) -> (bool, (np.ndarray, list, list)):
     # check if any descriptor has NaNs
     # returns False when row has NaN
     mols_wth_nan = ~ np.isnan(props_matrix).any(axis=1)
-    # add False to succes list mol idx where props has NaNs
+    # add False to succes list in mol idx where properties results has NaNs
     success_list = (np.array(success_list) & mols_wth_nan).tolist()
 
     return True, (props_matrix, props_names, success_list)
@@ -171,8 +172,8 @@ def _RDKit_descriptors(ifile) -> (bool, (np.ndarray, list, list)):
         num_obj = 0
         for mol in suppl:
             if mol is None:
-                LOG.error(
-                    f'Unable to process molecule #{num_obj+1} in {ifile}')
+                LOG.error('Unable to process molecule'
+                          f'#{num_obj+1} in {ifile}')
                 print('ERROR: (@_RDKit_descriptors) Unable to process molecule #', str(
                     num_obj+1), 'in file ' + ifile)
                 success_list.append(False)
@@ -204,6 +205,51 @@ def _RDKit_descriptors(ifile) -> (bool, (np.ndarray, list, list)):
         return False, 'Unable to compute RDKit properties for molecule '+ifile
 
     return True, (xmatrix, nms, success_list)
+
+
+def _RDKit_descriptors2(ifile) -> (bool, (np.ndarray, list, list)):
+    """ Computes RDKit descriptors
+    """
+    try:
+        suppl = Chem.SDMolSupplier(ifile)
+    except Exception as err:
+        LOG.error(f'Unable to create supplier with exception {err}')
+        raise err
+        # return False, 'unable to create supplier'
+
+    descrip_names = [n[0] for n in Descriptors._descList]
+    md_calculator = MoleculeDescriptors.MolecularDescriptorCalculator(descrip_names)
+
+    matrix_shape = (len(suppl), len(descrip_names))
+    descrip_matrix = np.zeros(matrix_shape)
+
+    LOG.info('Computing RDKit descriptors...')
+
+    success_list = []
+    for i, mol in enumerate(suppl):
+        # check mol
+        if mol is None:
+            LOG.warning(f'Supplier failed to read molecule #{i+1} in {ifile}')
+            success_list.append(False)
+            continue
+
+        # fill descriptor matrix
+        try:
+            descrip_matrix[i, :] = md_calculator.CalcDescriptors(mol)
+        except Exception as e:
+            LOG.error(f'Failed to compute RDKit descriptors for mol {i+1}'
+                      f' in {ifile} with exception {e}')
+            success_list.append(False)
+
+        success_list.append(True)
+
+    # check if any descriptor has NaNs
+    # returns False when row has NaN
+    mols_wth_nan = ~ np.isnan(descrip_matrix).any(axis=1)
+    # add False to succes list in mol idx where properties results has NaNs
+    success_list = (np.array(success_list) & mols_wth_nan).tolist()
+
+    return True, (descrip_matrix, descrip_names, success_list)
 
 
 def _RDKit_morganFPS():
