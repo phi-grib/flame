@@ -125,7 +125,7 @@ def _RDKit_properties2(ifile) -> (bool, (np.ndarray, list, list)):
     for i, mol in enumerate(suppl):
         # check mol
         if mol is None:
-            LOG.error(f'Unable to process molecule #{i+1} in {ifile}')
+            LOG.warning(f'Supplier failed to read molecule #{i+1} in {ifile}')
             success_list.append(False)
             continue
 
@@ -219,7 +219,7 @@ def _RDKit_descriptors2(ifile) -> (bool, (np.ndarray, list, list)):
 
     descrip_names = [n[0] for n in Descriptors._descList]
     md_calculator = MoleculeDescriptors.MolecularDescriptorCalculator(descrip_names)
-
+    # rows: n mols, cols: n descriptors
     matrix_shape = (len(suppl), len(descrip_names))
     descrip_matrix = np.zeros(matrix_shape)
 
