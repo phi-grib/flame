@@ -35,7 +35,7 @@ from flame.util import get_logger
 LOG = get_logger(__name__)
 
 
-def _RDKit_properties(ifile) -> (bool, (np.ndarray, list, list)):
+def _RDKit_properties_old(ifile) -> (bool, (np.ndarray, list, list)):
     ''' 
     computes RDKit properties for the file provided as argument
 
@@ -98,7 +98,7 @@ def _RDKit_properties(ifile) -> (bool, (np.ndarray, list, list)):
     return True, (xmatrix, md_name, success_list)
 
 
-def _RDKit_properties2(ifile) -> dict:
+def _RDKit_properties(ifile) -> dict:
     ''' 
     computes RDKit properties for the file provided as argument
 
@@ -142,7 +142,12 @@ def _RDKit_properties2(ifile) -> dict:
     # check if any descriptor has NaNs
     # returns False when row has NaN
     mols_wthout_nan = ~ np.isnan(props_matrix).any(axis=1)
-    np.where()
+    # num of mols that have NaNs in descriptors
+    n_mols_wth_nan = sum(~mols_wthout_nan)
+
+    if n_mols_wth_nan != 0:
+        LOG.debug(f'{n_mols_wth_nan} molecules have `NaN` in'
+                  ' the descriptors and will be descarted')
     # add False to succes list in mol idx where properties results has NaNs
     success_arr = np.array(success_list) & mols_wthout_nan
 
@@ -155,7 +160,7 @@ def _RDKit_properties2(ifile) -> dict:
     return results_dict
 
 
-def _RDKit_descriptors(ifile) -> (bool, (np.ndarray, list, list)):
+def _RDKit_descriptors_old(ifile) -> (bool, (np.ndarray, list, list)):
     '''
     computes RDKit descriptors for the file provided as argument
 
@@ -214,7 +219,7 @@ def _RDKit_descriptors(ifile) -> (bool, (np.ndarray, list, list)):
     return True, (xmatrix, nms, success_list)
 
 
-def _RDKit_descriptors2(ifile) -> dict:
+def _RDKit_descriptors(ifile) -> dict:
     """ Computes RDKit descriptors
     """
     try:
@@ -254,6 +259,12 @@ def _RDKit_descriptors2(ifile) -> dict:
     # check if any descriptor has NaNs
     # returns False when row has NaN
     mols_wthout_nan = ~ np.isnan(descrip_matrix).any(axis=1)
+    # num of mols that have NaNs in descriptors
+    n_mols_wth_nan = sum(~mols_wthout_nan)
+
+    if n_mols_wth_nan != 0:
+        LOG.debug(f'Molecules num {n_mols_wth_nan} have `NaN` in'
+                 'the descriptors and will be descarted')
     # add False to succes list in mol idx where properties results has NaNs
     success_arr = (np.array(success_list) & mols_wthout_nan)
 
