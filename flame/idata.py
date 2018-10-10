@@ -394,8 +394,8 @@ class Idata:
 
         LOG.info(f'Computing molecular descriptors with methods {methods}...')
 
-        registered_methods = dict([('RDKit_properties', computeMD._RDKit_properties2),
-                                   ('RDKit_md', computeMD._RDKit_descriptors2),
+        registered_methods = dict([('RDKit_properties', computeMD._RDKit_properties),
+                                   ('RDKit_md', computeMD._RDKit_descriptors),
                                    ('padel', computeMD._padel_descriptors),
                                    ('custom', self.computeMD_custom)])
 
