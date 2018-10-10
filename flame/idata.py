@@ -398,19 +398,27 @@ class Idata:
 
         ifile: str
             Input SDF file
-        
+
 
         methods: list
             list of methods to compute molecular descriptors with
-        
+
         Returns
         -------
 
         bool
-            if computation was successfull
-        
+            If computation was successfull
+
         np.ndarray
-            descriptors matrix filtered without failed ones
+            Descriptors matrix filtered without failed molecules
+        
+        list
+            Variable names or descriptor names
+        
+        list
+            List with bool values indicating if mol
+            had any issues during supplier (None) or in the
+            descriptor array (presence of NaNs).
         """
 
         if not methods:
@@ -459,8 +467,9 @@ class Idata:
             success_lists.append(results['success_arr'])
 
         # filter molecules with failed status during computing descriptors
-        xmatrix_filtered, succes_list = self._filter_matrix(xmatrix, success_lists)
-        return True, (xmatrix_filtered, var_names, succes_list)
+        xmatrix_filtered, success_list = self._filter_matrix(
+            xmatrix, success_lists)
+        return True, (xmatrix_filtered, var_names, success_list)
 
     @staticmethod
     def _filter_matrix(matrix: np.ndarray, succes_list: list) -> (np.ndarray, list):
@@ -476,18 +485,18 @@ class Idata:
 
         matrix: np.ndarray
             descriptors matrix that's going to be filtered
-        
+
         succes_list: list
             list of array masks that will be used to filter 
             the descriptors matrix
-    
+
         Returns
         -------
 
         np.ndarray
             Filtered matrix with the elements that have
             only `True` in succes_list arrays
-            
+
         list
             the resultant succes list. `all()` combination of 
             `succes_list` (param) arrays
