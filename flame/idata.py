@@ -435,8 +435,8 @@ class Idata:
             succes_lists.append(results['succes_arr'])
 
         # filter molecules with failed status during computing descriptors
-        xmatrix_filtered = self._filter_matrix(xmatrix, succes_lists)
-        return True, (xmatrix_filtered, var_names, succes_lists)
+        xmatrix_filtered, succes_list = self._filter_matrix(xmatrix, succes_lists)
+        return True, (xmatrix_filtered, var_names, succes_list)
 
     @staticmethod
     def _filter_matrix(matrix: np.ndarray, succes_list: list) -> np.ndarray:
@@ -458,7 +458,7 @@ class Idata:
                              ' same shape on filter axis')
 
         filtered_matrix = matrix[filter_mask, :]
-        return filtered_matrix
+        return filtered_matrix, filter_mask.tolist()
 
     @staticmethod
     def _concat_descriptors_matrix(matrices: list) -> np.ndarray:
