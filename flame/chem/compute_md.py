@@ -141,9 +141,10 @@ def _RDKit_properties2(ifile) -> dict:
 
     # check if any descriptor has NaNs
     # returns False when row has NaN
-    mols_wth_nan = ~ np.isnan(props_matrix).any(axis=1)
+    mols_wthout_nan = ~ np.isnan(props_matrix).any(axis=1)
+    np.where()
     # add False to succes list in mol idx where properties results has NaNs
-    success_arr = np.array(success_list) & mols_wth_nan
+    success_arr = np.array(success_list) & mols_wthout_nan
 
     results_dict = {
         'matrix': props_matrix,
@@ -252,9 +253,9 @@ def _RDKit_descriptors2(ifile) -> dict:
 
     # check if any descriptor has NaNs
     # returns False when row has NaN
-    mols_wth_nan = ~ np.isnan(descrip_matrix).any(axis=1)
+    mols_wthout_nan = ~ np.isnan(descrip_matrix).any(axis=1)
     # add False to succes list in mol idx where properties results has NaNs
-    success_arr = (np.array(success_list) & mols_wth_nan)
+    success_arr = (np.array(success_list) & mols_wthout_nan)
 
     results_dict = {
         'matrix': descrip_matrix,
