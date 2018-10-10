@@ -123,7 +123,7 @@ def _RDKit_descriptors(ifile: str) -> dict:
             'matrix': ndarray, descriptor matrix. Full form with non processed
                     and failed molecules.
             'names': list, matrix column names. descriptors names.
-            'succes_arr': ndarray, array with bool values indicating if mol
+            'success_arr': ndarray, array with bool values indicating if mol
                         had any issues during supplier (None) or in the 
                         descriptor array (presence of NaNs).
         }
@@ -135,7 +135,7 @@ def _RDKit_descriptors(ifile: str) -> dict:
     # rows: n mols, cols: n descriptors
     n_cols = len(descrip_names)
 
-    descrip_matrix, succes_arr = _calc_descriptors(
+    descrip_matrix, success_arr = _calc_descriptors(
         md_calculator.CalcDescriptors,
         ifile,
         n_cols
@@ -144,7 +144,7 @@ def _RDKit_descriptors(ifile: str) -> dict:
     results_dict = {
         'matrix': descrip_matrix,
         'names': descrip_names,
-        'succes_arr': succes_arr
+        'success_arr': success_arr
     }
 
     return results_dict
@@ -153,14 +153,14 @@ def _RDKit_descriptors(ifile: str) -> dict:
 def _RDKit_properties(ifile) -> dict:
     '''Computes RDKit properties for the SDF provided as argument
 
-    Parameters:
-    -----------
+    Parameters
+    ----------
 
     ifile: str
         SDF input file
 
-    Returns:
-    --------
+    Returns
+    -------
 
     results_dict: dict
         with keys {
@@ -168,7 +168,7 @@ def _RDKit_properties(ifile) -> dict:
             'matrix': ndarray, properties matrix. Full form with non processed
                     and failed molecules.
             'names': list, matrix column names. Properties names.
-            'succes_arr': ndarray, array with bool values indicating if mol
+            'success_arr': ndarray, array with bool values indicating if mol
                         had any issues during supplier (None) or in the 
                         descriptor array (presence of NaNs).
         }
@@ -182,7 +182,7 @@ def _RDKit_properties(ifile) -> dict:
 
     LOG.info('computing RDKit properties...')
 
-    props_matrix, succes_arr = _calc_descriptors(
+    props_matrix, success_arr = _calc_descriptors(
         properties.ComputeProperties,
         ifile,
         n_cols
@@ -191,7 +191,7 @@ def _RDKit_properties(ifile) -> dict:
     results_dict = {
         'matrix': props_matrix,
         'names': props_names,
-        'succes_arr': succes_arr
+        'success_arr': success_arr
     }
 
     return results_dict

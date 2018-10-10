@@ -115,7 +115,7 @@ class Idata:
             activity_num = None
             exp = None
 
-            # FIXIT defence when prop is not in parameter file
+            # defence when prop is not in parameter file
             if mol.HasProp(self.parameters['SDFile_activity']):
                 activity_str = mol.GetProp(self.parameters['SDFile_activity'])
                 try:
@@ -388,6 +388,30 @@ class Idata:
         return True, (combined_md, combined_nm, combined_sc)
 
     def computeMD(self, ifile: str, methods: list) -> np.ndarray:
+        """ Computes molecular descriptors.
+
+        Computes and concatenates all the descriptor methods 
+        passed in `methods` parameter.
+
+        Parameters
+        ----------
+
+        ifile: str
+            Input SDF file
+        
+
+        methods: list
+            list of methods to compute molecular descriptors with
+        
+        Returns
+        -------
+
+        bool
+            if computation was successfull
+        
+        np.ndarray
+            descriptors matrix filtered without failed ones
+        """
 
         if not methods:
             raise ValueError('Must provide at least one method')
@@ -410,7 +434,7 @@ class Idata:
                 raise ValueError(f'Methods {no_recog_meth} not recognized.'
                                  ' No valid method found.')
 
-        succes_lists = []
+        success_lists = []
         # more tha one method
         if len(methods) > 1:
             xmatrix_ls = []
@@ -420,7 +444,7 @@ class Idata:
 
                 xmatrix_ls.append(results['matrix'])
                 var_names.extend(results['names'])
-                succes_lists.append(results['succes_arr'])
+                success_lists.append(results['success_arr'])
             # horizontally concat results
             xmatrix = self._concat_descriptors_matrix(xmatrix_ls)
 
@@ -432,20 +456,42 @@ class Idata:
             var_names = results['names']
             # still append to list to maintain
             # the behaviour of _filter_matrix
-            succes_lists.append(results['succes_arr'])
+            success_lists.append(results['success_arr'])
 
         # filter molecules with failed status during computing descriptors
-        xmatrix_filtered, succes_list = self._filter_matrix(xmatrix, succes_lists)
+        xmatrix_filtered, succes_list = self._filter_matrix(xmatrix, success_lists)
         return True, (xmatrix_filtered, var_names, succes_list)
 
     @staticmethod
-    def _filter_matrix(matrix: np.ndarray, succes_list: list) -> np.ndarray:
+    def _filter_matrix(matrix: np.ndarray, succes_list: list) -> (np.ndarray, list):
         """Filters matrix via boolean mask.
+
         The boolean mask is the logical AND combination of all the masks in
         `succes_list`.
-
-        This way we get rid of molecules with NaNs or that have failed during 
+        This way we get rid of molecules with NaNs or that have failed during
         supplier reading in any descriptor computation.
+
+        Parameters
+        ----------
+
+        matrix: np.ndarray
+            descriptors matrix that's going to be filtered
+        
+        succes_list: list
+            list of array masks that will be used to filter 
+            the descriptors matrix
+    
+        Returns
+        -------
+
+        np.ndarray
+            Filtered matrix with the elements that have
+            only `True` in succes_list arrays
+            
+        list
+            the resultant succes list. `all()` combination of 
+            `succes_list` (param) arrays
+
         """
         # using all bcause of arbitrary list length
         filter_mask = np.all(succes_list, axis=0)
@@ -463,7 +509,20 @@ class Idata:
     @staticmethod
     def _concat_descriptors_matrix(matrices: list) -> np.ndarray:
         """ Concatenates horizontaly an arbritary number of matrices.
+
         Used to concat multiple descriptors results into a one array.
+
+        Parameters
+        ----------
+
+        matrices: list
+            list of matrices (np.ndarrays) to concat horizontally
+
+        Returns
+        -------
+
+        np.ndarray
+            concatenated matrix of input matrices
         """
         # type check input
         if not all(isinstance(m, np.ndarray) for m in matrices):
