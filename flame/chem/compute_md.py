@@ -35,208 +35,34 @@ from flame.util import get_logger
 LOG = get_logger(__name__)
 
 
-def _RDKit_properties_old(ifile) -> (bool, (np.ndarray, list, list)):
-    ''' 
-    computes RDKit properties for the file provided as argument
+def _calc_descriptors(md_function, ifile: str,  n_cols: int) -> (np.ndarray, np.ndarray):
+    """Helper function for handling all the security of calculating descriptors
+    for a given calculator function.
 
-    output is a boolean and a tupla with the xmatrix and the variable names
-    '''
-    try:
-        suppl = Chem.SDMolSupplier(ifile)
-    except Exception as e:
-        LOG.error(f'Unable to create supplier with exception {e}')
-        return False, 'unable to create supplier'
+    Parameters:
+    -----------
 
-    LOG.info('computing RDKit properties...')
+    md_function: callable, descriptor method
+    ifile: str, SDF input file
+    n_cols: int, number of columns that the matrix needs. Obtained in
+            the function that uses this helper.
 
-    properties = rdMolDescriptors.Properties()
+    Returns:
+    --------
 
-    # get from here num of properties
-    md_name = [prop_name for prop_name in properties.GetPropertyNames()]
-
-    success_list = []
-    xmatrix = []
-
-    try:
-        num_obj = 0
-        for mol in suppl:
-            if mol is None:
-                LOG.error(
-                    f'Unable to process molecule #{num_obj+1} in {ifile}')
-                success_list.append(False)
-                continue
-
-            # xmatrix [num_obj] = properties.ComputeProperties(mol)
-            if num_obj == 0:
-                descriptors = properties.ComputeProperties(mol)
-                # what is going on here??
-                if np.isnan(xmatrix).any():
-                    success_list.append(False)
-                    continue
-                else:
-                    xmatrix = descriptors
-            else:
-                descriptors = properties.ComputeProperties(mol)
-                if np.isnan(descriptors).any():
-                    success_list.append(False)
-                    continue
-                xmatrix = np.vstack(
-                    (xmatrix, descriptors))
-
-            success_list.append(True)
-            num_obj += 1
-
-    except Exception as e:
-        LOG.error(f'Failed computing RDKit properties for molecule #{num_obj+1} in {ifile}'
-                  f' with exception: {e}')
-        return False, 'Failed computing RDKit properties for molecule' + str(num_obj+1) + 'in file ' + ifile
-
-    LOG.debug(f'computed RDKit properties matrix with shape {xmatrix.shape}')
-    if num_obj == 0:
-        return False, 'Unable to compute RDKit properties for molecule '+ifile
-
-    return True, (xmatrix, md_name, success_list)
-
-
-def _RDKit_properties(ifile) -> dict:
-    ''' 
-    computes RDKit properties for the file provided as argument
-
-    output is a boolean and a tupla with the xmatrix and the variable names
-    '''
-    try:
-        suppl = Chem.SDMolSupplier(ifile)
-    except Exception as err:
-        LOG.error(f'Unable to create supplier with exception {err}')
-        raise err
-        # return False, 'unable to create supplier'
-
-    properties = rdMolDescriptors.Properties()
-
-    props_names = [propname for propname in properties.GetPropertyNames()]
-    n_props = len(props_names)
-
-    matrix_shape = (len(suppl), n_props)
-    props_matrix = np.zeros(matrix_shape)
-
-    LOG.info('computing RDKit properties...')
-
-    success_list = []
-    for i, mol in enumerate(suppl):
-        # check mol
-        if mol is None:
-            LOG.warning(f'Supplier failed to read molecule #{i+1} in {ifile}')
-            success_list.append(False)
-            continue
-
-        # fill in properties matrix
-        try:
-            props_matrix[i, :] = properties.ComputeProperties(mol)
-        except Exception as e:
-            LOG.error(f'Failed to compute RDKit properties for mol {i+1}'
-                      f' in {ifile} with exception {e}')
-            success_list.append(False)
-
-        success_list.append(True)
-
-    # check if any descriptor has NaNs
-    # returns False when row has NaN
-    mols_wthout_nan = ~ np.isnan(props_matrix).any(axis=1)
-    # num of mols that have NaNs in descriptors
-    n_mols_wth_nan = sum(~mols_wthout_nan)
-
-    if n_mols_wth_nan != 0:
-        LOG.debug(f'{n_mols_wth_nan} molecules have `NaN` in'
-                  ' the descriptors and will be descarted')
-    # add False to succes list in mol idx where properties results has NaNs
-    success_arr = np.array(success_list) & mols_wthout_nan
-
-    results_dict = {
-        'matrix': props_matrix,
-        'names': props_names,
-        'succes_arr': success_arr
-    }
-
-    return results_dict
-
-
-def _RDKit_descriptors_old(ifile) -> (bool, (np.ndarray, list, list)):
-    '''
-    computes RDKit descriptors for the file provided as argument
-
-    output is a boolean and a tupla with the xmatrix and the variable names
-    '''
-    try:
-        suppl = Chem.SDMolSupplier(ifile)
-    except:
-        LOG.error(f'Unable to create supplier with exception {e}')
-        return False, 'Unable to compute RDKit MD'
-
-    LOG.info('Computing RDKit descriptors...')
-    # what is this??
-    nms = [x[0] for x in Descriptors._descList]
-
-    md = MoleculeDescriptors.MolecularDescriptorCalculator(nms)
-    success_list = []
-    xmatrix = []
-
-    try:
-        num_obj = 0
-        for mol in suppl:
-            if mol is None:
-                LOG.error('Unable to process molecule'
-                          f'#{num_obj+1} in {ifile}')
-                print('ERROR: (@_RDKit_descriptors) Unable to process molecule #', str(
-                    num_obj+1), 'in file ' + ifile)
-                success_list.append(False)
-                continue
-
-            if num_obj == 0:
-                xmatrix = md.CalcDescriptors(mol)
-                LOG.debug(
-                    f'first descriptor vector computet with length {len(xmatrix)}')
-                if np.isnan(xmatrix).any():
-                    # what is the deal if there is any NaN?
-                    success_list.append(False)
-                    continue
-            else:
-                descriptors = md.CalcDescriptors(mol)
-                if np.isnan(descriptors).any():
-                    success_list.append(False)
-                    continue
-                xmatrix = np.vstack((xmatrix, descriptors))
-
-            success_list.append(True)
-            num_obj += 1
-
-    except:  # if any mol fails the whole try except will break
-        return False, 'Failed computing RDKit descriptors for molecule' + str(num_obj+1) + 'in file ' + ifile
-
-    LOG.debug(f'computed RDKit descriptors matrix with shape {xmatrix.shape}')
-    if num_obj == 0:
-        return False, 'Unable to compute RDKit properties for molecule '+ifile
-
-    return True, (xmatrix, nms, success_list)
-
-
-def _RDKit_descriptors(ifile) -> dict:
-    """ Computes RDKit descriptors
+    descriptors_matrix: ndarray, matrix with the descriptors
+    success_arr: ndarray, array with bool values indicating if mol
+                 had any issues during supplier (None) or in the descreiptor
+                 array (presence of NaNs)
     """
     try:
         suppl = Chem.SDMolSupplier(ifile)
     except Exception as err:
         LOG.error(f'Unable to create supplier with exception {err}')
         raise err
-        # return False, 'unable to create supplier'
 
-    descrip_names = [n[0] for n in Descriptors._descList]
-    md_calculator = MoleculeDescriptors.MolecularDescriptorCalculator(descrip_names)
-    # rows: n mols, cols: n descriptors
-    matrix_shape = (len(suppl), len(descrip_names))
-    # init matrix
+    matrix_shape = (len(suppl), n_cols)
     descrip_matrix = np.zeros(matrix_shape)
-
-    LOG.info('Computing RDKit descriptors...')
 
     success_list = []
     for i, mol in enumerate(suppl):
@@ -246,11 +72,11 @@ def _RDKit_descriptors(ifile) -> dict:
             success_list.append(False)
             continue
 
-        # fill descriptor matrix
+        # fill in matrix with descriptor array
         try:
-            descrip_matrix[i, :] = md_calculator.CalcDescriptors(mol)
+            descrip_matrix[i, :] = md_function(mol)
         except Exception as e:
-            LOG.error(f'Failed to compute RDKit descriptors for mol {i+1}'
+            LOG.error(f'Failed to compute RDKit properties for mol {i+1}'
                       f' in {ifile} with exception {e}')
             success_list.append(False)
 
@@ -263,15 +89,65 @@ def _RDKit_descriptors(ifile) -> dict:
     n_mols_wth_nan = sum(~mols_wthout_nan)
 
     if n_mols_wth_nan != 0:
-        LOG.debug(f'Molecules num {n_mols_wth_nan} have `NaN` in'
-                 'the descriptors and will be descarted')
+        LOG.debug(f'{n_mols_wth_nan} molecules have `NaN` in'
+                  ' the descriptors and will be descarted')
+
     # add False to succes list in mol idx where properties results has NaNs
-    success_arr = (np.array(success_list) & mols_wthout_nan)
+    success_arr = np.array(success_list) & mols_wthout_nan
+
+    return descrip_matrix, success_arr
+
+
+def _RDKit_descriptors(ifile) -> dict:
+    """ Computes RDKit descriptors
+    """
+
+    descrip_names = [n[0] for n in Descriptors._descList]
+    md_calculator = MoleculeDescriptors.MolecularDescriptorCalculator(
+        descrip_names)
+    # rows: n mols, cols: n descriptors
+    n_cols = len(descrip_names)
+
+    descrip_matrix, succes_arr = _calc_descriptors(
+        md_calculator.CalcDescriptors,
+        ifile,
+        n_cols
+    )
 
     results_dict = {
         'matrix': descrip_matrix,
         'names': descrip_names,
-        'succes_arr': success_arr
+        'succes_arr': succes_arr
+    }
+
+    return results_dict
+
+
+def _RDKit_properties(ifile) -> dict:
+    '''
+    computes RDKit properties for the file provided as argument
+
+    output is a boolean and a tupla with the xmatrix and the variable names
+    '''
+    properties = rdMolDescriptors.Properties()
+
+    props_names = [propname for propname in properties.GetPropertyNames()]
+    n_props = len(props_names)
+
+    n_cols = n_props
+
+    LOG.info('computing RDKit properties...')
+
+    props_matrix, succes_arr = _calc_descriptors(
+        properties.ComputeProperties,
+        ifile,
+        n_cols
+    )
+
+    results_dict = {
+        'matrix': props_matrix,
+        'names': props_names,
+        'succes_arr': succes_arr
     }
 
     return results_dict
@@ -368,3 +244,125 @@ def _padel_descriptors(ifile):
     # this is common when series are processed object-wise
 
     return (index > 1), (xmatrix, var_nam, success_list)
+
+
+def _RDKit_descriptors_old(ifile) -> (bool, (np.ndarray, list, list)):
+    '''
+    computes RDKit descriptors for the file provided as argument
+
+    output is a boolean and a tupla with the xmatrix and the variable names
+    '''
+    try:
+        suppl = Chem.SDMolSupplier(ifile)
+    except:
+        LOG.error(f'Unable to create supplier with exception {e}')
+        return False, 'Unable to compute RDKit MD'
+
+    LOG.info('Computing RDKit descriptors...')
+    # what is this??
+    nms = [x[0] for x in Descriptors._descList]
+
+    md = MoleculeDescriptors.MolecularDescriptorCalculator(nms)
+    success_list = []
+    xmatrix = []
+
+    try:
+        num_obj = 0
+        for mol in suppl:
+            if mol is None:
+                LOG.error('Unable to process molecule'
+                          f'#{num_obj+1} in {ifile}')
+                print('ERROR: (@_RDKit_descriptors) Unable to process molecule #', str(
+                    num_obj+1), 'in file ' + ifile)
+                success_list.append(False)
+                continue
+
+            if num_obj == 0:
+                xmatrix = md.CalcDescriptors(mol)
+                LOG.debug(
+                    f'first descriptor vector computet with length {len(xmatrix)}')
+                if np.isnan(xmatrix).any():
+                    # what is the deal if there is any NaN?
+                    success_list.append(False)
+                    continue
+            else:
+                descriptors = md.CalcDescriptors(mol)
+                if np.isnan(descriptors).any():
+                    success_list.append(False)
+                    continue
+                xmatrix = np.vstack((xmatrix, descriptors))
+
+            success_list.append(True)
+            num_obj += 1
+
+    except:  # if any mol fails the whole try except will break
+        return False, 'Failed computing RDKit descriptors for molecule' + str(num_obj+1) + 'in file ' + ifile
+
+    LOG.debug(f'computed RDKit descriptors matrix with shape {xmatrix.shape}')
+    if num_obj == 0:
+        return False, 'Unable to compute RDKit properties for molecule '+ifile
+
+    return True, (xmatrix, nms, success_list)
+
+
+def _RDKit_properties_old(ifile) -> (bool, (np.ndarray, list, list)):
+    ''' 
+    computes RDKit properties for the file provided as argument
+
+    output is a boolean and a tupla with the xmatrix and the variable names
+    '''
+    try:
+        suppl = Chem.SDMolSupplier(ifile)
+    except Exception as e:
+        LOG.error(f'Unable to create supplier with exception {e}')
+        return False, 'unable to create supplier'
+
+    LOG.info('computing RDKit properties...')
+
+    properties = rdMolDescriptors.Properties()
+
+    # get from here num of properties
+    md_name = [prop_name for prop_name in properties.GetPropertyNames()]
+
+    success_list = []
+    xmatrix = []
+
+    try:
+        num_obj = 0
+        for mol in suppl:
+            if mol is None:
+                LOG.error(
+                    f'Unable to process molecule #{num_obj+1} in {ifile}')
+                success_list.append(False)
+                continue
+
+            # xmatrix [num_obj] = properties.ComputeProperties(mol)
+            if num_obj == 0:
+                descriptors = properties.ComputeProperties(mol)
+                # what is going on here??
+                if np.isnan(xmatrix).any():
+                    success_list.append(False)
+                    continue
+                else:
+                    xmatrix = descriptors
+            else:
+                descriptors = properties.ComputeProperties(mol)
+                if np.isnan(descriptors).any():
+                    success_list.append(False)
+                    continue
+                xmatrix = np.vstack(
+                    (xmatrix, descriptors))
+
+            success_list.append(True)
+            num_obj += 1
+
+    except Exception as e:
+        LOG.error(f'Failed computing RDKit properties for molecule #{num_obj+1} in {ifile}'
+                  f' with exception: {e}')
+        return False, 'Failed computing RDKit properties for molecule' + str(num_obj+1) + 'in file ' + ifile
+
+    LOG.debug(f'computed RDKit properties matrix with shape {xmatrix.shape}')
+    if num_obj == 0:
+        return False, 'Unable to compute RDKit properties for molecule '+ifile
+
+    return True, (xmatrix, md_name, success_list)
