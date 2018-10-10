@@ -23,7 +23,7 @@
 
 import os
 import shutil
-from flame.util import utils
+from flame.util import utils, get_logger
 from flame.predict import Predict
 from flame.build import Build
 
@@ -32,6 +32,8 @@ import multiprocessing as mp
 
 # if the number of models is higher, try to run in multithread
 MAX_MODELS_SINGLE_CPU = 4
+
+LOG = get_logger(__name__)
 
 
 def get_external_input(task, model_set, infile):
@@ -139,8 +141,11 @@ def build_cmd(model, output_format=None):
 
         epd = utils.model_path(model['endpoint'], 0)
         lfile = os.path.join(epd, os.path.basename(ifile))
-        shutil.copy(ifile, lfile)
-
+        try:
+            shutil.copy(ifile, lfile)
+        except shutil.SameFileError:
+            LOG.warning('Building model with the input SDF'
+                        f' present in model folder {lfile}')
         # run the model with the input file
         success, results = build.run(lfile)
 
