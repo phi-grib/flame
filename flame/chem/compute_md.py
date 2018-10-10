@@ -36,8 +36,8 @@ LOG = get_logger(__name__)
 
 
 def _calc_descriptors(md_function, ifile: str,  n_cols: int) -> (np.ndarray, np.ndarray):
-    """Helper function for handling all the security of calculating descriptors
-    for a given calculator function.
+    """Helper function for handling all the safety measures of computing
+    RDKit descriptors.
 
     Parameters:
     -----------
@@ -98,8 +98,26 @@ def _calc_descriptors(md_function, ifile: str,  n_cols: int) -> (np.ndarray, np.
     return descrip_matrix, success_arr
 
 
-def _RDKit_descriptors(ifile) -> dict:
-    """ Computes RDKit descriptors
+def _RDKit_descriptors(ifile: str) -> dict:
+    """ Computes RDKit descriptors for the SDF provided as argument
+
+    Parameters:
+    -----------
+
+    ifile: str, SDF input file
+
+    Returns:
+    --------
+
+    results_dict: dict, with keys {
+
+        'matrix': ndarray, descriptor matrix. Full form with non processed
+                  and failed molecules.
+        'names': list, matrix column names. descriptors names.
+        'succes_arr': ndarray, array with bool values indicating if mol
+                      had any issues during supplier (None) or in the 
+                      descriptor array (presence of NaNs).
+    }
     """
 
     descrip_names = [n[0] for n in Descriptors._descList]
@@ -124,10 +142,25 @@ def _RDKit_descriptors(ifile) -> dict:
 
 
 def _RDKit_properties(ifile) -> dict:
-    '''
-    computes RDKit properties for the file provided as argument
+    '''Computes RDKit properties for the SDF provided as argument
+    
+    Parameters:
+    -----------
 
-    output is a boolean and a tupla with the xmatrix and the variable names
+    ifile: str, SDF input file
+
+    Returns:
+    --------
+
+    results_dict: dict, with keys {
+
+        'matrix': ndarray, properties matrix. Full form with non processed
+                  and failed molecules.
+        'names': list, matrix column names. Properties names.
+        'succes_arr': ndarray, array with bool values indicating if mol
+                      had any issues during supplier (None) or in the 
+                      descriptor array (presence of NaNs).
+    }
     '''
     properties = rdMolDescriptors.Properties()
 
