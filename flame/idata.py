@@ -387,7 +387,11 @@ class Idata:
 
         return True, (combined_md, combined_nm, combined_sc)
 
-    def computeMDNEW(self, ifile: str, methods: list) -> (bool, (np.ndarray, list, list)):
+    def computeMDNEW(self, ifile: str, methods: list) -> np.ndarray:
+
+        if not methods:
+            raise ValueError('Must provide at least one method')
+    
         LOG.info(f'Computing molecular descriptors with methods {methods}...')
 
         registered_methods = dict([('RDKit_properties', computeMD._RDKit_properties2),
@@ -405,19 +409,28 @@ class Idata:
                 # then no md method is correct... so error
                 raise ValueError(f'Methods {no_recog_meth} not recognized.'
                                  ' No valid method found.')
+        
+        # more tha one method
+        if len(methods) > 1:
+            xmatrix_ls = []
+            var_names = []
+            succes_lists = []
+            for method in methods:
+                results = registered_methods[method](ifile)
 
-        xmatrix_ls = []
-        var_names = []
-        succes_lists = []
-        for method in methods:
-            results = registered_methods[method](ifile)
+                xmatrix_ls.append(results['matrix'])
+                var_names.extend(results['names'])
+                succes_lists.append(results['succes_arr'])
+            # horizontally concat results
+            xmatrix = self._concat_descriptors_matrix(xmatrix_ls)
+        
+        # do for a single method. Skipping concatenation
+        else:
+            results = registered_methods[methods[0]](ifile)
 
-            xmatrix_ls.append(results['matrix'])
-            var_names.extend(results['names'])
-            succes_lists.append(results['succes_arr'])
-
-        # horizontally concat results
-        xmatrix = self._concat_descriptors_matrix(xmatrix_ls)
+            xmatrix = results['matrix']
+            var_names = results['names']
+            succes_lists = results['succes_arr']
 
         # filter molecules with failed status during computing descriptors
         xmatrix_filtered = self._filter_matrix(xmatrix, succes_lists)
@@ -434,6 +447,9 @@ class Idata:
         """
         # using all bcause of arbitrary list length
         filter_mask = np.all(succes_list, axis=0)
+        n_filtered_mols = len(filter_mask) - sum(filter_mask)
+        LOG.info(f'removed {n_filtered_mols} molecules'
+                 ' because of malformation or problems computing descriptors')
 
         if matrix.shape[0] != len(filter_mask):
             raise ValueError('Matrix and filter mask do not have the'
@@ -456,7 +472,7 @@ class Idata:
 
             LOG.debug('concatenated matrices with shapes: '
                       f'{[m.shape for m in matrices]} into a'
-                      f'matrix with shape {xmatrix.shape}')
+                      f' matrix with shape {xmatrix.shape}')
 
         except ValueError as e:
             LOG.critical('Cannot concatenate matrix with different shapes: '
