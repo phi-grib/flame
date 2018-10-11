@@ -49,7 +49,7 @@ def _ETKDG(ifile) -> (bool, str):
     with open(ofile, 'w') as fo:
         for i, mol in enumerate(suppl):
             if mol is None:
-                LOG.warning('Supplier failed to read'
+                LOG.debug('Supplier failed to read'
                             f' molecule #{i+1} in {ifile}')
                 continue
 
