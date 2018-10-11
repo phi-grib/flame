@@ -23,14 +23,18 @@
 import os
 from rdkit import Chem
 
+from flame.util import get_logger
+
+LOG = get_logger(__name__)
+
 
 def count_mols(ifile):
     return len(Chem.SDMolSupplier(ifile))
 
 
 def split_SDFile(ifile, num_chunks):
-    """
-    Splits the input SDfile in pieces SDfiles files of balanced size.
+    """Splits the input SDfile in pieces SDfiles files of balanced size.
+    
     Every file is named "filename_0.sdf", "filename_1.sdf", ...
 
     Argument:
@@ -46,9 +50,10 @@ def split_SDFile(ifile, num_chunks):
     suppl = Chem.SDMolSupplier(ifile)
 
     num_mols = len(suppl)
-
+    
     # Inital checking for early return
     if num_mols == 0:
+        LOG.critical(f'No molecule foung in {ifile}')
         return False, 'No molecule found in file: '+ifile
 
     if num_chunks < 2:
@@ -57,6 +62,8 @@ def split_SDFile(ifile, num_chunks):
 
     # Get number of molecules per chunks
     chunk_size = num_mols // num_chunks
+    LOG.debug(f'Splitting {ifile} into {num_chunks} chunk files with'
+              f' {chunk_size} molecules in every chunk')
 
     filename, fileext = os.path.splitext(ifile)
     temp_files_name = []
