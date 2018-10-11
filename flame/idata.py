@@ -294,7 +294,6 @@ class Idata:
         success = False
         results = 'not converted to 3D'
 
-        LOG.info('converting structures to 3D with method ETKDG...')
         if 'ETKDG' in method:
             success, results = convert3D._ETKDG(ifile)
 
@@ -387,7 +386,7 @@ class Idata:
 
         return True, (combined_md, combined_nm, combined_sc)
 
-    def computeMD(self, ifile: str, methods: list) -> np.ndarray:
+    def computeMD(self, ifile: str, methods: list) -> (bool, (np.ndarray, list, list)):
         """ Computes molecular descriptors.
 
         Computes and concatenates all the descriptor methods 
@@ -406,16 +405,16 @@ class Idata:
         Returns
         -------
 
-        bool
+        success: bool
             If computation was successfull
 
-        np.ndarray
+        xmatrix_filtered: np.ndarray
             Descriptors matrix filtered without failed molecules
-        
-        list
+
+        var_names: list
             Variable names or descriptor names
-        
-        list
+
+        success_list: list
             List with bool values indicating if mol
             had any issues during supplier (None) or in the
             descriptor array (presence of NaNs).
@@ -437,16 +436,22 @@ class Idata:
             no_recog_meth = [m for m in methods if m not in registered_methods]
             LOG.error(f'Methods {no_recog_meth} not recognized')
 
+            # check is any single good method
             if len(no_recog_meth) == len(methods):
-                # then no md method is correct... so error
+                # then not a single md method is correct... so error
                 raise ValueError(f'Methods {no_recog_meth} not recognized.'
                                  ' No valid method found.')
+
+            # remove bad methods
+            methods = [m for m in methods if m not in no_recog_meth]
 
         success_lists = []
         # more tha one method
         if len(methods) > 1:
+
             xmatrix_ls = []
             var_names = []
+
             for method in methods:
                 results = registered_methods[method](ifile)
 
@@ -498,8 +503,9 @@ class Idata:
             only `True` in succes_list arrays
 
         list
-            the resultant succes list. `all()` combination of 
-            `succes_list` (param) arrays
+            the resultant succes list. `all()` combination of
+            `succes_list` (param) arrays. The length must be same
+            as the number of molecules.
 
         """
         # using all bcause of arbitrary list length
@@ -570,6 +576,7 @@ class Idata:
             internal = iresults[1]
             ixmatrix = internal[0]
 
+            # isinstance?
             if type(ixmatrix).__module__ != np.__name__:
                 return False, "unknown results type in consolidate"
 
@@ -682,6 +689,7 @@ class Idata:
         file_size = results[1]
 
         # check if any of the molecules is empty
+        # ?? what if it has more than one molecule?
         for fsize in file_size:
             success_list.append(fsize == 1)
 
@@ -690,10 +698,7 @@ class Idata:
         for i, ifile in enumerate(file_list):
 
             if not success_list[i]:   # molecule was empty, do not process
-
-                print('ERROR: (@workflow_objects) Unable to process molecule #', str(
-                    i+1), 'in file ' + ifile)
-
+                LOG.error(f'Molecule {i+1} in {ifile} is empty, skiping...')
                 continue
 
             success, results = self.workflow_series(ifile)
@@ -734,7 +739,8 @@ class Idata:
         output: results contains two lists
                 results[0] a numpy bidimensional array containing MD
                 results[1] a list of strings containing the names of the MD vars
-                results[2] a list of booleans indicating for which objects the MD computations succeeded    
+                results[2] a list of booleans indicating for which objects the 
+                           MD computations succeeded    
 
         '''
 
