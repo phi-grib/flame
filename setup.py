@@ -24,7 +24,7 @@ setup(
     # If any package contains *.txt or *.rst files, include them:
     package_data={'': ['*.yaml', '*.yml']},
     install_requires=['standardiser',
-                      'nonconformist'],
+                      'phi_nonconformist'],
     dependency_links=['https://github.com/phi-grib/standardiser/archive/master.zip',
-                      'https://github.com/josecarlosgomezt/nonconformist/archive/master.zip']
+                      'https://github.com/phi-grib/phi_nonconformist/archive/master.zip']
 )
