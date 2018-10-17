@@ -50,7 +50,7 @@ def get_logger(name) -> logging.Logger:
     # if not already created
     if not logger.handlers:
         # 512 Kb file log
-        fh = RotatingFileHandler(log_file, maxBytes=524_288, backupCount=5)
+        fh = RotatingFileHandler(log_file, maxBytes=1_024_000, backupCount=5)
         fh.setLevel('DEBUG')
         # add formatter to handler
         fh.setFormatter(file_formatter)
