@@ -35,7 +35,7 @@ from flame.util import get_logger
 LOG = get_logger(__name__)
 
 
-def _calc_descriptors(md_function, ifile: str,  n_cols: int) -> (np.ndarray, np.ndarray):
+def _calc_descriptors(md_function, ifile: str,  descrip_names: list) -> (np.ndarray, np.ndarray):
     """Helper function for handling all the safety measures of computing
     RDKit descriptors.
 
@@ -69,6 +69,7 @@ def _calc_descriptors(md_function, ifile: str,  n_cols: int) -> (np.ndarray, np.
         LOG.error(f'Unable to create supplier with exception {err}')
         raise err
 
+    n_cols = len(descrip_names)
     matrix_shape = (len(suppl), n_cols)
     descrip_matrix = np.zeros(matrix_shape)
 
@@ -103,7 +104,13 @@ def _calc_descriptors(md_function, ifile: str,  n_cols: int) -> (np.ndarray, np.
     # add False to succes list in mol idx where properties results has NaNs
     success_arr = np.array(success_list) & mols_wthout_nan
 
-    return descrip_matrix, success_arr
+    results_dict = {
+        'matrix': descrip_matrix,
+        'names': descrip_names,
+        'success_arr': success_arr
+    }
+
+    return results_dict
 
 
 def _RDKit_descriptors(ifile: str) -> dict:
@@ -132,22 +139,14 @@ def _RDKit_descriptors(ifile: str) -> dict:
     descrip_names = [n[0] for n in Descriptors._descList]
     md_calculator = MoleculeDescriptors.MolecularDescriptorCalculator(
         descrip_names)
-    # num of columns that matrix will need
-    n_cols = len(descrip_names)
 
     LOG.info('Computing {} RDKit descriptors per molecule...'.format(n_cols))
     
-    descrip_matrix, success_arr = _calc_descriptors(
+    results_dict = _calc_descriptors(
         md_calculator.CalcDescriptors,
         ifile,
-        n_cols
+        descrip_names,
     )
-
-    results_dict = {
-        'matrix': descrip_matrix,
-        'names': descrip_names,
-        'success_arr': success_arr
-    }
 
     return results_dict
 
@@ -183,17 +182,11 @@ def _RDKit_properties(ifile) -> dict:
 
     LOG.info('computing {} RDKit properties per molecule...'.format(n_cols))
 
-    props_matrix, success_arr = _calc_descriptors(
+    results_dict = _calc_descriptors(
         properties.ComputeProperties,
         ifile,
-        n_cols
+        props_names
     )
-
-    results_dict = {
-        'matrix': props_matrix,
-        'names': props_names,
-        'success_arr': success_arr
-    }
 
     return results_dict
 

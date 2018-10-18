@@ -695,7 +695,6 @@ class Idata:
         file_size = results[1]
 
         # check if any of the molecules is empty
-        # ?? what if it has more than one molecule?
         for fsize in file_size:
             success_list.append(fsize == 1)
 
