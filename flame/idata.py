@@ -38,7 +38,7 @@ import flame.chem.sdfileutils as sdfu
 import flame.chem.compute_md as computeMD
 import flame.chem.convert_3d as convert3D
 
-from flame.util import utils, get_logger
+from flame.util import utils, get_logger, supress_log
 
 LOG = get_logger(__name__)
 
@@ -274,6 +274,8 @@ class Idata:
         if not method:
             return True, ifile
 
+        else:
+            raise NotImplementedError
         success = False
         results = 'not ionized'
 
@@ -315,7 +317,7 @@ class Idata:
         raise NotImplementedError
         return False, 'not implemented'
 
-    def computeMD_old(self, ifile: str, methods: list) -> (bool, (np.ndarray, list, list)):
+    def computeMD(self, ifile: str, methods: list) -> (bool, (np.ndarray, list, list)):
         '''
         Uses the molecular structures for computing an array
         of values (int or float).
@@ -348,23 +350,26 @@ class Idata:
         is_empty = True
 
         for method in methods:
-            success, results = registered_methods[method](ifile)
+            # success, results = registered_methods[method](ifile)
+            success = True
+            results = registered_methods[method](ifile)
 
             if not success:  # if computing returns False in status
                 return success, results
 
             if is_empty:  # first md computed, just copy
 
-                combined_md = results[0]  # np.array of values
-                combined_nm = results[1]  # list of variable names
-                combined_sc = results[2]  # list of true/false, what?
+                combined_md = results['matrix']  # np.array of values
+                combined_nm = results['names']  # list of variable names
+                # list of true/false, what?
+                combined_sc = results['success_arr']
 
                 shape = np.shape(combined_md)
 
                 is_empty = False
 
             else:  # append laterally
-                ishape = np.shape(results[0])
+                ishape = np.shape(results['matrix'])
 
                 if (len(ishape) > 1):
                     # for 2D arrays, shape[0] is the number of objects
@@ -373,20 +378,20 @@ class Idata:
                               method+'" does not match those computed by other methods')
                         continue
 
-                combined_md = np.hstack((combined_md, results[0]))
-                combined_nm.extend(results[1])
+                combined_md = np.hstack((combined_md, results['matrix']))
+                combined_nm.extend(results['names'])
 
                 # wut is this???
                 # combine sucess results into oine list with AND
                 # All results must be True to get True
                 # scc stands for success
-                new_sc = [scc and results[2][i]
+                new_sc = [scc and results['success_arr'][i]
                           for i, scc in enumerate(combined_sc)]
                 combined_sc = new_sc
 
         return True, (combined_md, combined_nm, combined_sc)
 
-    def computeMD(self, ifile: str, methods: list) -> (bool, (np.ndarray, list, list)):
+    def computeMD_FUTURE(self, ifile: str, methods: list) -> (bool, (np.ndarray, list, list)):
         """ Computes molecular descriptors.
 
         Computes and concatenates all the descriptor methods 
@@ -665,8 +670,9 @@ class Idata:
 
         return True
 
+    @supress_log(logger=LOG)
     def workflow_objects(self, input_file):
-        '''      
+        '''
         Executes in sequence methods required to generate MD,
         starting from a single molecular file.
 
@@ -708,8 +714,8 @@ class Idata:
             success_list[i] = success
 
             if not success:           # failed in the workflow
-                print('ERROR: (@workflow_objects) Workflow failed for molecule #', str(
-                    i+1), 'in file ' + input_file)
+                LOG.error(f'Workflow failed for molecule #{str(i+1)}'
+                          f' in file {input_file}')
                 continue
 
             if first_mol:  # first molecule
@@ -719,8 +725,9 @@ class Idata:
                 first_mol = False
             else:
                 if len(results[0]) != num_var:
-                    print('ERROR: (@workflow_objects) MD length for molecule #', str(
-                        i+1), 'in file ' + input_file + 'does not match the MD length of the first molecule')
+                    LOG.warning(f'MD length for molecule #{str(i+1)} in file'
+                                f' {input_file} does not match the MD length'
+                                'of the first molecule')
                     success_list[i] = False
                     continue
 
@@ -731,7 +738,7 @@ class Idata:
         return True, (md_results, va_results, success_list)
 
     def workflow_series(self, input_file):
-        '''      
+        '''  
         Executes in sequence methods required to generate MD,
         starting from a single molecular file
 

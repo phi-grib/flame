@@ -1,3 +1,4 @@
+import functools
 import logging
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
@@ -8,6 +9,27 @@ try:
     import coloredlogs  # add color in the future with this
 except ImportError as e:
     pass
+
+
+def supress_log(logger: logging.Logger):
+    """Decorator for suprerss logs during objects workflow
+
+    Logs we are entering a supress log routine and 
+    disables the logger setting the minimum message level at
+    interpreter level.
+    """
+    def decorator(func):
+        @functools.wraps(func)
+        def supressor(*args, **kwargs):
+            logger.info('Entering mol by mol workflow. Logger will be disabled'
+                         ' below error level')
+            logging.disable(logging.WARNING)
+            func_results = func(*args, **kwargs)
+            logging.disable(logging.NOTSET)
+            logger.debug('Logger enable!')
+            return func_results
+        return supressor
+    return decorator
 
 
 def get_log_file() -> Path:
