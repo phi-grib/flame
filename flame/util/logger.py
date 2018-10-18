@@ -22,11 +22,11 @@ def supress_log(logger: logging.Logger):
         @functools.wraps(func)
         def supressor(*args, **kwargs):
             logger.info('Entering mol by mol workflow. Logger will be disabled'
-                         ' below error level')
+                        ' below error level')
             logging.disable(logging.WARNING)
             func_results = func(*args, **kwargs)
             logging.disable(logging.NOTSET)
-            logger.debug('Logger enable!')
+            logger.debug('Logger enabled again!')
             return func_results
         return supressor
     return decorator
