@@ -568,7 +568,7 @@ class Idata:
         '''
         Mix the results obtained by multiple CPUs into a single result file.
         '''
-
+        LOG.info(f'Concatenating results from {njobs} jobs')
         first = True
         xmatrix = None
         var_nam = None
@@ -584,7 +584,9 @@ class Idata:
             ixmatrix = internal[0]
 
             # isinstance?
-            if type(ixmatrix).__module__ != np.__name__:
+            if not isinstance(ixmatrix, np.ndarray):
+                LOG.error('Results type in consolidate must be `np.ndarray`.'
+                          f' Found: {type(ixmatrix)}')
                 return False, "unknown results type in consolidate"
 
             if first:
@@ -599,10 +601,12 @@ class Idata:
                 # for bidimensional arrays, num_var is shape[1]
                 if len(shape) > 1 and len(ishape) > 1:
                     if shape[1] != ishape[1]:
+                        LOG.error(f'Impossible to concat arrays with shape {shape} and {ishape}')
                         return False, "inconsistent number of variables"
                 else:
                     # for vectors obtained with a single object, numvar is shape[0]
                     if shape[0] != ishape[0]:
+                        LOG.error(f'Impossible to concat arrays with shape {shape} and {ishape}')
                         return False, "inconsistent number of variables"
 
                 xmatrix = np.vstack((xmatrix, ixmatrix))
@@ -635,8 +639,8 @@ class Idata:
 
                 pickle.dump(self.results, fo)
 
-        except:
-            pass
+        except Exception as e:
+            LOG.error(f"Can't serialize descriptors because of exception: {e}")
 
     def load(self):
         ''' 
