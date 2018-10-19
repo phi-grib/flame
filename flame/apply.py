@@ -32,7 +32,6 @@ from sklearn.metrics import confusion_matrix
 from flame.util import utils, get_logger
 
 
-
 class Apply:
 
     def __init__(self, parameters, results):
@@ -111,8 +110,8 @@ class Apply:
                 SSY0_out = np.sum(np.square(Ym - Ye))
                 SSY_out = np.sum(np.square(Ye - Yp))
                 scoringP = mean_squared_error(Ye, Yp)
-                SDEP = np.sqrt(SSY_out/(nobj))
-                Q2 = 1.00 - (SSY_out/SSY0_out)
+                SDEP = np.sqrt(SSY_out / (nobj))
+                Q2 = 1.00 - (SSY_out /  SSY0_out)
 
                 ext_val_results.append(('scoringP_ex', 'Scoring P', scoringP))
                 ext_val_results.append(

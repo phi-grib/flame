@@ -113,7 +113,7 @@ def _calc_descriptors(md_function, ifile: str,  descrip_names: list) -> (np.ndar
     return results_dict
 
 
-def _RDKit_descriptors(ifile: str) -> dict:
+def _RDKit_descriptors_FUTURE(ifile: str) -> dict:
     """ Computes RDKit descriptors for the SDF provided as argument
 
     Parameters:
@@ -140,8 +140,9 @@ def _RDKit_descriptors(ifile: str) -> dict:
     md_calculator = MoleculeDescriptors.MolecularDescriptorCalculator(
         descrip_names)
 
-    LOG.info('Computing {} RDKit descriptors per molecule...'.format(n_cols))
-    
+    LOG.info('Computing {} RDKit descriptors per molecule...'
+             .format(len(descrip_names)))
+
     results_dict = _calc_descriptors(
         md_calculator.CalcDescriptors,
         ifile,
@@ -151,7 +152,7 @@ def _RDKit_descriptors(ifile: str) -> dict:
     return results_dict
 
 
-def _RDKit_properties(ifile) -> dict:
+def _RDKit_properties_FUTURE(ifile) -> dict:
     '''Computes RDKit properties for the SDF provided as argument
 
     Parameters
@@ -284,7 +285,7 @@ def _padel_descriptors(ifile):
     return (index > 1), (xmatrix, var_nam, success_list)
 
 
-def _RDKit_descriptors_old(ifile) -> (bool, (np.ndarray, list, list)):
+def _RDKit_descriptors(ifile) -> (bool, (np.ndarray, list, list)):
     '''
     computes RDKit descriptors for the file provided as argument
 
@@ -336,14 +337,20 @@ def _RDKit_descriptors_old(ifile) -> (bool, (np.ndarray, list, list)):
     except:  # if any mol fails the whole try except will break
         return False, 'Failed computing RDKit descriptors for molecule' + str(num_obj+1) + 'in file ' + ifile
 
-    LOG.debug(f'computed RDKit descriptors matrix with shape {xmatrix.shape}')
+    LOG.debug(f'computed RDKit descriptors matrix with shape {len(xmatrix)}')
     if num_obj == 0:
         return False, 'Unable to compute RDKit properties for molecule '+ifile
+    
+    results = {
+        'matrix': xmatrix,
+        'names': nms,
+        'success_arr': success_list
+    }
 
-    return True, (xmatrix, nms, success_list)
+    return True, results
 
 
-def _RDKit_properties_old(ifile) -> (bool, (np.ndarray, list, list)):
+def _RDKit_properties(ifile) -> (bool, (np.ndarray, list, list)):
     ''' 
     computes RDKit properties for the file provided as argument
 
@@ -399,8 +406,13 @@ def _RDKit_properties_old(ifile) -> (bool, (np.ndarray, list, list)):
                   f' with exception: {e}')
         return False, 'Failed computing RDKit properties for molecule' + str(num_obj+1) + 'in file ' + ifile
 
-    LOG.debug(f'computed RDKit properties matrix with shape {xmatrix.shape}')
+    LOG.debug(f'computed RDKit properties matrix with shape {len(xmatrix)}')
     if num_obj == 0:
         return False, 'Unable to compute RDKit properties for molecule '+ifile
 
-    return True, (xmatrix, md_name, success_list)
+    results = {
+        'matrix': xmatrix,
+        'names': md_name,
+        'success_arr': success_list
+    }
+    return True, results

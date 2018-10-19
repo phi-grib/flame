@@ -103,9 +103,8 @@ class Idata:
             # Do not even try to process molecules not recognised by RDKit.
             # They will be removed at the normalization step
             if mol is None:
-                LOG.error(f'Unable to process molecule #{obj_num+1}')
-                print('ERROR: (@extractInformaton) Unable to process molecule #', str(
-                    obj_num+1), 'in file ' + ifile)
+                LOG.error(f'(@extractInformaton) Unable to process molecule #{obj_num+1}'
+                          f' in file {ifile}')
                 success_list.append(False)
                 continue
 
@@ -132,13 +131,13 @@ class Idata:
 
             if mol.HasProp(self.parameters['SDFile_experimental']):
                 exp = mol.GetProp(self.parameters['SDFile_experimental'])
-
+                LOG.debug('Found experimental results in SDF')
             # generate a SMILES
             try:
                 sml = Chem.MolToSmiles(mol)
             except Exception as e:
-                LOG.error(
-                    f'while converting mol to smiles an exception has ocurred: {e}')
+                LOG.error('while converting mol to smiles'
+                          f' an exception has ocurred: {e}')
                 sml = None
 
             # it's not clear what this is
@@ -347,18 +346,21 @@ class Idata:
                 raise ValueError(f'Methods {no_recog_meth} not recognized.'
                                  ' No valid method found.')
 
+            # remove bad methods
+            methods = [m for m in methods if m not in no_recog_meth]
+
         is_empty = True
 
         for method in methods:
             # success, results = registered_methods[method](ifile)
-            success = True
-            results = registered_methods[method](ifile)
+            
+            success, results = registered_methods[method](ifile)
 
             if not success:  # if computing returns False in status
                 return success, results
 
             if is_empty:  # first md computed, just copy
-
+ 
                 combined_md = results['matrix']  # np.array of values
                 combined_nm = results['names']  # list of variable names
                 # list of true/false, what?
@@ -737,7 +739,7 @@ class Idata:
         return True, (md_results, va_results, success_list)
 
     def workflow_series(self, input_file):
-        '''  
+        '''
         Executes in sequence methods required to generate MD,
         starting from a single molecular file
 
