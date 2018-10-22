@@ -311,15 +311,13 @@ def _RDKit_descriptors(ifile) -> (bool, (np.ndarray, list, list)):
             if mol is None:
                 LOG.error('Unable to process molecule'
                           f'#{num_obj+1} in {ifile}')
-                print('ERROR: (@_RDKit_descriptors) Unable to process molecule #', str(
-                    num_obj+1), 'in file ' + ifile)
                 success_list.append(False)
                 continue
 
             if num_obj == 0:
                 xmatrix = md.CalcDescriptors(mol)
                 LOG.debug(
-                    f'first descriptor vector computet with length {len(xmatrix)}')
+                    f'first descriptor vector computet with shape {np.shape(xmatrix)}')
                 if np.isnan(xmatrix).any():
                     # what is the deal if there is any NaN?
                     success_list.append(False)
@@ -337,7 +335,7 @@ def _RDKit_descriptors(ifile) -> (bool, (np.ndarray, list, list)):
     except:  # if any mol fails the whole try except will break
         return False, 'Failed computing RDKit descriptors for molecule' + str(num_obj+1) + 'in file ' + ifile
 
-    LOG.debug(f'computed RDKit descriptors matrix with shape {len(xmatrix)}')
+    LOG.debug(f'computed RDKit descriptors matrix with shape {np.shape(xmatrix)}')
     if num_obj == 0:
         return False, 'Unable to compute RDKit properties for molecule '+ifile
     
@@ -406,7 +404,7 @@ def _RDKit_properties(ifile) -> (bool, (np.ndarray, list, list)):
                   f' with exception: {e}')
         return False, 'Failed computing RDKit properties for molecule' + str(num_obj+1) + 'in file ' + ifile
 
-    LOG.debug(f'computed RDKit properties matrix with shape {len(xmatrix)}')
+    LOG.debug(f'computed RDKit properties matrix with shape {np.shape(xmatrix)}')
     if num_obj == 0:
         return False, 'Unable to compute RDKit properties for molecule '+ifile
 
