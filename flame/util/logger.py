@@ -21,7 +21,7 @@ def supress_log(logger: logging.Logger):
     def decorator(func):
         @functools.wraps(func)
         def supressor(*args, **kwargs):
-            logger.info('Entering mol by mol workflow. Logger will be disabled'
+            logger.warning('Entering OBJECTS workflow. Logger will be disabled'
                         ' below error level')
             logging.disable(logging.WARNING)
             func_results = func(*args, **kwargs)

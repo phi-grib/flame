@@ -353,14 +353,14 @@ class Idata:
 
         for method in methods:
             # success, results = registered_methods[method](ifile)
-            
+
             success, results = registered_methods[method](ifile)
 
             if not success:  # if computing returns False in status
                 return success, results
 
             if is_empty:  # first md computed, just copy
- 
+
                 combined_md = results['matrix']  # np.array of values
                 combined_nm = results['names']  # list of variable names
                 # list of true/false, what?
@@ -568,7 +568,8 @@ class Idata:
         '''
         Mix the results obtained by multiple CPUs into a single result file.
         '''
-        LOG.info(f'Concatenating results from {njobs} jobs')
+        LOG.info(
+            f'Concatenating results from {len(nobj)} jobs with shapes {nobj}')
         first = True
         xmatrix = None
         var_nam = None
@@ -601,12 +602,14 @@ class Idata:
                 # for bidimensional arrays, num_var is shape[1]
                 if len(shape) > 1 and len(ishape) > 1:
                     if shape[1] != ishape[1]:
-                        LOG.error(f'Impossible to concat arrays with shape {shape} and {ishape}')
+                        LOG.error(
+                            f'Impossible to concat arrays with shape {shape} and {ishape}')
                         return False, "inconsistent number of variables"
                 else:
                     # for vectors obtained with a single object, numvar is shape[0]
                     if shape[0] != ishape[0]:
-                        LOG.error(f'Impossible to concat arrays with shape {shape} and {ishape}')
+                        LOG.error(
+                            f'Impossible to concat arrays with shape {shape} and {ishape}')
                         return False, "inconsistent number of variables"
 
                 xmatrix = np.vstack((xmatrix, ixmatrix))
@@ -771,7 +774,7 @@ class Idata:
 
         return success, results
 
-    def ammend_objects(self, inform, workflow):
+    def ammend_objects(self, inform, workflow) -> None:
         ''' 
         The arguments inform and workflow are lists of booleans describing
         when the objects were successfully informed (inform)
@@ -796,6 +799,8 @@ class Idata:
             if inform[i] and workflow[i]:
                 obj_num += 1
 
+        LOG.debug('(@ammend_objects) going to remove these'
+                  'indexes from manifest: {}'.format(remove_index))
         if 'obj_num' in self.results:
             self.results['obj_num'] = obj_num
 
@@ -807,7 +812,8 @@ class Idata:
                 ilist = self.results[ikey]
 
                 # keys are experim or ymatrix are numpy arrays
-                if 'numpy.ndarray' in str(type(ilist)):
+                # if 'numpy.ndarray' in str(type(ilist)):
+                if isinstance(ilist, np.ndarray):
                     self.results[ikey] = np.delete(ilist, remove_index)
                 # other keys are regular list
                 else:
@@ -845,7 +851,7 @@ class Idata:
 
         # Execute the workflow in 1 or n CPUs
         if ncpu > 1:
-
+            LOG.debug('Entering molecule workflow for {} cpus'.format(ncpu))
             success, results = sdfu.split_SDFile(lfile, ncpu)
 
             if not success:
@@ -882,6 +888,9 @@ class Idata:
         success_workflow = results[2]
 
         if len(success_inform) != len(success_workflow):
+            LOG.error('lengths of informed and workflow results'
+                      'does not match ({},{})'.format(len(success_inform),
+                                                      len(success_workflow)))
             self.results['error'] = 'number of molecules informed and processed does not match'
             return
 
@@ -920,16 +929,23 @@ class Idata:
         '''
 
         if not os.path.isfile(self.ifile):
-            self.results['error'] = 'unable to open file '+self.ifile
+            self.results['error'] = '{} not found'.format(self.ifile)
+            raise FileNotFoundError('{} not found'.format(self.ifile))
             return
 
+        # --------------------
+        #  Reading TSV by hand
+        #
+        # this could be done simply with pd.read_csv(self.idata, sep='\t')
+        # --------------------
+
         with open(self.ifile, 'r') as fi:
-            index = 0
+
             var_nam = []
             obj_nam = []
             smiles = []
 
-            for line in fi:
+            for index, line in enumerate(fi):
                 # we asume that the first row contains var names
                 if index == 0 and self.parameters['TSV_varnames']:
                     var_nam = line.strip().split('\t')
@@ -947,20 +963,24 @@ class Idata:
                         smiles.append(value_list[col])
                         del value_list[col]
 
+                    value_array = np.array(value_list, dtype=np.float64)
                     if index == 1:  # for the fist row, just copy the value list to the xmatrix
-                        xmatrix = np.array(value_list, dtype=np.float64)
+                        xmatrix = value_array
                     else:
-                        xmatrix = np.vstack(
-                            (xmatrix, np.array(value_list, dtype=np.float64)))
-                index += 1
+                        xmatrix = np.vstack((xmatrix, value_array))
+
+        # ------- END of reading TSV
 
         obj_num = index
+        LOG.debug('loaded TSV with shape {} '.format(xmatrix.shape))
         if self.parameters['TSV_varnames']:
-            obj_num -= 1
+            obj_num -= 1  # what?
 
         # extract any named as "TSV_activity" as the ymatrix
-        if self.parameters['TSV_activity'] in var_nam:
-            col = var_nam.index(self.parameters['TSV_activity'])
+        activity_param = self.parameters['TSV_activity']
+        LOG.debug('creating ymatrix from column {}'.format(activity_param))
+        if activity_param in var_nam:
+            col = var_nam.index(activity_param)
             ymatrix = xmatrix[:, col]
             xmatrix = np.delete(xmatrix, col, 1)
             utils.add_result(self.results, ymatrix, 'ymatrix', 'Activity', 'decoration',
@@ -1091,7 +1111,7 @@ class Idata:
         LOG.info('Running with input type: {}'.format(input_type))
         # processing for molecular input (for now an SDFile)
         if (input_type == 'molecule'):
-            
+
             # trick to avoid RDKit dumping warnings to the console
             if not self.parameters['verbose_error']:
                 stderr_fileno = sys.stderr.fileno()  # saves current syserr
