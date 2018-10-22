@@ -668,7 +668,8 @@ class Idata:
                 self.results['meta']['endpoint'] = self.parameters['endpoint']
                 self.results['meta']['version'] = self.parameters['version']
 
-        except:
+        except Exception as e:
+            LOG.error('Error loading pickle with exception: {}'.format(e))
             return False
 
         dest_path_pkl = os.path.join(self.dest_path, 'data.pkl')
@@ -1076,7 +1077,6 @@ class Idata:
         # check for the presence of a valid pickle file
         if self.load():
             return self.results
-
         if self.parameters['input_type'] == 'ext_data':
             input_type = 'ext_data'
         else:
@@ -1088,9 +1088,10 @@ class Idata:
             else:
                 input_type = self.parameters['input_type']
 
+        LOG.info('Running with input type: {}'.format(input_type))
         # processing for molecular input (for now an SDFile)
         if (input_type == 'molecule'):
-
+            
             # trick to avoid RDKit dumping warnings to the console
             if not self.parameters['verbose_error']:
                 stderr_fileno = sys.stderr.fileno()  # saves current syserr
