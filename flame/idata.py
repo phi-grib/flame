@@ -214,15 +214,11 @@ class Idata:
 
                 # molecule not recognised by RDKit
                 if m is None:
-                    LOG.error(
-                        f'Unable to process molecule #{mcount+1} in {ifile}')
-                    print('ERROR: (@normalize) Unable to process molecule #',
-                          str(mcount+1), 'in file ' + ifile)
-
+                    LOG.error('Unable to process molecule'
+                              f' #{mcount+1} in {ifile}')
                     continue
 
-                name = sdfu.getName(m,
-                                    count=mcount,
+                name = sdfu.getName(m, count=mcount,
                                     field=self.parameters['SDFile_name'],
                                     suppl=suppl)
 
@@ -232,7 +228,7 @@ class Idata:
                     try:
                         parent = standardise.run(Chem.MolToMolBlock(m))
                     except standardise.StandardiseException as e:
-                        LOG.error(f'standardize exceptio: {e}'
+                        LOG.error(f'Standardize exception: {e}'
                                   f' when processing mol #{mcount} {name}')
 
                         if e.name == "no_non_salt":
@@ -618,7 +614,7 @@ class Idata:
         return True, (xmatrix, var_nam, success_list)
 
     def save(self):
-        ''' 
+        '''
         Saves the results in serialized form, together with the MD5 signature
         of the control class and the input file.
         '''
@@ -646,7 +642,7 @@ class Idata:
             LOG.error(f"Can't serialize descriptors because of exception: {e}")
 
     def load(self):
-        ''' 
+        '''
         Loads the results in serialized form, together with the MD5 signature
         of the control class and the input file.
         '''
@@ -775,7 +771,7 @@ class Idata:
         return success, results
 
     def ammend_objects(self, inform, workflow) -> None:
-        ''' 
+        '''
         The arguments inform and workflow are lists of booleans describing
         when the objects were successfully informed (inform)
         or completed the workflow.
@@ -888,18 +884,30 @@ class Idata:
         success_workflow = results[2]
 
         if len(success_inform) != len(success_workflow):
-            LOG.error('lengths of informed and workflow results'
-                      'does not match ({},{})'.format(len(success_inform),
-                                                      len(success_workflow)))
-            self.results['error'] = 'number of molecules informed and processed does not match'
+            LOG.error('shape mismatch of informed and workflow results:'
+                      f' ({len(success_inform), len(success_workflow)})'
+                      ' This is because some molecules failed during'
+                      ' the standarization or descriptors computations.')
+
+            self.results['error'] = ('number of molecules informed'
+                                     ' and processed does not match')
+
             return
 
         # Check if molecules not informed succeded
         # to be complete MD generation.
         # This should never happen, because they
         # do not pass the normalization step
-        for i, j in zip(success_inform, success_workflow):
-            if j and not i:
+        for i, inform, workflow in enumerate(zip(success_inform,
+                                                 success_workflow)):
+
+            if workflow and not inform:
+
+                LOG.critical(f'Molecule #{i} is `None` in Rdkit'
+                             ' but appears to be processed. This means that'
+                             ' there is a serious workflow issue and the '
+                             ' molecule should be cured or eliminated.')
+
                 self.results['error'] = 'unknown error in molecule inform'
                 return
 
@@ -1135,6 +1143,7 @@ class Idata:
             self._run_ext_data()
 
         else:
+            LOG.error('Unknown input data format')
             self.results['error'] = 'unknown input data format'
 
         # save in a pickle file stamped with MD5 hash of file and control
