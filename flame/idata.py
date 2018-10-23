@@ -369,12 +369,12 @@ class Idata:
             else:  # append laterally
                 ishape = np.shape(results['matrix'])
 
-                if (len(ishape) > 1):
-                    # for 2D arrays, shape[0] is the number of objects
-                    if ishape[0] != shape[0]:
-                        print('ERROR: number of objects processed by md method "' +
-                              method+'" does not match those computed by other methods')
-                        continue
+                # for 2D arrays, shape[0] is the number of objects
+                if (len(ishape) > 1) and ishape[0] != shape[0]:
+
+                    LOG.error(f'Number of objects processed by {method}'
+                              'does not match those computed by other methods')
+                    continue
 
                 combined_md = np.hstack((combined_md, results['matrix']))
                 combined_nm.extend(results['names'])
@@ -389,7 +389,7 @@ class Idata:
 
         return True, (combined_md, combined_nm, combined_sc)
 
-    def computeMD_FUTURE(self, ifile: str, methods: list) -> (bool, (np.ndarray, list, list)):
+    def computeMD_FUTURE(self, ifile: str, methods: list):
         """ Computes molecular descriptors.
 
         Computes and concatenates all the descriptor methods 
@@ -480,7 +480,7 @@ class Idata:
         return True, (xmatrix_filtered, var_names, success_list)
 
     @staticmethod
-    def _filter_matrix(matrix: np.ndarray, succes_list: list) -> (np.ndarray, list):
+    def _filter_matrix(matrix: np.ndarray, succes_list: list):
         """Filters matrix via boolean mask.
 
         The boolean mask is the logical AND combination of all the masks in
@@ -564,19 +564,22 @@ class Idata:
         '''
         Mix the results obtained by multiple CPUs into a single result file.
         '''
-        LOG.info(
-            f'Concatenating results from {len(nobj)} jobs with shapes {nobj}')
+        LOG.info('Concatenating results from'
+                 f'{len(nobj)} jobs with shapes {nobj}')
+
         first = True
         xmatrix = None
         var_nam = None
 
         for iresults in results:
 
-            # iresults is a tupla of Boolean (iresults[0]) and results (iresults[1])
+            # iresults is a tupla of Boolean (iresults[0])
+            #  and results (iresults[1])
             if iresults[0] == False:
                 return False, iresults[1]
 
-            # internal is a tupla of 3 elements (xmatrix, var_nam, success_list)
+            # internal is a tupla of 3 elements
+            #  (xmatrix, var_nam, success_list)
             internal = iresults[1]
             ixmatrix = internal[0]
 
@@ -598,14 +601,16 @@ class Idata:
                 # for bidimensional arrays, num_var is shape[1]
                 if len(shape) > 1 and len(ishape) > 1:
                     if shape[1] != ishape[1]:
-                        LOG.error(
-                            f'Impossible to concat arrays with shape {shape} and {ishape}')
+                        LOG.error('Impossible to concat arrays'
+                                  f'with shape {shape} and {ishape}')
+
                         return False, "inconsistent number of variables"
                 else:
                     # for vectors obtained with a single object, numvar is shape[0]
                     if shape[0] != ishape[0]:
-                        LOG.error(
-                            f'Impossible to concat arrays with shape {shape} and {ishape}')
+                        LOG.error('Impossible to concat arrays'
+                                  f' with shape {shape} and {ishape}')
+
                         return False, "inconsistent number of variables"
 
                 xmatrix = np.vstack((xmatrix, ixmatrix))
@@ -777,7 +782,7 @@ class Idata:
         or completed the workflow.
 
         This functions is called only when a disagreement if found, revealing
-        that any object failed to be processed, and that the xmatrix will 
+        that any object failed to be processed, and that the xmatrix will
         have less rows than expected.
 
         The function ammends all keys describing objects,
@@ -898,9 +903,8 @@ class Idata:
         # to be complete MD generation.
         # This should never happen, because they
         # do not pass the normalization step
-        for i, inform, workflow in enumerate(zip(success_inform,
-                                                 success_workflow)):
-
+        for i, (inform, workflow) in enumerate(zip(success_inform,
+                                                   success_workflow)):
             if workflow and not inform:
 
                 LOG.critical(f'Molecule #{i} is `None` in Rdkit'
@@ -1018,7 +1022,8 @@ class Idata:
 
     def _run_ext_data(self):
         '''
-        version of Run for inter-process input (calling another model to obtain input)
+        version of Run for inter-process input
+        (calling another model to obtain input)
         '''
 
         # idata is a list of JSON from 1-n sources
@@ -1091,7 +1096,7 @@ class Idata:
         return
 
     def run(self):
-        ''' 
+        '''
         Process input file to obtain metadata (size, type, number of objects,
         name of objects, etc.) as well as for generating MD.
 
