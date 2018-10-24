@@ -28,6 +28,9 @@ from flame.control import Control
 
 
 class Predict:
+    """
+    TODO: Expand class docstring
+    """
 
     def __init__(self, model, version, output_format=None):
 
@@ -45,7 +48,8 @@ class Predict:
         return
 
     def get_model_set(self):
-        ''' Returns a Boolean indicating if the model uses external input sources and a list with these sources '''
+        ''' Returns a Boolean indicating if the model uses external input
+            sources and a list with these sources '''
         return self.control.get_model_set()
 
     def set_single_CPU(self):
@@ -63,7 +67,7 @@ class Predict:
             results['error'] = 'unable to find model: ' + \
                 self.model+' version: '+str(self.version)
 
-        if not 'error' in results:
+        if 'error' not in results:
             # uses the child classes within the 'model' folder, to allow customization of
             # the processing applied to each model
             modpath = utils.module_path(self.model, self.version)
@@ -76,7 +80,7 @@ class Predict:
             idata = idata_child.IdataChild(self.parameters, input_source)
             results = idata.run()
 
-        if not 'error' in results:
+        if 'error' not in results:
             # run apply object, in charge of generate a prediction from idata
             apply = apply_child.ApplyChild(self.parameters, results)
             results = apply.run()

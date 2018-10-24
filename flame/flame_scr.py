@@ -101,6 +101,7 @@ def manage_cmd(args):
 
 def main():
 
+    LOG.debug('-------------NEW RUN-------------\n')
     parser = argparse.ArgumentParser(
         description='Use Flame to either build a model from or apply a model to the input file.')
 
@@ -196,4 +197,5 @@ def main():
 if __name__ == '__main__':
     # used to reproduce speed problems in Linux platforms
     # multiprocessing.set_start_method('spawn')
+
     main()
