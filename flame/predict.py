@@ -23,8 +23,10 @@
 import os
 import importlib
 
-from flame.util import utils
+from flame.util import utils, get_logger
 from flame.control import Control
+
+log = get_logger(__name__)
 
 
 class Predict:
@@ -62,13 +64,18 @@ class Predict:
         results = {}
 
         # path to endpoint
-        epd = utils.model_path(self.model, self.version)
-        if not os.path.isdir(epd):
+        endpoint = utils.model_path(self.model, self.version)
+        if not os.path.isdir(endpoint):
+
+            log.error('Unable to find model'
+                      ' {} version {}'.format(self.model, self.version))
+
             results['error'] = 'unable to find model: ' + \
                 self.model+' version: '+str(self.version)
 
         if 'error' not in results:
-            # uses the child classes within the 'model' folder, to allow customization of
+            # uses the child classes within the 'model' folder,
+            # to allow customization of
             # the processing applied to each model
             modpath = utils.module_path(self.model, self.version)
 

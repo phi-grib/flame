@@ -79,11 +79,11 @@ class Odata():
                         line += '\t'+str(xmatrix[y])
                     fo.write(line+'\n')
 
-        log.info('Molecular descriptors dumped into output_md.tsv')
+        log.debug('Molecular descriptors dumped into output_md.tsv')
 
     def run_learn(self):
         '''Process the results of learn,
-        usually a report on the model quality   
+        usually a report on the model quality
         '''
 
         if 'model_build' in self.results:
@@ -129,7 +129,7 @@ class Odata():
         # print ('format output', self.format)
 
         if 'TSV' in self.format:
-
+            log.debug('formating apply results to TSV')
             # label and smiles
             key_list = ['obj_nam']
             if 'SMILES' in self.results:
@@ -172,7 +172,7 @@ class Odata():
                     fo.write(line+'\n')
 
         if 'JSON' in self.format:
-
+            log.debug('formating apply results to JSON')
             # TODO: output also 'method' keys, like the 'external-validation' or others
             # by setting up at the client side some interface able to show them
 
@@ -216,7 +216,7 @@ class Odata():
         '''Formats error messages
         sending only the error and the error source
         '''
-
+        log.debug('formating errors in results')
         white_list = ['error', 'warning', 'origin']
         error_json = {key: val for key,
                       val in self.results.items() if key in white_list}
