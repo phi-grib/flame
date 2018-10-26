@@ -5,16 +5,37 @@ from pathlib import Path
 
 import appdirs
 
-try:
-    import coloredlogs  # add color in the future with this
-except ImportError as e:
-    pass
+
+def colored_log(logger_func) -> logging.Logger:
+    """Decorator to colorize log stream if colorlog module lib is present"""
+    def colorer(*args):
+        logger = logger_func(*args)
+
+        formatter = colorlog.ColoredFormatter(
+            "%(log_color)s%(levelname)s%(reset)s - %(message)s",
+            datefmt=None,
+            reset=True,
+            log_colors={
+                'DEBUG':    'cyan',
+                'INFO':     '',
+                'WARNING':  'yellow',
+                'ERROR':    'red',
+                'CRITICAL': 'red,bg_white',
+            },
+            secondary_log_colors={},
+            style='%'
+        )
+        for handler in logger.handlers:
+            if handler.name == 'streamhandler':
+                handler.formatter = formatter
+        return logger
+    return colorer
 
 
 def supress_log(logger: logging.Logger):
     """Decorator for suprerss logs during objects workflow
 
-    Logs we are entering a supress log routine and 
+    Logs we are entering a supress log routine and
     disables the logger setting the minimum message level at
     interpreter level.
     """
@@ -35,7 +56,7 @@ def supress_log(logger: logging.Logger):
 def get_log_file() -> Path:
     """ Returns the log file path
 
-    The path of the log file is given by 
+    The path of the log file is given by
     appdirs.user_log_dir
     """
     log_filename_path = appdirs.user_log_dir(appname='flame')
@@ -86,22 +107,20 @@ def get_logger(name) -> logging.Logger:
         logger.addHandler(fh)
 
         ch = logging.StreamHandler()
+        ch.set_name('streamhandler')
         ch.setLevel('INFO')
         ch.setFormatter(stdout_formatter)
         logger.addHandler(ch)
-
+        return logger
     # if there already handlers just return the logger
     # since its already configured
     else:
         return logger
-    # logger.propagate = False
-    return logger
 
-
-# app code examples:
-
-# logger.debug('debug message')
-# logger.info('info message')
-# logger.warn('warn message')
-# logger.error('error message')
-# logger.critical('critical message')
+# if colorlog lib is present then decorate get_logger
+# to get colorized formater
+try:
+    import colorlog
+    get_logger = colored_log(get_logger)
+except ImportError:
+    pass
