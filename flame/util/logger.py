@@ -20,7 +20,7 @@ def colored_log(logger_func) -> logging.Logger:
                 'INFO':     '',
                 'WARNING':  'yellow',
                 'ERROR':    'red',
-                'CRITICAL': 'red,bg_white',
+                'CRITICAL': 'bg_red,white',
             },
             secondary_log_colors={},
             style='%'
@@ -116,6 +116,7 @@ def get_logger(name) -> logging.Logger:
     # since its already configured
     else:
         return logger
+
 
 # if colorlog lib is present then decorate get_logger
 # to get colorized formater

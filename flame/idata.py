@@ -90,7 +90,12 @@ class Idata:
                       f'{e}')
             self.results['error'] = f'unable to open {ifile}. {e}'
             return
-
+        
+        # Raise error if SDF is empty
+        if len(suppl) == 0:
+            LOG.critical('ifile {} is empty'.format(ifile))
+            raise ValueError('Input SDF is empty')
+        
         obj_nam = []
         obj_bio = []
         obj_exp = []

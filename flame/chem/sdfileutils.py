@@ -53,7 +53,7 @@ def split_SDFile(ifile, num_chunks):
     
     # Inital checking for early return
     if num_mols == 0:
-        LOG.critical(f'No molecule foung in {ifile}')
+        LOG.critical(f'No molecule found in {ifile}')
         return False, 'No molecule found in file: '+ifile
 
     if num_chunks < 2:
