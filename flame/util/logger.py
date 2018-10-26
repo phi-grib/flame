@@ -9,8 +9,10 @@ import appdirs
 def colored_log(logger_func) -> logging.Logger:
     """Decorator to colorize log stream if colorlog module lib is present"""
     def colorer(*args):
+        # get the logger from arg function
         logger = logger_func(*args)
 
+        # new color formatter
         formatter = colorlog.ColoredFormatter(
             "%(log_color)s%(levelname)s%(reset)s - %(message)s",
             datefmt=None,
@@ -25,6 +27,9 @@ def colored_log(logger_func) -> logging.Logger:
             secondary_log_colors={},
             style='%'
         )
+
+        # find the current logger StreamHandler
+        # and reassign the new color formatter
         for handler in logger.handlers:
             if handler.name == 'streamhandler':
                 handler.formatter = formatter
@@ -61,6 +66,7 @@ def get_log_file() -> Path:
     """
     log_filename_path = appdirs.user_log_dir(appname='flame')
     log_filename_path = Path(log_filename_path)
+    # creeate dir tree if not exists
     if not log_filename_path.exists():
         log_filename_path.mkdir(parents=True)
 
@@ -122,6 +128,7 @@ def get_logger(name) -> logging.Logger:
 # to get colorized formater
 try:
     import colorlog
+    # decorates get_logger
     get_logger = colored_log(get_logger)
 except ImportError:
     pass
