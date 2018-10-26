@@ -22,7 +22,7 @@ def supress_log(logger: logging.Logger):
         @functools.wraps(func)
         def supressor(*args, **kwargs):
             logger.warning('Entering OBJECTS workflow. Logger will be disabled'
-                        ' below error level')
+                           ' below error level')
             logging.disable(logging.WARNING)
             func_results = func(*args, **kwargs)
             logging.disable(logging.NOTSET)
@@ -33,11 +33,17 @@ def supress_log(logger: logging.Logger):
 
 
 def get_log_file() -> Path:
+    """ Returns the log file path
+
+    The path of the log file is given by 
+    appdirs.user_log_dir
+    """
     log_filename_path = appdirs.user_log_dir(appname='flame')
     log_filename_path = Path(log_filename_path)
     if not log_filename_path.exists():
         log_filename_path.mkdir(parents=True)
-    log_filename = log_filename_path / 'flame.log'
+
+    log_filename = log_filename_path / 'flame.log'  # append file name
 
     # check if exists to not erase current file
     if not log_filename.exists():
@@ -59,7 +65,7 @@ def get_logger(name) -> logging.Logger:
 
     # create formatter fdor file handler (more explicit)
     file_formatter = logging.Formatter(
-        '[%(asctime)s] - %(name)s - %(levelname)s - %(message)s'
+        '%(levelname)-8s [%(asctime)s] - %(name)s - %(message)s'
     )
 
     # formater for stream handler (less info)

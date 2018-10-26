@@ -77,19 +77,20 @@ class Build:
             learn_child = importlib.import_module(modpath+".learn_child")
             odata_child = importlib.import_module(modpath+".odata_child")
 
-            LOG.debug('Childs imported: '
-                      f'{idata_child}, {learn_child}, {odata_child}')
+            LOG.debug('child modules imported: '
+                      f'{idata_child.__name__},'
+                      f' {learn_child.__name__},'
+                      f' {odata_child.__name__}')
             # run idata object, in charge of generate model
             # data from local copy of input
             idata = idata_child.IdataChild(self.parameters, input_source)
             results = idata.run()
-            LOG.debug(f'idata child {idata} passed `run()` without errors')
+            LOG.debug(f'idata child {idata_child.__name__} completed `run()`')
         if 'error' not in results:
             # run learn object, in charge of generate a prediction from idata
             learn = learn_child.LearnChild(self.parameters, results)
             results = learn.run()
-            LOG.debug(f'learn child {learn} passed `run()` without errors')
+            LOG.debug(f'learn child {learn_child.__name__} complered `run()`')
         # run odata object, in charge of formatting the prediction results
         odata = odata_child.OdataChild(self.parameters, results)
         return odata.run()
-        LOG.debug(f'odata child {odata} passed `run()` without errors')
