@@ -56,5 +56,6 @@ script:
   # Your test script goes here 
   - source activate flame
   - py.test -vv
+  - cd $HOME/miniconda/envs/flame/lib/ && find . -regex '^.*\(__pycache__\|\.py[co]\)$' -delete
 
 sudo: required
