@@ -38,7 +38,7 @@ before_install:
       echo "flame enviroment already created";
     else
       conda env create -f environment.yml;
-      
+    fi
 
 install:
   - sudo apt-get update
