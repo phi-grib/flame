@@ -10,7 +10,8 @@ cache:
 before_install:
 # Get miniconda. Take the right version.
   - if test -e $HOME/miniconda/bin; then 
-      echo "miniconda already installed."; 
+      echo "miniconda already installed.";
+      export PATH="$HOME/miniconda/bin:$PATH";
     else 
       echo "Installing miniconda."; 
       rm -rf $HOME/miniconda; 
