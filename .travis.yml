@@ -32,7 +32,13 @@ before_install:
       fi; 
       bash $HOME/download/miniconda.sh -b -p $HOME/miniconda;
       export PATH="$HOME/miniconda/bin:$PATH";
-    fi 
+    fi
+# Check if flame env is already created
+  - if test -e $HOME/miniconda/envs/flame; then
+      echo "flame enviroment already created";
+    else
+      conda env create -f environment.yml;
+      
 
 install:
   - sudo apt-get update
@@ -41,7 +47,6 @@ install:
   - conda update -q conda
   # Useful for debugging any issues with conda
   - conda info -a
-  - conda env create -f environment.yml
   - source activate flame
   - python setup.py install
 
