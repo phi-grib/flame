@@ -302,12 +302,11 @@ def is_empty(mylist):
     return True
 
 
-def get_sdf_activity_name(mol, parameters: dict) -> float:
+def get_sdf_activity_value(mol, parameters: dict) -> float:
     """ Checks if activity prop is the same in parameters and SDF input file
 
     Returns activity value as float if possible
     """
-    # defence when prop is not in parameter file
     if mol.HasProp(parameters['SDFile_activity']):
         # get sdf activity field value
         activity_str = mol.GetProp(parameters['SDFile_activity'])
@@ -318,6 +317,7 @@ def get_sdf_activity_name(mol, parameters: dict) -> float:
             LOG.error('while casting activity to'
                       f' float an exception has ocurred: {e}')
             activity_num = None
+    # defence when prop is not in parameter file
     else:  # SDF doesn't have param prop name
         raise ValueError(f"SDFile_activity parameter '{parameters['SDFile_activity']}'"
                          " not found in input SDF."
