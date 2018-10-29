@@ -80,10 +80,10 @@ def get_log_file() -> Path:
 
 def get_logger(name) -> logging.Logger:
     """ inits a logger and adds the handlers.
+
     If the logger is already created doesn't adds new handlers
-    since those are set at interpreter level and already exists."""
-    # Create the log file
-    log_file = get_log_file()
+    since those are set at interpreter level and already exists.
+    """    
     # create logger
     logger = logging.getLogger(name)
     # set base logger level to DEBUG but fine tu the handlers
@@ -99,12 +99,11 @@ def get_logger(name) -> logging.Logger:
     stdout_formatter = logging.Formatter(
         '%(levelname)s - %(message)s'
     )
-    # datefmt='%d-%m-%Y %I:%M %p')
 
+    log_file = get_log_file()  # Create the log file
     # create console and file handler
     # if not already created
     if not logger.handlers:
-        # 512 Kb file log
         fh = RotatingFileHandler(log_file, maxBytes=1_024_000, backupCount=5)
         fh.setLevel('DEBUG')
         # add formatter to handler
