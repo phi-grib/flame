@@ -7,9 +7,6 @@ cache:
     - $HOME/download 
     - $HOME/miniconda 
 
-before_cache: 
-  - if ! [[ $TRAVIS_TAG ]]; then rm -rf $HOME/miniconda/conda-bld; fi 
-  - rm -rf $HOME/miniconda/locks $HOME/miniconda/pkgs $HOME/miniconda/var $HOME/miniconda/conda-meta/history
 
 before_install:
 # Get miniconda. Take the right version, so re-installing python is hopefully not needed. 
@@ -33,16 +30,14 @@ before_install:
          wget https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh -O $HOME/download/miniconda.sh; 
        fi; 
      fi; 
-     bash $HOME/download/miniconda.sh -b -p $HOME/miniconda; 
+     bash $HOME/download/miniconda.sh -b -p $HOME/miniconda;
+     export PATH="$HOME/miniconda/bin:$PATH";
 fi 
 
 install:
   - sudo apt-get update
   # We do this conditionally because it saves us some downloading if the
   # version is the same.
-  - wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
-  - bash miniconda.sh -b -p $HOME/miniconda
-  - export PATH="$HOME/miniconda/bin:$PATH"
   - hash -r
   - conda config --set always_yes yes --set changeps1 no
   - conda update -q conda
