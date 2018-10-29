@@ -168,6 +168,8 @@ class Idata:
 
             https://github.com/flatkinson/standardiser
 
+        But we use a modified version accessible from:
+            https://github.com/phi-grib/standardiser
         Returns a tuple containing the result of the method and (if True)
         the name of the output molecule and an error message otherwyse
         '''
