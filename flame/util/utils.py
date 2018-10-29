@@ -292,9 +292,51 @@ def add_result(results, var, _key, _label, _type, _dimension='objs',
         else:
             results['meta']['main'].append(_key)
 
+# what is this??
+
 
 def is_empty(mylist):
     for i in mylist:
         if i is not None:
             return False
     return True
+
+
+def get_sdf_activity_name(mol, parameters: dict) -> float:
+    """ Checks if activity prop is the same in parameters and SDF input file
+
+    Returns activity value as float if possible
+    """
+    # defence when prop is not in parameter file
+    if mol.HasProp(parameters['SDFile_activity']):
+        # get sdf activity field value
+        activity_str = mol.GetProp(parameters['SDFile_activity'])
+        try:
+            # cast val to float to be sure it is num
+            activity_num = float(activity_str)
+        except Exception as e:
+            LOG.error('while casting activity to'
+                      f' float an exception has ocurred: {e}')
+            activity_num = None
+    else:  # SDF doesn't have param prop name
+        raise ValueError(f"SDFile_activity parameter '{parameters['SDFile_activity']}'"
+                         " not found in input SDF."
+                         "Change SDFile_activity param in parameter.yml"
+                         " to match the target prop in SDF")
+
+    return activity_num
+
+
+def check_sdf_activity_type(mol, parameters: dict) -> None:
+    """ Type check the activity prop fot the model type.
+
+    If the model is quantitative and the activty
+    field is not float it Raises TypeError
+    """
+    activity = mol.GetProp(parameters['SDFile_activity'])
+    is_quant = parameters['quantitative']
+    if is_quant and not isinstance(activity, float):
+        raise TypeError(
+            'Expected float activity value for a quantitative model')
+    else:
+        pass

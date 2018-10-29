@@ -78,6 +78,7 @@ class Idata:
         Extracts molecule names, biological anotations and experimental values
         from an SDFile.
 
+        It also ensures that 
         Anotations must be added using method utils.add_result,
         so they are also inserted into the results manifest.
         '''
@@ -90,12 +91,12 @@ class Idata:
                       f'{e}')
             self.results['error'] = f'unable to open {ifile}. {e}'
             return
-        
+
         # Raise error if SDF is empty
         if len(suppl) == 0:
             LOG.critical('ifile {} is empty'.format(ifile))
             raise ValueError('Input SDF is empty')
-        
+
         obj_nam = []
         obj_bio = []
         obj_exp = []
@@ -118,21 +119,10 @@ class Idata:
 
             activity_num = None
             exp = None
-
-            # defence when prop is not in parameter file
-            if mol.HasProp(self.parameters['SDFile_activity']):
-                activity_str = mol.GetProp(self.parameters['SDFile_activity'])
-                try:
-                    # cast val to float to be sure it is num
-                    activity_num = float(activity_str)
-                except Exception as e:
-                    LOG.error(
-                        f'while casting activity to float an exception has ocurred: {e}')
-                    activity_num = None
-            else:
-                raise ValueError(f"SDFile_activity prop label '{self.parameters['SDFile_activity']}'"
-                                 " not found in input SDF. Change SDFile_activity param in parameter.yml"
-                                 " to match the target prop in SDF")
+            
+            # raises typerror if model is quantitative and activity not float
+            utils.check_sdf_activity_type(mol, self.parameters)
+            activity_num = utils.check_sdf_activity_name(mol, self.parameters)
 
             if mol.HasProp(self.parameters['SDFile_experimental']):
                 exp = mol.GetProp(self.parameters['SDFile_experimental'])
