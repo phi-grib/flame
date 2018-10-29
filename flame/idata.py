@@ -170,7 +170,6 @@ class Idata:
 
         Returns a tuple containing the result of the method and (if True)
         the name of the output molecule and an error message otherwyse
-
         '''
 
         if not method:
