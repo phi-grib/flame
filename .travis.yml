@@ -7,9 +7,8 @@ cache:
     - $HOME/download 
     - $HOME/miniconda 
 
-
 before_install:
-# Get miniconda. Take the right version, so re-installing python is hopefully not needed. 
+# Get miniconda. Take the right version.
   - if test -e $HOME/miniconda/bin; then 
       echo "miniconda already installed."; 
     else 
@@ -36,14 +35,11 @@ before_install:
 
 install:
   - sudo apt-get update
-  # We do this conditionally because it saves us some downloading if the
-  # version is the same.
   - hash -r
   - conda config --set always_yes yes --set changeps1 no
   - conda update -q conda
   # Useful for debugging any issues with conda
   - conda info -a
-  # Replace dep1 dep2 ... with your dependencies
   - conda env create -f environment.yml
   - source activate flame
   - python setup.py install
