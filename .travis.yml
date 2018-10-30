@@ -9,6 +9,8 @@ cache:
 before_cache: 
   - if ! [[ $TRAVIS_TAG ]]; then rm -rf $HOME/miniconda/conda-bld; fi 
   - rm -rf $HOME/miniconda/locks $HOME/miniconda/pkgs $HOME/miniconda/var $HOME/miniconda/conda-meta/history 
+  # delete flame to avoid caching changes
+  - rm -rf $HOME/miniconda/envs/flame
 
 before_install:
 # Get miniconda. Take the right version.
@@ -59,7 +61,6 @@ script:
   # Your test script goes here 
   - source activate flame
   - py.test -vv
-  # delete flame to avoid caching changes
-  - rm -rf $HOME/miniconda/envs/flame
+  
 
 sudo: required
