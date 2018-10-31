@@ -7,10 +7,9 @@ cache:
     - $HOME/miniconda 
 
 before_cache: 
-  - if ! [[ $TRAVIS_TAG ]]; then rm -rf $HOME/miniconda/conda-bld; fi 
-  - rm -rf $HOME/miniconda/locks $HOME/miniconda/pkgs $HOME/miniconda/var $HOME/miniconda/conda-meta/history 
   # delete flame to avoid caching changes
   # - cd $HOME/miniconda/envs/flame/ && find . -regex '^.*\(__pycache__\|\.py[co]\)$' -delete
+  - source activate flame
   - pip uninstall -y flame
 
 before_install:
