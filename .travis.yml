@@ -11,7 +11,7 @@ before_cache:
   - rm -rf $HOME/miniconda/locks $HOME/miniconda/pkgs $HOME/miniconda/var $HOME/miniconda/conda-meta/history 
   # delete flame to avoid caching changes
   # - cd $HOME/miniconda/envs/flame/ && find . -regex '^.*\(__pycache__\|\.py[co]\)$' -delete
-  - pip uninstall flame
+  - pip uninstall -y flame
 
 before_install:
 # Get miniconda. Take the right version.
