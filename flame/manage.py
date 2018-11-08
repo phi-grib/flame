@@ -133,7 +133,7 @@ def action_publish(model):
 
     src_path = bdir+'/dev'
     shutil.copytree(src_path, new_dir)
-    LOG.debug(f'New model version created from {src_path} to {new_dir}')
+    LOG.info(f'New model version created from {src_path} to {new_dir}')
     return True, 'development version published as version '+str(max_version+1)
 
 
@@ -154,7 +154,7 @@ def action_remove(model, version):
         return False, 'version not found'
 
     shutil.rmtree(rdir, ignore_errors=True)
-    LOG.debug(f'version {version} of model {model} has removed')
+    LOG.info(f'version {version} of model {model} has removed')
     return True, 'version '+str(version)+' of model '+model+' removed'
 
 
@@ -167,14 +167,16 @@ def action_list(model):
     # TODO: if no argument is provided, also list all models
     if not model:
         rdir = utils.model_repository_path()
-        print(rdir)
 
         num_models = 0
+        models = []
+        print(' Models found in repository:')
         for x in os.listdir(rdir):
             num_models += 1
-            print(x)
-
-        return True, str(num_models)+' models found in the repository'
+            models.append(x)
+            print('\t- ', x)
+        LOG.debug(f'Retrieved list of models from {rdir}')
+        return True, ''
 
     bdir = utils.model_tree_path(model)
 
@@ -185,6 +187,7 @@ def action_list(model):
             num_versions += 1
             print(model, ':', x)
 
+    LOG.info(f'model {model} has {num_versions} published versions')
     return True, 'model '+model+' has '+str(num_versions)+' published versions'
 
 
@@ -204,6 +207,7 @@ def action_import(model):
     bdir = utils.model_tree_path(endpoint)
 
     if os.path.isdir(bdir):
+        LOG.error(f'Trying to create a model which already exists: {model}')
         return False, 'endpoint already exists'
 
     if ext != '.tgz':
@@ -211,16 +215,17 @@ def action_import(model):
     else:
         importfile = model
 
-    print(importfile)
+    LOG.info('importing {}'.format(importfile))
 
     if not os.path.isfile(importfile):
         return False, 'importing package '+importfile+' not found'
 
     try:
         os.mkdir(bdir)
-        # os.chdir(bdir)
-    except:
-        return False, 'error creating directory '+bdir
+    except Exception as e:
+        LOG.error(f'error creating directory {bdir}: {e}')
+        raise e
+        # return False, 'error creating directory '+bdir
 
     with tarfile.open(importfile, 'r:gz') as tar:
         tar.extractall(bdir)
@@ -243,6 +248,7 @@ def action_export(model):
     bdir = utils.model_tree_path(model)
 
     if not os.path.isdir(bdir):
+        LOG.error('Unable to export, model directory not found')
         return False, 'endpoint directory not found'
 
     os.chdir(bdir)
@@ -257,7 +263,7 @@ def action_export(model):
             tar.add(iversion)
 
     os.chdir(current_path)
-
+    LOG.info('Model exported as {}.tgz'.format(model))
     return True, 'endpoint '+model+' exported as '+model+'.tgz'
 
 

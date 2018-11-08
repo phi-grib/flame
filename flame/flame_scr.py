@@ -96,7 +96,7 @@ def manage_cmd(args):
     elif args.action == 'info':
         success, results = manage.action_info(args.endpoint, version)
 
-    print('flame : ', results)
+    # print('flame : ', results)
 
 
 def main():

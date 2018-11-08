@@ -75,6 +75,11 @@ class Control:
 
         return self.parameters
 
+    # def set_params(self, new_params):
+    #     if new_params not condition:
+    #         raise ValueError
+    #     self.parameters = new_params
+
     def get_model_set(self):
         '''
         Returns a Boolean indicating if the model uses external input
