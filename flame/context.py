@@ -23,11 +23,13 @@
 
 import os
 import shutil
+import pathlib
+
+import multiprocessing as mp
+
 from flame.util import utils, get_logger
 from flame.predict import Predict
 from flame.build import Build
-
-import multiprocessing as mp
 
 
 # if the number of models is higher, try to run in multithread
@@ -116,6 +118,14 @@ def build_cmd(model, output_format=None):
     This method must be self-contained and suitable for being called in
     cascade, by models which use the output of other models as input
     '''
+    # safety check if model exists
+    repo_path = pathlib.Path(utils.model_repository_path())
+    model_list = os.listdir(repo_path)
+
+    if model['endpoint'] not in model_list:
+        LOG.error('endpoint name not found in model repository.')
+        raise ValueError('Wrong endpoint name. '
+                         f"{model['endpoint']} does not exist")
 
     build = Build(model['endpoint'], output_format)
 
