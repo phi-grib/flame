@@ -1,6 +1,12 @@
 admin_email: manuel.pastor@upf.edu
 admin_name: Manuel Pastor
+<<<<<<< HEAD
 config_status: true
 homepage: http://phi.upf.edu
 model_repository_path: /data/jcgomez/projects/internals/flame/flame/flame/models
+=======
+config_status: False
+homepage: http://phi.upf.edu
+model_repository_path: ~/
+>>>>>>> c73763a9b3831ad0484df428e5fb3622cc4357d6
 provider: UPF
