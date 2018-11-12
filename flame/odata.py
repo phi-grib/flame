@@ -161,7 +161,7 @@ class Odata():
                         else:
                             val = self.results[key][i]
 
-                        if val == None:
+                        if val is None:
                             line += '-'
                         else:
                             if isinstance(val, float):
@@ -173,7 +173,8 @@ class Odata():
 
         if 'JSON' in self.format:
             log.debug('formating apply results to JSON')
-            # TODO: output also 'method' keys, like the 'external-validation' or others
+            # TODO: output also 'method' keys, like the 
+            # 'external-validation' or others
             # by setting up at the client side some interface able to show them
 
             # do not output var arrays, only 'obj' arrays
@@ -201,7 +202,8 @@ class Odata():
                         temp_json[key] = [
                             'True' if x else 'False' for x in value]
                     else:
-                        # this removes NaN and and creates a plain list from ndarrays
+                        # This removes NaN and and creates
+                        # a plain list from ndarrays
                         temp_json[key] = [x if not np.isnan(
                             x) else None for x in value]
 

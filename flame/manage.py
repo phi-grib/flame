@@ -314,13 +314,13 @@ def action_dir():
 
 def action_info(model, version=None, output='text'):
     '''
-    Returns a text or JSON with info for a given model and version
+    Returns a text or JSON with results info for a given model and version
     '''
 
     if model is None:
         return False, 'empty model label'
 
-    if version == None:
+    if version is None:
         return False, 'no version provided'
 
     rdir = utils.model_path(model, version)

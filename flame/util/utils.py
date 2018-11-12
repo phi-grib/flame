@@ -35,7 +35,7 @@ from flame.util import get_logger
 LOG = get_logger(__name__)
 
 
-def get_conf_yml_path():
+def get_conf_yml_path() -> str:
     '''
     recovers the path of the configuration yml file
 
