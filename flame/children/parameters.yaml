@@ -109,7 +109,7 @@ RF_optimize:
   max_features:
   - sqrt
   - log2
-  n_estimators: !!python/object/apply:builtins.range
+  n_estimators:
   - 25
   - 50
   - 75
