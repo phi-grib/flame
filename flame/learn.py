@@ -92,7 +92,7 @@ class Learn:
 
         # build model
         success, results = model.build()
-        LOG.info("Building model")
+
         if not results:  
             self.results['error'] = results
             return

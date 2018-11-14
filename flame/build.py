@@ -32,7 +32,7 @@ LOG = get_logger(__name__)
 class Build:
 
     def __init__(self, model, output_format=None):
-        LOG.info('Starting build...')
+        LOG.debug('Starting build...')
         self.model = model
 
         # instance Control object
