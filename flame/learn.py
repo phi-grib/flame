@@ -1,23 +1,23 @@
 #! -*- coding: utf-8 -*-
 
 # Description    Flame Learn class
-##
-# Authors:       Manuel Pastor (manuel.pastor@upf.edu), Jose Carlos Gómez (josecarlos.gomez@upf.edu)
-##
-##
+#
+# Authors: Manuel Pastor (manuel.pastor@upf.edu),
+#          Jose Carlos Gómez (josecarlos.gomez@upf.edu)
+#
 # Copyright 2018 Manuel Pastor
-##
+#
 # This file is part of Flame
-##
+#
 # Flame is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation version 3.
-##
+#
 # Flame is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-##
+#
 # You should have received a copy of the GNU General Public License
 # along with Flame.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -69,12 +69,12 @@ class Learn:
         but also saved to the model folder as a pickle (info.pkl)
         for being displayed in manage tools.
         '''
-
+        # expand with new methods here:
         registered_methods = [('RF', RF),
                               ('SVM', SVM),
                               ('GNB', GNB),
                               ('PLSR', PLSR),
-                              ('PLSDA', PLSDA), ]  # expand with new methods here
+                              ('PLSDA', PLSDA), ]
 
         # instanciate an appropriate child of base_model
         model = None
@@ -87,13 +87,14 @@ class Learn:
 
         if not model:
             self.results['error'] = 'modeling method not recognised'
-            LOG.error(f'Modeling method {self.parameters["model"]} not recognized')
+            LOG.error(f'Modeling method {self.parameters["model"]}'
+                      'not recognized')
             return
 
         # build model
         success, results = model.build()
 
-        if not results:  
+        if not results:
             self.results['error'] = results
             return
         self.results['model_build'] = results
@@ -102,7 +103,7 @@ class Learn:
         success, results = model.validate()
         LOG.info('Starting model validation')
         if not success:
-            self.error('Error in model validation')
+            #self.error('Error in model validation')
             self.results['error'] = results
             return
         self.results['model_validate'] = results
@@ -110,11 +111,14 @@ class Learn:
         # TODO: compute AD (when applicable)
 
         # save model
-        with open(os.path.join(self.parameters['model_path'], 'model.pkl'), 'wb') as handle:
+        model_pkl_path = os.path.join(
+            self.parameters['model_path'], 'model.pkl')
+        with open(model_pkl_path, 'wb') as handle:
             pickle.dump(model, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
         # save model info for informative purposes
-        with open(os.path.join(self.parameters['model_path'], 'info.pkl'), 'wb') as handle:
+        info_pkl_path = os.path.join(self.parameters['model_path'], 'info.pkl')
+        with open(info_pkl_path, 'wb') as handle:
             pickle.dump(self.results['model_build'], handle)
             pickle.dump(self.results['model_validate'], handle)
 
@@ -137,6 +141,5 @@ class Learn:
             LOG.error("Modeling toolkit is not yet supported")
             self.results['error'] = 'modeling Toolkit ' + \
                 toolkit+' is not supported yet'
-            
 
         return self.results
