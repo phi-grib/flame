@@ -28,8 +28,8 @@ from sklearn.metrics import mean_squared_error, matthews_corrcoef as mcc
 from sklearn.metrics import f1_score
 from sklearn.metrics import make_scorer
 from sklearn.metrics import confusion_matrix
-
 from flame.util import utils, get_logger
+LOG = get_logger(__name__)
 
 
 class Apply:
@@ -234,19 +234,24 @@ class Apply:
         try:
             nobj, nvarx = np.shape(X)
         except:
+            LOG.error('Failed to generate MD (AGAIN')  # We should not get to this point
             self.results['error'] = 'Failed to generate MD'
             return
 
         if (nobj == 0) or (nvarx == 0):
+            LOG.error('Failed to extract activity or to generate MD')  # Same as previous.
             self.results['error'] = 'Failed to extract activity or to generate MD'
             return
 
+        
+        model_file = os.path.join(
+            self.parameters['model_path'], 'model.pkl')
+        LOG.debug(f'Loading model from pickle file, path: {model_file}')
         try:
-            model_file = os.path.join(
-                self.parameters['model_path'], 'model.pkl')
             with open(model_file, "rb") as input_file:
                 estimator = pickle.load(input_file)
-        except:
+        except FileNotFoundError:
+            LOG.error(f'No valid model estimator found at: {model_file}')
             self.results['error'] = 'No valid model estimator found'
             return
 

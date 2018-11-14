@@ -30,6 +30,8 @@ from flame.stats.SVM import SVM
 from flame.stats.GNB import GNB
 from flame.stats.PLSR import PLSR
 from flame.stats.PLSDA import PLSDA
+from flame.util import get_logger
+LOG = get_logger(__name__)
 
 
 class Learn:
@@ -79,22 +81,28 @@ class Learn:
         for imethod in registered_methods:
             if imethod[0] == self.parameters['model']:
                 model = imethod[1](self.X, self.Y, self.parameters)
+                LOG.debug('Recognized learner: '
+                          f"{self.parameters['model']}")
                 break
 
         if not model:
             self.results['error'] = 'modeling method not recognised'
+            LOG.error(f'Modeling method {self.parameters["model"]} not recognized')
             return
 
         # build model
         success, results = model.build()
-        if not results:
+        LOG.info("Building model")
+        if not results:  
             self.results['error'] = results
             return
         self.results['model_build'] = results
 
         # validate model
         success, results = model.validate()
+        LOG.info('Starting model validation')
         if not success:
+            self.error('Error in model validation')
             self.results['error'] = results
             return
         self.results['model_validate'] = results
@@ -120,11 +128,15 @@ class Learn:
         toolkit = self.parameters['modelingToolkit']
 
         if toolkit == 'internal':
+            LOG.info('Building model using internal toolkit : Sci-kit learn')
             self.run_internal()
         elif toolkit == 'custom':
+            LOG.info('Building model using custom toolkit')
             self.run_custom()
         else:
+            LOG.error("Modeling toolkit is not yet supported")
             self.results['error'] = 'modeling Toolkit ' + \
                 toolkit+' is not supported yet'
+            
 
         return self.results
