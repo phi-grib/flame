@@ -94,4 +94,5 @@ class Predict:
 
         # run odata object, in charge of formatting the prediction results or any error
         odata = odata_child.OdataChild(self.parameters, results)
+        log.info('Prediction finished!')
         return odata.run()
