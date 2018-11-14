@@ -182,7 +182,7 @@ def main():
                  f' with file {args.infile}')
 
         success, results = context.build_cmd(model)
-        print('flame build : ', success, results)
+        # print('flame build : ', success, results)
 
     elif args.command == 'manage':
         configuration_warning()
