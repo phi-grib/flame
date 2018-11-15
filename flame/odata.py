@@ -195,9 +195,8 @@ class Odata():
                 value = self.results[key]
 
                 # print (key, value, type(value))
-
-                if 'numpy.ndarray' in str(type(value)):
-
+                # if 'numpy.ndarray' in str(type(value)):
+                if isinstance(value, np.ndarray):
                     if 'bool_' in str(type(value[0])):
                         temp_json[key] = [
                             'True' if x else 'False' for x in value]
@@ -224,11 +223,13 @@ class Odata():
                       val in self.results.items() if key in white_list}
 
         if 'TSV' in self.format:
+            log.debug('Dumping errors into errors.tsv')
             with open('error.tsv', 'w') as fo:
                 for key, value in error_json.items():
                     fo.write(key+'\t'+value+'\n')
 
         if 'JSON' in self.format:
+            log.debug('Dumping errors into JSON')
             return False, json.dumps(error_json)
 
         # this is only reached if JSON is not present and
