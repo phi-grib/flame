@@ -20,9 +20,11 @@
 # You should have received a copy of the GNU General Public License
 # along with Flame.  If not, see <http://www.gnu.org/licenses/>.
 
-from flame.util import utils
+from flame.util import utils, get_logger
 import os
 import yaml
+
+log = get_logger(__name__)
 
 
 class Control:
@@ -36,8 +38,9 @@ class Control:
         # TODO: study the pros and cons of copying the
         # children template instead
         if not success:
-            print('CRITICAL ERROR: unable to load parameter file.'
-                  'Running with fallback defaults')
+            log.critical('unable to load parameter file')
+            # print('CRITICAL ERROR: unable to load parameter file.'
+            #       'Running with fallback defaults')
             parameters = self.get_defaults()
 
         self.parameters = parameters
@@ -71,6 +74,11 @@ class Control:
         '''
 
         return self.parameters
+
+    # def set_params(self, new_params):
+    #     if new_params not condition:
+    #         raise ValueError
+    #     self.parameters = new_params
 
     def get_model_set(self):
         '''
