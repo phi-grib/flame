@@ -346,8 +346,160 @@ webData:
     advanced: advanced
     object_type: string
     values: null
-    description: Selection of available models to get the input from.
+    description: "Selection of available models to get the input from".
     dependencies: 
       - ext_input:true
     comments: Values are obtained from available models.
     group: data    
+
+  SDFile_experimental:
+    advanced: advanced
+    object_type: string
+    values: null
+    description: Experimental measure field in the SDF file
+    dependencies: 
+      - ext_input:false
+      - input_type:molecule
+    comments: Values are obtained from available models.
+    group: data    
+
+
+  model:
+    advanced: regular
+    object_type: string
+    values: 
+      - RF
+      - SVM
+      - PLSR
+      - PLSDA
+      - GNB
+    description: List of availablealgorithms.
+    dependencies: 
+      - ext_input:false
+      - input_type:molecule
+    comments: ""
+    group: modeling
+
+  conformal:
+    advanced: regular
+    object_type: boolean
+    values: 
+      - True
+      - false
+    description: ""
+    dependencies: 
+      - model:!PLSDA
+    comments: "So far it can not be applied to PLSDA"
+    group: modeling    
+
+  conformalSignificance:
+    advanced: regular
+    object_type: float
+    values: 
+      - null
+    description: "Conformal estimator significance (from 0 to 1)"
+    dependencies: 
+      - conformal: true
+    comments: "So far it can not be applied to PLSDA"
+    group: modeling
+
+  tune:
+    advanced: regular
+    object_type: boolean
+    values: 
+      - true
+      - false
+    description: "Whether to perform or not algorithm hyperparameter optimization"
+    dependencies: 
+      - null
+    comments: "It might last long"
+    group: modeling
+
+  imbalance:
+    advanced: regular
+    object_type: string
+    values: 
+      - null
+      - simple_subsampling
+    description: "Whether to perform or not sub/over sampling strategies"
+    dependencies: 
+      - null
+    comments: ""
+    group: modeling
+
+  ModelValidationCV:
+    advanced: regular
+    object_type: string
+    values: 
+      - loo
+      - kfold
+      - lpo
+    description: "Selection of cross-validation method"
+    dependencies: 
+      - null
+    comments: ""
+    group: modeling
+
+  ModelValidationN:
+    advanced: regular
+    object_type: integer
+    values: 
+      - nulll
+    description: "Number of folds"
+    dependencies: 
+      - ModelValidationCV:kfold
+    comments: ""
+    group: modeling
+
+  ModelValidationP:
+    advanced: regular
+    object_type: integer
+    values: 
+      - null
+    description: "Size of the test set"
+    dependencies: 
+      - ModelValidationCV:lpo
+    comments: ""
+    group: modeling
+
+  RF_parameters:
+    advanced: advanced
+    object_type: dictionary
+    values:
+      - class_weight:
+        - values:
+          - balanced
+          - null
+        - description: ""
+      - max_depth:
+        - values:
+          - null
+        - description: ""
+      - max_features:
+        - values:
+          - null 
+          - auto
+          - sqrt
+          - log2
+        - description: ""
+      - n_estimators:
+        - values:
+          - 25
+          - 50
+          - 75
+        - description: ""
+      - oob_score:
+        - values: 
+          - true
+          - false
+        - description: ""
+      - random_state:
+        - values:
+          - null
+        - description: ""
+
+    description: "Random Forest Parameters"
+    dependencies: 
+      - model: RF
+    comments: ""
+    group: modeling
