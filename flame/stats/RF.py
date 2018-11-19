@@ -20,11 +20,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Flame.  If not, see <http://www.gnu.org/licenses/>.
 
-from flame.stats.base_model import BaseEstimator
-from flame.stats.model_validation import getCrossVal
-from flame.stats.scale import scale, center
-from flame.stats.model_validation import CF_QuanVal
-
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.ensemble import RandomForestRegressor
 
@@ -35,6 +30,14 @@ from nonconformist.icp import IcpClassifier, IcpRegressor
 from nonconformist.nc import ClassifierNc, MarginErrFunc, RegressorNc
 from sklearn.neighbors import KNeighborsRegressor
 from nonconformist.nc import AbsErrorErrFunc, RegressorNormalizer
+
+from flame.stats.base_model import BaseEstimator
+from flame.stats.model_validation import getCrossVal
+from flame.stats.scale import scale, center
+from flame.stats.model_validation import CF_QuanVal
+from flame.util import get_logger
+
+log = get_logger(__name__)
 
 
 class RF(BaseEstimator):
@@ -84,7 +87,7 @@ class RF(BaseEstimator):
                     ('model', 'model type', 'RF qualitative (optimized)'))
         else:
             if self.quantitative:
-                print("Building Quantitative RF model")
+                log.info("Building Quantitative RF model")
                 self.estimator_parameters.pop('class_weight', None)
 
                 self.estimator = RandomForestRegressor(
@@ -92,7 +95,7 @@ class RF(BaseEstimator):
                 results.append(('model', 'model type', 'RF quantitative'))
 
             else:
-                print("Building Qualitative RF_model")
+                log.info("Building Qualitative RF model")
                 self.estimator = RandomForestClassifier(
                     **self.estimator_parameters)
                 results.append(('model', 'model type', 'RF qualitative'))

@@ -22,20 +22,28 @@
 
 import json
 import numpy as np
+from flame.util import utils, get_logger, supress_log
+
+log = get_logger(__name__)
 
 
 class Odata():
+    """
+    Transforms results into something readable?.
+
+    TODO: Expand Class docstring
+    """
 
     def __init__(self, parameters, results):
 
-        # previous results (eg. object names, molecular descriptors) are retained
+        # previous results (eg. object names, mol descriptors) are retained
         self.results = results
         self.parameters = parameters
         self.format = self.parameters['output_format']
 
-    def _output_md (self):
+    def _output_md(self):
         ''' dumps the molecular descriptors to a TSV file'''
-         
+
         with open('output_md.tsv', 'w') as fo:
 
             # Make sure the keys 'var_nam', 'obj_nam', 'xmatrix' actualy exist
@@ -71,39 +79,45 @@ class Odata():
                         line += '\t'+str(xmatrix[y])
                     fo.write(line+'\n')
 
+        log.debug('Molecular descriptors dumped into output_md.tsv')
+
     def run_learn(self):
-        ''' Process the results of lear, usually a report on the model quality '''
+        '''Process the results of learn,
+        usually a report on the model quality
+        '''
 
         if 'model_build' in self.results:
             for val in self.results['model_build']:
-                if len(val)<3:
-                    print (val)
+                if len(val) < 3:
+                    print(val)
                 else:
-                    print (val[0],' (', val[1], ') : ', val[2])
+                    print(val[0], ' (', val[1], ') : ', val[2])
 
         if 'model_validate' in self.results:
             for val in self.results['model_validate']:
-                if len(val)<3:
-                    print (val)
+                if len(val) < 3:
+                    print(val)
                 else:
-                    print (val[0],' (', val[1], ') : ', val[2])
+                    print(val[0], ' (', val[1], ') : ', val[2])
 
         # TODO: process learn output and produce meaniningfull JSON/TSV
 
         if self.parameters['output_md']:
             self._output_md()
-            
-        return True, self.results # 'building OK'
+
+        return True, self.results  # 'building OK'
 
     def run_apply(self):
-        ''' Process the results of apply, usually a list of results and serializing to JSON '''
-        
+        ''' Process the results of apply,
+        usually a list of results and serializing to JSON
+        '''
+
         # Check if all mandatory elements are in the results matrix
-        
+
         main_results = self.results['meta']['main']
 
         for key in main_results:
-            if not key in self.results:
+            if key not in self.results:
                 self.results['error'] = 'unable to find "'+key+'" in results'
                 return self.run_error()
 
@@ -115,7 +129,7 @@ class Odata():
         # print ('format output', self.format)
 
         if 'TSV' in self.format:
-
+            log.debug('formating apply results to TSV')
             # label and smiles
             key_list = ['obj_nam']
             if 'SMILES' in self.results:
@@ -147,7 +161,7 @@ class Odata():
                         else:
                             val = self.results[key][i]
 
-                        if val == None:
+                        if val is None:
                             line += '-'
                         else:
                             if isinstance(val, float):
@@ -158,16 +172,17 @@ class Odata():
                     fo.write(line+'\n')
 
         if 'JSON' in self.format:
+            log.debug('formating apply results to JSON')
+            # TODO: output also 'method' keys, like the 
+            # 'external-validation' or others
+            # by setting up at the client side some interface able to show them
 
-            # TODO: output also 'method' keys, like the 'external-validation' or others
-            # by setting up at the client side some interface able to show them 
-             
             # do not output var arrays, only 'obj' arrays
             black_list = []
-            for k in self.results['manifest'] :
-                if not (k['dimension'] in ['objs','single']):
+            for k in self.results['manifest']:
+                if not (k['dimension'] in ['objs', 'single']):
                     black_list.append(k['key'])
-            
+
             # print (black_list)
 
             temp_json = {}
@@ -180,14 +195,14 @@ class Odata():
                 value = self.results[key]
 
                 # print (key, value, type(value))
-                
-                if 'numpy.ndarray' in str(type(value)):
-
+                # if 'numpy.ndarray' in str(type(value)):
+                if isinstance(value, np.ndarray):
                     if 'bool_' in str(type(value[0])):
                         temp_json[key] = [
                             'True' if x else 'False' for x in value]
                     else:
-                        # this removes NaN and and creates a plain list from ndarrays
+                        # This removes NaN and and creates
+                        # a plain list from ndarrays
                         temp_json[key] = [x if not np.isnan(
                             x) else None for x in value]
 
@@ -199,18 +214,22 @@ class Odata():
         return True, output
 
     def run_error(self):
-        ''' Formats error messages, sending only the error and the error source '''
-
+        '''Formats error messages
+        sending only the error and the error source
+        '''
+        log.debug('formating errors in results')
         white_list = ['error', 'warning', 'origin']
         error_json = {key: val for key,
                       val in self.results.items() if key in white_list}
 
         if 'TSV' in self.format:
+            log.debug('Dumping errors into errors.tsv')
             with open('error.tsv', 'w') as fo:
                 for key, value in error_json.items():
                     fo.write(key+'\t'+value+'\n')
 
         if 'JSON' in self.format:
+            log.debug('Dumping errors into JSON')
             return False, json.dumps(error_json)
 
         # this is only reached if JSON is not present and
@@ -218,7 +237,7 @@ class Odata():
         return False, 'errors found'
 
     def run(self):
-        ''' Formats the results produced by "learn" or "apply" as appropriate '''
+        '''Formats the results produced by "learn" or "apply"'''
 
         if 'error' in self.results:
             success, results = self.run_error()
