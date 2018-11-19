@@ -23,15 +23,19 @@
 
 import os
 import shutil
-from flame.util import utils
-from flame.predict import Predict
-from flame.build import Build
+import pathlib
 
 import multiprocessing as mp
+
+from flame.util import utils, get_logger
+from flame.predict import Predict
+from flame.build import Build
 
 
 # if the number of models is higher, try to run in multithread
 MAX_MODELS_SINGLE_CPU = 4
+
+LOG = get_logger(__name__)
 
 
 def get_external_input(task, model_set, infile):
@@ -114,6 +118,14 @@ def build_cmd(model, output_format=None):
     This method must be self-contained and suitable for being called in
     cascade, by models which use the output of other models as input
     '''
+    # safety check if model exists
+    repo_path = pathlib.Path(utils.model_repository_path())
+    model_list = os.listdir(repo_path)
+
+    if model['endpoint'] not in model_list:
+        LOG.error('endpoint name not found in model repository.')
+        raise ValueError('Wrong endpoint name. '
+                         f"{model['endpoint']} does not exist")
 
     build = Build(model['endpoint'], output_format)
 
@@ -139,8 +151,11 @@ def build_cmd(model, output_format=None):
 
         epd = utils.model_path(model['endpoint'], 0)
         lfile = os.path.join(epd, os.path.basename(ifile))
-        shutil.copy(ifile, lfile)
-
+        try:
+            shutil.copy(ifile, lfile)
+        except shutil.SameFileError:
+            LOG.warning('Building model with the input SDF'
+                        f' present in model folder {lfile}')
         # run the model with the input file
         success, results = build.run(lfile)
 
