@@ -122,9 +122,7 @@ class Learn:
         # save model info for informative purposes
         info_pkl_path = os.path.join(self.parameters['model_path'], 'info.pkl')
         with open(info_pkl_path, 'wb') as handle:
-            pickle.dump(self.results['model_build'], handle)
-            pickle.dump(self.results['model_validate'], handle)
-
+            pickle.dump([self.results['model_build'], self.results['model_validate']], handle)
         LOG.debug('Model information saved as:{}'.format(info_pkl_path))
         return
 

@@ -476,17 +476,17 @@ webData:
           - null
         - description: ""
       - max_features:
-        - values:
-          - null 
+        - values: 
           - auto
           - sqrt
           - log2
+          - null
         - description: ""
       - n_estimators:
-        - values:
-          - 25
+        - values: 
           - 50
-          - 75
+          - max: 500
+          - min: 0
         - description: ""
       - oob_score:
         - values: 
