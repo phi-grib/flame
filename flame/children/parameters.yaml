@@ -346,7 +346,7 @@ webData:
     advanced: advanced
     object_type: string
     values: null
-    description: "Selection of available models to get the input from".
+    description: "Selection of available models to get the input from"
     dependencies: 
       - ext_input:true
     comments: Values are obtained from available models.
