@@ -95,6 +95,9 @@ def manage_cmd(args):
         success, results = manage.action_dir()
     elif args.action == 'info':
         success, results = manage.action_info(args.endpoint, version)
+    
+    else: 
+        raise ValueError("Specified action does not exist.")
 
     # print('flame : ', results)
 
