@@ -86,7 +86,7 @@ def manage_cmd(args):
     elif args.action == 'list':
         success, results = manage.action_list(args.endpoint)
     elif args.action == 'import':
-        success, results = manage.action_import(args.endpoint)
+        success, results = manage.action_import(args.infile)
     elif args.action == 'export':
         success, results = manage.action_export(args.endpoint)
     elif args.action == 'refactoring':

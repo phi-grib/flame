@@ -144,13 +144,16 @@ def action_remove(model, version):
     '''
 
     if not model:
+        LOG.error('empty model label')
         return False, 'empty model label'
 
     if version == 0:
+        LOG.error('development version cannot be removed')
         return False, 'development version cannot be removed'
 
     rdir = utils.model_path(model, version)
     if not os.path.isdir(rdir):
+        LOG.error('version {} not found')
         return False, 'version not found'
 
     shutil.rmtree(rdir, ignore_errors=True)
@@ -207,7 +210,7 @@ def action_import(model):
     bdir = utils.model_tree_path(endpoint)
 
     if os.path.isdir(bdir):
-        LOG.error(f'Trying to create a model which already exists: {model}')
+        LOG.error(f'Endpoint already exists: {model}')
         return False, 'endpoint already exists'
 
     if ext != '.tgz':
@@ -218,6 +221,7 @@ def action_import(model):
     LOG.info('importing {}'.format(importfile))
 
     if not os.path.isfile(importfile):
+        LOG.info('importing package {} not found'.format(importfile))
         return False, 'importing package '+importfile+' not found'
 
     try:
@@ -229,7 +233,7 @@ def action_import(model):
 
     with tarfile.open(importfile, 'r:gz') as tar:
         tar.extractall(bdir)
-
+    LOG.info('Endpoint {} imported OK'.format(endpoint))
     return True, 'endpoint '+endpoint+' imported OK'
 
 
@@ -346,13 +350,15 @@ def action_info(model, version=None, output='text'):
         if 'numpy.int64' in str(type(i[2])):
             try:
                 v = int(i[2])
-            except:
+            except Exception as e:
+                LOG.error(e)
                 v = None
             new_results.append((i[0], i[1], v))
         elif 'numpy.float64' in str(type(i[2])):
             try:
                 v = float(i[2])
-            except:
+            except Exception as e:
+                LOG.error(e)
                 v = None
             new_results.append((i[0], i[1], v))
         else:
