@@ -309,7 +309,7 @@ def get_sdf_activity_value(mol, parameters: dict) -> float:
     """
     if self.parameters['SDFile_activity'] is None:
         activity_num = None
-    
+
     else:
         if mol.HasProp(parameters['SDFile_activity']):
             # get sdf activity field value
@@ -319,7 +319,7 @@ def get_sdf_activity_value(mol, parameters: dict) -> float:
                 activity_num = float(activity_str)
             except Exception as e:
                 LOG.error('while casting activity to'
-                        f' float an exception has ocurred: {e}')
+                          f' float an exception has ocurred: {e}')
                 activity_num = None
         # defence when prop is not in parameter file
         else:  # SDF doesn't have param prop name
