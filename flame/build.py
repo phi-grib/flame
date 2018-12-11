@@ -87,6 +87,12 @@ class Build:
             results = idata.run()
             LOG.debug(f'idata child {idata_child.__name__} completed `run()`')
         if 'error' not in results:
+
+            if 'xmatrix' not in results:
+                raise RuntimeError('X data not generated.')
+            
+            if 'ymatrix' not in results:
+                raise RuntimeError('Y data not found. Cannot build model without activity values.')
             # run learn object, in charge of generate a prediction from idata
             learn = learn_child.LearnChild(self.parameters, results)
             results = learn.run()

@@ -45,13 +45,27 @@ LOG = get_logger(__name__)
 
 class Idata:
 
-    def __init__(self, parameters, input_source):
+    def __init__(self, parameters: dict, input_source: str):
+        """
+        Input data class to standarize mol inputs
 
+        Parameters
+        ----------
+        parameters: dict
+            dict with model parameters
+        
+        input_source: str
+            SDF file with the molecules to use as training or predict        
+
+        Returns
+        -------
+        # TODO: clear what this class returns
+
+        """
         # control object defining the processing
         self.parameters = parameters
         # path for temp files (fallback default)
         self.dest_path = '.'
-
         self.results = {
             'manifest': [],
             'meta': {'main': [],
@@ -122,6 +136,8 @@ class Idata:
             
             # raises typerror if model is quantitative and activity not float
             # utils.check_sdf_activity_type(mol, self.parameters)
+            
+            
             activity_num = utils.get_sdf_activity_value(mol, self.parameters)
 
             if mol.HasProp(self.parameters['SDFile_experimental']):
