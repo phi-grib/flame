@@ -84,9 +84,7 @@ class Predict:
             odata_child = importlib.import_module(modpath+".odata_child")
 
             # run idata object, in charge of generate model data from input
-            idata = idata_child.IdataChild(self.parameters,
-                                           input_source,
-                                           is_predict=True)
+            idata = idata_child.IdataChild(self.parameters, input_source)
             results = idata.run()
 
         if 'error' not in results:

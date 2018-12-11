@@ -302,11 +302,12 @@ def is_empty(mylist):
     return True
 
 
-def get_sdf_activity_value(mol, parameters: dict, is_predict:bool) -> float:
+def get_sdf_activity_value(mol, parameters: dict) -> float:
     """ Checks if activity prop is the same in parameters and SDF input file
 
     Returns activity value as float if possible
     """
+
     if mol.HasProp(parameters['SDFile_activity']):
         # get sdf activity field value
         activity_str = mol.GetProp(parameters['SDFile_activity'])
@@ -319,14 +320,11 @@ def get_sdf_activity_value(mol, parameters: dict, is_predict:bool) -> float:
             activity_num = None
     # defence when prop is not in parameter file
     else:  # SDF doesn't have param prop name
-        if not is_predict:
-            raise ValueError(f"SDFile_activity parameter '{parameters['SDFile_activity']}'"
-                            " not found in input SDF."
-                            "Change SDFile_activity param in parameter.yml"
-                            " to match the target prop in SDF")
-        else:
-            activity_num = None
-
+        activity_num = None
+        # raise ValueError(f"SDFile_activity parameter '{parameters['SDFile_activity']}'"
+        #                  " not found in input SDF."
+        #                  "Change SDFile_activity param in parameter.yml"
+        #                  " to match the target prop in SDF")
     return activity_num
 
 

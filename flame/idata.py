@@ -45,7 +45,7 @@ LOG = get_logger(__name__)
 
 class Idata:
 
-    def __init__(self, parameters: dict, input_source: str, is_predict: bool=False):
+    def __init__(self, parameters: dict, input_source: str):
         """
         Input data class to standarize mol inputs
 
@@ -70,7 +70,6 @@ class Idata:
         self.parameters = parameters
         # path for temp files (fallback default)
         self.dest_path = '.'
-        self.is_predict = is_predict
         self.results = {
             'manifest': [],
             'meta': {'main': [],
@@ -141,7 +140,7 @@ class Idata:
             
             # raises typerror if model is quantitative and activity not float
             # utils.check_sdf_activity_type(mol, self.parameters)
-            if not self.is_predict:
+            if not self.parameters['SDFile_activity'] == None:
                 activity_num = utils.get_sdf_activity_value(mol, self.parameters)
 
             if mol.HasProp(self.parameters['SDFile_experimental']):
