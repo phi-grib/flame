@@ -111,7 +111,7 @@ class Apply:
                 SSY_out = np.sum(np.square(Ye - Yp))
                 scoringP = mean_squared_error(Ye, Yp)
                 SDEP = np.sqrt(SSY_out / (nobj))
-                Q2 = 1.00 - (SSY_out /  SSY0_out)
+                Q2 = 1.00 - (SSY_out / SSY0_out)
 
                 ext_val_results.append(('scoringP_ex', 'Scoring P', scoringP))
                 ext_val_results.append(
@@ -218,7 +218,7 @@ class Apply:
                 utils.add_result(self.results, ext_val_results, 'external-validation',
                                  'external validation', 'method', 'single', 'External validation results')
 
-    def run_internal(self):
+    def run_internal(self):  # THIS IS THE ACTUALL PREDICT NO?
         ''' 
 
         Runs prediction tasks using internally defined methods
@@ -230,53 +230,33 @@ class Apply:
         # assume X matrix is present in 'xmatrix0
         X = self.results["xmatrix"]
 
+        # use in single mol prdictions
+        if X.ndim < 2:  # if flat array
+            X = X.reshape(1, -1)  # to 1 row matrix
+
         # retrieve data and dimensions from results
-        try:
-            nobj, nvarx = np.shape(X)
-        except:
-            LOG.error('Failed to generate MD (AGAIN')  # We should not get to this point
-            self.results['error'] = 'Failed to generate MD'
-            return
+        nobj, nvarx = np.shape(X)
 
         if (nobj == 0) or (nvarx == 0):
-            LOG.error('Failed to extract activity or to generate MD')  # Same as previous.
+            LOG.error('Failed to extract activity or to generate MD')
             self.results['error'] = 'Failed to extract activity or to generate MD'
             return
-
         
-        model_file = os.path.join(
-            self.parameters['model_path'], 'model.pkl')
+        # get model pickle
+        model_file = os.path.join(self.parameters['model_path'], 'model.pkl')
         LOG.debug(f'Loading model from pickle file, path: {model_file}')
+
         try:
             with open(model_file, "rb") as input_file:
                 estimator = pickle.load(input_file)
         except FileNotFoundError:
             LOG.error(f'No valid model estimator found at: {model_file}')
-            self.results['error'] = 'No valid model estimator found'
+            self.results['error'] = f'No valid model estimator found at: {model_file}'
             return
 
-        estimator.project(X, self.results)
+        estimatorr.project(X, self.results)
 
-        # if len(self.results["ymatrix"]) > 0:
-        #     # print (len(self.results["ymatrix"]))
-        #     # print (self.parameters["conformal"])
-
-        # if not self.parameters["conformal"]:
         self.external_validation()
-
-        # TODO: implement this for every prediction
-        # zero_array = np.zeros(nobj, dtype=np.float64)
-
-        # if not 'CI' in self.results:
-        #     self.results['CI'] = zero_array
-        # if not 'RI' in self.results:
-        #     self.results['RI'] = zero_array
-
-        # utils.add_result (self.results, zero_array, 'CI', 'CI (95%)',
-        # 'confidence', 'objs', 'Approximate 95% Confidence Interval')
-
-        # utils.add_result (self.results, zero_array, 'RI', 'RI (prob)',
-        # 'confidence', 'objs', 'Reliability Index, from 0 (good) to 6 (bad)')
 
         return
 
