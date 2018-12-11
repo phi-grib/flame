@@ -45,7 +45,7 @@ class Apply:
         ''' when experimental values are available for the predicted compounds,
         apply external validation '''
 
-        if 'ymatrix' not in self.results:  # Why this???
+        if 'ymatrix' not in self.results:
             return
 
         ext_val_results = []
@@ -80,14 +80,18 @@ class Apply:
                 else:
                     specificity = 0.0
 
-                ext_val_results.append(
-                    ('TP_ex', 'True positives in external-validation', float(TP)))
-                ext_val_results.append(
-                    ('TN_ex', 'True negatives in external-validation', float(TN)))
-                ext_val_results.append(
-                    ('FP_ex', 'False positives in external-validation', float(FP)))
-                ext_val_results.append(
-                    ('FN_ex', 'False negatives in external-validation', float(FN)))
+                ext_val_results.append(('TP_ex',
+                                        'True positives in external-validation',
+                                        float(TP)))
+                ext_val_results.append(('TN_ex',
+                                        'True negatives in external-validation',
+                                        float(TN)))
+                ext_val_results.append(('FP_ex',
+                                        'False positives in external-validation',
+                                        float(FP)))
+                ext_val_results.append(('FN_ex',
+                                        'False negatives in external-validation',
+                                        float(FN)))
 
                 ext_val_results.append(('Sensitivity_ex',
                                         'Sensitivity in external-validation',

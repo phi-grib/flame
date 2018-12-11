@@ -55,11 +55,7 @@ class Idata:
             dict with model parameters
         
         input_source: str
-            SDF file with the molecules to use as training or predict
-        
-        predict: bool
-            flag the input data if its just for prediction
-        
+            SDF file with the molecules to use as training or predict        
 
         Returns
         -------
