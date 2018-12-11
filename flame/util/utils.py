@@ -189,7 +189,7 @@ def model_path(model, version):
     if version == 0:
         modpath = os.path.join(modpath, 'dev')
     else:
-        modpath = os.path.join(modpath, 'ver%0.6d' % (version))
+        modpath = os.path.join(modpath, 'ver{}'.format(version))
 
     return modpath
 
@@ -323,7 +323,7 @@ def get_sdf_activity_value(mol, parameters: dict) -> float:
                          " not found in input SDF."
                          "Change SDFile_activity param in parameter.yml"
                          " to match the target prop in SDF")
-
+    
     return activity_num
 
 

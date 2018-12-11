@@ -42,9 +42,10 @@ class Apply:
         self.results['origin'] = 'apply'
 
     def external_validation(self):
-        ''' when experimental values are available for the predicted compounds, apply external validation '''
+        ''' when experimental values are available for the predicted compounds,
+        apply external validation '''
 
-        if 'ymatrix' not in self.results:
+        if 'ymatrix' not in self.results:  # Why this???
             return
 
         ext_val_results = []
@@ -88,12 +89,17 @@ class Apply:
                 ext_val_results.append(
                     ('FN_ex', 'False negatives in external-validation', float(FN)))
 
-                ext_val_results.append(
-                    ('Sensitivity_ex', 'Sensitivity in external-validation', float(sensitivity)))
-                ext_val_results.append(
-                    ('Specificity_ex', 'Specificity in external-validation', float(specificity)))
-                ext_val_results.append(
-                    ('MCC_ex', 'Mattews Correlation Coefficient in external-validation', float(MCC)))
+                ext_val_results.append(('Sensitivity_ex',
+                                        'Sensitivity in external-validation',
+                                        float(sensitivity)))
+
+                ext_val_results.append(('Specificity_ex',
+                                        'Specificity in external-validation',
+                                        float(specificity)))
+
+                ext_val_results.append(('MCC_ex',
+                                        'Mattews Correlation Coefficient in external-validation',
+                                        float(MCC)))
 
             else:
                 Ye = np.asarray(self.results["ymatrix"])
@@ -113,14 +119,20 @@ class Apply:
                 SDEP = np.sqrt(SSY_out / (nobj))
                 Q2 = 1.00 - (SSY_out / SSY0_out)
 
-                ext_val_results.append(('scoringP_ex', 'Scoring P', scoringP))
+                ext_val_results.append(
+                    ('scoringP_ex', 'Scoring P', scoringP))
                 ext_val_results.append(
                     ('Q2_ex', 'Determination coefficient in cross-validation', Q2))
                 ext_val_results.append(
                     ('SDEP_ex', 'Standard Deviation Error of the Predictions', SDEP))
 
-            utils.add_result(self.results, ext_val_results, 'external-validation',
-                             'external validation', 'method', 'single', 'External validation results')
+            utils.add_result(self.results,
+                             ext_val_results,
+                             'external-validation',
+                             'external validation',
+                             'method',
+                             'single',
+                             'External validation results')
 
         else:
             if not self.parameters["quantitative"]:
@@ -178,25 +190,38 @@ class Apply:
                     specificity = (TN / (TN + FP))
                 else:
                     specificity = 0.0
-                ext_val_results.append(
-                    ('TP', 'True positives in external-validation', float(TP)))
-                ext_val_results.append(
-                    ('TN', 'True negatives in external-validation', float(TN)))
-                ext_val_results.append(
-                    ('FP', 'False positives in external-validation', float(FP)))
-                ext_val_results.append(
-                    ('FN', 'False negatives in external-validation', float(FN)))
-                ext_val_results.append(
-                    ('Coverage', 'Conformal coverage in external-validation', float(coverage)))
+                ext_val_results.append(('TP',
+                                        'True positives in external-validation',
+                                        float(TP)))
+                ext_val_results.append(('TN',
+                                        'True negatives in external-validation',
+                                        float(TN)))
+                ext_val_results.append(('FP',
+                                        'False positives in external-validation',
+                                        float(FP)))
+                ext_val_results.append(('FN',
+                                        'False negatives in external-validation',
+                                        float(FN)))
+                ext_val_results.append(('Coverage',
+                                        'Conformal coverage in external-validation',
+                                        float(coverage)))
 
-                ext_val_results.append(
-                    ('Sensitivity', 'Sensitivity in external-validation', float(sensitivity)))
-                ext_val_results.append(
-                    ('Specificity', 'Specificity in external-validation', float(specificity)))
-                ext_val_results.append(
-                    ('MCC', 'Mattews Correlation Coefficient in external-validation', float(MCC)))
-                utils.add_result(self.results, ext_val_results, 'external-validation',
-                                 'external validation', 'method', 'single', 'External validation results')
+                ext_val_results.append(('Sensitivity',
+                                        'Sensitivity in external-validation',
+                                        float(sensitivity)))
+                ext_val_results.append(('Specificity',
+                                        'Specificity in external-validation',
+                                        float(specificity)))
+                ext_val_results.append(('MCC',
+                                        'Mattews Correlation Coefficient in external-validation',
+                                        float(MCC)))
+                utils.add_result(self.results,
+                                 ext_val_results,
+                                 'external-validation',
+                                 'external validation',
+                                 'method',
+                                 'single',
+                                 'External validation results')
             else:
 
                 Ye = np.asarray(self.results["ymatrix"])
@@ -212,11 +237,19 @@ class Apply:
                     "{0:.2f}".format(mean_interval))
 
                 ext_val_results.append(('Conformal_mean_interval',
-                                        'Conformal mean interval', conformal_mean_interval))
-                ext_val_results.append(
-                    ('Conformal_accuracy', 'Conformal accuracy', conformal_accuracy))
-                utils.add_result(self.results, ext_val_results, 'external-validation',
-                                 'external validation', 'method', 'single', 'External validation results')
+                                        'Conformal mean interval',
+                                        conformal_mean_interval))
+                ext_val_results.append(('Conformal_accuracy',
+                                        'Conformal accuracy',
+                                        conformal_accuracy))
+
+                utils.add_result(self.results,
+                                 ext_val_results,
+                                 'external-validation',
+                                 'external validation',
+                                 'method',
+                                 'single',
+                                 'External validation results')
 
     def run_internal(self):  # THIS IS THE ACTUALL PREDICT NO?
         ''' 
@@ -241,9 +274,11 @@ class Apply:
             LOG.error('Failed to extract activity or to generate MD')
             self.results['error'] = 'Failed to extract activity or to generate MD'
             return
-        
+
         # get model pickle
-        model_file = os.path.join(self.parameters['model_path'], 'model.pkl')
+        model_file = os.path.join(self.parameters['model_path'],
+                                  'model.pkl')
+
         LOG.debug(f'Loading model from pickle file, path: {model_file}')
 
         try:
@@ -254,7 +289,7 @@ class Apply:
             self.results['error'] = f'No valid model estimator found at: {model_file}'
             return
 
-        estimatorr.project(X, self.results)
+        estimator.project(X, self.results)
 
         self.external_validation()
 
