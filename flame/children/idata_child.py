@@ -25,6 +25,6 @@ from flame.idata import Idata
 
 class IdataChild(Idata):
 
-    def __init__(self, parameters, input_source, is_predict):
+    def __init__(self, parameters, input_source, is_predict=False):
 
         Idata.__init__(self, parameters, input_source, is_predict)
