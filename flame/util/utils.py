@@ -189,7 +189,7 @@ def model_path(model, version):
     if version == 0:
         modpath = os.path.join(modpath, 'dev')
     else:
-        modpath = os.path.join(modpath, 'ver{}'.format(version))
+        modpath = os.path.join(modpath, 'ver%0.6d' % (version))
 
     return modpath
 
@@ -307,24 +307,27 @@ def get_sdf_activity_value(mol, parameters: dict) -> float:
 
     Returns activity value as float if possible
     """
-
-    if mol.HasProp(parameters['SDFile_activity']):
-        # get sdf activity field value
-        activity_str = mol.GetProp(parameters['SDFile_activity'])
-        try:
-            # cast val to float to be sure it is num
-            activity_num = float(activity_str)
-        except Exception as e:
-            LOG.error('while casting activity to'
-                      f' float an exception has ocurred: {e}')
-            activity_num = None
-    # defence when prop is not in parameter file
-    else:  # SDF doesn't have param prop name
+    if self.parameters['SDFile_activity'] is None:
         activity_num = None
-        # raise ValueError(f"SDFile_activity parameter '{parameters['SDFile_activity']}'"
-        #                  " not found in input SDF."
-        #                  "Change SDFile_activity param in parameter.yml"
-        #                  " to match the target prop in SDF")
+    
+    else:
+        if mol.HasProp(parameters['SDFile_activity']):
+            # get sdf activity field value
+            activity_str = mol.GetProp(parameters['SDFile_activity'])
+            try:
+                # cast val to float to be sure it is num
+                activity_num = float(activity_str)
+            except Exception as e:
+                LOG.error('while casting activity to'
+                        f' float an exception has ocurred: {e}')
+                activity_num = None
+        # defence when prop is not in parameter file
+        else:  # SDF doesn't have param prop name
+            activity_num = None
+            # raise ValueError(f"SDFile_activity parameter '{parameters['SDFile_activity']}'"
+            #                  " not found in input SDF."
+            #                  "Change SDFile_activity param in parameter.yml"
+            #                  " to match the target prop in SDF")
     return activity_num
 
 

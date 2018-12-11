@@ -136,8 +136,9 @@ class Idata:
             
             # raises typerror if model is quantitative and activity not float
             # utils.check_sdf_activity_type(mol, self.parameters)
-            if not self.parameters['SDFile_activity'] == None:
-                activity_num = utils.get_sdf_activity_value(mol, self.parameters)
+            
+            
+            activity_num = utils.get_sdf_activity_value(mol, self.parameters)
 
             if mol.HasProp(self.parameters['SDFile_experimental']):
                 exp = mol.GetProp(self.parameters['SDFile_experimental'])
