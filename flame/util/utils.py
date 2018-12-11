@@ -307,7 +307,7 @@ def get_sdf_activity_value(mol, parameters: dict) -> float:
 
     Returns activity value as float if possible
     """
-    if self.parameters['SDFile_activity'] is None:
+    if parameters['SDFile_activity'] is None:
         activity_num = None
 
     else:
