@@ -30,8 +30,12 @@ import pathlib
 import re
 import warnings
 
+from flame.util import get_logger
 
-def get_conf_yml_path():
+LOG = get_logger(__name__)
+
+
+def get_conf_yml_path() -> str:
     '''
     recovers the path of the configuration yml file
 
@@ -59,6 +63,7 @@ def _read_configuration() -> dict:
     --------
     dict
     '''
+    # LOG.info('reading configuration')
     with open(get_conf_yml_path(), 'r') as config_file:
         conf = yaml.load(config_file)
 
@@ -66,46 +71,62 @@ def _read_configuration() -> dict:
 
     model_abs_path = pathlib.Path(model_path).resolve()
 
+    # LOG.debug(f'changed path from {model_path} to {model_abs_path}')
     conf['model_repository_path'] = str(model_abs_path)
+    # LOG.info('Configuration loaded')
     return conf
 
 
 def check_repository_path() -> None:
     """
-    Checks existence and sanity of modle repository path in config file
+    Checks existence of module repository path in config file
     Use only in flame_scr, it uses user input so it's a CLI tools
     """
-    print('>>>flame: reading config file...')
+    LOG.debug('reading configuration')
 
     config_path = get_conf_yml_path()
     with open(config_path, 'r') as config_file:
         config = yaml.load(config_file)
 
-    print('>>>flame: reading and sanitizing model repository path')
-    model_path = pathlib.Path(config['model_repository_path'])
+    old_model_path = config['model_repository_path']
+
+    LOG.debug(f'Current model repository path: {old_model_path}')
+
+    model_path = pathlib.Path(old_model_path)
     # check if path exists
     while not model_path.exists():
-        warnings.warn(f"Model repository path '{model_path}'"
-                      " in config file doesn't exists.")
+        LOG.warning(f"Model repository path '{model_path}'"
+                    " in config file doesn't exists.")
 
         print("\nEnter a correct model repository path:")
         user_path = input()
         model_path = pathlib.Path(user_path)
 
-    config['model_repository_path'] = str(model_path.resolve())
-    with open(config_path, 'w') as config_file:
-        yaml.dump(config, config_file, default_flow_style=False)
+    model_abs_path = str(model_path.resolve())
 
-    print('>>>flame: Model repository path updated succesfully')
-    # finds C: or D:
-    rex = re.compile('^.:')
-    match_windows = rex.findall(str(model_path))
+    # if repo path has been updated
+    if old_model_path != model_abs_path:
+        LOG.debug('Model repo path changed from '
+                  f'{old_model_path} to {model_abs_path}')
 
-    # extra check if on linux and path starts with char followed by ':'
-    if sys.platform == 'linux' and match_windows:
-        raise ValueError('Windows path found in config.yml model repository path:'
-                         f'"{model_path}".'
-                         '\nPlease write a correct path.')
+        config['model_repository_path'] = model_abs_path
+
+        # write new config to config file
+        with open(config_path, 'w') as config_file:
+            yaml.dump(config, config_file, default_flow_style=False)
+
+        LOG.info('Model repository path updated')
+
+    # # finds C: or D:
+    # rex = re.compile('^.:')
+    # match_windows = rex.findall(str(model_path))
+
+    # # extra check if on linux and path starts with char followed by ':'
+    # if sys.platform == 'linux' and match_windows:
+    #     raise ValueError('Windows path found in config.yml'
+    #                      'model repository path:'
+    #                      f'"{model_path}".'
+    #                      '\nPlease write a correct path manually')
 
 
 def write_config(config: dict) -> None:
@@ -271,9 +292,55 @@ def add_result(results, var, _key, _label, _type, _dimension='objs',
         else:
             results['meta']['main'].append(_key)
 
+# what is this??
+
 
 def is_empty(mylist):
     for i in mylist:
         if i is not None:
             return False
     return True
+
+
+def get_sdf_activity_value(mol, parameters: dict) -> float:
+    """ Checks if activity prop is the same in parameters and SDF input file
+
+    Returns activity value as float if possible
+    """
+    if parameters['SDFile_activity'] is None:
+        activity_num = None
+
+    else:
+        if mol.HasProp(parameters['SDFile_activity']):
+            # get sdf activity field value
+            activity_str = mol.GetProp(parameters['SDFile_activity'])
+            try:
+                # cast val to float to be sure it is num
+                activity_num = float(activity_str)
+            except Exception as e:
+                LOG.error('while casting activity to'
+                          f' float an exception has ocurred: {e}')
+                activity_num = None
+        # defence when prop is not in parameter file
+        else:  # SDF doesn't have param prop name
+            activity_num = None
+            # raise ValueError(f"SDFile_activity parameter '{parameters['SDFile_activity']}'"
+            #                  " not found in input SDF."
+            #                  "Change SDFile_activity param in parameter.yml"
+            #                  " to match the target prop in SDF")
+    return activity_num
+
+
+def check_sdf_activity_type(mol, parameters: dict) -> None:
+    """ Type check the activity prop fot the model type.
+
+    If the model is quantitative and the activty
+    field is not float it Raises TypeError
+    """
+    activity = mol.GetProp(parameters['SDFile_activity'])
+    is_quant = parameters['quantitative']
+    if is_quant and not isinstance(activity, float):
+        raise TypeError(
+            'Expected float activity value for a quantitative model')
+    else:
+        pass

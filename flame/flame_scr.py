@@ -24,21 +24,24 @@ import argparse
 import pathlib
 import sys
 
-from flame.util import utils
+from flame.util import utils, get_logger
 from flame.util import config, change_config_status
+
 import flame.context as context
 import flame.manage as manage
 
+import logging
+
+LOG = get_logger(__name__)
+
+
 # TEMP: only to allow EBI model to run
-
-
 def sensitivity(y_true, y_pred):
     tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
     return(tp / (tp+fn))
 
+
 # TEMP: only to allow EBI model to run
-
-
 def specificity(y_true, y_pred):
     tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
     return(tn / (tn+fp))
@@ -71,6 +74,8 @@ def manage_cmd(args):
     version = utils.intver(args.version)
 
     if args.action == 'new':
+        # check if config model repo path is correct
+        utils.check_repository_path()
         success, results = manage.action_new(args.endpoint)
     elif args.action == 'kill':
         success, results = manage.action_kill(args.endpoint)
@@ -81,7 +86,7 @@ def manage_cmd(args):
     elif args.action == 'list':
         success, results = manage.action_list(args.endpoint)
     elif args.action == 'import':
-        success, results = manage.action_import(args.endpoint)
+        success, results = manage.action_import(args.infile)
     elif args.action == 'export':
         success, results = manage.action_export(args.endpoint)
     elif args.action == 'refactoring':
@@ -91,11 +96,12 @@ def manage_cmd(args):
     elif args.action == 'info':
         success, results = manage.action_info(args.endpoint, version)
 
-    print('flame : ', results)
+    # print('flame : ', results)
 
 
 def main():
 
+    LOG.debug('-------------NEW RUN-------------\n')
     parser = argparse.ArgumentParser(
         description='Use Flame to either build a model from or apply a model to the input file.')
 
@@ -121,11 +127,24 @@ def main():
                         help='Action type: \'predict\' or \'build\' or \'manage\'',
                         required=True)
 
+    # parser.add_argument('-log', '--loglevel',
+    #                     help='Logger level of verbosity',)
+
     parser.add_argument('-p', '--path',
                         help='Defines de new path for models repository.',
                         required=False)
 
     args = parser.parse_args()
+
+    # init logger Level and set general config
+    # another way around would be create a handler with the level
+    # and append it to the global instance of logger
+
+    # if args.loglevel:
+    #     numeric_level = getattr(logging, args.loglevel.upper(), None)
+    #     if not isinstance(numeric_level, int):
+    #         raise ValueError('Invalid log level: {}'.format(args.loglevel))
+    #     logging.basicConfig(level=numeric_level)
 
     if args.command == 'predict':
 
@@ -135,11 +154,16 @@ def main():
 
         version = utils.intver(args.version)
 
+        # wrong, input file is not part of the model
         model = {'endpoint': args.endpoint,
                  'version': version,
                  'infile': args.infile}
 
         configuration_warning()
+
+        LOG.info(f'Starting prediction with model {args.endpoint}'
+                 f' version {version} for file {args.infile}')
+
         success, results = context.predict_cmd(model)
         print('flame predict : ', success, results)
 
@@ -153,8 +177,12 @@ def main():
                  'infile': args.infile}
 
         configuration_warning()
+
+        LOG.info(f'Starting building model {args.endpoint}'
+                 f' with file {args.infile}')
+
         success, results = context.build_cmd(model)
-        print('flame build : ', success, results)
+        # print('flame build : ', success, results)
 
     elif args.command == 'manage':
         configuration_warning()
@@ -169,4 +197,5 @@ def main():
 if __name__ == '__main__':
     # used to reproduce speed problems in Linux platforms
     # multiprocessing.set_start_method('spawn')
+
     main()
