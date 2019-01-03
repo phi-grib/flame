@@ -11,10 +11,7 @@ normalize_method:                     # null | standardize
 ionize_method: null                   # null | moka
 convert3D_method: null                # null | ETKDG
 computeMD_method:                     # RDKit_properties | RDKit_md | padel | custom
-#- RDKit_properties
-#- RDKit_md
 - RDKit_properties
-
 
 ext_input: false                      # external input source TRUE
 model_set:                            # list of models used for producing input
@@ -25,7 +22,7 @@ model_set:                            # list of models used for producing input
 
 # Output 
 output_format:                        # JSON | TSV  (dump results to output.tsv and errors to error.tsv)
-- JSON   
+- JSON      
          
 output_md: true                      # if true dump the MD generated to 'output_md.tsv'
 
@@ -42,21 +39,20 @@ TSV_objnames: true                    # true if the object names are in the firs
 TSV_varnames: true                    # true if the variable names are in the first row
 
 # modeling settings
-
-modelingToolkit: internal             # internal | R | KNIME
-model: PLSR                           # RF | SVM | GNB | PLSR | PLSDA
-modelAutoscaling: true                # true | false
+modelingToolkit: internal             # internal | R | KNIME | custom
+model: PLSR                             # RF | SVM | GNB | PLSR | PLSDA
+modelAutoscaling: false               # true | false
 quantitative: true
 tune: false
 imbalance: null                       # simple_subsampling
 feature_selection: null               # Kbest | null
 feature_number: auto                  # auto: Sets max features to 10% of entries | Number
 
+
 ModelValidationCV: loo
 ModelValidationLC: false
 ModelValidationN: 2
 ModelValidationP: 1
-
 
 # SVM settings
 SVM_parameters:
@@ -101,7 +97,7 @@ RF_parameters:
   class_weight: balanced
   max_depth: null
   max_features: sqrt
-  n_estimators: 250
+  n_estimators: 200
   n_jobs: 1
   oob_score: true
   random_state: 46
@@ -152,8 +148,8 @@ PLSR_optimize:
 PLSDA_parameters:
   scale: false
   tol: 0.000006
-  n_components: 6
-  threshold: 0.4
+  n_components: 2
+  threshold: null
   # Manual optimization returns the MCC for the diffent
   # number of latent variables considered in 
   # n_components (below) with the best threshold for
@@ -175,5 +171,5 @@ PLSDA_optimize:
   - 0.5
 
 # conformal predictor settings
-conformal: true
+conformal: false
 conformalSignificance: 0.2

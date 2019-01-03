@@ -74,7 +74,7 @@ class Idata:
                      }
         }    # create empty context index ('manifest')
 
-        # why double checking???
+        # make sure parameters contains an ext_input enty and that it is not null
         if ('ext_input' in parameters) and (parameters['ext_input']):
             LOG.debug('"ext_input" found in parameters')
             self.idata = input_source
@@ -92,11 +92,11 @@ class Idata:
         Extracts molecule names, biological anotations and experimental values
         from an SDFile.
 
-        It also ensures that 
-        Anotations must be added using method utils.add_result,
+        All this information is added to the results using method utils.add_result,
         so they are also inserted into the results manifest.
         '''
 
+        # Initiate a RDKit SDFile iterator to process the molecules one by one
         try:
             suppl = Chem.SDMolSupplier(ifile)
             LOG.debug(f'mol supplier created from {ifile}')
@@ -111,13 +111,15 @@ class Idata:
             LOG.critical('ifile {} is empty'.format(ifile))
             raise ValueError('Input SDF is empty')
 
+        # Initate lists which will contain the extracted values
         obj_nam = []
         obj_bio = []
         obj_exp = []
         obj_sml = []
-        obj_num = 0
         success_list = []
+        obj_num = 0
 
+        # Iterate for every molecule inside the SDFile
         for mol in suppl:
 
             # Do not even try to process molecules not recognised by RDKit.
@@ -128,38 +130,41 @@ class Idata:
                 success_list.append(False)
                 continue
 
+            # extract the molecule name, using a sdfileutils algorithm 
             name = sdfu.getName(
                 mol, count=obj_num, field=self.parameters['SDFile_name'], suppl=suppl)
 
-            activity_num = None
-            exp = None
+            # extracts biological information (activity) which is used as dependent variable
+            # for the model training and is provided as a prediction for new compounds
+            bio = None
+            if self.parameters['SDFile_activity'] is not None:
+                bio = utils.get_sdf_value(mol, self.parameters['SDFile_activity'])
             
-            # raises typerror if model is quantitative and activity not float
-            # utils.check_sdf_activity_type(mol, self.parameters)
-            
-            
-            activity_num = utils.get_sdf_activity_value(mol, self.parameters)
+            # extracts experimental information, if any.
+            # note that experimental information is used only in prediction, as a value
+            # which overrides any model predicted value
+            exp = None    
+            if self.parameters['SDFile_activity'] is not None:
+                exp = utils.get_sdf_value(mol, self.parameters['SDFile_experimental'])
 
-            if mol.HasProp(self.parameters['SDFile_experimental']):
-                exp = mol.GetProp(self.parameters['SDFile_experimental'])
-                LOG.debug('Found experimental results in SDF')
-            # generate a SMILES
+            # generates a SMILES
+            sml = None
             try:
                 sml = Chem.MolToSmiles(mol)
             except Exception as e:
                 LOG.error('while converting mol to smiles'
                           f' an exception has ocurred: {e}')
-                sml = None
 
-            # it's not clear what this is
+            # assigns the information extracted from the SDFile to the corresponding lists
             obj_nam.append(name)
-            obj_bio.append(activity_num)
+            obj_bio.append(bio)
             obj_exp.append(exp)
             obj_sml.append(sml)
 
             success_list.append(True)
             obj_num += 1
 
+        # Insert the values as lists in 'results' using an utility function
         utils.add_result(self.results, obj_num, 'obj_num', 'Num mol',
                          'method', 'single',
                          'Number of molecules present in the input file')
