@@ -43,17 +43,22 @@ class Apply:
 
     def external_validation(self):
         ''' when experimental values are available for the predicted compounds,
-        apply external validation '''
-
-        if 'ymatrix' not in self.results:
-            return
+        run external validation '''
 
         ext_val_results = []
+        
+        # Ye are the y values present in the input file
+        Ye = np.asarray(self.results["ymatrix"])
+
+        # there are four variants of external validation, depending if the method
+        # if conformal or non-conformal and the model is qualitative and quantitative
 
         if not self.parameters["conformal"]:
 
+            # non-conformal 
             if not self.parameters["quantitative"]:
-                Ye = np.asarray(self.results["ymatrix"])
+                
+                # non-conformal & qualitative
                 Yp = np.asarray(self.results["values"])
 
                 if Ye.size == 0:
@@ -92,21 +97,19 @@ class Apply:
                 ext_val_results.append(('FN_ex',
                                         'False negatives in external-validation',
                                         float(FN)))
-
                 ext_val_results.append(('Sensitivity_ex',
                                         'Sensitivity in external-validation',
                                         float(sensitivity)))
-
                 ext_val_results.append(('Specificity_ex',
                                         'Specificity in external-validation',
                                         float(specificity)))
-
                 ext_val_results.append(('MCC_ex',
                                         'Mattews Correlation Coefficient in external-validation',
                                         float(MCC)))
 
             else:
-                Ye = np.asarray(self.results["ymatrix"])
+
+                # non-conformal & quantitative
                 Yp = np.asarray(self.results["values"])
 
                 if Ye.size == 0:
@@ -139,9 +142,11 @@ class Apply:
                              'External validation results')
 
         else:
-            if not self.parameters["quantitative"]:
+            # conformal external validation
 
-                Ye = np.asarray(self.results["ymatrix"])
+            if not self.parameters["quantitative"]:
+                
+                # conformal & qualitative
                 Yp = np.concatenate((np.asarray(self.results['c0']).reshape(
                     -1, 1), np.asarray(self.results['c1']).reshape(-1, 1)), axis=1)
 
@@ -189,7 +194,6 @@ class Apply:
                     sensitivity = (TP / (TP + FN))
                 else:
                     sensitivity = 0.0
-
                 if (TN+FP) > 0:
                     specificity = (TN / (TN + FP))
                 else:
@@ -209,7 +213,6 @@ class Apply:
                 ext_val_results.append(('Coverage',
                                         'Conformal coverage in external-validation',
                                         float(coverage)))
-
                 ext_val_results.append(('Sensitivity',
                                         'Sensitivity in external-validation',
                                         float(sensitivity)))
@@ -228,7 +231,7 @@ class Apply:
                                  'External validation results')
             else:
 
-                Ye = np.asarray(self.results["ymatrix"])
+                # conformal & quantitative
                 Yp_lower = self.results['lower_limit']
                 Yp_upper = self.results['upper_limit']
 
@@ -255,7 +258,7 @@ class Apply:
                                  'single',
                                  'External validation results')
 
-    def run_internal(self):  # THIS IS THE ACTUALL PREDICT NO?
+    def run_internal(self): 
         ''' 
 
         Runs prediction tasks using internally defined methods
@@ -264,7 +267,7 @@ class Apply:
 
         '''
 
-        # assume X matrix is present in 'xmatrix0
+        # assume X matrix is present in 'xmatrix'
         X = self.results["xmatrix"]
 
         # use in single mol prdictions
@@ -274,9 +277,15 @@ class Apply:
         # retrieve data and dimensions from results
         nobj, nvarx = np.shape(X)
 
-        if (nobj == 0) or (nvarx == 0):
-            LOG.error('Failed to extract activity or to generate MD')
-            self.results['error'] = 'Failed to extract activity or to generate MD'
+        # check that the dimensions of the X matrix are acceptable
+        if (nobj == 0) :
+            LOG.error('No object found')
+            self.results['error'] = 'No object found'
+            return
+
+        if (nvarx == 0):
+            LOG.error('Failed to generate MDs')
+            self.results['error'] = 'Failed to generate MDs'
             return
 
         # get model pickle
@@ -293,9 +302,12 @@ class Apply:
             self.results['error'] = f'No valid model estimator found at: {model_file}'
             return
 
+        # project the X matrix into the model and save predictions in self.results
         estimator.project(X, self.results)
 
-        self.external_validation()
+        # if the input file contains activity values use them to run external validation 
+        if 'ymatrix' in self.results:
+            self.external_validation()
 
         return
 

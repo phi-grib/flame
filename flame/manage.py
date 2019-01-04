@@ -52,6 +52,13 @@ def action_new(model):
     if not model:
         return False, 'empty model label'
 
+    # importlib does not allow using 'test' and issues a misterious error when we
+    # try to use this name. This is a simple workaround to prevent creating models 
+    # with this name 
+    if model == 'test':
+        LOG.warning(f'the name "test" is disallowed, please use any other name')
+        return False, 'the name "test" is disallowed, please use any other name'
+
     # Model directory with /dev (default) level
     ndir = pathlib.Path(utils.model_tree_path(model)) / 'dev'
 
