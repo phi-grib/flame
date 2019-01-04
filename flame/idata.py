@@ -672,7 +672,11 @@ class Idata:
             return False
 
         try:
-            with open(os.path.join(self.dest_path, 'data.pkl'), 'rb') as fi:
+            picklfile = os.path.join(self.dest_path, 'data.pkl')
+            if not os.path.isfile(picklfile):
+                return False
+
+            with open(picklfile, 'rb') as fi:
                 md5_parameters = pickle.load(fi)
                 if md5_parameters != self.parameters['md5']:
                     return False
@@ -1123,12 +1127,26 @@ class Idata:
         chunck per CPU        
         '''
 
-        # check for the presence of a valid pickle file
-        if self.load():
-            return self.results
+        # # check for the presence of a valid pickle file
+        # if self.load():
+        #     return self.results
+
+
         if self.parameters['input_type'] == 'ext_data':
             input_type = 'ext_data'
         else:
+
+            # if the input file is not found
+            if not os.path.isfile(self.ifile):
+                self.results['error'] = 'input data file '+self.ifile+' not found'
+                LOG.error('input data file '+self.ifile+' not found')
+                return self.results
+
+            # check for the presence of a valid pickle file
+            if self.load():
+                return self.results
+
+            # assign input type from ifile name extension
             suffix = pathlib.Path(self.ifile).suffix
             if suffix == '.tsv':
                 input_type = 'data'
