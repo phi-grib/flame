@@ -1127,16 +1127,12 @@ class Idata:
         chunck per CPU        
         '''
 
-        # # check for the presence of a valid pickle file
-        # if self.load():
-        #     return self.results
+        input_type = self.parameters['input_type']
+        LOG.info('Running with input type: {}'.format(input_type))
 
+        if (input_type != 'ext_data'):
 
-        if self.parameters['input_type'] == 'ext_data':
-            input_type = 'ext_data'
-        else:
-
-            # if the input file is not found
+            # if the input file is not found return
             if not os.path.isfile(self.ifile):
                 self.results['error'] = 'input data file '+self.ifile+' not found'
                 LOG.error('input data file '+self.ifile+' not found')
@@ -1146,16 +1142,7 @@ class Idata:
             if self.load():
                 return self.results
 
-            # assign input type from ifile name extension
-            suffix = pathlib.Path(self.ifile).suffix
-            if suffix == '.tsv':
-                input_type = 'data'
-            elif suffix == '.sdf':
-                input_type = 'molecule'
-            else:
-                input_type = self.parameters['input_type']
 
-        LOG.info('Running with input type: {}'.format(input_type))
         # processing for molecular input (for now an SDFile)
         if (input_type == 'molecule'):
 

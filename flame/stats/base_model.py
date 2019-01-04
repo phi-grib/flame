@@ -314,6 +314,11 @@ class BaseEstimator:
         results.append(
             ('SDEP', 'Standard Deviation Error of the Predictions', self.SDEP))
 
+        results.append (
+            ('Y_adj', 'Adjusted Y values', Yp) )          
+        results.append (
+            ('Y_pred', 'Predicted Y values after cross-validation', y_pred) )  
+
         return True, results
 
     def qualitativeValidation(self):
@@ -321,7 +326,6 @@ class BaseEstimator:
 
         X = self.X.copy()
         Y = self.Y.copy()
-
 
         Yp = self.estimator.predict(X)
 
@@ -369,6 +373,11 @@ class BaseEstimator:
             ('Specificity', 'Specificity in cross-validation', self.specificity))
         results.append(
             ('MCC', 'Mattews Correlation Coefficient in cross-validation', self.mcc))
+
+        results.append (
+            ('Y_adj', 'Adjusted Y values', Yp) )          
+        results.append (
+            ('Y_pred', 'Predicted Y values after cross-validation', y_pred) )  
 
         return True, results
 
