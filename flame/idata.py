@@ -144,7 +144,7 @@ class Idata:
             # note that experimental information is used only in prediction, as a value
             # which overrides any model predicted value
             exp = None    
-            if self.parameters['SDFile_activity'] is not None:
+            if self.parameters['SDFile_experimental'] is not None:
                 exp = utils.get_sdf_value(mol, self.parameters['SDFile_experimental'])
 
             # generates a SMILES
@@ -326,7 +326,7 @@ class Idata:
         example:    return True, (xmatrix, md_nam, success_list)
         '''
         raise NotImplementedError
-        return False, 'not implemented'
+        #return False, 'not implemented'
 
     def computeMD(self, ifile: str, methods: list) -> (bool, (np.ndarray, list, list)):
         '''
