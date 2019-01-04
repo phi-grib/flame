@@ -146,6 +146,11 @@ def main():
     #         raise ValueError('Invalid log level: {}'.format(args.loglevel))
     #     logging.basicConfig(level=numeric_level)
 
+    # make sure flame has been configured before running any command, unless this command if used to 
+    # configure flame
+    if args.command != 'config':
+        configuration_warning()
+
     if args.command == 'predict':
 
         if (args.endpoint is None) or (args.infile is None):
@@ -154,18 +159,15 @@ def main():
 
         version = utils.intver(args.version)
 
-        # wrong, input file is not part of the model
-        model = {'endpoint': args.endpoint,
+        command_predict = {'endpoint': args.endpoint,
                  'version': version,
                  'infile': args.infile}
-
-        configuration_warning()
 
         LOG.info(f'Starting prediction with model {args.endpoint}'
                  f' version {version} for file {args.infile}')
 
-        success, results = context.predict_cmd(model)
-        print('flame predict : ', success, results)
+        success, results = context.predict_cmd(command_predict)
+        # print('flame predict : ', success, results)
 
     elif args.command == 'build':
 
@@ -173,24 +175,21 @@ def main():
             print('flame build : endpoint and input file arguments are compulsory')
             return
 
-        model = {'endpoint': args.endpoint,
-                 'infile': args.infile}
-
-        configuration_warning()
+        command_build = {'endpoint': args.endpoint, 'infile': args.infile}
 
         LOG.info(f'Starting building model {args.endpoint}'
                  f' with file {args.infile}')
 
-        success, results = context.build_cmd(model)
+        success, results = context.build_cmd(command_build)
         # print('flame build : ', success, results)
 
     elif args.command == 'manage':
-        configuration_warning()
         manage_cmd(args)
 
     elif args.command == 'config':
         config(args.path)
         change_config_status()
+
 # import multiprocessing
 
 
