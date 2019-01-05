@@ -932,7 +932,7 @@ class Idata:
                              ' there is a serious workflow issue and the '
                              ' molecule should be cured or eliminated.')
 
-                self.results['error'] = 'unknown error in molecule inform'
+                self.results['error'] = 'Unknown error processing input file. Probably the format is wrong or not supported'
                 return
 
         # check if a molecule informed did not

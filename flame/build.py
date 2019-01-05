@@ -81,25 +81,33 @@ class Build:
             odata_child = importlib.import_module(modpath+".odata_child")
 
             LOG.debug('child modules imported: '
-                      f'{idata_child.__name__},'
+                      f' {idata_child.__name__},'
                       f' {learn_child.__name__},'
                       f' {odata_child.__name__}')
-            # run idata object, in charge of generate model
-            # data from local copy of input
-            idata = idata_child.IdataChild(self.parameters, input_source)
-            results = idata.run()
-            LOG.debug(f'idata child {idata_child.__name__} completed `run()`')
-        if 'error' not in results:
 
+            # run idata object, in charge of generate model
+            idata = idata_child.IdataChild(self.parameters, input_source)
+            results = idata.run() 
+            LOG.debug(f'idata child {idata_child.__name__} completed `run()`')
+
+        if 'error' not in results:
             if 'xmatrix' not in results:
-                raise RuntimeError('X data not generated.')
-            
+                LOG.error(f'Failed to compute MDs')
+                results['error'] = 'Failed to compute MDs'
+
             if 'ymatrix' not in results:
-                raise RuntimeError('Y data not found. Cannot build model without activity values.')
+                LOG.error(f'No activity data (Y) found in training series')
+                results['error'] = 'No activity data (Y) found in training series'
+        
+        if 'error' not in results:
             # run learn object, in charge of generate a prediction from idata
             learn = learn_child.LearnChild(self.parameters, results)
             results = learn.run()
-            LOG.debug(f'learn child {learn_child.__name__} complered `run()`')
+            LOG.debug(f'learn child {learn_child.__name__} completed `run()`')
+
         # run odata object, in charge of formatting the prediction results
+        # note that if any of the above steps failed, an error has been inserted in the
+        # results and odata will take case of showing an error message
         odata = odata_child.OdataChild(self.parameters, results)
+        LOG.info('Building completed')
         return odata.run()

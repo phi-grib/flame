@@ -28,7 +28,7 @@ output_format:                        # JSON | TSV  (dump results to output.tsv 
 output_md: true                      # if true dump the MD generated to 'output_md.tsv'
 
 # SDFile settings
-SDFile_activity: activity             # str
+SDFile_activity: activity            # str
 SDFile_experimental: IC50             # str
 SDFile_name:                          # str
 - GENERIC_NAME                        

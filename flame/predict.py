@@ -26,8 +26,7 @@ import importlib
 from flame.util import utils, get_logger
 from flame.control import Control
 
-log = get_logger(__name__)
-
+LOG = get_logger(__name__)
 
 class Predict:
     """
@@ -70,7 +69,7 @@ class Predict:
         endpoint = utils.model_path(self.model, self.version)
         if not os.path.isdir(endpoint):
 
-            log.error('Unable to find model'
+            LOG.error('Unable to find model'
                       ' {} version {}'.format(self.model, self.version))
 
             results['error'] = 'unable to find model: ' + \
@@ -86,16 +85,28 @@ class Predict:
             apply_child = importlib.import_module(modpath+".apply_child")
             odata_child = importlib.import_module(modpath+".odata_child")
 
+            LOG.debug('child modules imported: '
+                      f' {idata_child.__name__},'
+                      f' {apply_child.__name__},'
+                      f' {odata_child.__name__}')
+
             # run idata object, in charge of generate model data from input
             idata = idata_child.IdataChild(self.parameters, input_source)
             results = idata.run()
+            LOG.debug(f'idata child {idata_child.__name__} completed `run()`')
+
+        if 'error' not in results:
+            if 'xmatrix' not in results:
+                LOG.error(f'Failed to compute MDs')
+                results['error'] = 'Failed to compute MDs'
 
         if 'error' not in results:
             # run apply object, in charge of generate a prediction from idata
             apply = apply_child.ApplyChild(self.parameters, results)
             results = apply.run()
+            LOG.debug(f'apply child {apply_child.__name__} completed `run()`')
 
         # run odata object, in charge of formatting the prediction results or any error
         odata = odata_child.OdataChild(self.parameters, results)
-        log.info('Prediction finished. ')
+        LOG.info('Prediction completed')
         return odata.run()
