@@ -27,6 +27,7 @@ import tarfile
 import json
 import pickle
 import pathlib
+import numpy as np
 
 from flame.util import utils, get_logger
 
@@ -368,6 +369,17 @@ def action_info(model, version=None, output='text'):
                 LOG.error(e)
                 v = None
             new_results.append((i[0], i[1], v))
+
+        elif isinstance(i[2], np.ndarray):
+            if 'bool_' in str(type(i[2][0])):
+                temp_json = [
+                    'True' if x else 'False' for x in i[2]]
+            else:
+                # This removes NaN and and creates
+                # a plain list of formatted floats from ndarrays
+                temp_json = [float("{0:.4f}".format(x)) if not np.isnan(x) else None for x in i[2]]
+                new_results.append((i[0], i[1], temp_json ))
+
         else:
             new_results.append(i)
 
