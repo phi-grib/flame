@@ -43,10 +43,13 @@ class Predict:
         self.control = Control(model, version)
         self.parameters = self.control.get_parameters()
 
-        # set parameter overriding value in
+        # add additional output formats included in the constructor 
+        # this is requiered to add JSON format as output when the object is
+        # instantiated from a web service call, requiring this output   
         if output_format != None:
-            self.parameters['output_format'] = output_format
-
+            if output_format not in self.parameters['output_format']:
+                self.parameters['output_format'].append(output_format)
+ 
         return
 
     def get_model_set(self):

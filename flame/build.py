@@ -39,10 +39,13 @@ class Build:
         self.control = Control(self.model, 0)
         self.parameters = self.control.get_parameters()
 
-        # set parameter overriding value in
-        if output_format is not None:
-            self.parameters['output_format'] = output_format
-
+        # add additional output formats included in the constructor 
+        # this is requiered to add JSON format as output when the object is
+        # instantiated from a web service call, requiring this output   
+        if output_format != None:
+            if output_format not in self.parameters['output_format']:
+                self.parameters['output_format'].append(output_format)
+ 
         return
 
     def get_model_set(self):

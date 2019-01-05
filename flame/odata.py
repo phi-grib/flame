@@ -24,7 +24,7 @@ import json
 import numpy as np
 from flame.util import utils, get_logger, supress_log
 
-log = get_logger(__name__)
+LOG = get_logger(__name__)
 
 
 class Odata():
@@ -79,7 +79,7 @@ class Odata():
                         line += '\t'+str(xmatrix[y])
                     fo.write(line+'\n')
 
-        log.debug('Molecular descriptors dumped into output_md.tsv')
+        LOG.info('Molecular descriptors dumped into output_md.tsv')
 
     def run_learn(self):
         '''Process the results of learn,
@@ -129,7 +129,7 @@ class Odata():
         # print ('format output', self.format)
 
         if 'TSV' in self.format:
-            log.debug('formating apply results to TSV')
+            LOG.info('writting results to TSV file "output.tsv"')
             # label and smiles
             key_list = ['obj_nam']
             if 'SMILES' in self.results:
@@ -172,7 +172,7 @@ class Odata():
                     fo.write(line+'\n')
 
         if 'JSON' in self.format:
-            log.debug('formating apply results to JSON')
+            LOG.info('writting results in JSON format')
             # TODO: output also 'method' keys, like the 
             # 'external-validation' or others
             # by setting up at the client side some interface able to show them
@@ -217,19 +217,19 @@ class Odata():
         '''Formats error messages
         sending only the error and the error source
         '''
-        log.debug('formating errors in results')
+        LOG.debug('formating errors in results')
         white_list = ['error', 'warning', 'origin']
         error_json = {key: val for key,
                       val in self.results.items() if key in white_list}
 
         if 'TSV' in self.format:
-            log.debug('Dumping errors into errors.tsv')
+            LOG.info('Dumping errors into errors.tsv')
             with open('error.tsv', 'w') as fo:
                 for key, value in error_json.items():
                     fo.write(key+'\t'+value+'\n')
 
         if 'JSON' in self.format:
-            log.debug('Dumping errors into JSON')
+            LOG.info('Dumping errors into JSON')
             return False, json.dumps(error_json)
 
         # this is only reached if JSON is not present and
@@ -246,7 +246,6 @@ class Odata():
             success, results = self.run_learn()
 
         elif self.results['origin'] == 'apply':
-
             success, results = self.run_apply()
 
         else:
