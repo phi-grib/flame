@@ -69,7 +69,7 @@ class Predict:
         endpoint = utils.model_path(self.model, self.version)
         if not os.path.isdir(endpoint):
 
-            LOG.error('Unable to find model'
+            LOG.debug('Unable to find model'
                       ' {} version {}'.format(self.model, self.version))
 
             results['error'] = 'unable to find model: ' + \
@@ -97,7 +97,7 @@ class Predict:
 
         if 'error' not in results:
             if 'xmatrix' not in results:
-                LOG.error(f'Failed to compute MDs')
+                LOG.debug(f'Failed to compute MDs')
                 results['error'] = 'Failed to compute MDs'
 
         if 'error' not in results:

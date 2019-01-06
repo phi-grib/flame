@@ -101,7 +101,7 @@ class Idata:
             suppl = Chem.SDMolSupplier(ifile)
             LOG.debug(f'mol supplier created from {ifile}')
         except Exception as e:
-            LOG.error('Unable to create mol supplier with the exception: '
+            LOG.debug('Unable to create mol supplier with the exception: '
                       f'{e}')
             self.results['error'] = f'unable to open {ifile}. {e}'
             return
@@ -962,7 +962,7 @@ class Idata:
 
         if not os.path.isfile(self.ifile):
             self.results['error'] = '{} not found'.format(self.ifile)
-            raise FileNotFoundError('{} not found'.format(self.ifile))
+            # raise FileNotFoundError('{} not found'.format(self.ifile))
             return
 
         # --------------------
@@ -1135,7 +1135,7 @@ class Idata:
             # if the input file is not found return
             if not os.path.isfile(self.ifile):
                 self.results['error'] = 'input data file '+self.ifile+' not found'
-                LOG.error('input data file '+self.ifile+' not found')
+                LOG.debug('input data file '+self.ifile+' not found')
                 return self.results
 
             # check for the presence of a valid pickle file
@@ -1169,7 +1169,7 @@ class Idata:
             self._run_ext_data()
 
         else:
-            LOG.error('Unknown input data format')
+            LOG.debug('Unknown input data format')
             self.results['error'] = 'unknown input data format'
 
         # save in a pickle file stamped with MD5 hash of file and control
