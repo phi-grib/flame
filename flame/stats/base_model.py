@@ -76,13 +76,17 @@ from nonconformist.evaluation import reg_mean_errors, reg_median_size
 from nonconformist.evaluation import reg_mean_size
 from nonconformist.evaluation import class_mean_errors
 
+from flame.util import utils, get_logger, supress_log
+LOG = get_logger(__name__)
 
 class BaseEstimator:
+    """Estimator parent class, contains all the methods shared by different algorithms.
+     Particular implementation of these methods are overwritten by child classes"""
+
     def __init__(self, X, Y, parameters):
 
         self.failed = False
         self.parameters = parameters
-
         self.X_original = X
         self.Y_original = Y
         self.variable_mask = []
@@ -90,19 +94,7 @@ class BaseEstimator:
         self.Y = Y
         self.nobj, self.nvarx = np.shape(X)
 
-        if self.parameters["imbalance"] is not None and not self.parameters["quantitative"]:
-            self.X, self.Y = run_imbalance(
-                self.parameters['imbalance'], self.X, self.Y, 46)
-
-
-        if (self.nobj == 0) or (self.nvarx == 0):
-            self.failed = True
-            return
-
-        if (np.shape(Y) == 0):
-            self.failed = True
-            return
-
+        # Assign model attributes.
         self.quantitative = self.parameters['quantitative']
         self.autoscale = self.parameters['modelAutoscaling']
         self.cv = self.parameters['ModelValidationCV']
@@ -112,20 +104,53 @@ class BaseEstimator:
         self.conformal = self.parameters['conformal']
         self.feature_selection = self.parameters["feature_selection"]
         self.conformalSignificance = self.parameters['conformalSignificance']
+
+        # Perform subsampling on the majoritary class. Consider to move.
+        if self.parameters["imbalance"] is not None and not self.parameters["quantitative"]:
+            try:
+                self.X, self.Y = run_imbalance(
+                    self.parameters['imbalance'], self.X, self.Y, 46)
+                LOG.info(f'{self.parameters["imbalance"]} sampling method performed')
+            except Exception as e:
+                LOG.error(f'Unable to perform sampling method with exception: {e}')
+                return False, 'Error performing subsampling'
+
+
+        # Check X and Y matrix integrity.
+        if (self.nobj == 0) or (self.nvarx == 0):
+            self.failed = True
+            LOG.error('No objects/variables in the matrix')
+            return False, 'No objects/variables in the matrix'
+
+        if (np.shape(Y) == 0):
+            self.failed = True
+            LOG.error('No activity values')
+            return False, 'No activity in the matrix'
+
+        # Run scaling.
         if self.autoscale:
-            self.X, self.mux = center(self.X)
-            self.X, self.wgx = scale(self.X, self.autoscale)
-            scaler =  MinMaxScaler(copy=True, feature_range=(0,1))
-            self.scaler = scaler.fit(self.X)
-            self.X = scaler.transform(self.X)
+            try:
+                self.X, self.mux = center(self.X)
+                self.X, self.wgx = scale(self.X, self.autoscale)
+                # MinMaxScaler is used between range 1-0 so there is no negative values.
+                scaler =  MinMaxScaler(copy=True, feature_range=(0,1))
+                # The scaler is saved so it can be used later to prediction instances.
+                self.scaler = scaler.fit(self.X)
+                self.X = scaler.transform(self.X)
+            except Exception as e:
+                LOG.error(f'Unable to perform autoscaling with exception : {e}')
+                return False, 'Error performing autoscaling'
+
             ### Alternative way to make all values positives (sum the minimum of each column to the column)
             # list_min = np.min(self.X, axis=0)
             # newX = copy.copy(self.X)
             # for i in range(len(self.X[0])):
             #     newX[:, i] = np.array(self.X[:, i] -list_min[i])
 
+        # Run feature selection. Move to a instance method.
         if self.feature_selection:
             self.n_features = 10
+            # Compute the number of variables to be retained (when auto)
             if self.parameters["feature_number"] == "auto":
                 if self.nvarx > (self.nobj * 0.1) and not self.nobj < 100:
                     self.n_features = int(self.nobj * 0.1)
@@ -133,45 +158,62 @@ class BaseEstimator:
                     self.n_features = 10
                 else:
                     self.n_features = self.nvarx
+            # Manual selection of number of variables
             else:
                 self.n_features = int(self.parameters["feature_number"])
-            self.variable_mask = selectkBest(self.X, self.Y, self.n_features, self.quantitative)
-            self.X = self.scaler.inverse_transform(self.X)
-            self.X = self.X[:, self.variable_mask]
-            self.scaler = self.scaler.fit(self.X)
-            self.X = self.scaler.transform(self.X)
-            self.mux = self.mux.reshape(1, -1)[:, self.variable_mask]
-            self.wgx = self.wgx.reshape(1, -1)[:, self.variable_mask]
+
+            # Apply variable selection
+            try:
+                self.variable_mask = selectkBest(self.X, self.Y, self.n_features, self.quantitative)
+                self.X = self.scaler.inverse_transform(self.X)
+                self.X = self.X[:, self.variable_mask]
+                self.scaler = self.scaler.fit(self.X)
+                self.X = self.scaler.transform(self.X)
+                self.mux = self.mux.reshape(1, -1)[:, self.variable_mask]
+                self.wgx = self.wgx.reshape(1, -1)[:, self.variable_mask]
+                LOG.info(f'Variable selection applied, number of final variables: {self.n_features}')
+            except Exception as e:
+                LOG.error(f'Error performing feature selection with exception: {e}')
+                return False, f'Error performing feature selection with exception: {e}'
 
             
     # Validation methods section
 
     def CF_quantitative_validation(self):
-        ''' performs validation for conformal quantitative models '''
+        ''' Performs internal  validation for conformal quantitative models '''
 
+        # Make a copy of original matrices.
         X = self.X.copy()
         Y = self.Y.copy()
 
+        # Number of external validations for the aggregated conformal estimator.
         seeds = [5, 7, 35]
+        # Interval means for each aggregated  conformal estimator (out of 3)
         interval_means = []
+        # Accuracies for each aggregated conformal estimator (out of 3)
         accuracies = []
         results = []
-        for i in range(len(seeds)):
-            X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.25,
-                                                                random_state=i, shuffle=False)
-            conformal_pred = AggregatedCp(IcpRegressor(RegressorNc(RegressorAdapter(self.estimator))),
-                                          BootstrapSampler())
-            conformal_pred.fit(X_train, Y_train)
-            prediction = conformal_pred.predict(
-                X_test, self.conformalSignificance)
+        try:
+            for i in range(len(seeds)):
+                X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.25,
+                                                                    random_state=i, shuffle=False)
+                conformal_pred = AggregatedCp(IcpRegressor(RegressorNc(RegressorAdapter(self.estimator))),
+                                            BootstrapSampler())
+                conformal_pred.fit(X_train, Y_train)
+                prediction = conformal_pred.predict(
+                    X_test, self.conformalSignificance)
 
-            interval_means.append(
-                np.mean(np.abs(prediction[:, 0]) - np.abs(prediction[:, 1])))
-            Y_test = Y_test.reshape(-1, 1)
-            inside_interval = (
-                prediction[:, 0].reshape(-1, 1) < Y_test) & (prediction[:, 1].reshape(-1, 1) > Y_test)
-            accuracy = np.sum(inside_interval)/len(Y_test)
-            accuracies.append(accuracy)
+                interval_means.append(
+                    np.mean(np.abs(prediction[:, 0]) - np.abs(prediction[:, 1])))
+                Y_test = Y_test.reshape(-1, 1)
+                inside_interval = (
+                    prediction[:, 0].reshape(-1, 1) < Y_test) & (prediction[:, 1].reshape(-1, 1) > Y_test)
+                accuracy = np.sum(inside_interval)/len(Y_test)
+                accuracies.append(accuracy)
+        except Exception as e:
+            LOG.error(f'Quantitative conformal validation failed with exception: {e}')
+            return False, f'Quantitative conformal validation failed with exception: {e}'
+            
         interval_means = np.mean(interval_means)
         accuracies = np.mean(accuracies)
         self.conformal_accuracy = float("{0:.2f}".format(accuracies))
