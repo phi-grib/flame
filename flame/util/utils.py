@@ -303,40 +303,54 @@ def is_empty(mylist):
 
 
 def get_sdf_activity_value(mol, parameters: dict) -> float:
-    """ Checks if activity prop is the same in parameters and SDF input file
+    """ Returns the value of the activity present in a SDFIle mol 
+    
+    The field containing this value is recognized using the parameter 'SDFile_activity"
+    If this value is undefined or the field does not exists or is not a float, it returns None
 
-    Returns activity value as float if possible
+    Returns activity value as float or None
     """
-    if mol.HasProp(parameters['SDFile_activity']):
-        # get sdf activity field value
-        activity_str = mol.GetProp(parameters['SDFile_activity'])
-        try:
-            # cast val to float to be sure it is num
-            activity_num = float(activity_str)
-        except Exception as e:
-            LOG.error('while casting activity to'
-                      f' float an exception has ocurred: {e}')
-            activity_num = None
-    # defence when prop is not in parameter file
-    else:  # SDF doesn't have param prop name
-        raise ValueError(f"SDFile_activity parameter '{parameters['SDFile_activity']}'"
-                         " not found in input SDF."
-                         "Change SDFile_activity param in parameter.yml"
-                         " to match the target prop in SDF")
+
+    activity_num = None
+
+    if parameters['SDFile_activity'] is not None:  # if the parameter exists
+
+        if mol.HasProp(parameters['SDFile_activity']):  # if the SDFile contains the field
+           
+            activity_str = mol.GetProp(parameters['SDFile_activity'])
+            try:
+                activity_num = float(activity_str) # cast val to float to be sure it is 
+            except Exception as e:
+                LOG.error('The SDFile activity value cannot be converted'
+                            f' to float: {e}')
 
     return activity_num
 
+def get_sdf_value(mol, value_label) :
+    """ Returns the value of the certain field present in a SDFIle mol 
+    
+    The field containing this value is recognized using the value_label
+    If this field does not exists or is not a float, it returns None
 
-def check_sdf_activity_type(mol, parameters: dict) -> None:
-    """ Type check the activity prop fot the model type.
-
-    If the model is quantitative and the activty
-    field is not float it Raises TypeError
+    Returns either a float or None
     """
-    activity = mol.GetProp(parameters['SDFile_activity'])
-    is_quant = parameters['quantitative']
-    if is_quant and not isinstance(activity, float):
-        raise TypeError(
-            'Expected float activity value for a quantitative model')
-    else:
-        pass
+
+    value_num = None
+
+    # if the SDFile contains the field
+    if mol.HasProp(value_label):  
+
+        value_str = mol.GetProp(value_label)
+        
+        # cast val to float to be sure it is such or return None otherwyse
+        try:
+            
+            value_num = float(value_str)  
+
+        except Exception as e:
+            
+            LOG.error('An SDFile value cannot be converted'
+                        f' to float: {e}')
+
+    return value_num
+

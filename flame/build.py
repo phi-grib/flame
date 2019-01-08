@@ -39,10 +39,13 @@ class Build:
         self.control = Control(self.model, 0)
         self.parameters = self.control.get_parameters()
 
-        # set parameter overriding value in
-        if output_format is not None:
-            self.parameters['output_format'] = output_format
-
+        # add additional output formats included in the constructor 
+        # this is requiered to add JSON format as output when the object is
+        # instantiated from a web service call, requiring this output   
+        if output_format != None:
+            if output_format not in self.parameters['output_format']:
+                self.parameters['output_format'].append(output_format)
+ 
         return
 
     def get_model_set(self):
@@ -78,19 +81,33 @@ class Build:
             odata_child = importlib.import_module(modpath+".odata_child")
 
             LOG.debug('child modules imported: '
-                      f'{idata_child.__name__},'
+                      f' {idata_child.__name__},'
                       f' {learn_child.__name__},'
                       f' {odata_child.__name__}')
+
             # run idata object, in charge of generate model
-            # data from local copy of input
             idata = idata_child.IdataChild(self.parameters, input_source)
-            results = idata.run()
+            results = idata.run() 
             LOG.debug(f'idata child {idata_child.__name__} completed `run()`')
+
+        if 'error' not in results:
+            if 'xmatrix' not in results:
+                LOG.error(f'Failed to compute MDs')
+                results['error'] = 'Failed to compute MDs'
+
+            if 'ymatrix' not in results:
+                LOG.error(f'No activity data (Y) found in training series')
+                results['error'] = 'No activity data (Y) found in training series'
+        
         if 'error' not in results:
             # run learn object, in charge of generate a prediction from idata
             learn = learn_child.LearnChild(self.parameters, results)
             results = learn.run()
-            LOG.debug(f'learn child {learn_child.__name__} complered `run()`')
+            LOG.debug(f'learn child {learn_child.__name__} completed `run()`')
+
         # run odata object, in charge of formatting the prediction results
+        # note that if any of the above steps failed, an error has been inserted in the
+        # results and odata will take case of showing an error message
         odata = odata_child.OdataChild(self.parameters, results)
+        LOG.info('Building completed')
         return odata.run()
