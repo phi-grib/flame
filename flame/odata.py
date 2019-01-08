@@ -81,6 +81,21 @@ class Odata():
 
         LOG.info('Molecular descriptors dumped into output_md.tsv')
 
+    def print_result (self, val):
+        ''' Prints in the console the content of results given as an 
+        argument (val) in a human-readable format 
+        '''
+        if len(val) < 3:
+            print(val)
+        else:
+            v3 = val[2]
+            try:
+                v3 = float("{0:.4f}".format(v3))
+            except:
+                pass
+
+            print(val[0], ' (', val[1], ') : ', v3)
+
     def run_learn(self):
         '''Process the results of learn,
         usually a report on the model quality
@@ -90,24 +105,20 @@ class Odata():
         # 1. console output
         # 2. molecular descriptors file in TSV format [optional]
         # 3. results file in TSV format [optional]
-        # 4. this function return results in JSON format [optional]
+        # 
+        # (note) no JSON file is produced because this was already
+        # implemented in manage.py. Call action_info (model, version, output='JSON')
 
         ####
         # 1. console output
         ####
         if 'model_build' in self.results:
             for val in self.results['model_build']:
-                if len(val) < 3:
-                    print(val)
-                else:
-                    print(val[0], ' (', val[1], ') : ', val[2])
+                self.print_result (val)
 
         if 'model_validate' in self.results:
             for val in self.results['model_validate']:
-                if len(val) < 3:
-                    print(val)
-                else:
-                    print(val[0], ' (', val[1], ') : ', val[2])
+                self.print_result (val)
 
         ###
         # 2. molecular descriptors file in TSV format [optional]
@@ -118,94 +129,50 @@ class Odata():
         ###
         # 3. results file in TSV format [optional]
         ### 
-        # if 'TSV' in self.format:
-        #     LOG.info('writting results to TSV file "output.tsv"')
-        #     # label and smiles
-        #     key_list = ['obj_nam']
-        #     if 'SMILES' in self.results:
-        #         key_list.append('SMILES')
+        if 'TSV' in self.format:
+            LOG.info('writting results to TSV file "output.tsv"')
 
-        #     # main result
-        #     key_list += self.results['meta']['main']
+            print (self.results)
+            # label and smiles
+            key_list = ['obj_nam']
+            if 'SMILES' in self.results:
+                key_list.append('SMILES')
 
-        #     # add all object type results
-        #     manifest = self.results['manifest']
-        #     for item in manifest:
-        #         if item['dimension'] == 'objs' and item['key'] not in key_list:
-        #             key_list.append(item['key'])
+            # main result
+            key_list += self.results['meta']['main']
 
-        #     with open('output.tsv', 'w') as fo:
-        #         header = ''
-        #         for label in key_list:
-        #             header += label+'\t'
-        #         fo.write(header+'\n')
+            # add all object type results
+            manifest = self.results['manifest']
+            for item in manifest:
+                if item['dimension'] == 'objs' and item['key'] not in key_list:
+                    key_list.append(item['key'])
 
-        #         obj_num = int(self.results['obj_num'])
+            with open('output.tsv', 'w') as fo:
+                header = ''
+                for label in key_list:
+                    header += label+'\t'
+                fo.write(header+'\n')
 
-        #         for i in range(obj_num):
-        #             line = ''
-        #             for key in key_list:
+                obj_num = int(self.results['obj_num'])
 
-        #                 if i > len(self.results[key]):
-        #                     val = None
-        #                 else:
-        #                     val = self.results[key][i]
+                for i in range(obj_num):
+                    line = ''
+                    for key in key_list:
 
-        #                 if val is None:
-        #                     line += '-'
-        #                 else:
-        #                     if isinstance(val, float):
-        #                         line += "%.4f" % val
-        #                     else:
-        #                         line += str(val)
-        #                 line += '\t'
-        #             fo.write(line+'\n')
+                        if i > len(self.results[key]):
+                            val = None
+                        else:
+                            val = self.results[key][i]
 
-        # # the function returns "True, output". output can be empty or a JSON
-        # output = ''
-
-        ###
-        # 4. this function return results in JSON format [optional]
-        ###
-        # returns a JSON with the prediction results
-        # if 'JSON' in self.format:
-        #     LOG.info('writting results in JSON format')
-
-        #     # do not output var arrays, only 'obj' arrays
-        #     black_list = []
-        #     for k in self.results['manifest']:
-        #         if not (k['dimension'] in ['objs', 'single']):
-        #             black_list.append(k['key'])
-
-        #     # print (black_list)
-
-        #     temp_json = {}
-
-        #     for key in self.results:
-
-        #         if key in black_list:
-        #             continue
-
-        #         value = self.results[key]
-
-        #         # print (key, value, type(value))
-        #         # if 'numpy.ndarray' in str(type(value)):
-        #         if isinstance(value, np.ndarray):
-        #             if 'bool_' in str(type(value[0])):
-        #                 temp_json[key] = [
-        #                     'True' if x else 'False' for x in value]
-        #             else:
-        #                 # This removes NaN and and creates
-        #                 # a plain list from ndarrays
-        #                 temp_json[key] = [x if not np.isnan(
-        #                     x) else None for x in value]
-
-        #         else:
-        #             temp_json[key] = value
-
-        #     output = json.dumps(temp_json)
-
-        # return True, output
+                        if val is None:
+                            line += '-'
+                        else:
+                            if isinstance(val, float):
+                                line += "%.4f" % val
+                            else:
+                                line += str(val)
+                        line += '\t'
+                    fo.write(line+'\n')
 
         return True, self.results  # 'building OK'
 
@@ -242,10 +209,11 @@ class Odata():
 
         if 'external-validation' in self.results:
             for val in self.results['external-validation']:
-                if len(val) < 3:
-                    print(val)
-                else:
-                    print(val[0], ' (', val[1], ') : ', val[2])       
+                self.print_result (val)
+                # if len(val) < 3:
+                #     print(val)
+                # else:
+                #     print(val[0], ' (', val[1], ') : ', val[2])       
 
         ###
         # 2. molecular descriptors file in TSV format [optional]

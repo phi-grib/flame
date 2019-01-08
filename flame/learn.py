@@ -110,21 +110,20 @@ class Learn:
 
         # TODO: compute AD (when applicable)
 
-        # save model
         LOG.info('Model finished succesfully')
+
+        # save model
         model_pkl_path = os.path.join(self.parameters['model_path'],
                                       'model.pkl')
-
         with open(model_pkl_path, 'wb') as handle:
             pickle.dump(model, handle, protocol=pickle.HIGHEST_PROTOCOL)
-
         LOG.debug('Model saved as:{}'.format(model_pkl_path))
+        
         # save model info for informative purposes
         info_pkl_path = os.path.join(self.parameters['model_path'], 'info.pkl')
         with open(info_pkl_path, 'wb') as handle:
             pickle.dump(self.results['model_build'], handle)
             pickle.dump(self.results['model_validate'], handle)
-
         LOG.debug('Model information saved as:{}'.format(info_pkl_path))
         return
 
