@@ -315,9 +315,11 @@ class BaseEstimator:
             ('SDEP', 'Standard Deviation Error of the Predictions', self.SDEP))
 
         results.append (
-            ('Y_adj', 'Adjusted Y values', Yp) )          
+            ('Y', 'Y values', Y) )  
         results.append (
-            ('Y_pred', 'Predicted Y values after cross-validation', y_pred) )  
+            ('Y_adj', 'Recalculated Y values', Yp) )          
+        results.append (
+            ('Y_pred', 'Predicted Y values (after cross-validation)', y_pred) )  
 
         return True, results
 
@@ -374,6 +376,8 @@ class BaseEstimator:
         results.append(
             ('MCC', 'Mattews Correlation Coefficient in cross-validation', self.mcc))
 
+        results.append (
+            ('Y_adj', 'Adjusted Y values', Y) ) 
         results.append (
             ('Y_adj', 'Adjusted Y values', Yp) )          
         results.append (
