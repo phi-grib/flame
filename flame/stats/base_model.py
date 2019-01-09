@@ -182,7 +182,7 @@ class BaseEstimator:
         results.append(
             ('Conformal_accuracy', 'Conformal accuracy', self.conformal_accuracy))
 
-        return True, results
+        return True, (results,)
 
     def CF_qualitative_validation(self):
         ''' performs validation for conformal qualitative models '''
@@ -269,7 +269,7 @@ class BaseEstimator:
         results.append(
             ('Conformal_accuracy', 'Conformal accuracy', self.conformal_accuracy))
 
-        return True, results
+        return True, (results,)
 
     def quantitativeValidation(self):
         ''' performs validation for quantitative models '''
@@ -281,7 +281,7 @@ class BaseEstimator:
 
         Yp = self.estimator.predict(X)
         Ym = np.mean(Y)
-        results = []
+        info = []
 
         # Goodness of the fitt
 
@@ -293,9 +293,9 @@ class BaseEstimator:
         self.SDEC = np.sqrt(SSY/nobj)
         self.R2 = 1.00 - (SSY/SSY0)
 
-        results.append(('scoringR', 'Scoring P', self.scoringR))
-        results.append(('R2', 'Determination coefficient', self.R2))
-        results.append(
+        info.append(('scoringR', 'Scoring P', self.scoringR))
+        info.append(('R2', 'Determination coefficient', self.R2))
+        info.append(
             ('SDEC', 'Standard Deviation Error of the Calculations', self.SDEC))
 
         # Cross-validation
@@ -308,20 +308,18 @@ class BaseEstimator:
         self.SDEP = np.sqrt(SSY_out/(nobj))
         self.Q2 = 1.00 - (SSY_out/SSY0_out)
 
-        results.append(('scoringP', 'Scoring P', self.scoringP))
-        results.append(
+        info.append(('scoringP', 'Scoring P', self.scoringP))
+        info.append(
             ('Q2', 'Determination coefficient in cross-validation', self.Q2))
-        results.append(
+        info.append(
             ('SDEP', 'Standard Deviation Error of the Predictions', self.SDEP))
 
-        results.append (
-            ('Y', 'Y values', Y) )  
-        results.append (
-            ('Y_adj', 'Recalculated Y values', Yp) )          
-        results.append (
-            ('Y_pred', 'Predicted Y values (after cross-validation)', y_pred) )  
+        # newy.append (
+        #     ('Y_adj', 'Recalculated Y values', Yp) )          
+        # newy.append (
+        #     ('Y_pred', 'Predicted Y values (after cross-validation)', y_pred) )  
 
-        return True, results
+        return True, (info, Yp, y_pred)
 
     def qualitativeValidation(self):
         ''' performs validation for qualitative models '''
@@ -334,7 +332,7 @@ class BaseEstimator:
         if len(Yp) != len(Y):
             return False, 'lenght of prediction do not match'
 
-        results = []
+        info = []
 
         # Goodness of the fit
 
@@ -344,15 +342,15 @@ class BaseEstimator:
         self.specificityPred = (self.TNpred / (self.TNpred + self.FPpred))
         self.mccp = mcc(Y, Yp)
 
-        results.append(('TPpred', 'True positives', self.TPpred))
-        results.append(('TNpred', 'True negatives', self.TNpred))
-        results.append(('FPpred', 'False positives', self.FPpred))
-        results.append(('FNpred', 'False negatives', self.FNpred))
-        results.append(
+        info.append(('TPpred', 'True positives', self.TPpred))
+        info.append(('TNpred', 'True negatives', self.TNpred))
+        info.append(('FPpred', 'False positives', self.FPpred))
+        info.append(('FNpred', 'False negatives', self.FNpred))
+        info.append(
             ('SensitivityPed', 'Sensitivity in fitting', self.sensitivityPred))
-        results.append(
+        info.append(
             ('SpecificityPred', 'Specificity in fitting', self.specificityPred))
-        results.append(
+        info.append(
             ('MCCpred', 'Mattews Correlation Coefficient', self.mccp))
 
         # Cross validation
@@ -364,26 +362,19 @@ class BaseEstimator:
         self.specificity = (self.TN / (self.TN + self.FP))
         self.mcc = mcc(Y, y_pred)
 
-        results.append(('TP', 'True positives in cross-validation', self.TP))
-        results.append(('TN', 'True negatives in cross-validation', self.TN))
-        results.append(('FP', 'False positives in cross-validation', self.FP))
-        results.append(('FN', 'False negatives in cross-validation', self.FN))
+        info.append(('TP', 'True positives in cross-validation', self.TP))
+        info.append(('TN', 'True negatives in cross-validation', self.TN))
+        info.append(('FP', 'False positives in cross-validation', self.FP))
+        info.append(('FN', 'False negatives in cross-validation', self.FN))
 
-        results.append(
+        info.append(
             ('Sensitivity', 'Sensitivity in cross-validation', self.sensitivity))
-        results.append(
+        info.append(
             ('Specificity', 'Specificity in cross-validation', self.specificity))
-        results.append(
+        info.append(
             ('MCC', 'Mattews Correlation Coefficient in cross-validation', self.mcc))
 
-        results.append (
-            ('Y_adj', 'Adjusted Y values', Y) ) 
-        results.append (
-            ('Y_adj', 'Adjusted Y values', Yp) )          
-        results.append (
-            ('Y_pred', 'Predicted Y values after cross-validation', y_pred) )  
-
-        return True, results
+        return True, (info, Yp, y_pred)
 
     def validate(self):
         ''' Validates the model and computes suitable model quality scoring values'''
