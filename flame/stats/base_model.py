@@ -79,6 +79,9 @@ from nonconformist.evaluation import class_mean_errors
 from flame.util import utils, get_logger, supress_log
 LOG = get_logger(__name__)
 
+# TODO
+# Raise errors to child class and handling from there
+
 class BaseEstimator:
     """Estimator parent class, contains all the methods shared by different algorithms.
      Particular implementation of these methods are overwritten by child classes"""
@@ -195,14 +198,19 @@ class BaseEstimator:
         results = []
         try:
             for i in range(len(seeds)):
+                # Generate training a test sets
                 X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.25,
                                                                     random_state=i, shuffle=False)
+                # Create the aggregated conformal regressor.
                 conformal_pred = AggregatedCp(IcpRegressor(RegressorNc(RegressorAdapter(self.estimator))),
                                             BootstrapSampler())
+                # Fit conformal regressor to the data
                 conformal_pred.fit(X_train, Y_train)
+
+                # Perform prediction on test set
                 prediction = conformal_pred.predict(
                     X_test, self.conformalSignificance)
-
+                # Add the n validation interval means
                 interval_means.append(
                     np.mean(np.abs(prediction[:, 0]) - np.abs(prediction[:, 1])))
                 Y_test = Y_test.reshape(-1, 1)
