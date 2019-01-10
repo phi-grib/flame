@@ -360,7 +360,7 @@ def action_info(model, version=None, output='text'):
     # 
     # this code serializes the results in a list and then converts it 
     # to a JSON  
-    new_results = []
+    json_results = []
     for i in results:
         # results must be checked to avoid numpy elements not JSON serializable
         if 'numpy.int64' in str(type(i[2])):
@@ -369,7 +369,7 @@ def action_info(model, version=None, output='text'):
             except Exception as e:
                 LOG.error(e)
                 v = None
-            new_results.append((i[0], i[1], v))
+            json_results.append((i[0], i[1], v))
 
         elif 'numpy.float64' in str(type(i[2])):
             try:
@@ -377,19 +377,108 @@ def action_info(model, version=None, output='text'):
             except Exception as e:
                 LOG.error(e)
                 v = None
-            new_results.append((i[0], i[1], v))
+            json_results.append((i[0], i[1], v))
 
         elif isinstance(i[2], np.ndarray):
             if 'bool_' in str(type(i[2][0])):
-                temp_json = [
+                json_results = [
                     'True' if x else 'False' for x in i[2]]
             else:
                 # This removes NaN and and creates
                 # a plain list of formatted floats from ndarrays
-                temp_json = [float("{0:.4f}".format(x)) if not np.isnan(x) else None for x in i[2]]
-                new_results.append((i[0], i[1], temp_json ))
+                json_results = [float("{0:.4f}".format(x)) if not np.isnan(x) else None for x in i[2]]
+                json_results.append((i[0], i[1], json_results ))
 
         else:
-            new_results.append(i)
+            json_results.append(i)
 
-    return True, json.dumps(new_results)
+    return True, json.dumps(json_results)
+
+def action_results(model, version=None):
+    ''' Returns a JSON with whole results info for a given model and version '''
+
+    if model is None:
+        return False, 'empty model label'
+
+    if version is None:
+        return False, 'no version provided'
+
+    rdir = utils.model_path(model, version)
+    if not os.path.isfile(os.path.join(rdir, 'results.pkl')):
+        return False, 'results not found'
+
+    # retrieve a pickle file containing the keys 'model_build' 
+    # and 'model_validate' of results
+    with open(os.path.join(rdir, 'results.pkl'), 'rb') as handle:
+        results = pickle.load(handle)
+
+    # this code serializes the results in a list and then converts it 
+    # to a JSON  
+
+    # do not output var arrays, only 'obj' arrays
+    black_list = []
+    for k in results['manifest']:
+        if not (k['dimension'] in ['objs', 'single']):
+            black_list.append(k['key'])
+
+    # print (black_list)
+
+    json_results = {}
+
+    for key in results:
+
+        if key in black_list:
+            continue
+
+        value = results[key]
+
+        # print (key, value, type(value))
+        # if 'numpy.ndarray' in str(type(value)):
+        if isinstance(value, np.ndarray):
+            if 'bool_' in str(type(value[0])):
+                json_results[key] = [
+                    'True' if x else 'False' for x in value]
+            else:
+                # This removes NaN and and creates
+                # a plain list from ndarrays
+                json_results[key] = [x if not np.isnan(
+                    x) else None for x in value]
+
+        else:
+            json_results[key] = value
+        
+        output = json.dumps(json_results)
+
+    return True, output
+
+    # json_results = []
+    # for i in results:
+    #     # results must be checked to avoid numpy elements not JSON serializable
+    #     if 'numpy.int64' in str(type(i[2])):
+    #         try:
+    #             v = int(i[2])
+    #         except Exception as e:
+    #             LOG.error(e)
+    #             v = None
+    #         json_results.append((i[0], i[1], v))
+
+    #     elif 'numpy.float64' in str(type(i[2])):
+    #         try:
+    #             v = float(i[2])
+    #         except Exception as e:
+    #             LOG.error(e)
+    #             v = None
+    #         json_results.append((i[0], i[1], v))
+
+    #     elif isinstance(i[2], np.ndarray):
+    #         if 'bool_' in str(type(i[2][0])):
+    #             json_results = [
+    #                 'True' if x else 'False' for x in i[2]]
+    #         else:
+    #             # This removes NaN and and creates
+    #             # a plain list of formatted floats from ndarrays
+    #             json_results = [float("{0:.4f}".format(x)) if not np.isnan(x) else None for x in i[2]]
+    #             json_results.append((i[0], i[1], json_results ))
+
+    #     else:
+    #         json_results.append(i)
