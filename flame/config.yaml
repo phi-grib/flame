@@ -3,4 +3,3 @@ admin_name: Manuel Pastor
 config_status: true
 homepage: http://phi.upf.edu
 model_repository_path: /data/jcgomez/projects/internals/flame/flame/flame/models
-provider: UPF

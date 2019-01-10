@@ -27,6 +27,7 @@ import tarfile
 import json
 import pickle
 import pathlib
+import numpy as np
 
 from flame.util import utils, get_logger
 
@@ -51,6 +52,13 @@ def action_new(model):
 
     if not model:
         return False, 'empty model label'
+
+    # importlib does not allow using 'test' and issues a misterious error when we
+    # try to use this name. This is a simple workaround to prevent creating models 
+    # with this name 
+    if model == 'test':
+        LOG.warning(f'the name "test" is disallowed, please use any other name')
+        return False, 'the name "test" is disallowed, please use any other name'
 
     # Model directory with /dev (default) level
     ndir = pathlib.Path(utils.model_tree_path(model)) / 'dev'
@@ -331,10 +339,14 @@ def action_info(model, version=None, output='text'):
     if not os.path.isfile(os.path.join(rdir, 'info.pkl')):
         return False, 'info not found'
 
+    # retrieve a pickle file containing the keys 'model_build' 
+    # and 'model_validate' of results
     with open(os.path.join(rdir, 'info.pkl'), 'rb') as handle:
         results = pickle.load(handle)
         results += pickle.load(handle)
 
+    # when this function is called from the console, output is 'text'
+    # write and exit
     if output == 'text':
         for val in results:
             if len(val) < 3:
@@ -343,10 +355,14 @@ def action_info(model, version=None, output='text'):
                 print(val[0], ' (', val[1], ') : ', val[2])
         return True, 'model informed OK'
 
+    # this is only reached when this funcion is called from a web service
+    # asking for a JSON
+    # 
+    # this code serializes the results in a list and then converts it 
+    # to a JSON  
     new_results = []
-
-    # results must be checked to avoid numpy elements not JSON serializable
     for i in results:
+        # results must be checked to avoid numpy elements not JSON serializable
         if 'numpy.int64' in str(type(i[2])):
             try:
                 v = int(i[2])
@@ -354,6 +370,7 @@ def action_info(model, version=None, output='text'):
                 LOG.error(e)
                 v = None
             new_results.append((i[0], i[1], v))
+
         elif 'numpy.float64' in str(type(i[2])):
             try:
                 v = float(i[2])
@@ -361,6 +378,17 @@ def action_info(model, version=None, output='text'):
                 LOG.error(e)
                 v = None
             new_results.append((i[0], i[1], v))
+
+        elif isinstance(i[2], np.ndarray):
+            if 'bool_' in str(type(i[2][0])):
+                temp_json = [
+                    'True' if x else 'False' for x in i[2]]
+            else:
+                # This removes NaN and and creates
+                # a plain list of formatted floats from ndarrays
+                temp_json = [float("{0:.4f}".format(x)) if not np.isnan(x) else None for x in i[2]]
+                new_results.append((i[0], i[1], temp_json ))
+
         else:
             new_results.append(i)
 

@@ -30,7 +30,7 @@ from flame.stats.SVM import SVM
 from flame.stats.GNB import GNB
 from flame.stats.PLSR import PLSR
 from flame.stats.PLSDA import PLSDA
-from flame.util import get_logger
+from flame.util import utils, get_logger
 LOG = get_logger(__name__)
 
 
@@ -92,40 +92,69 @@ class Learn:
             return
 
         # build model
-        success, results = model.build()
-
-        if not results:
-            self.results['error'] = results
+        LOG.info('Starting model building')
+        success, model_building_results = model.build()
+        if not success:
+            self.results['error'] = model_buidling_results
             return
-        self.results['model_build'] = results
+
+        utils.add_result(self.results,
+                    model_building_results,
+                    'model_build_info',
+                    'model buidling information',
+                    'method',
+                    'single',
+                    'Information about the model')
+        # self.results['model_build'] = results
 
         # validate model
-        success, results = model.validate()
         LOG.info('Starting model validation')
+        success, model_validation_results = model.validate()
         if not success:
-            #self.error('Error in model validation')
-            self.results['error'] = results
+            self.results['error'] = model_validation_results
             return
-        self.results['model_validate'] = results
+
+        # model_validation_results is a tuple which contains model_validation_info and 
+        # (optionally) Y_adj and Y_pred, depending on the model type    
+        
+        utils.add_result(self.results,
+            model_validation_results[0],
+            'model_valid_info',
+            'model validation information',
+            'method',
+            'single',
+            'Information about the model validation')
+
+        if len(model_validation_results)>1:
+            utils.add_result(self.results,
+                model_validation_results[1],
+                'Y_adj',
+                'Y fitted',
+                'result',
+                'objs',
+                'Y values of the training series fitted by the model')
+        
+        if len(model_validation_results)>2:
+            utils.add_result(self.results,
+                model_validation_results[2],
+                'Y_pred',
+                'Y predicted',
+                'result',
+                'objs',
+                'Y values of the training series predicted by the model')
 
         # TODO: compute AD (when applicable)
 
-        # save model
         LOG.info('Model finished succesfully')
+
+        # save model
         model_pkl_path = os.path.join(self.parameters['model_path'],
                                       'model.pkl')
-
         with open(model_pkl_path, 'wb') as handle:
             pickle.dump(model, handle, protocol=pickle.HIGHEST_PROTOCOL)
-
         LOG.debug('Model saved as:{}'.format(model_pkl_path))
-        # save model info for informative purposes
-        info_pkl_path = os.path.join(self.parameters['model_path'], 'info.pkl')
-        with open(info_pkl_path, 'wb') as handle:
-            pickle.dump(self.results['model_build'], handle)
-            pickle.dump(self.results['model_validate'], handle)
+        
 
-        LOG.debug('Model information saved as:{}'.format(info_pkl_path))
         return
 
     def run(self):
