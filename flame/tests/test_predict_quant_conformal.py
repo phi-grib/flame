@@ -37,7 +37,7 @@ def fixed_results():
     return np.array(results['values'])
 
 
-def test_new_build_predict(make_model, build_model, fixed_results):
+def test_quant_conformal(make_model, build_model, fixed_results):
     """test predict comparing results"""
 
     make_status, message = make_model
