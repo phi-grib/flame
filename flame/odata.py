@@ -122,6 +122,11 @@ class Odata():
             pickle.dump(self.results['model_valid_info'], handle)
             # TODO: dump additional info or even all the results
 
+        results_pkl_path = os.path.join(self.parameters['model_path'], 'results.pkl')
+        LOG.debug('saving model results to:{}'.format(info_pkl_path))
+        with open(results_pkl_path, 'wb') as handle:
+            pickle.dump(self.results, handle)
+
         ####
         # 2. console output
         ####
@@ -216,9 +221,13 @@ class Odata():
         ####
         # 1. console output
         ####
+        #print (self.results)
+
         print ('obj_num','(number of objecs) : ',self.results['obj_num'])
-        for i in range (self.results['obj_num']):
-            print (self.results['obj_nam'][i], '\t', float("{0:.4f}".format(self.results['values'][i])))
+
+        if 'values' in self.results:
+            for i in range (self.results['obj_num']):
+                print (self.results['obj_nam'][i], '\t', float("{0:.4f}".format(self.results['values'][i])))
 
         if 'external-validation' in self.results:
             for val in self.results['external-validation']:
