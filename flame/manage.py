@@ -339,10 +339,14 @@ def action_info(model, version=None, output='text'):
     if not os.path.isfile(os.path.join(rdir, 'info.pkl')):
         return False, 'info not found'
 
+    # retrieve a pickle file containing the keys 'model_build' 
+    # and 'model_validate' of results
     with open(os.path.join(rdir, 'info.pkl'), 'rb') as handle:
         results = pickle.load(handle)
         results += pickle.load(handle)
 
+    # when this function is called from the console, output is 'text'
+    # write and exit
     if output == 'text':
         for val in results:
             if len(val) < 3:
@@ -351,10 +355,14 @@ def action_info(model, version=None, output='text'):
                 print(val[0], ' (', val[1], ') : ', val[2])
         return True, 'model informed OK'
 
+    # this is only reached when this funcion is called from a web service
+    # asking for a JSON
+    # 
+    # this code serializes the results in a list and then converts it 
+    # to a JSON  
     new_results = []
-
-    # results must be checked to avoid numpy elements not JSON serializable
     for i in results:
+        # results must be checked to avoid numpy elements not JSON serializable
         if 'numpy.int64' in str(type(i[2])):
             try:
                 v = int(i[2])
@@ -362,6 +370,7 @@ def action_info(model, version=None, output='text'):
                 LOG.error(e)
                 v = None
             new_results.append((i[0], i[1], v))
+
         elif 'numpy.float64' in str(type(i[2])):
             try:
                 v = float(i[2])
