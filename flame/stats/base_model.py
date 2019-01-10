@@ -418,7 +418,7 @@ class BaseEstimator:
 
             self.scoringR = np.mean(
                 mean_squared_error(Y, Yp)) 
-            self.SDEC = np.sqrt(SSY/nobj)
+            self.SDEC = np.sqrt(SSY/self.nobj)
             self.R2 = 1.00 - (SSY/SSY0)
 
             info.append(('scoringR', 'Scoring P', self.scoringR))
@@ -441,7 +441,7 @@ class BaseEstimator:
             SSY0_out = np.sum(np.square(Ym - Y))
             SSY_out = np.sum(np.square(Y - y_pred))
             self.scoringP = mean_squared_error(Y, y_pred)
-            self.SDEP = np.sqrt(SSY_out/(nobj))
+            self.SDEP = np.sqrt(SSY_out/(self.nobj))
             self.Q2 = 1.00 - (SSY_out/SSY0_out)
 
             info.append(('scoringP', 'Scoring P', self.scoringP))
@@ -603,32 +603,38 @@ class BaseEstimator:
     # Projection section
 
     def regularProject(self, Xb, results):
-        ''' projects a collection of query objects in a regular model, for obtaining predictions '''
+        ''' projects a collection of query objects in a regular model,
+         for obtaining predictions '''
 
         Yp = self.estimator.predict(Xb)
 
         utils.add_result(results, Yp, 'values', 'Prediction',
-                         'result', 'objs', 'Results of the prediction', 'main')
+                         'result', 'objs',
+                          'Results of the prediction', 'main')
 
     def conformalProject(self, Xb, results):
-        ''' projects a collection of query objects in a conformal model, for obtaining predictions '''
+        ''' projects a collection of query objects in a conformal model,
+         for obtaining predictions '''
 
         prediction = self.conformal_pred.predict(
             Xb, significance=self.conformalSignificance)
 
         if self.quantitative:
             mean1 = np.mean(prediction, axis=1)
-            # predictionSize = abs(abs(prediction[0][0]) - abs(prediction[0][1]))
             lower_limit = prediction[:, 0]
             upper_limit = prediction[:, 1]
             utils.add_result(results, mean1, 'values', 'Prediction',
-                             'result', 'objs', 'Results of the prediction', 'main')
-            utils.add_result(results, lower_limit, 'lower_limit', 'Lower limit',
-                             'confidence', 'objs', 'Lower limit of the conformal prediction')
-            utils.add_result(results, upper_limit, 'upper_limit', 'Upper limit',
-                             'confidence', 'objs', 'Upper limit of the conformal prediction')
+                             'result', 'objs',
+                              'Results of the prediction', 'main')
+            utils.add_result(results, lower_limit, 'lower_limit',
+                             'Lower limit', 'confidence', 'objs',
+                              'Lower limit of the conformal prediction')
+            utils.add_result(results, upper_limit, 'upper_limit',
+                             'Upper limit', 'confidence', 'objs',
+                              'Upper limit of the conformal prediction')
         else:
-            # For the moment is returning a dictionary with class predictions
+            # For the moment is returning a dictionary with class
+            #  predictions
             # / c0 / c1 / c2 /
             # /True/True/False/
 
@@ -636,8 +642,11 @@ class BaseEstimator:
                 class_key = 'c' + str(i)
                 class_label = 'Class ' + str(i)
                 class_list = prediction[:, i].tolist()
-                utils.add_result(results, class_list, class_key, class_label,
-                                 'result', 'objs', 'Conformal class assignment', 'main')
+                utils.add_result(results, class_list, 
+                                class_key, class_label,
+                                'result', 'objs', 
+                                'Conformal class assignment',
+                                 'main')
 
     def project(self, Xb, results):
         ''' Uses the X matrix provided as argument to predict Y'''
