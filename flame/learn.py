@@ -153,7 +153,6 @@ class Learn:
         with open(model_pkl_path, 'wb') as handle:
             pickle.dump(model, handle, protocol=pickle.HIGHEST_PROTOCOL)
         LOG.debug('Model saved as:{}'.format(model_pkl_path))
-        
 
         return
 

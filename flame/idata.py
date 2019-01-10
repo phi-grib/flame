@@ -959,7 +959,6 @@ class Idata:
         '''
         version of Run for data input (TSV tabular format)
         '''
-
         if not os.path.isfile(self.ifile):
             self.results['error'] = '{} not found'.format(self.ifile)
             # raise FileNotFoundError('{} not found'.format(self.ifile))
@@ -1037,7 +1036,6 @@ class Idata:
         if len(smiles) > 0:
             utils.add_result(self.results, smiles, 'SMILES', 'SMILES',
                              'smiles', 'objs', 'Structure of the molecule in SMILES format')
-
         return
 
     def _run_ext_data(self):

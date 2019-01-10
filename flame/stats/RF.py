@@ -131,3 +131,42 @@ class RF(BaseEstimator):
         self.estimator.fit(X, Y)
 
         return True, results
+
+
+
+#### Overriding of parent methods
+
+    # def CF_quantitative_validation(self):
+    #     ''' performs validation for conformal quantitative models '''
+
+      
+
+    # def CF_qualitative_validation(self):
+    #     ''' performs validation for conformal qualitative models '''
+
+
+    # def quantitativeValidation(self):
+    #     ''' performs validation for quantitative models '''
+
+    # def qualitativeValidation(self):
+    #     ''' performs validation for qualitative models '''
+
+
+    # def validate(self):
+    #     ''' Validates the model and computes suitable model quality scoring values'''
+
+
+    # def optimize(self, X, Y, estimator, tune_parameters):
+    #     ''' optimizes a model using a grid search over a range of values for diverse parameters'''
+
+
+    # def regularProject(self, Xb, results):
+    #     ''' projects a collection of query objects in a regular model, for obtaining predictions '''
+
+
+    # def conformalProject(self, Xb, results):
+    #     ''' projects a collection of query objects in a conformal model, for obtaining predictions '''
+
+
+    # def project(self, Xb, results):
+    #     ''' Uses the X matrix provided as argument to predict Y'''
