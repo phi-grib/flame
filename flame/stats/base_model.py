@@ -133,8 +133,12 @@ class BaseEstimator:
             try:
                 self.X, self.Y = run_imbalance(
                     self.parameters['imbalance'], self.X, self.Y, 46)
+                # This is necessary to avoid inconsistences in methods
+                # using self.nobj
+                self.nobj, self.nvarx = np.shape(self.X)
                 LOG.info(f'{self.parameters["imbalance"]}'
                              f'sampling method performed')
+                LOG.info(f'Number of objects after sampling: {self.nobj}')
             except Exception as e:
                 LOG.error(f'Unable to perform sampling'
                             f'method with exception: {e}')
@@ -325,7 +329,7 @@ class BaseEstimator:
                 not_predicted = 0
                 c0_incorrect = 0
                 c1_incorrect = 0
-                
+
                 # Iterate over the prediction and check the result
                 for i in range(len(Y_test)):
                     real = float(Y_test[i])
@@ -418,7 +422,7 @@ class BaseEstimator:
 
             self.scoringR = np.mean(
                 mean_squared_error(Y, Yp)) 
-            self.SDEC = np.sqrt(SSY/nobj)
+            self.SDEC = np.sqrt(SSY/self.nobj)
             self.R2 = 1.00 - (SSY/SSY0)
 
             info.append(('scoringR', 'Scoring P', self.scoringR))
@@ -441,7 +445,7 @@ class BaseEstimator:
             SSY0_out = np.sum(np.square(Ym - Y))
             SSY_out = np.sum(np.square(Y - y_pred))
             self.scoringP = mean_squared_error(Y, y_pred)
-            self.SDEP = np.sqrt(SSY_out/(nobj))
+            self.SDEP = np.sqrt(SSY_out/(self.nobj))
             self.Q2 = 1.00 - (SSY_out/SSY0_out)
 
             info.append(('scoringP', 'Scoring P', self.scoringP))
@@ -573,7 +577,8 @@ class BaseEstimator:
     def optimize(self, X, Y, estimator, tune_parameters):
         ''' optimizes a model using a grid search over a 
         range of values for diverse parameters'''
-
+        
+        LOG.info('Computing best hyperparameter values')
         metric = ""
         # Select the metric according to the type of model
         if self.quantitative:
@@ -582,23 +587,26 @@ class BaseEstimator:
              metric = make_scorer(mcc)
 
         tune_parameters = [tune_parameters]
-
+        # Count computation time
+        LOG.debug("Hyperparameter optimization ")
         start = time.time()
-        print("tune_parameters")
-        print("metric: " + str(metric))
-        tclf = GridSearchCV(estimator, tune_parameters,
-                            scoring=metric, cv=3, n_jobs=4)
-        # n_splits=10, shuffle=False,
-        #   random_state=42), n_jobs= -1)
-        tclf.fit(X, Y)
-        self.estimator = copy.copy(tclf.best_estimator_)
-        print("best parameters: ", tclf.best_params_)
+        # Consider crossval number to be a parameter, not
+        # constant.
+        try:
+            tclf = GridSearchCV(estimator, tune_parameters,
+                                scoring=metric, cv=3, n_jobs=4)
+            tclf.fit(X, Y)
+            self.estimator = copy.copy(tclf.best_estimator_)
+        except Exception as e:
+            LOG.error(f'Error optimizing hyperparameters with'
+            f'exception {e}')
+            raise e
         end = time.time()
-        print("found in: ", end-start, " seconds")
-        # print self.estimator.get_params()
+        LOG.debug(f'best parameters: , {tclf.best_params_}')
+        LOG.debug(f'Best estimator found in {end-start} seconds')
+        # Remove garbage in memory
         del(tclf)
         gc.collect()
-        len(gc.get_objects()) 
 
     # Projection section
 
@@ -637,7 +645,6 @@ class BaseEstimator:
             #  predictions
             # / c0 / c1 / c2 /
             # /True/True/False/
-
             for i in range(len(prediction[0])):
                 class_key = 'c' + str(i)
                 class_label = 'Class ' + str(i)
@@ -654,19 +661,16 @@ class BaseEstimator:
         if self.estimator == None:
             results['error'] = 'failed to load classifier'
             return
-
+        # Apply variable mask to prediction vector/matrix
         if self.feature_selection:
             print ("feature selection")
             Xb = Xb[:, self.variable_mask]
-
+        # Scale prediction vector/matrix
         if self.autoscale:
             Xb = Xb-self.mux
             Xb = Xb*self.wgx
-
             Xb = self.scaler.transform(Xb)
-
-
-
+        # Select the type of projection
         if not self.conformal:
             self.regularProject(Xb, results)
         else:
