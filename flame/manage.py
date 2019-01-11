@@ -394,7 +394,7 @@ def action_info(model, version=None, output='text'):
 
     return True, json.dumps(json_results)
 
-def action_results(model, version=None):
+def action_results(model, version=None, ouput_variables=True):
     ''' Returns a JSON with whole results info for a given model and version '''
 
     if model is None:
@@ -422,16 +422,17 @@ def action_results(model, version=None):
     for k in results['manifest']:
 
         ###
-        # OPTIONAL: do not include 'var' arrays, only 'obj' arrays
+        # By default do not include 'var' arrays, only 'obj' arrays
         # to avoid including the X matrix and save space
         # 
         # this black list can be easily tuned to include everything
         # or to remove other keys
         ###
-        if not (k['dimension'] in ['objs', 'single']):
-            black_list.append(k['key'])
+        if not ouput_variables:
+            if (k['dimension'] in ['vars']):
+                black_list.append(k['key'])
 
-    # iterate keys and for those not in the blacl list
+    # iterate keys and for those not in the black list
     # format the information to JSON
     for key in results:
 
@@ -442,6 +443,10 @@ def action_results(model, version=None):
 
         # np.arrays cannot be serialized to JSON and must be transformed
         if isinstance(value, np.ndarray):
+
+            # do not process bi-dimensional arrays
+            if len (np.shape(value)) > 1 :
+                continue
 
             # boolean must be transformed to 'True' or 'False' strings
             if 'bool_' in str(type(value[0])):
