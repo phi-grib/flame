@@ -11,9 +11,9 @@ from flame import build
 from flame import predict
 
 MODEL_REPOSITORY = '/home/testmodels'
-MODEL_NAME = 'FULLMODEL'
+MODEL_NAME = 'REGR'
 SDF_FILE_NAME = os.path.join(os.path.dirname(__file__), 'minicaco.sdf')
-FIXED_RESULTS = os.path.join(os.path.dirname(__file__), 'results_file.json')
+FIXED_RESULTS = os.path.join(os.path.dirname(__file__), 'regression_res.json')
 
 
 @pytest.fixture
@@ -35,7 +35,7 @@ def fixed_results():
 
     with open(FIXED_RESULTS) as f:
         results = json.load(f)
-    return np.array(results['values'])
+    return np.array(results['Y_adj'])
 
 
 def test_quant_standart(make_model, build_model, fixed_results):
@@ -51,6 +51,6 @@ def test_quant_standart(make_model, build_model, fixed_results):
     _, results_str = predictor.run(SDF_FILE_NAME)
 
     prediction_results_dict = json.load(io.StringIO(results_str))
-    result_values = np.array(prediction_results_dict['values'])
+    result_values = np.array(prediction_results_dict['Y_adj'])
 
     assert all(np.isclose(fixed_results, result_values, rtol=1e-4))

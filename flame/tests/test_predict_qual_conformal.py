@@ -14,7 +14,7 @@ MODEL_REPOSITORY = '/home/testmodels'
 MODEL_NAME = 'FULLMODEL'
 SDF = ''  # put qualitative dataset
 SDF_FILE_NAME = os.path.join(os.path.dirname(__file__), SDF)
-FIXED_RESULTS = os.path.join(os.path.dirname(__file__), 'results_file.json')
+FIXED_RESULTS = os.path.join(os.path.dirname(__file__), 'qual_conformal.json')
 
 
 @pytest.fixture
