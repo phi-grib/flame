@@ -33,30 +33,44 @@ from flame.stats.model_validation import CF_QuanVal
 
 import copy
 
-from sklearn.cross_decomposition import PLSCanonical, PLSRegression, CCA
+from sklearn.cross_decomposition import PLSCanonical,\
+ PLSRegression, CCA
 
 from nonconformist.base import ClassifierAdapter, RegressorAdapter
 from nonconformist.acp import AggregatedCp
 from nonconformist.acp import BootstrapSampler
 from nonconformist.icp import IcpClassifier, IcpRegressor
-from nonconformist.nc import ClassifierNc, MarginErrFunc, RegressorNc
+from nonconformist.nc import ClassifierNc,\
+ MarginErrFunc, RegressorNc
 
 import pandas as pd
 import numpy as np
 from sklearn.metrics import make_scorer
 from sklearn.model_selection import cross_val_predict
 from sklearn.metrics import confusion_matrix
-from sklearn.metrics import mean_squared_error, matthews_corrcoef as mcc, f1_score as f1
+from sklearn.metrics import mean_squared_error,\
+matthews_corrcoef as mcc, f1_score as f1
 
 import warnings
 warnings.filterwarnings('ignore')
+from flame.util import get_logger
+
+LOG = get_logger(__name__)
 
 
 class PLS_da(PLSRegression):
     def __init__(self, n_components=2, scale=False, max_iter=500,
                  tol=1e-6, copy=True, threshold=None):
-        super(PLS_da, self).__init__(n_components=n_components,
-                                     scale=scale, max_iter=max_iter, tol=tol, copy=copy)
+        # Initialize parent class
+        try:
+            super(PLS_da, self).__init__(n_components=n_components,
+                                        scale=scale, max_iter=max_iter,
+                                         tol=tol, copy=copy)
+            LOG.error(f'Initializing PLSRegression parent class'
+                f'class with exception: {e}')
+        except Exception as e:
+            LOG.error(f'Error initializing PLSRegression parent'
+                f'class with exception: {e}')            
         self.threshold = threshold
 
     def predict(self, X, copy=True):

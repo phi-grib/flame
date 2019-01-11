@@ -107,15 +107,14 @@ class BaseEstimator:
         self.nobj, self.nvarx = np.shape(X)
 
         # Assign model attributes.
-        self.quantitative = self.parameters['quantitative']
-        self.autoscale = self.parameters['modelAutoscaling']
-        self.cv = self.parameters['ModelValidationCV']
-        self.n = self.parameters['ModelValidationN']
-        self.p = self.parameters['ModelValidationP']
-        self.learning_curve = parameters['ModelValidationLC']
-        self.conformal = self.parameters['conformal']
-        self.feature_selection = self.parameters["feature_selection"]
-        self.conformalSignificance = self.parameters['conformalSignificance']
+        # self.quantitative = self.parameters['quantitative']
+        # self.autoscale = self.parameters['modelAutoscaling']
+        # self.cv = self.parameters['ModelValidationCV']
+        # self.n = self.parameters['ModelValidationN']
+        # self.p = self.parameters['ModelValidationP']
+        # self.conformal = self.parameters['conformal']
+        #self.feature_selection = self.parameters["feature_selection"]
+        #self.conformalSignificance = self.parameters['conformalSignificance']
 
         # Check X and Y integrity.
         if (self.nobj == 0) or (self.nvarx == 0):
@@ -125,6 +124,22 @@ class BaseEstimator:
             self.failed = True
             LOG.error('No activity values')
             raise ValueError("No activity values (Y)")
+
+
+        # Get cross-validator 
+        # Consider to include a Random Seed for cross-validator
+        if self.parameters['ModelValidationCV']:
+            try:
+                self.cv = getCrossVal(self.parameters['ModelValidationCV'],
+                                46,
+                                self.parameters['ModelValidationN'],
+                                self.parameters['ModelValidationP'])
+                LOG.debug('Cross-validator retrieved')
+                LOG.info(f'cv is: {self.cv}')
+            except Exception as e:
+                LOG.error(f'Error retrieving cross-validator with'
+                           f'exception: {e}')
+                raise e
 
         # Perform subsampling on the majoritary class. Consider to move.
         # Only for qualititive endpoints.
@@ -145,10 +160,11 @@ class BaseEstimator:
                 raise e
 
         # Run scaling.
-        if self.autoscale:
+        if self.parameters['modelAutoscaling']:
             try:
                 self.X, self.mux = center(self.X)
-                self.X, self.wgx = scale(self.X, self.autoscale)
+                self.X, self.wgx = scale(self.X, 
+                                    self.parameters['modelAutoscaling'])
                 # MinMaxScaler is used between range 1-0 so 
                 # there is no negative values.
                 scaler =  MinMaxScaler(copy=True, feature_range=(0,1))
@@ -171,7 +187,7 @@ class BaseEstimator:
             #     newX[:, i] = np.array(self.X[:, i] -list_min[i])
 
         # Run feature selection. Move to a instance method.
-        if self.feature_selection:
+        if self.parameters["feature_selection"]:
             self.run_feature_selection()
 
 
@@ -201,7 +217,8 @@ class BaseEstimator:
             # Apply the variable selection algorithm obtaining
             # the variable mask.
             self.variable_mask = selectkBest(self.X, self.Y, 
-                                self.n_features, self.quantitative)
+                                self.n_features, 
+                                self.parameters['quantitative'])
             
             # The scaler has to be fitted to the reduced matrix
             # in order to be applied in prediction.
@@ -249,7 +266,7 @@ class BaseEstimator:
 
                 # Perform prediction on test set
                 prediction = conformal_pred.predict(
-                    X_test, self.conformalSignificance)
+                    X_test, self.parameters['conformalSignificance'])
                 # Add the n validation interval means
                 interval_means.append(
                     np.mean(np.abs(prediction[:, 0]) - np.abs(prediction[:, 1])))
@@ -322,7 +339,7 @@ class BaseEstimator:
                 conformal_pred.fit(X_train, Y_train)
                 # Perform prediction on test set
                 prediction = conformal_pred.predict(
-                                X_test, self.conformalSignificance)
+                            X_test, self.parameters['conformalSignificance'])
                 
                 c0_correct = 0
                 c1_correct = 0
@@ -368,8 +385,12 @@ class BaseEstimator:
         results.append(('FN', 'False negatives in cross-validation', self.FN))
         
         # Compute sensitivity and specificity
-        self.sensitivity = (self.TP / (self.TP + self.FN))
-        self.specificity = (self.TN / (self.TN + self.FP))
+        try:
+            self.sensitivity = (self.TP / (self.TP + self.FN))
+            self.specificity = (self.TN / (self.TN + self.FP))
+        except Exception as e:
+            LOG.error(f'Failed to compute sens/spe with'
+                        f'exception {e}')
         # Compute Matthews Correlation Coefficient
         self.mcc = (((self.TP * self.TN) - (self.FP * self.FN)) /
                     np.sqrt((self.TP + self.FP) * (self.TP + self.FN) *
@@ -440,8 +461,9 @@ class BaseEstimator:
         try:
             # Get predicted Y
             y_pred = cross_val_predict(copy.copy(self.estimator),
-                                         copy.copy(X), copy.copy(Y),
-                                             cv=self.cv, n_jobs=1)
+                            copy.copy(X), copy.copy(Y),
+                                cv=self.cv,
+                                    n_jobs=1)
             SSY0_out = np.sum(np.square(Ym - Y))
             SSY_out = np.sum(np.square(Y - y_pred))
             self.scoringP = mean_squared_error(Y, y_pred)
@@ -512,7 +534,9 @@ class BaseEstimator:
 
         # Get cross-validated Y 
         try:
-            y_pred = cross_val_predict(self.estimator, X, Y, cv=self.cv, n_jobs=1)
+            y_pred = cross_val_predict(self.estimator, X, Y,
+                    cv=self.parameters['ModelValidationCV'],
+                             n_jobs=1)
 
             # Get confusion matrix
             self.TN, self.FP, self.FN, self.TP = confusion_matrix(
@@ -561,13 +585,13 @@ class BaseEstimator:
         if self.X is None or self.estimator is None:
             return False, 'no estimator'
 
-        if not self.conformal:
-            if self.quantitative:
+        if not self.parameters['conformal']:
+            if self.parameters['quantitative']:
                 success, results = self.quantitativeValidation()
             else:
                 success, results = self.qualitativeValidation()
         else:
-            if self.quantitative:
+            if self.parameters['quantitative']:
                 success, results = self.CF_quantitative_validation()
             else:
                 success, results = self.CF_qualitative_validation()
@@ -581,7 +605,7 @@ class BaseEstimator:
         LOG.info('Computing best hyperparameter values')
         metric = ""
         # Select the metric according to the type of model
-        if self.quantitative:
+        if self.parameters['quantitative']:
             metric = 'r2'
         else:
              metric = make_scorer(mcc)
@@ -625,9 +649,9 @@ class BaseEstimator:
          for obtaining predictions '''
 
         prediction = self.conformal_pred.predict(
-            Xb, significance=self.conformalSignificance)
+            Xb, significance=self.parameters['conformalSignificance'])
 
-        if self.quantitative:
+        if self.parameters['quantitative']:
             mean1 = np.mean(prediction, axis=1)
             lower_limit = prediction[:, 0]
             upper_limit = prediction[:, 1]
@@ -662,16 +686,16 @@ class BaseEstimator:
             results['error'] = 'failed to load classifier'
             return
         # Apply variable mask to prediction vector/matrix
-        if self.feature_selection:
+        if self.parameters["feature_selection"]:
             print ("feature selection")
             Xb = Xb[:, self.variable_mask]
         # Scale prediction vector/matrix
-        if self.autoscale:
+        if self.parameters['autoscale']:
             Xb = Xb-self.mux
             Xb = Xb*self.wgx
             Xb = self.scaler.transform(Xb)
         # Select the type of projection
-        if not self.conformal:
+        if not self.parameters['conformal']:
             self.regularProject(Xb, results)
         else:
             self.conformalProject(Xb, results)

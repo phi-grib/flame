@@ -37,19 +37,23 @@ from flame.stats.scale import scale, center
 from flame.stats.model_validation import CF_QuanVal
 from flame.util import get_logger
 
-log = get_logger(__name__)
+LOG = get_logger(__name__)
 
 
 class RF(BaseEstimator):
-
     def __init__(self, X, Y, parameters):
-        super(RF, self).__init__(X, Y, parameters)
-
+        # Initialize parent class
+        try:
+            super(RF, self).__init__(X, Y, parameters)
+            LOG.debug('Initialize BaseEstimator parent class')
+        except Exception as e:
+            LOG.error(f'Error initializing BaseEstimator parent'
+                    f'class with exception: {e}')
+            raise e
         self.estimator_parameters = parameters['RF_parameters']
-        self.tune = parameters['tune']
         self.tune_parameters = parameters['RF_optimize']
 
-        if self.quantitative:
+        if self.parameters['quantitative']:
             self.name = "RF-R"
             self.tune_parameters.pop("class_weight")
         else:
@@ -58,36 +62,28 @@ class RF(BaseEstimator):
     def build(self):
         '''Build a new RF model with the X and Y numpy matrices '''
 
-        if self.failed:
-            return False
-
+        # Make a copy of the matrices
         X = self.X.copy()
         Y = self.Y.copy()
 
-
         results = []
-
         results.append(('nobj', 'number of objects', self.nobj))
         results.append(('nvarx', 'number of predictor variables', self.nvarx))
 
-        if self.cv:
-            self.cv = getCrossVal(self.cv,
-                                  self.estimator_parameters["random_state"],
-                                  self.n, self.p)
-        if self.tune:
-            if self.quantitative:
-                self.optimize(X, Y, RandomForestRegressor(),
-                              self.tune_parameters)
-                results.append(
-                    ('model', 'model type', 'RF quantitative (optimized)'))
-            else:
-                self.optimize(X, Y, RandomForestClassifier(),
-                              self.tune_parameters)
-                results.append(
-                    ('model', 'model type', 'RF qualitative (optimized)'))
+        if self.parameters['tune']:
+                if self.parameters['quantitative']:
+                    self.optimize(X, Y, RandomForestRegressor(),
+                                self.tune_parameters)
+                    results.append(
+                        ('model', 'model type', 'RF quantitative (optimized)'))
+                else:
+                    self.optimize(X, Y, RandomForestClassifier(),
+                                self.tune_parameters)
+                    results.append(
+                        ('model', 'model type', 'RF qualitative (optimized)'))
         else:
-            if self.quantitative:
-                log.info("Building Quantitative RF model")
+            if self.parameters['quantitative']:
+                LOG.info("Building Quantitative RF model")
                 self.estimator_parameters.pop('class_weight', None)
 
                 self.estimator = RandomForestRegressor(
@@ -95,13 +91,14 @@ class RF(BaseEstimator):
                 results.append(('model', 'model type', 'RF quantitative'))
 
             else:
-                log.info("Building Qualitative RF model")
+                LOG.info("Building Qualitative RF model")
                 self.estimator = RandomForestClassifier(
                     **self.estimator_parameters)
                 results.append(('model', 'model type', 'RF qualitative'))
-
-        if self.conformal:
-            if self.quantitative:
+        # Create the conformal estimator
+        if self.parameters['conformal']:
+            # Conformal regressor
+            if self.parameters['quantitative']:
                 underlying_model = RegressorAdapter(self.estimator)
                 normalizing_model = RegressorAdapter(
                     KNeighborsRegressor(n_neighbors=5))
@@ -110,7 +107,8 @@ class RF(BaseEstimator):
                     underlying_model, normalizing_model, AbsErrorErrFunc())
                 nc = RegressorNc(underlying_model,
                                  AbsErrorErrFunc(), normalizer)
-                # self.conformal_pred = AggregatedCp(IcpRegressor(RegressorNc(RegressorAdapter(self.estimator))),
+                # self.conformal_pred = AggregatedCp(IcpRegressor
+                # (RegressorNc(RegressorAdapter(self.estimator))),
                 #                                   BootstrapSampler())
 
                 self.conformal_pred = AggregatedCp(IcpRegressor(nc),
@@ -119,12 +117,16 @@ class RF(BaseEstimator):
                 # overrides non-conformal
                 results.append(
                     ('model', 'model type', 'conformal RF quantitative'))
-
+            # Conformal classifier
             else:
-                self.conformal_pred = AggregatedCp(IcpClassifier(ClassifierNc(ClassifierAdapter(self.estimator),
-                                                                              MarginErrFunc())), BootstrapSampler())
+                self.conformal_pred = AggregatedCp(
+                                        IcpClassifier(
+                                            ClassifierNc(
+                                                ClassifierAdapter(self.estimator),
+                                                    MarginErrFunc())),
+                                         BootstrapSampler())
+                # Fit estimator to the data
                 self.conformal_pred.fit(X, Y)
-                # overrides non-conformal
                 results.append(
                     ('model', 'model type', 'conformal RF qualitative'))
 

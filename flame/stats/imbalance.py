@@ -62,7 +62,6 @@ def simple_subsampling(X, Y, random_seed):
         raise ValueError("Error creating subsampled matrices")
     return X_s, Y_s
 
-
 def run_imbalance(method, X, Y, random_seed=46):
     X_s = []
     Y_s = []
