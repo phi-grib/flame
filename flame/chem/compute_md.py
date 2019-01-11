@@ -48,9 +48,8 @@ def _calc_descriptors(md_function, ifile: str,  descrip_names: list) -> (np.ndar
     ifile: str
         SDF input file
 
-    n_cols: int
-        number of columns that the matrix needs. Obtained in
-        the function that uses this helper.
+    descrip_names: list
+        list of descriptor names
 
     Returns
     -------
