@@ -324,7 +324,7 @@ def action_dir():
     # print(json.dumps(results))
 
 
-def action_info(model, version=None, output='text'):
+def action_info(model, version=None, output='JSON'):
     '''
     Returns a text or JSON with results info for a given model and version
     '''
@@ -336,19 +336,41 @@ def action_info(model, version=None, output='text'):
         return False, 'no version provided'
 
     rdir = utils.model_path(model, version)
-    if not os.path.isfile(os.path.join(rdir, 'info.pkl')):
-        return False, 'info not found'
+    if not os.path.isfile(os.path.join(rdir, 'results.pkl')):
 
-    # retrieve a pickle file containing the keys 'model_build' 
-    # and 'model_validate' of results
-    with open(os.path.join(rdir, 'info.pkl'), 'rb') as handle:
-        results = pickle.load(handle)
-        results += pickle.load(handle)
+        # compatibity method. use info.pkl
+        if not os.path.isfile(os.path.join(rdir, 'info.pkl')):
+            return False, 'info not found'
+
+        with open(os.path.join(rdir, 'info.pkl'), 'rb') as handle:
+            #retrieve a pickle file containing the keys 'model_build' 
+            #and 'model_validate' of results
+            info = pickle.load(handle)
+            info += pickle.load(handle)
+        # end of compatibility method
+
+    else:
+        # new method, use results.pkl
+        with open(os.path.join(rdir, 'results.pkl'), 'rb') as handle:
+            results = pickle.load(handle)
+        
+        info = None
+        if 'model_build_info' in results:
+            info =  results['model_build_info']
+
+        if info == None:
+            return False, 'info not found'
+
+        if 'model_valid_info' in results:
+            info += results['model_valid_info']
+        
+        if info == None:
+            return False, 'info not found'
 
     # when this function is called from the console, output is 'text'
     # write and exit
     if output == 'text':
-        for val in results:
+        for val in info:
             if len(val) < 3:
                 print(val)
             else:
@@ -361,7 +383,7 @@ def action_info(model, version=None, output='text'):
     # this code serializes the results in a list and then converts it 
     # to a JSON  
     json_results = []
-    for i in results:
+    for i in info:
         # results must be checked to avoid numpy elements not JSON serializable
         if 'numpy.int64' in str(type(i[2])):
             try:
@@ -381,20 +403,21 @@ def action_info(model, version=None, output='text'):
 
         elif isinstance(i[2], np.ndarray):
             if 'bool_' in str(type(i[2][0])):
-                json_results = [
+                temp_results = [
                     'True' if x else 'False' for x in i[2]]
             else:
                 # This removes NaN and and creates
                 # a plain list of formatted floats from ndarrays
-                json_results = [float("{0:.4f}".format(x)) if not np.isnan(x) else None for x in i[2]]
-                json_results.append((i[0], i[1], json_results ))
+                temp_results = [float("{0:.4f}".format(x)) if not np.isnan(x) else None for x in i[2]]
+
+            json_results.append((i[0], i[1], temp_results ))
 
         else:
             json_results.append(i)
 
     return True, json.dumps(json_results)
 
-def action_results(model, version=None, ouput_variables=True):
+def action_results(model, version=None, ouput_variables=False):
     ''' Returns a JSON with whole results info for a given model and version '''
 
     if model is None:

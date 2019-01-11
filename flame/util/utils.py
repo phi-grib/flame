@@ -260,39 +260,54 @@ def id_generator(size=10, chars=string.ascii_uppercase + string.digits):
 
 def add_result(results, var, _key, _label, _type, _dimension='objs',
                _description=None, _relevance=None):
+    '''
+    Utility function to insert information within the "result" dictionary, indexing 
+    it appropriatelly in the "manifest" and "meta" keys
+    
+    _key         (str)
+                   key for including this data in results dictionary
+    
+    _label       (str) 
+                   descriptive text used to label this data in tables
+       
+    _type        [label | decoration | smiles | result | confidence | method]
+                   cathegory of data, used to decide how showing it in GUI's
+    
+    _dimension   [single | vars | objs]
+                   if the data is one/more isolated values (single) or an array
+                   with data for each X variable (vars) or object (objs) 
+    
+    _description (str)
+                    a long human readable description of the information
+    
+    _relevance   [main | None]
+                    the main label is asigned to data to be highlighed 
 
+    '''
+
+    # if the key 'manifest' has not been created already, initiate it with an empty list
     if 'manifest' not in results:
         results['manifest'] = []
 
-    manifest = results['manifest']
-
-    # TODO: check if the _key already exist and add _1 _2 _3 etc as needed
-
+    # add the data to results
     results[_key] = var
 
-    # key in results
-    # descriptive text
-    # label, decoration, smiles, result, confidence, method
-    # can be single | vars | objs
-    # main | None
+    # insert the information in manifest
     manifest_item = {'key': _key,
                      'label': _label,
                      'type': _type,
                      'dimension': _dimension,
-                     # descriptive text (long)
                      'description': _description,
                      'relevance': _relevance
                      }
+    results['manifest'].append(manifest_item)
 
-    manifest.append(manifest_item)
-
+    # if the are adding data of type 'main' insert the key in meta 
     if _relevance == 'main':
         if 'meta' not in results:
             results['meta'] = {'main': [_key]}
         else:
             results['meta']['main'].append(_key)
-
-# what is this??
 
 
 def is_empty(mylist):
