@@ -122,7 +122,7 @@ class Odata():
         #     pickle.dump(self.results['model_valid_info'], handle)
 
         results_pkl_path = os.path.join(self.parameters['model_path'], 'results.pkl')
-        LOG.debug('saving model results to:{}'.format(info_pkl_path))
+        LOG.debug('saving model results to:{}'.format(results_pkl_path))
         with open(results_pkl_path, 'wb') as handle:
             pickle.dump(self.results, handle)
 
