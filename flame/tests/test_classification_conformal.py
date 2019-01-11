@@ -11,10 +11,10 @@ from flame import build
 from flame import predict
 
 MODEL_REPOSITORY = '/home/testmodels'
-MODEL_NAME = 'REGRCONF'
-SDF_FILE_NAME = os.path.join(os.path.dirname(__file__), 'minicaco.sdf')
-
-FIXED_RESULTS = os.path.join(os.path.dirname(__file__), 'regression_res_conf.json')
+MODEL_NAME = 'CLASSIFCONF'
+SDF = 'data/classification.sdf'  # put qualitative dataset
+SDF_FILE_NAME = os.path.join(os.path.dirname(__file__), SDF)
+FIXED_RESULTS = os.path.join(os.path.dirname(__file__), 'data/classif_res_conf.json')
 
 
 @pytest.fixture
@@ -27,17 +27,20 @@ def make_model():
 def build_model():
     builder = build.Build(MODEL_NAME)
     builder.parameters['tune'] = False
+    builder.parameters['quantitative'] = False
+    builder.parameters['mol_batch'] = 'objects'
     return builder.run(SDF_FILE_NAME)
 
 
 @pytest.fixture
 def fixed_results():
+
     with open(FIXED_RESULTS) as f:
         results = json.load(f)
-    return np.array(results['values'])
+    return np.array(results['c0'])
 
 
-def test_quant_conformal(make_model, build_model, fixed_results):
+def test_classification_conformal(make_model, build_model, fixed_results):
     """test predict comparing results"""
 
     make_status, message = make_model
@@ -47,9 +50,10 @@ def test_quant_conformal(make_model, build_model, fixed_results):
     assert build_status is True
 
     predictor = predict.Predict(MODEL_NAME, 0)
+    predictor.parameters['quantitative'] = False
     _, results_str = predictor.run(SDF_FILE_NAME)
 
     prediction_results_dict = json.load(io.StringIO(results_str))
-    result_values = np.array(prediction_results_dict['values'])
+    result_values = np.array(prediction_results_dict['c0'])
 
     assert all(np.isclose(fixed_results, result_values, rtol=1e-4))

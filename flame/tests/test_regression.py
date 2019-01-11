@@ -11,10 +11,9 @@ from flame import build
 from flame import predict
 
 MODEL_REPOSITORY = '/home/testmodels'
-MODEL_NAME = 'FULLMODEL'
-SDF = ''  # put qualitative dataset
-SDF_FILE_NAME = os.path.join(os.path.dirname(__file__), SDF)
-FIXED_RESULTS = os.path.join(os.path.dirname(__file__), 'qual_conformal.json')
+MODEL_NAME = 'REGR'
+SDF_FILE_NAME = os.path.join(os.path.dirname(__file__), 'data/minicaco.sdf')
+FIXED_RESULTS = os.path.join(os.path.dirname(__file__), 'data/regression_res.json')
 
 
 @pytest.fixture
@@ -27,6 +26,7 @@ def make_model():
 def build_model():
     builder = build.Build(MODEL_NAME)
     builder.parameters['tune'] = False
+    builder.parameters['conformal'] = False
     return builder.run(SDF_FILE_NAME)
 
 
@@ -35,10 +35,10 @@ def fixed_results():
 
     with open(FIXED_RESULTS) as f:
         results = json.load(f)
-    return np.array(results['values'])
+    return np.array(results['Y_adj'])
 
 
-def test_quant_standart(make_model, build_model, fixed_results):
+def test_regression(make_model, build_model, fixed_results):
     """test predict comparing results"""
 
     make_status, message = make_model
@@ -48,6 +48,7 @@ def test_quant_standart(make_model, build_model, fixed_results):
     assert build_status is True
 
     predictor = predict.Predict(MODEL_NAME, 0)
+    predictor.parameters['conformal'] = False
     _, results_str = predictor.run(SDF_FILE_NAME)
 
     prediction_results_dict = json.load(io.StringIO(results_str))
