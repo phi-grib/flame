@@ -690,7 +690,7 @@ class BaseEstimator:
             print ("feature selection")
             Xb = Xb[:, self.variable_mask]
         # Scale prediction vector/matrix
-        if self.parameters['autoscale']:
+        if self.parameters['modelAutoscaling']:
             Xb = Xb-self.mux
             Xb = Xb*self.wgx
             Xb = self.scaler.transform(Xb)
