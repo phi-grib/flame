@@ -122,12 +122,13 @@ class Idata:
         # Iterate for every molecule inside the SDFile
         for mol in suppl:
 
-            # Do not even try to process molecules not recognised by RDKit.
-            # They will be removed at the normalization step
+            # Do not try to process molecules not recognised by RDKit.
+            # They will be removed at the pre-normalization step, which is
+            # compulsory for every molecule
             if mol is None:
                 LOG.error(f'(@extractInformaton) Unable to process molecule #{obj_num+1}'
                           f' in file {ifile}')
-                success_list.append(False)
+                # success_list.append(False)
                 continue
 
             # extract the molecule name, using a sdfileutils algorithm 
@@ -164,6 +165,8 @@ class Idata:
             success_list.append(True)
             obj_num += 1
 
+        print ('@extractInfo:', obj_num, len(success_list), len(obj_nam), len(obj_bio), len(obj_sml))
+
         # Insert the values as lists in 'results' using an utility function
         utils.add_result(self.results, obj_num, 'obj_num', 'Num mol',
                          'method', 'single',
@@ -174,9 +177,6 @@ class Idata:
         utils.add_result(self.results, obj_sml, 'SMILES', 'SMILES',
                          'smiles', 'objs',
                          'Structure of the molecule in SMILES format')
-
-        LOG.debug(f'processed {obj_num} molecules'
-                  f' from a supplier of {len(suppl)} without issues')
 
         if not utils.is_empty(obj_bio):
             utils.add_result(self.results, np.array(obj_bio, dtype=np.float64),
@@ -190,12 +190,18 @@ class Idata:
                              'decoration', 'objs',
                              'Experimental anotation present in the input file')
 
+        LOG.debug(f'processed {obj_num} molecules'
+                  f' from a supplier of {len(suppl)} without issues')
+        
         return success_list
 
     def normalize(self, ifile, method):
         '''
         Generates a simplified SDFile with MolBlock and an internal ID for
-        further processing.
+        further processing
+
+        Note that this method is applied to every molecule and that it removes
+        mol blocks in the input SDFile not able to generate a valid mol
 
         Also, when defined in control, applies chemical standardization
         protocols, like the one provided by Francis Atkinson (EBI),
@@ -208,8 +214,9 @@ class Idata:
 
         '''
 
-        if not method:
-            return True, ifile
+        if not method :
+            method = ''
+
         LOG.info('Starting normalization...')
         try:
             suppl = Chem.SDMolSupplier(ifile)
@@ -219,7 +226,6 @@ class Idata:
                       f'{e}')
             return False, 'Error at processing input file for standardizing structures'
 
-        success = True
         filename, fileext = os.path.splitext(ifile)
         ofile = filename + '_std' + fileext
         LOG.debug(f'writing standarized molecules to {ofile}')
@@ -238,34 +244,43 @@ class Idata:
                                     field=self.parameters['SDFile_name'],
                                     suppl=suppl)
 
-                # this should be out of the loop
-                # since all the molecules will have the same method
+                parent = None
+
                 if 'standardize' in method:
                     try:
+
                         parent = standardise.run(Chem.MolToMolBlock(m))
+
                     except standardise.StandardiseException as e:
-                        LOG.error(f'Standardize exception: {e}'
-                                  f' when processing mol #{mcount} {name}')
 
                         if e.name == "no_non_salt":
-                            parent = Chem.MolToMolBlock(m)
-                            LOG.debug(f'skiped standardize for mol'
+                            # very commong warning, use parent mol and proceed
+                            LOG.debug(f'"No non salt error" found. Skiped standardize for mol'
                                       f' #{mcount} {name}')
-
+                            parent = Chem.MolToMolBlock(m)
                         else:
-                            return False, e.name
+                            # serious issue, no parent was generated, use original mol
+                            if (parent is None):
+                                LOG.error(f'Critical standardize exception: {e}'
+                                        f' when processing mol #{mcount} {name}. Skipping normalization')
+                                parent = Chem.MolToMolBlock(m)
+                            # minor isse, parent was generated, show a warning and proceed
+                            else:
+                                LOG.info(f'Standardize exception: {e}'
+                                        f' when processing mol #{mcount} {name}. Normalization applied')
+                        #return False, e.name
+
                     except Exception as e:
-                        LOG.error(f'exception {e} while standardizing')
-                        return False, f"Unknown standardiser error {e}"
+                        LOG.error(f'Critical standardize execution exception {e}'
+                                    f' when processing mol #{mcount} {name}. Discarding molecule')
+                        continue
 
                 else:
-                    LOG.error(f'normalize method {method} not recognized.'
-                              'Skipping normalization.')
+                    LOG.info(f'Skipping normalization.')
                     parent = Chem.MolToMolBlock(m)
 
                 # in any case, write parent plus internal ID (flameID)
                 fo.write(parent)
-
                 flameID = 'fl%0.10d' % mcount
                 fo.write('>  <flameID>\n'+flameID+'\n\n')
 
@@ -274,7 +289,7 @@ class Idata:
                 # terminator
                 fo.write('$$$$\n')
 
-        return success, ofile
+        return (mcount>0), ofile
 
     def ionize(self, ifile, method):
         '''
@@ -773,7 +788,7 @@ class Idata:
         starting from a single molecular file
 
         input : ifile, a molecular file in SDFile format
-        output: results contains two lists
+        output: results contains the following  lists
                 results[0] a numpy bidimensional array containing MD
                 results[1] a list of strings containing the names of the MD vars
                 results[2] a list of booleans indicating for which objects the 
@@ -908,7 +923,12 @@ class Idata:
 
         success_workflow = results[2]
 
+
         if len(success_inform) != len(success_workflow):
+            print (len (success_inform), len (success_workflow))
+            print (success_inform, success_workflow)
+
+            print (self.results)
             LOG.error('shape mismatch of informed and workflow results:'
                       f' ({len(success_inform), len(success_workflow)})'
                       ' This is because some molecules failed during'

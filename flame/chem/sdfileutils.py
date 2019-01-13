@@ -22,18 +22,30 @@
 
 import os
 from rdkit import Chem
-
 from flame.util import get_logger
 
 LOG = get_logger(__name__)
 
 
 def count_mols(ifile):
-    return len(Chem.SDMolSupplier(ifile))
+    ''' returns the number of valid molecules within an SDFile
 
+        do not consider invalid molecular blocks unable to produce
+        a valid 'mol' (those for which 'mol is None')
+    '''
+    suppl = Chem.SDMolSupplier(ifile)
+    num_mols = 0
+    for mol in suppl:
+        if mol is not None :
+            num_mols +=1
+    return num_mols
 
 def split_SDFile(ifile, num_chunks):
-    """Splits the input SDfile in pieces SDfiles files of balanced size.
+    """Splits the input SDfile in num_chunks SDfiles, containing a balanced number
+    of molecules inside
+
+    This version ignores molecular blocks inside the SDFile unable to produce a 
+    valid 'mol' (those for which 'mol is None') 
     
     Every file is named "filename_0.sdf", "filename_1.sdf", ...
 
@@ -49,7 +61,7 @@ def split_SDFile(ifile, num_chunks):
     # Count number of molecules in input file
     suppl = Chem.SDMolSupplier(ifile)
 
-    num_mols = len(suppl)
+    num_mols = count_mols(ifile)
     
     # Inital checking for early return
     if num_mols == 0:
@@ -74,15 +86,21 @@ def split_SDFile(ifile, num_chunks):
     # Chunk i initialization
     chunk_mol_i = 0  # counter of molecules within each chunk
     chunk_name = '{}_{}{}'.format(filename, chunk_i, fileext)
-    # force \n to avoid using CR-LF in Windows
-    fo = open(chunk_name, 'w', newline='\n')
+
+    # Initiates writer
+    writer = Chem.SDWriter(chunk_name)
     temp_files_name.append(chunk_name)
 
-    for mi in range(num_mols):
+    mi = 0
+    for mol in suppl:
+
+        if mol is None:
+            continue
 
         if (mi//chunk_size) > chunk_i and chunk_i < (num_chunks - 1):
             # Terminate chunk i
-            fo.close()
+        
+            writer.close()
             temp_files_size.append(chunk_mol_i)
 
             chunk_i += 1
@@ -90,16 +108,17 @@ def split_SDFile(ifile, num_chunks):
             # Chunk i initialization
             chunk_mol_i = 0  # counter of molecules within each chunk
             chunk_name = '{}_{}{}'.format(filename, chunk_i, fileext)
-            # force \n to avoid using CR-LF in Windows
-            fo = open(chunk_name, 'w', newline='\n')
+
+            writer = Chem.SDWriter(chunk_name)
             temp_files_name.append(chunk_name)
 
         # write the mol content in the output file
-        fo.write(suppl.GetItemText(mi))
+        writer.write(mol)
         chunk_mol_i += 1
+        mi += 1
 
     # Terminate chunk i
-    fo.close()
+    writer.close()
     temp_files_size.append(chunk_mol_i)
 
     return True, (temp_files_name, temp_files_size)

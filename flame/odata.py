@@ -88,7 +88,7 @@ class Odata():
         argument (val) in a human-readable format 
         '''
         if len(val) < 3:
-            print(val)
+            print('>>     ',val)
         else:
             v3 = val[2]
             try:
@@ -96,7 +96,7 @@ class Odata():
             except:
                 pass
 
-            print(val[0], ' (', val[1], ') : ', v3)
+            print('>>     ', val[0], ' (', val[1], ') : ', v3)
 
     def run_learn(self):
         '''Process the results of learn,
@@ -129,6 +129,7 @@ class Odata():
         ####
         # 2. console output
         ####
+
         if 'model_build_info' in self.results:
             for val in self.results['model_build_info']:
                 self.print_result (val)
@@ -149,7 +150,6 @@ class Odata():
         if 'TSV' in self.format:
             LOG.info('writting results to TSV file "output.tsv"')
 
-            print (self.results)
             # label and smiles
             key_list = ['obj_nam']
             if 'SMILES' in self.results:
@@ -222,19 +222,15 @@ class Odata():
         ####
         #print (self.results)
 
-        print ('obj_num','(number of objecs) : ',self.results['obj_num'])
+        self.print_result(('obj_num','number of objects',self.results['obj_num']))
+
+        if 'external-validation' in self.results:
+            for val in self.results['external-validation']:
+                self.print_result (val)   
 
         if 'values' in self.results:
             for i in range (self.results['obj_num']):
                 print (self.results['obj_nam'][i], '\t', float("{0:.4f}".format(self.results['values'][i])))
-
-        if 'external-validation' in self.results:
-            for val in self.results['external-validation']:
-                self.print_result (val)
-                # if len(val) < 3:
-                #     print(val)
-                # else:
-                #     print(val[0], ' (', val[1], ') : ', val[2])       
 
         ###
         # 2. molecular descriptors file in TSV format [optional]
