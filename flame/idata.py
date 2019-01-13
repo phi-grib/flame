@@ -165,8 +165,6 @@ class Idata:
             success_list.append(True)
             obj_num += 1
 
-        print ('@extractInfo:', obj_num, len(success_list), len(obj_nam), len(obj_bio), len(obj_sml))
-
         # Insert the values as lists in 'results' using an utility function
         utils.add_result(self.results, obj_num, 'obj_num', 'Num mol',
                          'method', 'single',
@@ -213,7 +211,9 @@ class Idata:
         the name of the output molecule and an error message otherwyse
 
         '''
-
+        
+        success_list = [True for i in range(sdfu.count_mols(ifile))]
+        
         if not method :
             method = ''
 
@@ -271,8 +271,11 @@ class Idata:
                         #return False, e.name
 
                     except Exception as e:
+                        # this error means an execution error running standardizer
+                        # the molecule is discarded and therefore the list of molecules must be updated 
                         LOG.error(f'Critical standardize execution exception {e}'
                                     f' when processing mol #{mcount} {name}. Discarding molecule')
+                        success_list[mcount]=False
                         continue
 
                 else:
@@ -281,51 +284,50 @@ class Idata:
 
                 # in any case, write parent plus internal ID (flameID)
                 fo.write(parent)
-                flameID = 'fl%0.10d' % mcount
-                fo.write('>  <flameID>\n'+flameID+'\n\n')
+
+                # *** discarded method to control errors ****
+                # flameID = 'fl%0.10d' % mcount
+                # fo.write('>  <flameID>\n'+flameID+'\n\n')
 
                 mcount += 1
 
                 # terminator
                 fo.write('$$$$\n')
 
-        return (mcount>0), ofile
+        return success_list, ofile
 
     def ionize(self, ifile, method):
         '''
         Adjust the ionization status of the molecular structure,
         using a given pH.
         '''
-
+        
+        success_list = [True for i in range(sdfu.count_mols(ifile))]
+    
         if not method:
-            return True, ifile
+            
+            return success_list, ifile
 
         else:
-            raise NotImplementedError
-        success = False
-        results = 'not ionized'
+            LOG.debug ('ionize called, but no method implemented so far')
+            # methods here
 
-        # methods here
-
-        results = 'ionization method not recognised'
-
-        return success, results
+        return success_list, ifile
 
     def convert3D(self, ifile, method):
         '''
         Assigns 3D structures to the molecular structures provided as input.
         '''
+        
+        success_list = [True for i in range(sdfu.count_mols(ifile))]
 
         if not method:
-            return True, ifile
-
-        success = False
-        results = 'not converted to 3D'
+            return success_list, ifile
 
         if 'ETKDG' in method:
-            success, results = convert3D._ETKDG(ifile)
+            success_list, ofile = convert3D._ETKDG(ifile)
 
-        return success, results
+        return success_list, ofile
 
     def computeMD_custom(self, ifile):
         '''
@@ -390,8 +392,7 @@ class Idata:
 
                 combined_md = results['matrix']  # np.array of values
                 combined_nm = results['names']  # list of variable names
-                # list of true/false, what?
-                combined_sc = results['success_arr']
+                combined_sc = results['success_arr'] # list of true/false
 
                 shape = np.shape(combined_md)
 
@@ -410,7 +411,6 @@ class Idata:
                 combined_md = np.hstack((combined_md, results['matrix']))
                 combined_nm.extend(results['names'])
 
-                # wut is this???
                 # combine sucess results into oine list with AND
                 # All results must be True to get True
                 # scc stands for success
@@ -782,6 +782,27 @@ class Idata:
 
         return True, (md_results, va_results, success_list)
 
+    def updateMolIndex (self, mol_index, success_list):
+
+        # if success list is True for all elements
+        if len(success_list) == sum(i for i in success_list):
+            return True, mol_index
+
+        # update mol_index
+        j = 0
+        for i in range(len(mol_index)):
+            if not mol_index[i]:
+                continue
+            if not success_list[j]:
+                mol_index[i]=False
+            j=j+1
+
+        # if no molecules left return False
+        if sum(i for i in mol_index) == 0:
+            return False, 'no molecules left'
+
+        return True, mol_index
+
     def workflow_series(self, input_file):
         '''
         Executes in sequence methods required to generate MD,
@@ -796,19 +817,54 @@ class Idata:
 
         '''
 
-        success, results = self.normalize(
-            input_file, self.parameters['normalize_method'])
-        if success:
-            success, results = self.ionize(
-                results, self.parameters['ionize_method'])
-            if success:
-                success, results = self.convert3D(
-                    results, self.parameters['convert3D_method'])
-                if success:
-                    success, results = self.computeMD(
-                        results, self.parameters['computeMD_method'])
+        mol_index = [True for i in range(sdfu.count_mols(input_file))]
 
-        return success, results
+        ###
+        # 1. normalize
+        ###
+        success_list, output_normalize_file = self.normalize(
+            input_file, self.parameters['normalize_method'])
+        success, mol_index = self.updateMolIndex(mol_index, success_list)
+
+        if not success:
+            return False, 'failed to normalize '+input_file
+
+        ###
+        # 2. ionize
+        ###
+        success_list, output_ionize_file = self.ionize(
+            output_normalize_file, self.parameters['ionize_method'])
+        success, mol_index = self.updateMolIndex(mol_index, success_list)
+
+        if not success:
+            return False, 'failed to ionize '+input_file
+
+        ###
+        # 3. convert3D
+        ###
+        success_list, output_convert3D_file = self.convert3D(
+            output_ionize_file, self.parameters['convert3D_method'])
+        success, mol_index = self.updateMolIndex(mol_index, success_list)
+
+        if not success:
+            return False, 'failed to convert 3D '+input_file
+
+        ###
+        # 4. compute MD
+        ###
+        success, results = self.computeMD(
+            output_convert3D_file, self.parameters['computeMD_method'])
+
+        if not success:
+            return False, results
+
+        x = results [0]
+        xnames = results [1]
+        success_list = results [2]
+
+        success, mol_index = self.updateMolIndex(mol_index, success_list)
+        
+        return success, (x, xnames, mol_index)
 
     def ammend_objects(self, inform, workflow) -> None:
         '''
@@ -923,12 +979,8 @@ class Idata:
 
         success_workflow = results[2]
 
-
         if len(success_inform) != len(success_workflow):
-            print (len (success_inform), len (success_workflow))
-            print (success_inform, success_workflow)
 
-            print (self.results)
             LOG.error('shape mismatch of informed and workflow results:'
                       f' ({len(success_inform), len(success_workflow)})'
                       ' This is because some molecules failed during'
