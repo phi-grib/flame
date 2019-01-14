@@ -142,7 +142,7 @@ class BaseEstimator:
                 raise e
 
         # Perform subsampling on the majoritary class. Consider to move.
-        # Only for qualititive endpoints.
+        # Only for qualitative endpoints.
         if self.parameters["imbalance"] is not None and \
          not self.parameters["quantitative"]:
             try:
@@ -508,6 +508,7 @@ class BaseEstimator:
 
         # Get confusion matrix for predicted Y
         try:
+            print(self.estimator)
             self.TNpred, self.FPpred,\
             self.FNpred, self.TPpred = confusion_matrix(Y, Yp,
                                                      labels=[0, 1]).ravel()
@@ -535,7 +536,7 @@ class BaseEstimator:
         # Get cross-validated Y 
         try:
             y_pred = cross_val_predict(self.estimator, X, Y,
-                    cv=self.parameters['ModelValidationCV'],
+                    cv=self.cv,
                              n_jobs=1)
 
             # Get confusion matrix
@@ -573,7 +574,7 @@ class BaseEstimator:
             LOG.debug(f'Qualitative crossvalidation performed')
         except Exception as e:
             LOG.error(f'Error computing crossvalidated Y'
-                f'with exception {e}')
+                f' with exception {e}')
             raise e
 
         return True, (info, Yp, y_pred)
@@ -626,7 +627,7 @@ class BaseEstimator:
             f'exception {e}')
             raise e
         end = time.time()
-        LOG.debug(f'best parameters: , {tclf.best_params_}')
+        LOG.info(f'best parameters: , {tclf.best_params_}')
         LOG.debug(f'Best estimator found in {end-start} seconds')
         # Remove garbage in memory
         del(tclf)

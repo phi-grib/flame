@@ -40,6 +40,24 @@ LOG = get_logger(__name__)
 
 
 class GNB(BaseEstimator):
+    """
+        This class inherits from BaseEstimator and wraps SKLEARN
+        GaussianNB estimator
+
+        ...
+        
+        Attributes
+        ----------
+
+        estimator_parameters : dict
+            parameter values
+        name : string
+            name of the estimator
+        
+        Methods
+        -------
+        
+    """
 
     def __init__(self, X, Y, parameters):
         # Initialize parent class
@@ -50,7 +68,6 @@ class GNB(BaseEstimator):
             LOG.error(f'Error initializing BaseEstimator parent'
                 f'class with exception {e}')
         self.estimator_parameters = parameters['GNB_parameters']
-
         if self.parameters['quantitative']:
             raise Exception("GNB only applies to qualitative data")
         else:

@@ -41,6 +41,34 @@ LOG = get_logger(__name__)
 
 
 class RF(BaseEstimator):
+    """
+        This class inherits from BaseEstimator and wraps SKLEARN
+        RandomForestClassifier or RandomForestRegressor estimator
+
+        ...
+        
+        Attributes
+        ----------
+
+        estimator_parameters : dict
+            parameter values
+        name : string
+            name of the estimator
+        tune_parameters: dict
+            Hyperparameter optimization settings
+        
+        Methods
+        -------
+
+        build(X)
+            Instance the estimator optimizing it
+            if tune=true.
+
+        optimize( X, Y, estimator, tune_parameters)
+            Gridsearch specially designed for PLSR.
+            Optimizes number of variables
+        
+    """
     def __init__(self, X, Y, parameters):
         # Initialize parent class
         try:
@@ -62,7 +90,7 @@ class RF(BaseEstimator):
     def build(self):
         '''Build a new RF model with the X and Y numpy matrices '''
 
-        # Make a copy of the matrices
+        # Make a copy of data matrices
         X = self.X.copy()
         Y = self.Y.copy()
 
