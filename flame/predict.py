@@ -21,10 +21,11 @@
 # along with Flame. If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import sys
 import importlib
 
 from flame.util import utils, get_logger
-from flame.control import Control
+# from flame.control import Control
 
 LOG = get_logger(__name__)
 
@@ -38,9 +39,14 @@ class Predict:
         self.model = model
         self.version = version
 
-        # instance Control object
-        self.control = Control(model, version)
-        self.parameters = self.control.get_parameters()
+        # # instance Control object
+        # self.control = Control(model, version)
+        # self.parameters = self.control.get_parameters()
+
+        success, self.parameters = utils.get_parameters(model, version)
+        if not success:
+            LOG.critical('Unable to load model parameters. Aborting...')
+            sys.exit()
 
         # add additional output formats included in the constructor 
         # this is requiered to add JSON format as output when the object is
@@ -54,7 +60,18 @@ class Predict:
     def get_model_set(self):
         ''' Returns a Boolean indicating if the model uses external input
             sources and a list with these sources '''
-        return self.control.get_model_set()
+
+        ext_input = False
+        model_set = None
+
+        if 'ext_input' in self.parameters:
+            if self.parameters['ext_input']:
+                if 'model_set' in self.parameters:
+                    if len(self.parameters['model_set']) > 1:
+                        model_set = self.parameters['model_set']
+                        ext_input = True
+
+        return ext_input, model_set
 
     def set_single_CPU(self):
         ''' Forces the use of a single CPU '''

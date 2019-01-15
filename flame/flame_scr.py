@@ -62,7 +62,7 @@ def configuration_warning() -> None:
         print("Flame hasn't been configured yet. "
               "Model repository may be wrong. "
               "Please use 'flame -c config' before using flame")
-        sys.exit()  # force exit???
+        sys.exit()  # force exit
 
 
 def manage_cmd(args):
@@ -95,14 +95,12 @@ def manage_cmd(args):
         success, results = manage.action_dir()
     elif args.action == 'info':
         success, results = manage.action_info(args.endpoint, version)
-    
     elif args.action == 'results':
         success, results = manage.action_results(args.endpoint, version)
-    
     else: 
         raise ValueError("Specified action does not exist.")
 
-    # print('flame : ', results)
+    print('flame : ', results)
 
 
 def main():
