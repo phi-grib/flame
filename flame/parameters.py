@@ -22,12 +22,13 @@
 
 import os
 import sys
+import yaml
 
 from flame.util import utils, get_logger
 
 LOG = get_logger(__name__)
 
-class parameters:
+class Parameters:
 
         def __init__(self, model, version):
      
@@ -53,9 +54,41 @@ class parameters:
             return
 
         def getVal(self, key):
+            ''' Return the value of the key parameter or None if it is
+                not found in the parameters dictionary
+            ''' 
             if key in self.p:
                 return self.p[key]
             return None
 
+        def getOldParam(self):
+            ''' Returns the dictionary with the parameters
+                This function was defined only for compatibility purposes
+                during the implementation of this class
+            '''
+            return self.p
+
         def setVal(self, key, value):
+            ''' Sets the parameter defined by key to the given value
+            '''
             self.p[key] = value
+
+        def appVal(self, key, value):
+            ''' Appends value to the end of existing key list 
+            '''
+            self.p[key].append(value)
+
+        def getModelSet (self):
+            ''' Returns a Boolean indicating if the model uses external input
+                sources and a list with these sources 
+            '''
+            ext_input = False
+            model_set = None
+
+            if self.getVal('ext_input'):
+                model_set = self.getVal('model_set')
+                if model_set is not None:
+                    if len(model_set) > 1:
+                        ext_input = True
+
+            return ext_input, model_set
