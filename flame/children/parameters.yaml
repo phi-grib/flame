@@ -192,20 +192,6 @@ webData:
     comments: ""
     group: data
 
-  mol_batch:
-    advanced: regular
-    object_type: string
-    writable: false
-    default: series
-    values:
-      - series
-      - objects
-      #- auto  # Not implemented yet.
-    description: How molecules are going to be processed
-    dependencies: null
-    comments: ""
-    group: data
-
   modelAutoscaling:
     advanced: regular
     object_type: boolean
@@ -1046,14 +1032,15 @@ webData:
     group: preferences
 
   mol_batch:
-    advanced: advanced
+    advanced: regular
     object_type: string
     writable: false
     default: series
     values:
       - series
       - objects
-    description: ""
+      #- auto  # Not implemented yet.
+    description: How molecules are going to be processed
     dependencies: null
     comments: ""
     group: preferences
