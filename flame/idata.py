@@ -45,7 +45,7 @@ LOG = get_logger(__name__)
 
 class Idata:
 
-    def __init__(self, parameters: dict, input_source: str):
+    def __init__(self, parameters, input_source: str):
         """
         Input data class to standarize mol inputs
 
@@ -63,25 +63,23 @@ class Idata:
 
         """
         # control object defining the processing
-        self.parameters = parameters
+        self.param = parameters
         # path for temp files (fallback default)
         self.dest_path = '.'
         self.results = {
             'manifest': [],
             'meta': {'main': [],
-                     'endpoint': self.parameters['endpoint'],
-                     'version': self.parameters['version'],
+                     'endpoint': self.param.getVal('endpoint'),
+                     'version': self.param.getVal('version'),
                      }
         }    # create empty context index ('manifest')
 
-        # make sure parameters contains an ext_input enty and that it is not null
-        if ('ext_input' in parameters) and (parameters['ext_input']):
+        if self.param.getVal('ext_input'):
             LOG.debug('"ext_input" found in parameters')
             self.idata = input_source
             self.ifile = None
             randomName = 'flame-'+utils.id_generator()
             self.dest_path = os.path.join(tempfile.gettempdir(), randomName)
-
         else:
             self.idate = None
             self.ifile = input_source
@@ -133,20 +131,20 @@ class Idata:
 
             # extract the molecule name, using a sdfileutils algorithm 
             name = sdfu.getName(
-                mol, count=obj_num, field=self.parameters['SDFile_name'], suppl=suppl)
+                mol, count=obj_num, field=self.param.getVal('SDFile_name'), suppl=suppl)
 
             # extracts biological information (activity) which is used as dependent variable
             # for the model training and is provided as a prediction for new compounds
             bio = None
-            if self.parameters['SDFile_activity'] is not None:
-                bio = utils.get_sdf_value(mol, self.parameters['SDFile_activity'])
+            if self.param.getVal('SDFile_activity') is not None:
+                bio = utils.get_sdf_value(mol, self.param.getVal('SDFile_activity'))
             
             # extracts experimental information, if any.
             # note that experimental information is used only in prediction, as a value
             # which overrides any model predicted value
             exp = None    
-            if self.parameters['SDFile_experimental'] is not None:
-                exp = utils.get_sdf_value(mol, self.parameters['SDFile_experimental'])
+            if self.param.getVal('SDFile_experimental') is not None:
+                exp = utils.get_sdf_value(mol, self.param.getVal('SDFile_experimental'))
 
             # generates a SMILES
             sml = None
@@ -241,7 +239,7 @@ class Idata:
                     continue
 
                 name = sdfu.getName(m, count=mcount,
-                                    field=self.parameters['SDFile_name'],
+                                    field=self.param.getVal('SDFile_name'),
                                     suppl=suppl)
 
                 parent = None
@@ -663,10 +661,10 @@ class Idata:
         # return
         ##
 
-        if 'ext_input' in self.parameters and self.parameters['ext_input']:
+        if self.param.getVal('ext_input'):
             return
 
-        md5_parameters = self.parameters['md5']
+        md5_parameters = self.param.getVal('md5')
         md5_input = utils.md5sum(self.ifile)  # run md5 in self.ifile
 
         try:
@@ -686,7 +684,7 @@ class Idata:
         of the control class and the input file.
         '''
 
-        if 'ext_input' in self.parameters and self.parameters['ext_input']:
+        if self.param.getVal('ext_input'):
             return False
 
         try:
@@ -696,7 +694,7 @@ class Idata:
 
             with open(picklfile, 'rb') as fi:
                 md5_parameters = pickle.load(fi)
-                if md5_parameters != self.parameters['md5']:
+                if md5_parameters != self.param.getVal('md5'):
                     return False
 
                 md5_input = pickle.load(fi)
@@ -707,8 +705,8 @@ class Idata:
 
                 # these values are added programatically and therefore not
                 # checked by the md5
-                self.results['meta']['endpoint'] = self.parameters['endpoint']
-                self.results['meta']['version'] = self.parameters['version']
+                self.results['meta']['endpoint'] = self.param.getVal('endpoint')
+                self.results['meta']['version'] = self.param.getVal('version')
 
         except Exception as e:
             LOG.error('Error loading pickle with exception: {}'.format(e))
@@ -826,7 +824,7 @@ class Idata:
         # 1. normalize
         ###
         success_list, output_normalize_file = self.normalize(
-            input_file, self.parameters['normalize_method'])
+            input_file, self.param.getVal('normalize_method'))
         success, mol_index = self.updateMolIndex(mol_index, success_list)
 
         if not success:
@@ -836,7 +834,7 @@ class Idata:
         # 2. ionize
         ###
         success_list, output_ionize_file = self.ionize(
-            output_normalize_file, self.parameters['ionize_method'])
+            output_normalize_file, self.param.getVal('ionize_method'))
         success, mol_index = self.updateMolIndex(mol_index, success_list)
 
         if not success:
@@ -846,7 +844,7 @@ class Idata:
         # 3. convert3D
         ###
         success_list, output_convert3D_file = self.convert3D(
-            output_ionize_file, self.parameters['convert3D_method'])
+            output_ionize_file, self.param.getVal('convert3D_method'))
         success, mol_index = self.updateMolIndex(mol_index, success_list)
 
         if not success:
@@ -856,7 +854,7 @@ class Idata:
         # 4. compute MD
         ###
         success, results = self.computeMD(
-            output_convert3D_file, self.parameters['computeMD_method'])
+            output_convert3D_file, self.param.getVal('computeMD_method'))
 
         if not success:
             return False, results
@@ -937,7 +935,7 @@ class Idata:
             return
 
         nobj = self.results['obj_num']
-        ncpu = min(nobj, self.parameters['numCPUs'])
+        ncpu = min(nobj, self.param.getVal('numCPUs'))
 
         # copy the input file to a temp file which will be cleaned at the end
         temp_path = tempfile.mkdtemp()
@@ -958,7 +956,7 @@ class Idata:
 
             pool = mp.Pool(ncpu)
 
-            if self.parameters['mol_batch'] == 'series':
+            if self.param.getVal('mol_batch') == 'series':
                 results = pool.map(self.workflow_series, split_files_names)
             else:
                 results = pool.map(self.workflow_objects, split_files_names)
@@ -967,7 +965,7 @@ class Idata:
 
         else:
 
-            if self.parameters['mol_batch'] == 'series':
+            if self.param.getVal('mol_batch') == 'series':
                 success, results = self.workflow_series(lfile)
             else:
                 success, results = self.workflow_objects(lfile)
@@ -1048,13 +1046,13 @@ class Idata:
 
             for index, line in enumerate(fi):
                 # we asume that the first row contains var names
-                if index == 0 and self.parameters['TSV_varnames']:
+                if index == 0 and self.param.getVal('TSV_varnames'):
                     var_nam = line.strip().split('\t')
                     var_nam = var_nam[1:]
                 else:
                     value_list = line.strip().split('\t')
 
-                    if self.parameters['TSV_objnames']:
+                    if self.param.getVal('TSV_objnames'):
                         # we asume that the first column contains object names
                         obj_nam.append(value_list[0])
                         value_list = value_list[1:]
@@ -1072,11 +1070,11 @@ class Idata:
 
         obj_num = index
         LOG.debug('loaded TSV with shape {} '.format(xmatrix.shape))
-        if self.parameters['TSV_varnames']:
+        if self.param.getVal('TSV_varnames'):
             obj_num -= 1  # what?
 
         # extract any named as "TSV_activity" as the ymatrix
-        activity_param = self.parameters['TSV_activity']
+        activity_param = self.param.getVal('TSV_activity')
         LOG.debug('creating ymatrix from column {}'.format(activity_param))
         if activity_param in var_nam:
             col = var_nam.index(activity_param)
@@ -1090,11 +1088,11 @@ class Idata:
         utils.add_result(self.results, xmatrix, 'xmatrix',
                          'X matrix', 'method', 'vars', 'Molecular descriptors')
 
-        if self.parameters['TSV_varnames']:
+        if self.param.getVal('TSV_varnames'):
             utils.add_result(self.results, var_nam, 'var_nam', 'Var names',
                              'method', 'vars', 'Names of the X variables')
 
-        if not self.parameters['TSV_objnames']:
+        if not self.param.getVal('TSV_objnames'):
             for i in range(obj_num):
                 obj_nam.append('obj%.10f' % i)
 
@@ -1193,7 +1191,7 @@ class Idata:
         chunck per CPU        
         '''
 
-        input_type = self.parameters['input_type']
+        input_type = self.param.getVal('input_type')
         LOG.info('Running with input type: {}'.format(input_type))
 
         if (input_type != 'ext_data'):
@@ -1213,7 +1211,7 @@ class Idata:
         if (input_type == 'molecule'):
 
             # trick to avoid RDKit dumping warnings to the console
-            if not self.parameters['verbose_error']:
+            if not self.param.getVal('verbose_error'):
                 stderr_fileno = sys.stderr.fileno()  # saves current syserr
                 stderr_save = os.dup(stderr_fileno)
                 # open a specific RDKit log file
@@ -1222,7 +1220,7 @@ class Idata:
 
             self._run_molecule()
 
-            if not self.parameters['verbose_error']:
+            if not self.param.getVal('verbose_error'):
                 stderr_fd.close()                     # close the RDKit log
                 os.dup2(stderr_save, stderr_fileno)   # restore old syserr
 

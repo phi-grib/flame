@@ -75,11 +75,11 @@ class RF(BaseEstimator):
                     f'class with exception: {e}')
             raise e
         # Load estimator parameters
-        self.estimator_parameters = parameters['RF_parameters']
+        self.estimator_parameters = self.param.getVal('RF_parameters')
         # Load tune parameters
-        self.tune_parameters = parameters['RF_optimize']
+        self.tune_parameters = self.param.getVal('RF_optimize')
 
-        if self.parameters['quantitative']:
+        if self.param.getVal('quantitative'):
             self.name = "RF-R"
             self.tune_parameters.pop("class_weight")
         else:
@@ -97,10 +97,10 @@ class RF(BaseEstimator):
         results.append(('nvarx', 'number of predictor variables', self.nvarx))
 
         # If tune then call gridsearch to optimize the estimator
-        if self.parameters['tune']:
+        if self.param.getVal('tune'):
                 try:
                     # Check type of model
-                    if self.parameters['quantitative']:
+                    if self.param.getVal('quantitative'):
                         self.optimize(X, Y, RandomForestRegressor(),
                                     self.tune_parameters)
                         results.append(
@@ -120,7 +120,7 @@ class RF(BaseEstimator):
         else:
             try:
                 LOG.info("Building  RF model")
-                if self.parameters['quantitative']:
+                if self.param.getVal('quantitative'):
                     self.estimator_parameters.pop('class_weight', None)
                     self.estimator = RandomForestRegressor(
                         **self.estimator_parameters)
@@ -135,10 +135,10 @@ class RF(BaseEstimator):
                         f'estimator with exception {e}')
             
         # Create the conformal estimator
-        if self.parameters['conformal']:
+        if self.param.getVal('conformal'):
             try:
                 LOG.info("Building aggregated conformal RF model")
-                if self.parameters['quantitative']:
+                if self.param.getVal('quantitative'):
                     underlying_model = RegressorAdapter(self.estimator)
                     normalizing_model = RegressorAdapter(
                         KNeighborsRegressor(n_neighbors=5))

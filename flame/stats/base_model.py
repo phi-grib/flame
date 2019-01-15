@@ -149,7 +149,7 @@ class BaseEstimator:
             - Feature selection
         """
 
-        self.parameters = parameters
+        self.param = parameters
         self.X_original = X
         self.Y_original = Y
         self.variable_mask = []
@@ -161,12 +161,12 @@ class BaseEstimator:
 
         # Get cross-validator 
         # Consider to include a Random Seed for cross-validator
-        if self.parameters['ModelValidationCV']:
+        if self.param.getVal('ModelValidationCV'):
             try:
-                self.cv = getCrossVal(self.parameters['ModelValidationCV'],
+                self.cv = getCrossVal(self.param.getVal('ModelValidationCV'),
                                 46,
-                                self.parameters['ModelValidationN'],
-                                self.parameters['ModelValidationP'])
+                                self.param.getVal('ModelValidationN'),
+                                self.param.getVal('ModelValidationP'))
                 LOG.debug('Cross-validator retrieved')
                 LOG.info(f'cv is: {self.cv}')
             except Exception as e:
@@ -176,14 +176,14 @@ class BaseEstimator:
 
         # Perform subsampling on the majority class. Consider to move.
         # Only for qualitative endpoints.
-        if self.parameters["imbalance"] is not None and \
-         not self.parameters["quantitative"]:
+        if self.param.getVal("imbalance") is not None and \
+         not self.param.getVal("quantitative"):
             try:
                 self.X, self.Y = run_imbalance(
-                    self.parameters['imbalance'], self.X, self.Y, 46)
+                    self.param.getVal('imbalance'), self.X, self.Y, 46)
                 # This is necessary to avoid inconsistences in methods
                 # using self.nobj
-                LOG.info(f'{self.parameters["imbalance"]}'
+                LOG.info(f'{self.param.getVal("imbalance")}'
                              f'sampling method performed')
                 LOG.info(f'Number of objects after sampling: {self.nobj}')
             except Exception as e:
@@ -192,11 +192,11 @@ class BaseEstimator:
                 raise e
 
         # Run scaling.
-        if self.parameters['modelAutoscaling']:
+        if self.param.getVal('modelAutoscaling'):
             try:
                 self.X, self.mux = center(self.X)
                 self.X, self.wgx = scale(self.X, 
-                                    self.parameters['modelAutoscaling'])
+                                    self.param.getVal('modelAutoscaling'))
                 # MinMaxScaler is used between range 1-0 so 
                 # there is no negative values.
                 scaler =  MinMaxScaler(copy=True, feature_range=(0,1))
@@ -219,7 +219,7 @@ class BaseEstimator:
             #     newX[:, i] = np.array(self.X[:, i] -list_min[i])
 
         # Run feature selection. Move to a instance method.
-        if self.parameters["feature_selection"]:
+        if self.param.getVal("feature_selection"):
             self.run_feature_selection()
        
         # Set the new number of instances/variables
@@ -239,7 +239,7 @@ class BaseEstimator:
         """Compute the number of variables to be retained.
         """
         # When auto, the 10% top informative variables are retained.
-        if self.parameters["feature_number"] == "auto":
+        if self.param.getVal("feature_number") == "auto":
             # Use 10% of the total number of objects:
             # The number of variables is greater than the 10% of the objects
             # And the number of objects is greater than 100
@@ -254,7 +254,7 @@ class BaseEstimator:
                 self.n_features = self.nvarx
         # Manual selection of number of variables
         else:
-            self.n_features = int(self.parameters["feature_number"])
+            self.n_features = int(self.param.getVal("feature_number"))
 
         # Apply variable selection.
         try:
@@ -262,7 +262,7 @@ class BaseEstimator:
             # the variable mask.
             self.variable_mask = selectkBest(self.X, self.Y, 
                                 self.n_features, 
-                                self.parameters['quantitative'])
+                                self.param.getVal('quantitative'))
             
             # The scaler has to be fitted to the reduced matrix
             # in order to be applied in prediction.
@@ -310,7 +310,7 @@ class BaseEstimator:
 
                 # Perform prediction on test set
                 prediction = conformal_pred.predict(
-                    X_test, self.parameters['conformalSignificance'])
+                    X_test, self.param.getVal('conformalSignificance'))
                 # Add the n validation interval means
                 interval_means.append(
                     np.mean(np.abs(prediction[:, 0]) - 
@@ -389,7 +389,7 @@ class BaseEstimator:
                 conformal_pred.fit(X_train, Y_train)
                 # Perform prediction on test set
                 prediction = conformal_pred.predict(
-                            X_test, self.parameters['conformalSignificance'])
+                            X_test, self.param.getVal('conformalSignificance'))
                 
                 c0_correct = 0
                 c1_correct = 0
@@ -636,13 +636,13 @@ class BaseEstimator:
         if self.X is None or self.estimator is None:
             return False, 'no estimator'
 
-        if not self.parameters['conformal']:
-            if self.parameters['quantitative']:
+        if not self.param.getVal('conformal'):
+            if self.param.getVal('quantitative'):
                 success, results = self.quantitativeValidation()
             else:
                 success, results = self.qualitativeValidation()
         else:
-            if self.parameters['quantitative']:
+            if self.param.getVal('quantitative'):
                 success, results = self.CF_quantitative_validation()
             else:
                 success, results = self.CF_qualitative_validation()
@@ -656,7 +656,7 @@ class BaseEstimator:
         LOG.info('Computing best hyperparameter values')
         metric = ""
         # Select the metric according to the type of model
-        if self.parameters['quantitative']:
+        if self.param.getVal('quantitative'):
             metric = 'r2'
         else:
              metric = make_scorer(mcc)
@@ -700,9 +700,9 @@ class BaseEstimator:
          for obtaining predictions '''
 
         prediction = self.conformal_pred.predict(
-            Xb, significance=self.parameters['conformalSignificance'])
+            Xb, significance=self.param.getVal('conformalSignificance'))
 
-        if self.parameters['quantitative']:
+        if self.param.getVal('quantitative'):
             mean1 = np.mean(prediction, axis=1)
             lower_limit = prediction[:, 0]
             upper_limit = prediction[:, 1]
@@ -737,16 +737,16 @@ class BaseEstimator:
             results['error'] = 'failed to load classifier'
             return
         # Apply variable mask to prediction vector/matrix
-        if self.parameters["feature_selection"]:
+        if self.param.getVal("feature_selection"):
             print ("feature selection")
             Xb = Xb[:, self.variable_mask]
         # Scale prediction vector/matrix
-        if self.parameters['modelAutoscaling']:
+        if self.param.getVal('modelAutoscaling'):
             Xb = Xb-self.mux
             Xb = Xb*self.wgx
             Xb = self.scaler.transform(Xb)
         # Select the type of projection
-        if not self.parameters['conformal']:
+        if not self.param.getVal('conformal'):
             self.regularProject(Xb, results)
         else:
             self.conformalProject(Xb, results)

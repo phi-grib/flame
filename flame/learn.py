@@ -38,7 +38,7 @@ class Learn:
 
     def __init__(self, parameters, results):
 
-        self.parameters = parameters
+        self.param = parameters
 
         self.X = results['xmatrix']
         self.Y = results['ymatrix']
@@ -60,7 +60,7 @@ class Learn:
         '''
         Builds a model using the internally defined machine learning tools.
 
-        All input parameters are extracted from self.parameters.
+        All input parameters are extracted from self.param.
 
         The main output is an instance of basemodel saved in
         the model folder as a pickle (model.pkl) and used for prediction.
@@ -79,15 +79,15 @@ class Learn:
         # instanciate an appropriate child of base_model
         model = None
         for imethod in registered_methods:
-            if imethod[0] == self.parameters['model']:
-                model = imethod[1](self.X, self.Y, self.parameters)
+            if imethod[0] == self.param.getVal('model'):
+                model = imethod[1](self.X, self.Y, self.param)
                 LOG.debug('Recognized learner: '
-                          f"{self.parameters['model']}")
+                          f"{self.param.getVal('model')}")
                 break
 
         if not model:
             self.results['error'] = 'modeling method not recognised'
-            LOG.error(f'Modeling method {self.parameters["model"]}'
+            LOG.error(f'Modeling method {self.param.getVal("model")}'
                       'not recognized')
             return
 
@@ -148,7 +148,7 @@ class Learn:
         LOG.info('Model finished succesfully')
 
         # save model
-        model_pkl_path = os.path.join(self.parameters['model_path'],
+        model_pkl_path = os.path.join(self.param.getVal('model_path'),
                                       'model.pkl')
         with open(model_pkl_path, 'wb') as handle:
             pickle.dump(model, handle, protocol=pickle.HIGHEST_PROTOCOL)
@@ -161,7 +161,7 @@ class Learn:
         Builds the model using the appropriate toolkit (internal or custom).
         '''
 
-        toolkit = self.parameters['modelingToolkit']
+        toolkit = self.param.getVal('modelingToolkit')
 
         if toolkit == 'internal':
             LOG.info('Building model using internal toolkit : Sci-kit learn')

@@ -22,8 +22,9 @@
 
 import os
 import importlib
-from flame.parameters import Parameters
+
 from flame.util import utils, get_logger
+from flame.parameters import Parameters
 
 LOG = get_logger(__name__)
 
@@ -79,7 +80,7 @@ class Build:
                       f' {odata_child.__name__}')
 
             # run idata object, in charge of generate model
-            idata = idata_child.IdataChild(self.param.getOldParam(), input_source)
+            idata = idata_child.IdataChild(self.param, input_source)
             results = idata.run() 
             LOG.debug(f'idata child {idata_child.__name__} completed `run()`')
 
@@ -94,13 +95,13 @@ class Build:
         
         if 'error' not in results:
             # run learn object, in charge of generate a prediction from idata
-            learn = learn_child.LearnChild(self.param.getOldParam(), results)
+            learn = learn_child.LearnChild(self.param, results)
             results = learn.run()
             LOG.debug(f'learn child {learn_child.__name__} completed `run()`')
 
         # run odata object, in charge of formatting the prediction results
         # note that if any of the above steps failed, an error has been inserted in the
         # results and odata will take case of showing an error message
-        odata = odata_child.OdataChild(self.param.getOldParam(), results)
+        odata = odata_child.OdataChild(self.param, results)
         LOG.info('Building completed')
         return odata.run()

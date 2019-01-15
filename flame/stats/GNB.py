@@ -72,8 +72,8 @@ class GNB(BaseEstimator):
         except Exception as e:
             LOG.error(f'Error initializing BaseEstimator parent'
                 f'class with exception {e}')
-        self.estimator_parameters = parameters['GNB_parameters']
-        if self.parameters['quantitative']:
+        self.estimator_parameters = self.param.getVal('GNB_parameters')
+        if self.param.getVal('quantitative'):
             raise Exception("GNB only applies to qualitative data")
         else:
             self.name = "GNB-Classifier"
@@ -94,7 +94,7 @@ class GNB(BaseEstimator):
         self.estimator = GaussianNB(**self.estimator_parameters)
         results.append(('model', 'model type', 'GNB qualitative'))
         # If conformal, then create aggregated conformal classifier
-        if self.parameters['conformal']:
+        if self.param.getVal('conformal'):
             self.conformal_pred = AggregatedCp(
                 IcpClassifier(ClassifierNc(ClassifierAdapter(
                 self.estimator), MarginErrFunc())), BootstrapSampler())

@@ -113,11 +113,11 @@ class PLSR(BaseEstimator):
             LOG.error(f'Error initializing BaseEstimator parent'
                         f'class with exception: {e}')
             raise e
-        self.estimator_parameters = parameters['PLSR_parameters']
+        self.estimator_parameters = self.param.getVal('PLSR_parameters')
         self.name = "PLSR"
 
         # Check if the model is quantitative
-        if not self.parameters['quantitative']:
+        if not self.param.getVal('quantitative'):
             LOG.error('PLSR only applies to quantitative data')
             raise Exception('PLSR only applies to quantitative data')
 
@@ -131,13 +131,13 @@ class PLSR(BaseEstimator):
         results.append(('nobj', 'number of objects', self.nobj))
         results.append(('nvarx', 'number of predictor variables', self.nvarx))
 
-        if self.parameters['tune']:
+        if self.param.getVal('tune'):
             # Optimize estimator using sklearn-gridsearch
             if self.estimator_parameters['optimize'] == 'auto':
                 try:
                     super(PLSR, self).optimize(X, Y, PLS_r(
                         **self.estimator_parameters), 
-                        self.parameters['PLSR_optimize'])
+                        self.param.getVal('PLSR_optimize'))
                     LOG.debug('Optimizing PLSR through SK-LearnGridSearch')
                 except Exception as e:
                     LOG.error(f'Error performing sk-learn GridSearch'
@@ -155,7 +155,7 @@ class PLSR(BaseEstimator):
                     
                     self.optimize(X, Y, PLS_r(
                         **self.estimator_parameters), 
-                        self.parameters['PLSR_optimize'])
+                        self.param.getVal('PLSR_optimize'))
                     LOG.debug('Optimizing PLSR')
                 except Exception as e:
                     LOG.error(f'Error performing manual GridSearch'
@@ -182,7 +182,7 @@ class PLSR(BaseEstimator):
                 raise e
             results.append(('model', 'model type', 'PLSR quantitative'))
 
-        if self.parameters['conformal']:
+        if self.param.getVal('conformal'):
             try:
                 underlying_model = RegressorAdapter(self.estimator)
                 normalizing_model = RegressorAdapter(

@@ -40,8 +40,8 @@ class Odata():
 
         # previous results (eg. object names, mol descriptors) are retained
         self.results = results
-        self.parameters = parameters
-        self.format = self.parameters['output_format']
+        self.param = parameters
+        self.format = self.param.getVal('output_format')
 
     def _output_md(self):
         ''' dumps the molecular descriptors to a TSV file'''
@@ -115,13 +115,13 @@ class Odata():
         ####
         # 1. results.pkl
         ####
-        # info_pkl_path = os.path.join(self.parameters['model_path'], 'info.pkl')
+        # info_pkl_path = os.path.join(self.param.getVal('model_path'), 'info.pkl')
         # LOG.debug('saving model information to:{}'.format(info_pkl_path))
         # with open(info_pkl_path, 'wb') as handle:
         #     pickle.dump(self.results['model_build_info'], handle)
         #     pickle.dump(self.results['model_valid_info'], handle)
 
-        results_pkl_path = os.path.join(self.parameters['model_path'], 'results.pkl')
+        results_pkl_path = os.path.join(self.param.getVal('model_path'), 'results.pkl')
         LOG.debug('saving model results to:{}'.format(results_pkl_path))
         with open(results_pkl_path, 'wb') as handle:
             pickle.dump(self.results, handle)
@@ -141,7 +141,7 @@ class Odata():
         ###
         # 3. molecular descriptors file in TSV format [optional]
         ###
-        if self.parameters['output_md']:
+        if self.param.getVal('output_md'):
             self._output_md()
 
         ###
@@ -235,7 +235,7 @@ class Odata():
         ###
         # 2. molecular descriptors file in TSV format [optional]
         ###
-        if self.parameters['output_md']:
+        if self.param.getVal('output_md'):
             self._output_md()
 
         ###

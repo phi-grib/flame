@@ -75,10 +75,10 @@ class SVM(BaseEstimator):
                     f'class with exception: {e}')
             raise e
         # Load estimator parameters
-        self.estimator_parameters = parameters['SVM_parameters']
+        self.estimator_parameters = self.param.getVal('SVM_parameters')
         # Load tune parameters
-        self.tune_parameters = parameters['SVM_optimize']
-        if self.parameters['quantitative']:
+        self.tune_parameters = self.param.getVal('SVM_optimize')
+        if self.param.getVal('quantitative'):
             self.name = "SVM-R"
             # Remove parameters of SVC class and set the name
             self.estimator_parameters.pop("class_weight", None)
@@ -105,10 +105,10 @@ class SVM(BaseEstimator):
         results.append(('nvarx', 'number of predictor variables', self.nvarx))
        
         # If tune then call gridsearch to optimize the estimator
-        if self.parameters['tune']:
+        if self.param.getVal('tune'):
             try:
                 # Check type of model
-                if self.parameters['quantitative']:
+                if self.param.getVal('quantitative'):
                     self.optimize(X, Y, svm.SVR(), self.tune_parameters)
                     results.append(
                         ('model', 'model type', 'SVM quantitative (optimized)'))
@@ -125,7 +125,7 @@ class SVM(BaseEstimator):
         else:
             try:
                 LOG.info("Building  SVM model")
-                if self.parameters['quantitative']:
+                if self.param.getVal('quantitative'):
                     LOG.info("Building Quantitative SVM-R model")
                     self.estimator = svm.SVR(**self.estimator_parameters)
                     results.append(('model', 'model type', 'SVM quantitative'))
@@ -136,10 +136,10 @@ class SVM(BaseEstimator):
                 LOG.error(f'Exception building SVM' 
                         f'estimator with exception {e}')
 
-        if self.parameters['conformal']:
+        if self.param.getVal('conformal'):
             try:
                 LOG.info("Building aggregated conformal SVM model")
-                if self.parameters['quantitative']:
+                if self.param.getVal('quantitative'):
                     underlying_model = RegressorAdapter(self.estimator)
                     normalizing_model = RegressorAdapter(
                         KNeighborsRegressor(n_neighbors=5))
