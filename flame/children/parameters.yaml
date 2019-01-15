@@ -582,13 +582,6 @@ webData:
           - null
           - balanced
         - description: ""
-      - max_depth:
-        - object_type: integer
-        - writable: true
-        - default: null
-        - values:
-          - null
-        - description: ""
       - max_features:
         - object_type: string
         - writable: true
@@ -610,14 +603,6 @@ webData:
         - max: 500
         - min: 0
         - description: ""
-      - oob_score:
-        - object_type: boolean
-        - writable: false
-        - default: true 
-        - values: 
-          - true
-          - false
-        - description: ""
       - random_state:
         - object_type: int
         - writable: true
@@ -625,9 +610,10 @@ webData:
         - values:
           - 46
         - description: ""
-    description: "Random Forest Parameters"
+    description: "Random Forest Optimize parameters"
     dependencies: 
       - model: RF
+      - tune: true
     comments: ""
     group: modeling
 
@@ -681,9 +667,394 @@ webData:
           - 46
           - null
         - description: ""
+      - kernel:
+        - object_type: str
+        - writable: false
+        - default: null
+        - values:
+          - null
+          - rfb
+          - linear
+          - poly
+        - description: ""
+      - probability:
+        - object_type: boolean 
+        - writable: false
+        - default: true
+        - values:
+          -true
+          -false
+      - shrinking: 
+        - object_type: boolean
+        - writable: false
+        - default: null
+        - values:
+          - true
+          - false
+        - description: ""
     description: "SVM Parameters"
     dependencies: 
       - model: SVM
     comments: ""
     group: modeling
+
+  SVM_optimize:
+    advanced: advanced
+    object_type: dictionary
+    writable: false
+    default: null
+    values:
+      - class_weight:
+        - object_type: string
+        - writable: false
+        - default: null
+        - values:
+          - null
+          - balanced
+        - description: ""
+      - C:
+        - object_type: float
+        - writable: true
+        - default: null
+        - values:
+          - null
+          - 1
+          - 3
+          - 5
+        - description: ""
+      - coef0:
+        - object_type: float
+        - writable: true
+        - default: null
+        - values: 
+          - null
+          - 0
+          - 0.8
+          - 100
+        - description: ""
+      - degree:
+        - object_type: int
+        - writable: true
+        - default: null
+        - values: 
+          - null
+          - 1
+          - 3 
+          - 5
+        - description: ""
+      - gamma:
+        - object_type: float
+        - writable: true
+        - default: null 
+        - values: 
+          - null
+          - auto
+        - description: ""
+      - random_state:
+        - object_type: int
+        - writable: true
+        - default: 46
+        - values:
+          - 46
+          - null
+        - description: ""
+      - kernel:
+        - object_type: str
+        - writable: false
+        - default: null
+        - values:
+          - null
+          - rfb
+          - linear
+          - poly  
+        - description: ""
+      - probability:
+        - object_type: boolean 
+        - writable: false
+        - default: true
+        - values:
+          - true
+          - false
+      - shrinking: 
+        - object_type: boolean
+        - writable: false
+        - default: null
+        - values:
+          - true
+          - false
+        - description: ""
+    description: "SVM optimize parameters"
+    dependencies: 
+      - model: SVM
+    comments: ""
+    group: modeling
+
+  PLSR_parameters:
+    advanced: advanced
+    object_type: dictionary
+    writable: false
+    default: null
+    values:
+      - scale:
+        - object_type: boolean
+        - writable: false
+        - default: false
+        - values:
+          - true
+          - false
+        - description: ""
+      - tol:
+        - object_type: float
+        - writable: true
+        - default: null
+        - values:
+          - null
+        - description: ""
+      - n_components:
+        - object_type: int
+        - writable: true
+        - default: 2
+        - values: 
+          - null
+        - description: ""
+      - optimize:
+        - object_type: string
+        - writable: true
+        - default: manual
+        - values: 
+          - manual
+          - auto
+        - description: ""
+    description: "PLSR Parameters"
+    dependencies: 
+      - model: PLSR
+      - quantitative: true
+    comments: ""
+    group: modeling
+
+  PLSR_optimize:
+    advanced: advanced
+    object_type: dictionary
+    writable: false
+    default: null
+    values:
+      - scale:
+        - object_type: boolean
+        - writable: false
+        - default: null
+        - values:
+          - true
+          - false
+        - description: ""
+      - tol:
+        - object_type: float
+        - writable: true
+        - default: null
+        - values:
+          - null
+        - description: ""
+      - n_components:
+        - object_type: int
+        - writable: true
+        - default: null
+        - values: 
+          - 1
+          - 2
+          - 3
+          - 4
+          - 5
+          - 6
+        - description: ""
+    description: "PLSR optimize parameters"
+    dependencies: 
+      - model: PLSR
+      - quantitative: true
+    comments: ""
+    group: modeling
+
+  PLSDA_parameters:
+    advanced: advanced
+    object_type: dictionary
+    writable: false
+    default: null
+    values:
+      - scale:
+        - object_type: boolean
+        - writable: false
+        - default: false
+        - values:
+          - true
+          - false
+        - description: ""
+      - tol:
+        - object_type: float
+        - writable: true
+        - default: null
+        - values:
+          - null
+        - description: ""
+      - n_components:
+        - object_type: int
+        - writable: true
+        - default: 2
+        - values: 
+          - null
+        - description: ""
+      - optimize:
+        - object_type: string
+        - writable: true
+        - default: manual
+        - values: 
+          - manual
+          - auto
+        - description: ""
+      - threshold:
+        - object_type: float
+        - writable: true
+        - default: 0.5
+        - values: 
+          - 0.5
+        - description: ""
+    description: "PLSDA Parameters"
+    dependencies: 
+      - model: PLSDA
+      - quantitative: false
+    comments: ""
+    group: modeling
+
+  PLSDA_optimize:
+    advanced: advanced
+    object_type: dictionary
+    writable: false
+    default: null
+    values:
+      - scale:
+        - object_type: boolean
+        - writable: false
+        - default: null
+        - values:
+          - true
+          - false
+        - description: ""
+      - tol:
+        - object_type: float
+        - writable: true
+        - default: null
+        - values:
+          - null
+        - description: ""
+      - n_components:
+        - object_type: int
+        - writable: true
+        - default: null
+        - values: 
+          - 1
+          - 2
+          - 3
+          - 4
+          - 5
+          - 6
+        - description: ""
+      - threshold:
+        - object_type: float
+        - writable: true
+        - default: null
+        - values: 
+          - 0.4
+          - 0.5
+          - 0.6
+        - description: ""
+    description: "PLSDA optimize parameters"
+    dependencies: 
+      - model: PLSDA
+      - quantitative: false
+    comments: ""
+    group: modeling
+
+  GNB_parameters:
+    advanced: advanced
+    object_type: dictionary
+    writable: false
+    default: null
+    values:
+      - priors:
+        - object_type: list
+        - writable: false
+        - default: null
+        - values:
+          - null
+        - description: ""
+
+    description: "GNB Parameters"
+    dependencies: 
+      - model: GNB
+      - quantitative: false
+    comments: ""
+    group: modeling
+
+  output_format:
+    advanced: regular
+    object_type: list
+    writable: false
+    default: molecule
+    values:
+      - JSON
+      - TSV
+    description: Output data format
+    dependencies: null
+    comments: ""
+    group: preferences
+
+  output_md:
+    advanced: advanced
+    object_type: boolean
+    writable: false
+    default: false
+    values:
+      - true
+      - false
+    description: Dump descriptors to a tsv file
+    dependencies: 
+      - computeMD: true
+    comments: ""
+    group: preferences
+
+  verbose_error:
+    advanced: advanced
+    object_type: boolean
+    writable: false
+    default: false
+    values:
+      - true
+      - false
+    description: ""
+    dependencies: 
+      - computeMD: true
+    comments: ""
+    group: preferences
+
+  numCPUs:
+    advanced: advanced
+    object_type: int
+    writable: true
+    default: 2
+    values:
+      - null
+    description: ""
+    dependencies: null
+    comments: ""
+    group: preferences
+
+  mol_batch:
+    advanced: advanced
+    object_type: string
+    writable: false
+    default: series
+    values:
+      - series
+      - objects
+    description: ""
+    dependencies: null
+    comments: ""
+    group: preferences
 
