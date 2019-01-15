@@ -420,95 +420,95 @@ class Idata:
 
         return True, (combined_md, combined_nm, combined_sc)
 
-    def computeMD_FUTURE(self, ifile: str, methods: list):
-        """ Computes molecular descriptors.
+    # def computeMD_FUTURE(self, ifile: str, methods: list):
+    #     """ Computes molecular descriptors.
 
-        Computes and concatenates all the descriptor methods 
-        passed in `methods` parameter.
+    #     Computes and concatenates all the descriptor methods 
+    #     passed in `methods` parameter.
 
-        Parameters
-        ----------
+    #     Parameters
+    #     ----------
 
-        ifile: str
-            Input SDF file
+    #     ifile: str
+    #         Input SDF file
 
 
-        methods: list
-            list of methods to compute molecular descriptors with
+    #     methods: list
+    #         list of methods to compute molecular descriptors with
 
-        Returns
-        -------
+    #     Returns
+    #     -------
 
-        success: bool
-            If computation was successfull
+    #     success: bool
+    #         If computation was successfull
 
-        xmatrix_filtered: np.ndarray
-            Descriptors matrix filtered without failed molecules
+    #     xmatrix_filtered: np.ndarray
+    #         Descriptors matrix filtered without failed molecules
 
-        var_names: list
-            Variable names or descriptor names
+    #     var_names: list
+    #         Variable names or descriptor names
 
-        success_list: list
-            List with bool values indicating if mol
-            had any issues during supplier (None) or in the
-            descriptor array (presence of NaNs).
-        """
+    #     success_list: list
+    #         List with bool values indicating if mol
+    #         had any issues during supplier (None) or in the
+    #         descriptor array (presence of NaNs).
+    #     """
 
-        if not methods:
-            raise ValueError('Must provide at least one method')
+    #     if not methods:
+    #         raise ValueError('Must provide at least one method')
 
-        LOG.info(f'Computing molecular descriptors with methods {methods}...')
+    #     LOG.info(f'Computing molecular descriptors with methods {methods}...')
 
-        registered_methods = dict([('RDKit_properties', computeMD._RDKit_properties),
-                                   ('RDKit_md', computeMD._RDKit_descriptors),
-                                   ('padel', computeMD._padel_descriptors),
-                                   ('custom', self.computeMD_custom)])
+    #     registered_methods = dict([('RDKit_properties', computeMD._RDKit_properties),
+    #                                ('RDKit_md', computeMD._RDKit_descriptors),
+    #                                ('padel', computeMD._padel_descriptors),
+    #                                ('custom', self.computeMD_custom)])
 
-        # check if input methods are members of registered methods
-        if not all(m in registered_methods for m in methods):
-            # find the non member methods
-            no_recog_meth = [m for m in methods if m not in registered_methods]
-            LOG.error(f'Methods {no_recog_meth} not recognized')
+    #     # check if input methods are members of registered methods
+    #     if not all(m in registered_methods for m in methods):
+    #         # find the non member methods
+    #         no_recog_meth = [m for m in methods if m not in registered_methods]
+    #         LOG.error(f'Methods {no_recog_meth} not recognized')
 
-            # check is any single good method
-            if len(no_recog_meth) == len(methods):
-                # then not a single md method is correct... so error
-                raise ValueError(f'Methods {no_recog_meth} not recognized.'
-                                 ' No valid method found.')
+    #         # check is any single good method
+    #         if len(no_recog_meth) == len(methods):
+    #             # then not a single md method is correct... so error
+    #             raise ValueError(f'Methods {no_recog_meth} not recognized.'
+    #                              ' No valid method found.')
 
-            # remove bad methods
-            methods = [m for m in methods if m not in no_recog_meth]
+    #         # remove bad methods
+    #         methods = [m for m in methods if m not in no_recog_meth]
 
-        success_lists = []
-        # more tha one method
-        if len(methods) > 1:
+    #     success_lists = []
+    #     # more tha one method
+    #     if len(methods) > 1:
 
-            xmatrix_ls = []
-            var_names = []
+    #         xmatrix_ls = []
+    #         var_names = []
 
-            for method in methods:
-                results = registered_methods[method](ifile)
+    #         for method in methods:
+    #             results = registered_methods[method](ifile)
 
-                xmatrix_ls.append(results['matrix'])
-                var_names.extend(results['names'])
-                success_lists.append(results['success_arr'])
-            # horizontally concat results
-            xmatrix = self._concat_descriptors_matrix(xmatrix_ls)
+    #             xmatrix_ls.append(results['matrix'])
+    #             var_names.extend(results['names'])
+    #             success_lists.append(results['success_arr'])
+    #         # horizontally concat results
+    #         xmatrix = self._concat_descriptors_matrix(xmatrix_ls)
 
-        # do for a single method. Skipping concatenation
-        else:
-            results = registered_methods[methods[0]](ifile)
+    #     # do for a single method. Skipping concatenation
+    #     else:
+    #         results = registered_methods[methods[0]](ifile)
 
-            xmatrix = results['matrix']
-            var_names = results['names']
-            # still append to list to maintain
-            # the behaviour of _filter_matrix
-            success_lists.append(results['success_arr'])
+    #         xmatrix = results['matrix']
+    #         var_names = results['names']
+    #         # still append to list to maintain
+    #         # the behaviour of _filter_matrix
+    #         success_lists.append(results['success_arr'])
 
-        # filter molecules with failed status during computing descriptors
-        xmatrix_filtered, success_list = self._filter_matrix(
-            xmatrix, success_lists)
-        return True, (xmatrix_filtered, var_names, success_list)
+    #     # filter molecules with failed status during computing descriptors
+    #     xmatrix_filtered, success_list = self._filter_matrix(
+    #         xmatrix, success_lists)
+    #     return True, (xmatrix_filtered, var_names, success_list)
 
     @staticmethod
     def _filter_matrix(matrix: np.ndarray, succes_list: list):
@@ -614,23 +614,26 @@ class Idata:
             internal = iresults[1]
             ixmatrix = internal[0]
 
-            # isinstance?
+            # check that the type of ixmatrix is correct (np.ndarray)
             if not isinstance(ixmatrix, np.ndarray):
                 LOG.error('Results type in consolidate must be `np.ndarray`.'
                           f' Found: {type(ixmatrix)}')
                 return False, "unknown results type in consolidate"
 
-            if first:
+
+            if first: # only for the first element of the loop
                 xmatrix = ixmatrix
                 var_nam = internal[1]
                 success_list = internal[2]
 
                 shape = np.shape(ixmatrix)
                 first = False
+
             else:
                 ishape = np.shape(ixmatrix)
-                # for bidimensional arrays, num_var is shape[1]
+
                 if len(shape) > 1 and len(ishape) > 1:
+                    # for bidimensional arrays, num_var is shape[1]
                     if shape[1] != ishape[1]:
                         LOG.error('Impossible to concat arrays'
                                   f'with shape {shape} and {ishape}')
@@ -1036,12 +1039,7 @@ class Idata:
             # raise FileNotFoundError('{} not found'.format(self.ifile))
             return
 
-        # --------------------
         #  Reading TSV by hand
-        #
-        # this could be done simply with pd.read_csv(self.idata, sep='\t')
-        # --------------------
-
         with open(self.ifile, 'r') as fi:
 
             var_nam = []
@@ -1071,8 +1069,6 @@ class Idata:
                         xmatrix = value_array
                     else:
                         xmatrix = np.vstack((xmatrix, value_array))
-
-        # ------- END of reading TSV
 
         obj_num = index
         LOG.debug('loaded TSV with shape {} '.format(xmatrix.shape))
