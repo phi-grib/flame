@@ -54,8 +54,13 @@ class GNB(BaseEstimator):
         name : string
             name of the estimator
         
+        
         Methods
         -------
+        
+        build(X)
+            Instance the estimator optimizing it
+            if tune=true.
         
     """
 

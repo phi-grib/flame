@@ -64,10 +64,6 @@ class RF(BaseEstimator):
             Instance the estimator optimizing it
             if tune=true.
 
-        optimize( X, Y, estimator, tune_parameters)
-            Gridsearch specially designed for PLSR.
-            Optimizes number of variables
-        
     """
     def __init__(self, X, Y, parameters):
         # Initialize parent class
@@ -78,7 +74,9 @@ class RF(BaseEstimator):
             LOG.error(f'Error initializing BaseEstimator parent'
                     f'class with exception: {e}')
             raise e
+        # Load estimator parameters
         self.estimator_parameters = parameters['RF_parameters']
+        # Load tune parameters
         self.tune_parameters = parameters['RF_optimize']
 
         if self.parameters['quantitative']:
@@ -98,66 +96,84 @@ class RF(BaseEstimator):
         results.append(('nobj', 'number of objects', self.nobj))
         results.append(('nvarx', 'number of predictor variables', self.nvarx))
 
+        # If tune then call gridsearch to optimize the estimator
         if self.parameters['tune']:
-                if self.parameters['quantitative']:
-                    self.optimize(X, Y, RandomForestRegressor(),
-                                self.tune_parameters)
-                    results.append(
-                        ('model', 'model type', 'RF quantitative (optimized)'))
-                else:
-                    self.optimize(X, Y, RandomForestClassifier(),
-                                self.tune_parameters)
-                    results.append(
-                        ('model', 'model type', 'RF qualitative (optimized)'))
+                try:
+                    # Check type of model
+                    if self.parameters['quantitative']:
+                        self.optimize(X, Y, RandomForestRegressor(),
+                                    self.tune_parameters)
+                        results.append(
+                            ('model', 'model type', 
+                            'RF quantitative (optimized)'))
+                    else:
+                        self.optimize(X, Y, RandomForestClassifier(),
+                                    self.tune_parameters)
+                        results.append(
+                            ('model', 'model type', 
+                            'RF qualitative (optimized)'))
+                    LOG.debug('RF estimator optimized')
+                except Exception as e:
+                    LOG.error(f'Exception optimizing RF' 
+                            f'estimator with exception {e}')
+
         else:
-            if self.parameters['quantitative']:
-                LOG.info("Building Quantitative RF model")
-                self.estimator_parameters.pop('class_weight', None)
-
-                self.estimator = RandomForestRegressor(
-                    **self.estimator_parameters)
-                results.append(('model', 'model type', 'RF quantitative'))
-
-            else:
-                LOG.info("Building Qualitative RF model")
-                self.estimator = RandomForestClassifier(
-                    **self.estimator_parameters)
-                results.append(('model', 'model type', 'RF qualitative'))
+            try:
+                LOG.info("Building  RF model")
+                if self.parameters['quantitative']:
+                    self.estimator_parameters.pop('class_weight', None)
+                    self.estimator = RandomForestRegressor(
+                        **self.estimator_parameters)
+                    results.append(('model', 'model type', 'RF quantitative'))
+                else:
+                    LOG.info("Building Qualitative RF model")
+                    self.estimator = RandomForestClassifier(
+                        **self.estimator_parameters)
+                    results.append(('model', 'model type', 'RF qualitative'))
+            except Exception as e:
+                LOG.error(f'Exception building RF' 
+                        f'estimator with exception {e}')
+            
         # Create the conformal estimator
         if self.parameters['conformal']:
-            # Conformal regressor
-            if self.parameters['quantitative']:
-                underlying_model = RegressorAdapter(self.estimator)
-                normalizing_model = RegressorAdapter(
-                    KNeighborsRegressor(n_neighbors=5))
-                normalizing_model = RegressorAdapter(self.estimator)
-                normalizer = RegressorNormalizer(
-                    underlying_model, normalizing_model, AbsErrorErrFunc())
-                nc = RegressorNc(underlying_model,
-                                 AbsErrorErrFunc(), normalizer)
-                # self.conformal_pred = AggregatedCp(IcpRegressor
-                # (RegressorNc(RegressorAdapter(self.estimator))),
-                #                                   BootstrapSampler())
+            try:
+                LOG.info("Building aggregated conformal RF model")
+                if self.parameters['quantitative']:
+                    underlying_model = RegressorAdapter(self.estimator)
+                    normalizing_model = RegressorAdapter(
+                        KNeighborsRegressor(n_neighbors=5))
+                    normalizing_model = RegressorAdapter(self.estimator)
+                    normalizer = RegressorNormalizer(
+                            underlying_model, normalizing_model,
+                                AbsErrorErrFunc())
+                    nc = RegressorNc(underlying_model,
+                                    AbsErrorErrFunc(), normalizer)
+                    # self.conformal_pred = AggregatedCp(IcpRegressor
+                    # (RegressorNc(RegressorAdapter(self.estimator))),
+                    #                                   BootstrapSampler())
 
-                self.conformal_pred = AggregatedCp(IcpRegressor(nc),
-                                                   BootstrapSampler())
-                self.conformal_pred.fit(X, Y)
-                # overrides non-conformal
-                results.append(
-                    ('model', 'model type', 'conformal RF quantitative'))
-            # Conformal classifier
-            else:
-                self.conformal_pred = AggregatedCp(
-                                        IcpClassifier(
-                                            ClassifierNc(
-                                                ClassifierAdapter(self.estimator),
-                                                    MarginErrFunc())),
-                                         BootstrapSampler())
-                # Fit estimator to the data
-                self.conformal_pred.fit(X, Y)
-                results.append(
-                    ('model', 'model type', 'conformal RF qualitative'))
-
+                    self.conformal_pred = AggregatedCp(IcpRegressor(nc),
+                                                    BootstrapSampler())
+                    self.conformal_pred.fit(X, Y)
+                    # overrides non-conformal
+                    results.append(
+                        ('model', 'model type', 'conformal RF quantitative'))
+                # Conformal classifier
+                else:
+                    self.conformal_pred = AggregatedCp(
+                                            IcpClassifier(
+                                                ClassifierNc(
+                                                    ClassifierAdapter(
+                                                        self.estimator),
+                                                        MarginErrFunc())),
+                                            BootstrapSampler())
+                    # Fit estimator to the data
+                    self.conformal_pred.fit(X, Y)
+                    results.append(
+                        ('model', 'model type', 'conformal RF qualitative'))
+            except Exception as e:
+                LOG.error(f'Exception building aggregated conformal Random'
+                        f'Forest estimator with exception {e}')
         self.estimator.fit(X, Y)
 
         return True, results

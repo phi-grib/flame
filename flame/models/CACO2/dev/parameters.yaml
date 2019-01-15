@@ -41,12 +41,12 @@ TSV_varnames: true                    # true if the variable names are in the fi
 
 # modeling settings
 modelingToolkit: internal             # internal | R | KNIME | custom
-model: PLSR                             # RF | SVM | GNB | PLSR | PLSDA
+model: RF                             # RF | SVM | GNB | PLSR | PLSDA
 modelAutoscaling: true               # true | false
 quantitative: true
 tune: true
-imbalance: null                       # simple_subsampling
-feature_selection: null               # Kbest | null
+imbalance: simple_subsapling          # simple_subsampling
+feature_selection: Kbest               # Kbest | null
 feature_number: auto                  # auto: Sets max features to 10% of entries | Number
 
 
@@ -172,5 +172,5 @@ PLSDA_optimize:
   - 0.5
 
 # conformal predictor settings
-conformal: false
+conformal: true
 conformalSignificance: 0.2

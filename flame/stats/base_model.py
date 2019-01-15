@@ -79,14 +79,66 @@ from nonconformist.evaluation import class_mean_errors
 from flame.util import utils, get_logger, supress_log
 LOG = get_logger(__name__)
 
-# TODO
-# Raise errors to child class and handling from there
 
 class BaseEstimator:
-    """Estimator parent class, contains all attributes methods shared
+    """
+    Estimator parent class, contains all attributes methods shared
      by different algorithms.Particular implementation of these 
-     methods are overwritten by child classes"""
+     methods are overwritten by child classes      
+        
+        Attributes
+        ----------
 
+        parameters : dict
+            parameter values
+        X_original : numpy.darray
+            original X matrix
+        Y_original : numpy.darray
+            original X matrix
+        variable_mask: numpy.darray
+            variable mask from feature selection
+        X : numpy.darray
+            current X matrix
+        Y : numpy.darray
+            current Y vector/matrix
+        scaler: sklearn scaler
+            scaler object to scale prediction 
+            instances
+        nobj : int
+            number of objects
+        nvarx : int
+            number of variables
+        
+        
+        Methods
+        -------
+
+        build(X)
+            Instance the estimator optimizing it
+            if tune=true.
+        run_feature_selection()
+            Performs feature selection
+        CF_quantitative_validation(self)
+            Performs conformal quantitative validation
+        CF_qualitative_validation(self)
+            Performs conformal qualitative validation
+        quantitativeValidation(self)
+            Performs quantitative validation
+        qualitativeValidation
+            Performs qualitative validation
+        validate(self)
+            Checks type of validation and calls it
+        optimize(self, X, Y, estimator, tune_parameters)
+            Performs GridSearchCV to optimize estimator
+            hyperparameters
+        regularProject(self, Xb, results)
+            Returns prediction/s for unknown instance/s
+        conformalProject(self, Xb, results)
+            Returns conformal prediction/s for unknown instance/s
+        project(self, Xb, results)
+            Checks type of projection and calls it
+
+    """
     def __init__(self, X, Y, parameters):
         """Initializes the estimator.
         Actions
@@ -97,7 +149,6 @@ class BaseEstimator:
             - Feature selection
         """
 
-        self.failed = False
         self.parameters = parameters
         self.X_original = X
         self.Y_original = Y
@@ -106,24 +157,6 @@ class BaseEstimator:
         self.Y = Y
         self.nobj, self.nvarx = np.shape(X)
 
-        # Assign model attributes.
-        # self.quantitative = self.parameters['quantitative']
-        # self.autoscale = self.parameters['modelAutoscaling']
-        # self.cv = self.parameters['ModelValidationCV']
-        # self.n = self.parameters['ModelValidationN']
-        # self.p = self.parameters['ModelValidationP']
-        # self.conformal = self.parameters['conformal']
-        #self.feature_selection = self.parameters["feature_selection"]
-        #self.conformalSignificance = self.parameters['conformalSignificance']
-
-        # Check X and Y integrity.
-        if (self.nobj == 0) or (self.nvarx == 0):
-            LOG.error('No objects/variables in the matrix')
-            raise Exception('No objects/variables in the matrix')
-        if len(Y) == 0:
-            self.failed = True
-            LOG.error('No activity values')
-            raise ValueError("No activity values (Y)")
 
 
         # Get cross-validator 
@@ -141,7 +174,7 @@ class BaseEstimator:
                            f'exception: {e}')
                 raise e
 
-        # Perform subsampling on the majoritary class. Consider to move.
+        # Perform subsampling on the majority class. Consider to move.
         # Only for qualitative endpoints.
         if self.parameters["imbalance"] is not None and \
          not self.parameters["quantitative"]:
@@ -150,12 +183,11 @@ class BaseEstimator:
                     self.parameters['imbalance'], self.X, self.Y, 46)
                 # This is necessary to avoid inconsistences in methods
                 # using self.nobj
-                self.nobj, self.nvarx = np.shape(self.X)
                 LOG.info(f'{self.parameters["imbalance"]}'
                              f'sampling method performed')
                 LOG.info(f'Number of objects after sampling: {self.nobj}')
             except Exception as e:
-                LOG.error(f'Unable to perform sampling'
+                LOG.error(f'Unable to perform sampling '
                             f'method with exception: {e}')
                 raise e
 
@@ -189,7 +221,19 @@ class BaseEstimator:
         # Run feature selection. Move to a instance method.
         if self.parameters["feature_selection"]:
             self.run_feature_selection()
+       
+        # Set the new number of instances/variables
+        # if sampling/feature selection performed
+        self.nobj, self.nvarx = np.shape(X)
 
+        # Check X and Y integrity.
+        if (self.nobj == 0) or (self.nvarx == 0):
+            LOG.error('No objects/variables in the matrix')
+            raise Exception('No objects/variables in the matrix')
+        if len(Y) == 0:
+            self.failed = True
+            LOG.error('No activity values')
+            raise ValueError("No activity values (Y)")
 
     def run_feature_selection(self):
         """Compute the number of variables to be retained.
@@ -197,7 +241,7 @@ class BaseEstimator:
         # When auto, the 10% top informative variables are retained.
         if self.parameters["feature_number"] == "auto":
             # Use 10% of the total number of objects:
-            # -The number of variables is greater than the 10% of the objects
+            # The number of variables is greater than the 10% of the objects
             # And the number of objects is greater than 100
             if self.nvarx > (self.nobj * 0.1) and not self.nobj < 100:
                 self.n_features = int(self.nobj * 0.1)
@@ -269,11 +313,15 @@ class BaseEstimator:
                     X_test, self.parameters['conformalSignificance'])
                 # Add the n validation interval means
                 interval_means.append(
-                    np.mean(np.abs(prediction[:, 0]) - np.abs(prediction[:, 1])))
+                    np.mean(np.abs(prediction[:, 0]) - 
+                                np.abs(prediction[:, 1])))
                 Y_test = Y_test.reshape(-1, 1)
-                # Get boolean mask of instances within the applicability domain.
-                inside_interval = ((prediction[:, 0].reshape(-1, 1) < Y_test) & 
-                                     (prediction[:, 1].reshape(-1, 1) > Y_test))
+                # Get boolean mask of instances
+                #  within the applicability domain.
+                inside_interval = ((prediction[:, 0].reshape(-1, 1)
+                                     < Y_test) & 
+                                     (prediction[:, 1].reshape(-1, 1) 
+                                     > Y_test))
                 # Compute the accuracy (number of instances within the AD).
                 accuracy = np.sum(inside_interval)/len(Y_test)
                 # Add validation result to the list of accuracies.
@@ -292,9 +340,11 @@ class BaseEstimator:
         #Add quality metrics to results.
 
         results.append(('Conformal_mean_interval',
-                        'Conformal mean interval', self.conformal_mean_interval))
+                        'Conformal mean interval', 
+                        self.conformal_mean_interval))
         results.append(
-            ('Conformal_accuracy', 'Conformal accuracy', self.conformal_accuracy))
+            ('Conformal_accuracy', 'Conformal accuracy', 
+            self.conformal_accuracy))
 
         return True, (results,)
 
