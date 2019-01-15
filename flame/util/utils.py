@@ -134,7 +134,6 @@ def write_config(config: dict) -> None:
     with open(get_conf_yml_path(), 'w') as f:
         yaml.dump(config, f, default_flow_style=False)
 
-
 def set_model_repository(path=None):
     """
     Set the model repository path.
@@ -256,6 +255,28 @@ def id_generator(size=10, chars=string.ascii_uppercase + string.digits):
     '''
 
     return ''.join(random.choice(chars) for _ in range(size))
+
+
+def get_parameters(model, version):
+
+    parameters_file_path = model_path(model, version)
+    parameters_file_name = os.path.join (parameters_file_path,'parameters.yaml')
+
+    if not os.path.isfile(parameters_file_name):
+        return False, None
+
+    try:
+        with open(parameters_file_name, 'r') as pfile:
+            parameters = yaml.load(pfile)
+    except Exception as e:
+        return False, e
+
+    parameters['endpoint'] = model
+    parameters['version'] = version
+    parameters['model_path'] = parameters_file_path
+    parameters['md5'] = md5sum(parameters_file_name)
+
+    return True, parameters
 
 
 def add_result(results, var, _key, _label, _type, _dimension='objs',
