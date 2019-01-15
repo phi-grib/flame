@@ -25,7 +25,7 @@ def make_model():
 @pytest.fixture
 def build_model():
     builder = build.Build(MODEL_NAME)
-    builder.param.getVal('tune') = False
+    builder.param.setVal('tune',False)
     return builder.run(SDF_FILE_NAME)
 
 
