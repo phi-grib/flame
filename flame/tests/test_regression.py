@@ -2,6 +2,7 @@ import pytest
 
 import io
 import os
+from pathlib import Path
 import json
 
 import numpy as np
@@ -10,10 +11,12 @@ from flame import manage
 from flame import build
 from flame import predict
 
-MODEL_REPOSITORY = '/home/testmodels'
+# paths configs
+MODEL_REPOSITORY = Path('/home/testmodels')
 MODEL_NAME = 'REGR'
-SDF_FILE_NAME = os.path.join(os.path.dirname(__file__), 'data/minicaco.sdf')
-FIXED_RESULTS = os.path.join(os.path.dirname(__file__), 'data/regression_res.json')
+current = Path(__file__).parent.resolve()
+SDF_FILE_NAME = current / 'data' / 'minicaco.sdf'
+FIXED_RESULTS = current / 'data' / 'regression_res.json'
 
 
 @pytest.fixture
@@ -25,8 +28,8 @@ def make_model():
 @pytest.fixture
 def build_model():
     builder = build.Build(MODEL_NAME)
-    builder.parameters['tune'] = False
-    builder.parameters['conformal'] = False
+    builder.param.setVal('tune', False)
+    builder.param.setVal('conformal', False)
     return builder.run(SDF_FILE_NAME)
 
 
@@ -48,7 +51,7 @@ def test_regression(make_model, build_model, fixed_results):
     assert build_status is True
 
     predictor = predict.Predict(MODEL_NAME, 0)
-    predictor.parameters['conformal'] = False
+    predictor.param.setVal('conformal', False)
     _, results_str = predictor.run(SDF_FILE_NAME)
 
     prediction_results_dict = json.load(io.StringIO(results_str))

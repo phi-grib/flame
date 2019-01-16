@@ -3,6 +3,7 @@ import pytest
 import io
 import os
 import json
+from pathlib import Path
 
 import numpy as np
 
@@ -12,8 +13,9 @@ from flame import predict
 
 MODEL_REPOSITORY = '/home/testmodels'
 MODEL_NAME = 'REGRCONF'
-SDF_FILE_NAME = os.path.join(os.path.dirname(__file__), 'data/minicaco.sdf')
-FIXED_RESULTS = os.path.join(os.path.dirname(__file__), 'data/regression_res_conf.json')
+current = Path(__file__).parent.resolve()
+SDF_FILE_NAME = current / 'data/minicaco.sdf'
+FIXED_RESULTS = current / 'data/regression_res_conf.json'
 
 
 @pytest.fixture
@@ -25,7 +27,7 @@ def make_model():
 @pytest.fixture
 def build_model():
     builder = build.Build(MODEL_NAME)
-    builder.param.setVal('tune',False)
+    builder.param.setVal('tune', False)
     return builder.run(SDF_FILE_NAME)
 
 

@@ -3,6 +3,7 @@ import pytest
 import io
 import os
 import json
+from pathlib import Path
 
 import numpy as np
 
@@ -12,9 +13,10 @@ from flame import predict
 
 MODEL_REPOSITORY = '/home/testmodels'
 MODEL_NAME = 'CLASSIF'
-SDF = 'data/classification.sdf'  # put qualitative dataset
-SDF_FILE_NAME = os.path.join(os.path.dirname(__file__), SDF)
-FIXED_RESULTS = os.path.join(os.path.dirname(__file__), 'data/classif_res_std.json')
+SDF = Path('data/classification.sdf')
+current = Path(__file__).parent.resolve()
+SDF_FILE_NAME = current / SDF
+FIXED_RESULTS = current / 'data/classif_res_std.json'
 
 
 @pytest.fixture
@@ -26,10 +28,10 @@ def make_model():
 @pytest.fixture
 def build_model():
     builder = build.Build(MODEL_NAME)
-    builder.parameters['tune'] = False
-    builder.parameters['quantitative'] = False
-    builder.parameters['mol_batch'] = 'objects'
-    builder.parameters['conformal'] = False
+    builder.param.setVal('tune', False)
+    builder.param.setVal('quantitative', False)
+    builder.param.setVal('mol_batch', 'objects')
+    builder.param.setVal('conformal', False)
     return builder.run(SDF_FILE_NAME)
 
 
@@ -51,9 +53,9 @@ def test_classificationl(make_model, build_model, fixed_results):
     assert build_status is True
 
     predictor = predict.Predict(MODEL_NAME, 0)
-    predictor.parameters['quantitative'] = False
-    predictor.parameters['mol_batch'] = 'objects'
-    predictor.parameters['conformal'] = False
+    predictor.param.setVal('quantitative', False)
+    predictor.param.setVal('mol_batch', 'objects')
+    predictor.param.setVal('conformal', False)
     _, results_str = predictor.run(SDF_FILE_NAME)
 
     prediction_results_dict = json.load(io.StringIO(results_str))
