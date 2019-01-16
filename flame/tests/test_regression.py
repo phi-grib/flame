@@ -15,7 +15,7 @@ from flame import predict
 MODEL_REPOSITORY = Path('/home/testmodels')
 MODEL_NAME = 'REGR'
 current = Path(__file__).parent.resolve()
-SDF_FILE_NAME = current / 'data' / 'minicaco.sdf'
+SDF_FILE_NAME = str(current / 'data' / 'minicaco.sdf')
 FIXED_RESULTS = current / 'data' / 'regression_res.json'
 
 

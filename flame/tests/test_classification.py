@@ -15,7 +15,7 @@ MODEL_REPOSITORY = '/home/testmodels'
 MODEL_NAME = 'CLASSIF'
 SDF = Path('data/classification.sdf')
 current = Path(__file__).parent.resolve()
-SDF_FILE_NAME = current / SDF
+SDF_FILE_NAME = str(current / SDF)
 FIXED_RESULTS = current / 'data/classif_res_std.json'
 
 
