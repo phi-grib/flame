@@ -22,6 +22,7 @@
 
 import os
 import yaml
+import json
 
 from flame.util import utils
 
@@ -68,6 +69,20 @@ class Parameters:
         self.setVal('version',version)
         self.setVal('model_path',parameters_file_path)
         self.setVal('md5',utils.md5sum(parameters_file_name))
+
+        return True
+
+    @staticmethod
+    def saveYaml(self, model, version, input_JSON):
+        p = json.load(input_JSON)
+        parameters_file_path = utils.model_path(model, version)
+        parameters_file_name = os.path.join (parameters_file_path,
+                                            'parameters.yaml')
+        try:
+            with open(parameters_file_name, 'w') as pfile:
+                yaml.dump (p, pfile)
+        except Exception as e:
+            return False
 
         return True
 
@@ -118,3 +133,7 @@ class Parameters:
                     ext_input = True
 
         return ext_input, model_set
+
+    def dumpJSON (self):
+        return json.dumps(self.p)
+

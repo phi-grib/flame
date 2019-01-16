@@ -175,8 +175,8 @@ def main():
 
     elif args.command == 'build':
 
-        if (args.endpoint is None) or (args.infile is None):
-            print('flame build : endpoint and input file arguments are compulsory')
+        if (args.endpoint is None):
+            print('flame build : endpoint argument is compulsory')
             return
 
         command_build = {'endpoint': args.endpoint, 'infile': args.infile}

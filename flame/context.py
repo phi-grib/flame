@@ -145,17 +145,23 @@ def build_cmd(model, output_format=None):
     else:
 
         ifile = model['infile']
-
-        if not os.path.isfile(ifile):
-            return False, 'wrong training series file'
-
         epd = utils.model_path(model['endpoint'], 0)
-        lfile = os.path.join(epd, os.path.basename(ifile))
-        try:
-            shutil.copy(ifile, lfile)
-        except shutil.SameFileError:
-            LOG.warning('Building model with the input SDF'
-                        f' present in model folder {lfile}')
+        lfile = os.path.join(epd, 'training.sdf')
+
+        # when a new training series is provided in the command line
+        # try to copy it to the model directory
+        if ifile is not None:
+            if not os.path.isfile(ifile):
+                return False, 'wrong training series file'
+            try:
+                shutil.copy(ifile, lfile)
+            except:
+                return False, 'unable to copy input file to model directory'
+
+        # check that the local copy of the input file exists
+        if not os.path.isfile(lfile):
+            return False, 'not training series found'
+
         # run the model with the input file
         success, results = build.run(lfile)
 
