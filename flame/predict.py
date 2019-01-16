@@ -21,44 +21,43 @@
 # along with Flame. If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import sys
 import importlib
 
 from flame.util import utils, get_logger
-from flame.control import Control
+from flame.parameters import Parameters
 
 LOG = get_logger(__name__)
 
 class Predict:
-    """
-    TODO: Expand class docstring
-    """
 
     def __init__(self, model, version, output_format=None):
-
+        LOG.debug('Starting predict...')
         self.model = model
         self.version = version
-
-        # instance Control object
-        self.control = Control(model, version)
-        self.parameters = self.control.get_parameters()
+        self.param = Parameters()
+        if not self.param.loadYaml(model, version):
+            LOG.critical('Unable to load model parameters. Aborting...')
+            sys.exit()
 
         # add additional output formats included in the constructor 
         # this is requiered to add JSON format as output when the object is
         # instantiated from a web service call, requiring this output   
         if output_format != None:
-            if output_format not in self.parameters['output_format']:
-                self.parameters['output_format'].append(output_format)
+            if output_format not in self.param.getVal('output_format'):
+                self.param.appVal('output_format',output_format)
  
         return
 
     def get_model_set(self):
         ''' Returns a Boolean indicating if the model uses external input
             sources and a list with these sources '''
-        return self.control.get_model_set()
+        return self.param.getModelSet()
 
-    def set_single_CPU(self):
+    def set_single_CPU(self) -> None:
         ''' Forces the use of a single CPU '''
-        self.parameters['numCPUs'] = 1
+        LOG.debug('parameter "numCPUs" forced to be 1')
+        self.param.setVal('numCPUs',1)
 
     def run(self, input_source):
         ''' Executes a default predicton workflow '''
@@ -91,7 +90,7 @@ class Predict:
                       f' {odata_child.__name__}')
 
             # run idata object, in charge of generate model data from input
-            idata = idata_child.IdataChild(self.parameters, input_source)
+            idata = idata_child.IdataChild(self.param, input_source)
             results = idata.run()
             LOG.debug(f'idata child {idata_child.__name__} completed `run()`')
 
@@ -102,11 +101,11 @@ class Predict:
 
         if 'error' not in results:
             # run apply object, in charge of generate a prediction from idata
-            apply = apply_child.ApplyChild(self.parameters, results)
+            apply = apply_child.ApplyChild(self.param, results)
             results = apply.run()
             LOG.debug(f'apply child {apply_child.__name__} completed `run()`')
 
         # run odata object, in charge of formatting the prediction results or any error
-        odata = odata_child.OdataChild(self.parameters, results)
+        odata = odata_child.OdataChild(self.param, results)
         LOG.info('Prediction completed')
         return odata.run()

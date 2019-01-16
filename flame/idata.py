@@ -45,7 +45,7 @@ LOG = get_logger(__name__)
 
 class Idata:
 
-    def __init__(self, parameters: dict, input_source: str):
+    def __init__(self, parameters, input_source: str):
         """
         Input data class to standarize mol inputs
 
@@ -63,25 +63,23 @@ class Idata:
 
         """
         # control object defining the processing
-        self.parameters = parameters
+        self.param = parameters
         # path for temp files (fallback default)
         self.dest_path = '.'
         self.results = {
             'manifest': [],
             'meta': {'main': [],
-                     'endpoint': self.parameters['endpoint'],
-                     'version': self.parameters['version'],
+                     'endpoint': self.param.getVal('endpoint'),
+                     'version': self.param.getVal('version'),
                      }
         }    # create empty context index ('manifest')
 
-        # make sure parameters contains an ext_input enty and that it is not null
-        if ('ext_input' in parameters) and (parameters['ext_input']):
+        if self.param.getVal('ext_input'):
             LOG.debug('"ext_input" found in parameters')
             self.idata = input_source
             self.ifile = None
             randomName = 'flame-'+utils.id_generator()
             self.dest_path = os.path.join(tempfile.gettempdir(), randomName)
-
         else:
             self.idate = None
             self.ifile = input_source
@@ -122,30 +120,31 @@ class Idata:
         # Iterate for every molecule inside the SDFile
         for mol in suppl:
 
-            # Do not even try to process molecules not recognised by RDKit.
-            # They will be removed at the normalization step
+            # Do not try to process molecules not recognised by RDKit.
+            # They will be removed at the pre-normalization step, which is
+            # compulsory for every molecule
             if mol is None:
                 LOG.error(f'(@extractInformaton) Unable to process molecule #{obj_num+1}'
                           f' in file {ifile}')
-                success_list.append(False)
+                # success_list.append(False)
                 continue
 
             # extract the molecule name, using a sdfileutils algorithm 
             name = sdfu.getName(
-                mol, count=obj_num, field=self.parameters['SDFile_name'], suppl=suppl)
+                mol, count=obj_num, field=self.param.getVal('SDFile_name'), suppl=suppl)
 
             # extracts biological information (activity) which is used as dependent variable
             # for the model training and is provided as a prediction for new compounds
             bio = None
-            if self.parameters['SDFile_activity'] is not None:
-                bio = utils.get_sdf_value(mol, self.parameters['SDFile_activity'])
+            if self.param.getVal('SDFile_activity') is not None:
+                bio = utils.get_sdf_value(mol, self.param.getVal('SDFile_activity'))
             
             # extracts experimental information, if any.
             # note that experimental information is used only in prediction, as a value
             # which overrides any model predicted value
             exp = None    
-            if self.parameters['SDFile_experimental'] is not None:
-                exp = utils.get_sdf_value(mol, self.parameters['SDFile_experimental'])
+            if self.param.getVal('SDFile_experimental') is not None:
+                exp = utils.get_sdf_value(mol, self.param.getVal('SDFile_experimental'))
 
             # generates a SMILES
             sml = None
@@ -175,9 +174,6 @@ class Idata:
                          'smiles', 'objs',
                          'Structure of the molecule in SMILES format')
 
-        LOG.debug(f'processed {obj_num} molecules'
-                  f' from a supplier of {len(suppl)} without issues')
-
         if not utils.is_empty(obj_bio):
             utils.add_result(self.results, np.array(obj_bio, dtype=np.float64),
                              'ymatrix', 'Activity',
@@ -190,12 +186,18 @@ class Idata:
                              'decoration', 'objs',
                              'Experimental anotation present in the input file')
 
+        LOG.debug(f'processed {obj_num} molecules'
+                  f' from a supplier of {len(suppl)} without issues')
+        
         return success_list
 
     def normalize(self, ifile, method):
         '''
         Generates a simplified SDFile with MolBlock and an internal ID for
-        further processing.
+        further processing
+
+        Note that this method is applied to every molecule and that it removes
+        mol blocks in the input SDFile not able to generate a valid mol
 
         Also, when defined in control, applies chemical standardization
         protocols, like the one provided by Francis Atkinson (EBI),
@@ -207,9 +209,12 @@ class Idata:
         the name of the output molecule and an error message otherwyse
 
         '''
+        
+        success_list = [True for i in range(sdfu.count_mols(ifile))]
+        
+        if not method :
+            method = ''
 
-        if not method:
-            return True, ifile
         LOG.info('Starting normalization...')
         try:
             suppl = Chem.SDMolSupplier(ifile)
@@ -219,7 +224,6 @@ class Idata:
                       f'{e}')
             return False, 'Error at processing input file for standardizing structures'
 
-        success = True
         filename, fileext = os.path.splitext(ifile)
         ofile = filename + '_std' + fileext
         LOG.debug(f'writing standarized molecules to {ofile}')
@@ -235,82 +239,93 @@ class Idata:
                     continue
 
                 name = sdfu.getName(m, count=mcount,
-                                    field=self.parameters['SDFile_name'],
+                                    field=self.param.getVal('SDFile_name'),
                                     suppl=suppl)
 
-                # this should be out of the loop
-                # since all the molecules will have the same method
+                parent = None
+
                 if 'standardize' in method:
                     try:
+
                         parent = standardise.run(Chem.MolToMolBlock(m))
+
                     except standardise.StandardiseException as e:
-                        LOG.error(f'Standardize exception: {e}'
-                                  f' when processing mol #{mcount} {name}')
 
                         if e.name == "no_non_salt":
-                            parent = Chem.MolToMolBlock(m)
-                            LOG.debug(f'skiped standardize for mol'
+                            # very commong warning, use parent mol and proceed
+                            LOG.debug(f'"No non salt error" found. Skiped standardize for mol'
                                       f' #{mcount} {name}')
-
+                            parent = Chem.MolToMolBlock(m)
                         else:
-                            return False, e.name
+                            # serious issue, no parent was generated, use original mol
+                            if (parent is None):
+                                LOG.error(f'Critical standardize exception: {e}'
+                                        f' when processing mol #{mcount} {name}. Skipping normalization')
+                                parent = Chem.MolToMolBlock(m)
+                            # minor isse, parent was generated, show a warning and proceed
+                            else:
+                                LOG.info(f'Standardize exception: {e}'
+                                        f' when processing mol #{mcount} {name}. Normalization applied')
+                        #return False, e.name
+
                     except Exception as e:
-                        LOG.error(f'exception {e} while standardizing')
-                        return False, f"Unknown standardiser error {e}"
+                        # this error means an execution error running standardizer
+                        # the molecule is discarded and therefore the list of molecules must be updated 
+                        LOG.error(f'Critical standardize execution exception {e}'
+                                    f' when processing mol #{mcount} {name}. Discarding molecule')
+                        success_list[mcount]=False
+                        continue
 
                 else:
-                    LOG.error(f'normalize method {method} not recognized.'
-                              'Skipping normalization.')
+                    LOG.info(f'Skipping normalization.')
                     parent = Chem.MolToMolBlock(m)
 
                 # in any case, write parent plus internal ID (flameID)
                 fo.write(parent)
 
-                flameID = 'fl%0.10d' % mcount
-                fo.write('>  <flameID>\n'+flameID+'\n\n')
+                # *** discarded method to control errors ****
+                # flameID = 'fl%0.10d' % mcount
+                # fo.write('>  <flameID>\n'+flameID+'\n\n')
 
                 mcount += 1
 
                 # terminator
                 fo.write('$$$$\n')
 
-        return success, ofile
+        return success_list, ofile
 
     def ionize(self, ifile, method):
         '''
         Adjust the ionization status of the molecular structure,
         using a given pH.
         '''
-
+        
+        success_list = [True for i in range(sdfu.count_mols(ifile))]
+    
         if not method:
-            return True, ifile
+            
+            return success_list, ifile
 
         else:
-            raise NotImplementedError
-        success = False
-        results = 'not ionized'
+            LOG.debug ('ionize called, but no method implemented so far')
+            # methods here
 
-        # methods here
-
-        results = 'ionization method not recognised'
-
-        return success, results
+        return success_list, ifile
 
     def convert3D(self, ifile, method):
         '''
         Assigns 3D structures to the molecular structures provided as input.
         '''
+        
+        success_list = [True for i in range(sdfu.count_mols(ifile))]
 
         if not method:
-            return True, ifile
-
-        success = False
-        results = 'not converted to 3D'
+            return success_list, ifile
 
         if 'ETKDG' in method:
-            success, results = convert3D._ETKDG(ifile)
+            success_list, ofile = convert3D._ETKDG(ifile)
 
-        return success, results
+        return success_list, ofile
 
     def computeMD_custom(self, ifile):
         '''
@@ -375,8 +390,7 @@ class Idata:
 
                 combined_md = results['matrix']  # np.array of values
                 combined_nm = results['names']  # list of variable names
-                # list of true/false, what?
-                combined_sc = results['success_arr']
+                combined_sc = results['success_arr'] # list of true/false
 
                 shape = np.shape(combined_md)
 
@@ -395,7 +409,6 @@ class Idata:
                 combined_md = np.hstack((combined_md, results['matrix']))
                 combined_nm.extend(results['names'])
 
-                # wut is this???
                 # combine sucess results into oine list with AND
                 # All results must be True to get True
                 # scc stands for success
@@ -405,95 +418,95 @@ class Idata:
 
         return True, (combined_md, combined_nm, combined_sc)
 
-    def computeMD_FUTURE(self, ifile: str, methods: list):
-        """ Computes molecular descriptors.
+    # def computeMD_FUTURE(self, ifile: str, methods: list):
+    #     """ Computes molecular descriptors.
 
-        Computes and concatenates all the descriptor methods 
-        passed in `methods` parameter.
+    #     Computes and concatenates all the descriptor methods 
+    #     passed in `methods` parameter.
 
-        Parameters
-        ----------
+    #     Parameters
+    #     ----------
 
-        ifile: str
-            Input SDF file
+    #     ifile: str
+    #         Input SDF file
 
 
-        methods: list
-            list of methods to compute molecular descriptors with
+    #     methods: list
+    #         list of methods to compute molecular descriptors with
 
-        Returns
-        -------
+    #     Returns
+    #     -------
 
-        success: bool
-            If computation was successfull
+    #     success: bool
+    #         If computation was successfull
 
-        xmatrix_filtered: np.ndarray
-            Descriptors matrix filtered without failed molecules
+    #     xmatrix_filtered: np.ndarray
+    #         Descriptors matrix filtered without failed molecules
 
-        var_names: list
-            Variable names or descriptor names
+    #     var_names: list
+    #         Variable names or descriptor names
 
-        success_list: list
-            List with bool values indicating if mol
-            had any issues during supplier (None) or in the
-            descriptor array (presence of NaNs).
-        """
+    #     success_list: list
+    #         List with bool values indicating if mol
+    #         had any issues during supplier (None) or in the
+    #         descriptor array (presence of NaNs).
+    #     """
 
-        if not methods:
-            raise ValueError('Must provide at least one method')
+    #     if not methods:
+    #         raise ValueError('Must provide at least one method')
 
-        LOG.info(f'Computing molecular descriptors with methods {methods}...')
+    #     LOG.info(f'Computing molecular descriptors with methods {methods}...')
 
-        registered_methods = dict([('RDKit_properties', computeMD._RDKit_properties),
-                                   ('RDKit_md', computeMD._RDKit_descriptors),
-                                   ('padel', computeMD._padel_descriptors),
-                                   ('custom', self.computeMD_custom)])
+    #     registered_methods = dict([('RDKit_properties', computeMD._RDKit_properties),
+    #                                ('RDKit_md', computeMD._RDKit_descriptors),
+    #                                ('padel', computeMD._padel_descriptors),
+    #                                ('custom', self.computeMD_custom)])
 
-        # check if input methods are members of registered methods
-        if not all(m in registered_methods for m in methods):
-            # find the non member methods
-            no_recog_meth = [m for m in methods if m not in registered_methods]
-            LOG.error(f'Methods {no_recog_meth} not recognized')
+    #     # check if input methods are members of registered methods
+    #     if not all(m in registered_methods for m in methods):
+    #         # find the non member methods
+    #         no_recog_meth = [m for m in methods if m not in registered_methods]
+    #         LOG.error(f'Methods {no_recog_meth} not recognized')
 
-            # check is any single good method
-            if len(no_recog_meth) == len(methods):
-                # then not a single md method is correct... so error
-                raise ValueError(f'Methods {no_recog_meth} not recognized.'
-                                 ' No valid method found.')
+    #         # check is any single good method
+    #         if len(no_recog_meth) == len(methods):
+    #             # then not a single md method is correct... so error
+    #             raise ValueError(f'Methods {no_recog_meth} not recognized.'
+    #                              ' No valid method found.')
 
-            # remove bad methods
-            methods = [m for m in methods if m not in no_recog_meth]
+    #         # remove bad methods
+    #         methods = [m for m in methods if m not in no_recog_meth]
 
-        success_lists = []
-        # more tha one method
-        if len(methods) > 1:
+    #     success_lists = []
+    #     # more tha one method
+    #     if len(methods) > 1:
 
-            xmatrix_ls = []
-            var_names = []
+    #         xmatrix_ls = []
+    #         var_names = []
 
-            for method in methods:
-                results = registered_methods[method](ifile)
+    #         for method in methods:
+    #             results = registered_methods[method](ifile)
 
-                xmatrix_ls.append(results['matrix'])
-                var_names.extend(results['names'])
-                success_lists.append(results['success_arr'])
-            # horizontally concat results
-            xmatrix = self._concat_descriptors_matrix(xmatrix_ls)
+    #             xmatrix_ls.append(results['matrix'])
+    #             var_names.extend(results['names'])
+    #             success_lists.append(results['success_arr'])
+    #         # horizontally concat results
+    #         xmatrix = self._concat_descriptors_matrix(xmatrix_ls)
 
-        # do for a single method. Skipping concatenation
-        else:
-            results = registered_methods[methods[0]](ifile)
+    #     # do for a single method. Skipping concatenation
+    #     else:
+    #         results = registered_methods[methods[0]](ifile)
 
-            xmatrix = results['matrix']
-            var_names = results['names']
-            # still append to list to maintain
-            # the behaviour of _filter_matrix
-            success_lists.append(results['success_arr'])
+    #         xmatrix = results['matrix']
+    #         var_names = results['names']
+    #         # still append to list to maintain
+    #         # the behaviour of _filter_matrix
+    #         success_lists.append(results['success_arr'])
 
-        # filter molecules with failed status during computing descriptors
-        xmatrix_filtered, success_list = self._filter_matrix(
-            xmatrix, success_lists)
-        return True, (xmatrix_filtered, var_names, success_list)
+    #     # filter molecules with failed status during computing descriptors
+    #     xmatrix_filtered, success_list = self._filter_matrix(
+    #         xmatrix, success_lists)
+    #     return True, (xmatrix_filtered, var_names, success_list)
 
     @staticmethod
     def _filter_matrix(matrix: np.ndarray, succes_list: list):
@@ -599,23 +612,26 @@ class Idata:
             internal = iresults[1]
             ixmatrix = internal[0]
 
-            # isinstance?
+            # check that the type of ixmatrix is correct (np.ndarray)
             if not isinstance(ixmatrix, np.ndarray):
                 LOG.error('Results type in consolidate must be `np.ndarray`.'
                           f' Found: {type(ixmatrix)}')
                 return False, "unknown results type in consolidate"
 
-            if first:
+
+            if first: # only for the first element of the loop
                 xmatrix = ixmatrix
                 var_nam = internal[1]
                 success_list = internal[2]
 
                 shape = np.shape(ixmatrix)
                 first = False
+
             else:
                 ishape = np.shape(ixmatrix)
-                # for bidimensional arrays, num_var is shape[1]
+
                 if len(shape) > 1 and len(ishape) > 1:
+                    # for bidimensional arrays, num_var is shape[1]
                     if shape[1] != ishape[1]:
                         LOG.error('Impossible to concat arrays'
                                   f'with shape {shape} and {ishape}')
@@ -645,10 +661,10 @@ class Idata:
         # return
         ##
 
-        if 'ext_input' in self.parameters and self.parameters['ext_input']:
+        if self.param.getVal('ext_input'):
             return
 
-        md5_parameters = self.parameters['md5']
+        md5_parameters = self.param.getVal('md5')
         md5_input = utils.md5sum(self.ifile)  # run md5 in self.ifile
 
         try:
@@ -668,7 +684,7 @@ class Idata:
         of the control class and the input file.
         '''
 
-        if 'ext_input' in self.parameters and self.parameters['ext_input']:
+        if self.param.getVal('ext_input'):
             return False
 
         try:
@@ -678,7 +694,7 @@ class Idata:
 
             with open(picklfile, 'rb') as fi:
                 md5_parameters = pickle.load(fi)
-                if md5_parameters != self.parameters['md5']:
+                if md5_parameters != self.param.getVal('md5'):
                     return False
 
                 md5_input = pickle.load(fi)
@@ -689,8 +705,8 @@ class Idata:
 
                 # these values are added programatically and therefore not
                 # checked by the md5
-                self.results['meta']['endpoint'] = self.parameters['endpoint']
-                self.results['meta']['version'] = self.parameters['version']
+                self.results['meta']['endpoint'] = self.param.getVal('endpoint')
+                self.results['meta']['version'] = self.param.getVal('version')
 
         except Exception as e:
             LOG.error('Error loading pickle with exception: {}'.format(e))
@@ -767,13 +783,34 @@ class Idata:
 
         return True, (md_results, va_results, success_list)
 
+    def updateMolIndex (self, mol_index, success_list):
+
+        # if success list is True for all elements
+        if len(success_list) == sum(i for i in success_list):
+            return True, mol_index
+
+        # update mol_index
+        j = 0
+        for i in range(len(mol_index)):
+            if not mol_index[i]:
+                continue
+            if not success_list[j]:
+                mol_index[i]=False
+            j=j+1
+
+        # if no molecules left return False
+        if sum(i for i in mol_index) == 0:
+            return False, 'no molecules left'
+
+        return True, mol_index
+
     def workflow_series(self, input_file):
         '''
         Executes in sequence methods required to generate MD,
         starting from a single molecular file
 
         input : ifile, a molecular file in SDFile format
-        output: results contains two lists
+        output: results contains the following  lists
                 results[0] a numpy bidimensional array containing MD
                 results[1] a list of strings containing the names of the MD vars
                 results[2] a list of booleans indicating for which objects the 
@@ -781,19 +818,54 @@ class Idata:
 
         '''
 
-        success, results = self.normalize(
-            input_file, self.parameters['normalize_method'])
-        if success:
-            success, results = self.ionize(
-                results, self.parameters['ionize_method'])
-            if success:
-                success, results = self.convert3D(
-                    results, self.parameters['convert3D_method'])
-                if success:
-                    success, results = self.computeMD(
-                        results, self.parameters['computeMD_method'])
+        mol_index = [True for i in range(sdfu.count_mols(input_file))]
 
-        return success, results
+        ###
+        # 1. normalize
+        ###
+        success_list, output_normalize_file = self.normalize(
+            input_file, self.param.getVal('normalize_method'))
+        success, mol_index = self.updateMolIndex(mol_index, success_list)
+
+        if not success:
+            return False, 'failed to normalize '+input_file
+
+        ###
+        # 2. ionize
+        ###
+        success_list, output_ionize_file = self.ionize(
+            output_normalize_file, self.param.getVal('ionize_method'))
+        success, mol_index = self.updateMolIndex(mol_index, success_list)
+
+        if not success:
+            return False, 'failed to ionize '+input_file
+
+        ###
+        # 3. convert3D
+        ###
+        success_list, output_convert3D_file = self.convert3D(
+            output_ionize_file, self.param.getVal('convert3D_method'))
+        success, mol_index = self.updateMolIndex(mol_index, success_list)
+
+        if not success:
+            return False, 'failed to convert 3D '+input_file
+
+        ###
+        # 4. compute MD
+        ###
+        success, results = self.computeMD(
+            output_convert3D_file, self.param.getVal('computeMD_method'))
+
+        if not success:
+            return False, results
+
+        x = results [0]
+        xnames = results [1]
+        success_list = results [2]
+
+        success, mol_index = self.updateMolIndex(mol_index, success_list)
+        
+        return success, (x, xnames, mol_index)
 
     def ammend_objects(self, inform, workflow) -> None:
         '''
@@ -863,7 +935,7 @@ class Idata:
             return
 
         nobj = self.results['obj_num']
-        ncpu = min(nobj, self.parameters['numCPUs'])
+        ncpu = min(nobj, self.param.getVal('numCPUs'))
 
         # copy the input file to a temp file which will be cleaned at the end
         temp_path = tempfile.mkdtemp()
@@ -884,7 +956,7 @@ class Idata:
 
             pool = mp.Pool(ncpu)
 
-            if self.parameters['mol_batch'] == 'series':
+            if self.param.getVal('mol_batch') == 'series':
                 results = pool.map(self.workflow_series, split_files_names)
             else:
                 results = pool.map(self.workflow_objects, split_files_names)
@@ -893,7 +965,7 @@ class Idata:
 
         else:
 
-            if self.parameters['mol_batch'] == 'series':
+            if self.param.getVal('mol_batch') == 'series':
                 success, results = self.workflow_series(lfile)
             else:
                 success, results = self.workflow_objects(lfile)
@@ -909,6 +981,7 @@ class Idata:
         success_workflow = results[2]
 
         if len(success_inform) != len(success_workflow):
+
             LOG.error('shape mismatch of informed and workflow results:'
                       f' ({len(success_inform), len(success_workflow)})'
                       ' This is because some molecules failed during'
@@ -964,12 +1037,7 @@ class Idata:
             # raise FileNotFoundError('{} not found'.format(self.ifile))
             return
 
-        # --------------------
         #  Reading TSV by hand
-        #
-        # this could be done simply with pd.read_csv(self.idata, sep='\t')
-        # --------------------
-
         with open(self.ifile, 'r') as fi:
 
             var_nam = []
@@ -978,13 +1046,13 @@ class Idata:
 
             for index, line in enumerate(fi):
                 # we asume that the first row contains var names
-                if index == 0 and self.parameters['TSV_varnames']:
+                if index == 0 and self.param.getVal('TSV_varnames'):
                     var_nam = line.strip().split('\t')
                     var_nam = var_nam[1:]
                 else:
                     value_list = line.strip().split('\t')
 
-                    if self.parameters['TSV_objnames']:
+                    if self.param.getVal('TSV_objnames'):
                         # we asume that the first column contains object names
                         obj_nam.append(value_list[0])
                         value_list = value_list[1:]
@@ -1000,15 +1068,13 @@ class Idata:
                     else:
                         xmatrix = np.vstack((xmatrix, value_array))
 
-        # ------- END of reading TSV
-
         obj_num = index
         LOG.debug('loaded TSV with shape {} '.format(xmatrix.shape))
-        if self.parameters['TSV_varnames']:
+        if self.param.getVal('TSV_varnames'):
             obj_num -= 1  # what?
 
         # extract any named as "TSV_activity" as the ymatrix
-        activity_param = self.parameters['TSV_activity']
+        activity_param = self.param.getVal('TSV_activity')
         LOG.debug('creating ymatrix from column {}'.format(activity_param))
         if activity_param in var_nam:
             col = var_nam.index(activity_param)
@@ -1022,11 +1088,11 @@ class Idata:
         utils.add_result(self.results, xmatrix, 'xmatrix',
                          'X matrix', 'method', 'vars', 'Molecular descriptors')
 
-        if self.parameters['TSV_varnames']:
+        if self.param.getVal('TSV_varnames'):
             utils.add_result(self.results, var_nam, 'var_nam', 'Var names',
                              'method', 'vars', 'Names of the X variables')
 
-        if not self.parameters['TSV_objnames']:
+        if not self.param.getVal('TSV_objnames'):
             for i in range(obj_num):
                 obj_nam.append('obj%.10f' % i)
 
@@ -1125,7 +1191,7 @@ class Idata:
         chunck per CPU        
         '''
 
-        input_type = self.parameters['input_type']
+        input_type = self.param.getVal('input_type')
         LOG.info('Running with input type: {}'.format(input_type))
 
         if (input_type != 'ext_data'):
@@ -1145,7 +1211,7 @@ class Idata:
         if (input_type == 'molecule'):
 
             # trick to avoid RDKit dumping warnings to the console
-            if not self.parameters['verbose_error']:
+            if not self.param.getVal('verbose_error'):
                 stderr_fileno = sys.stderr.fileno()  # saves current syserr
                 stderr_save = os.dup(stderr_fileno)
                 # open a specific RDKit log file
@@ -1154,7 +1220,7 @@ class Idata:
 
             self._run_molecule()
 
-            if not self.parameters['verbose_error']:
+            if not self.param.getVal('verbose_error'):
                 stderr_fd.close()                     # close the RDKit log
                 os.dup2(stderr_save, stderr_fileno)   # restore old syserr
 

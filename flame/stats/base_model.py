@@ -79,14 +79,66 @@ from nonconformist.evaluation import class_mean_errors
 from flame.util import utils, get_logger, supress_log
 LOG = get_logger(__name__)
 
-# TODO
-# Raise errors to child class and handling from there
 
 class BaseEstimator:
-    """Estimator parent class, contains all attributes methods shared
+    """
+    Estimator parent class, contains all attributes methods shared
      by different algorithms.Particular implementation of these 
-     methods are overwritten by child classes"""
+     methods are overwritten by child classes      
+        
+        Attributes
+        ----------
 
+        parameters : dict
+            parameter values
+        X_original : numpy.darray
+            original X matrix
+        Y_original : numpy.darray
+            original X matrix
+        variable_mask: numpy.darray
+            variable mask from feature selection
+        X : numpy.darray
+            current X matrix
+        Y : numpy.darray
+            current Y vector/matrix
+        scaler: sklearn scaler
+            scaler object to scale prediction 
+            instances
+        nobj : int
+            number of objects
+        nvarx : int
+            number of variables
+        
+        
+        Methods
+        -------
+
+        build(X)
+            Instance the estimator optimizing it
+            if tune=true.
+        run_feature_selection()
+            Performs feature selection
+        CF_quantitative_validation(self)
+            Performs conformal quantitative validation
+        CF_qualitative_validation(self)
+            Performs conformal qualitative validation
+        quantitativeValidation(self)
+            Performs quantitative validation
+        qualitativeValidation
+            Performs qualitative validation
+        validate(self)
+            Checks type of validation and calls it
+        optimize(self, X, Y, estimator, tune_parameters)
+            Performs GridSearchCV to optimize estimator
+            hyperparameters
+        regularProject(self, Xb, results)
+            Returns prediction/s for unknown instance/s
+        conformalProject(self, Xb, results)
+            Returns conformal prediction/s for unknown instance/s
+        project(self, Xb, results)
+            Checks type of projection and calls it
+
+    """
     def __init__(self, X, Y, parameters):
         """Initializes the estimator.
         Actions
@@ -97,8 +149,7 @@ class BaseEstimator:
             - Feature selection
         """
 
-        self.failed = False
-        self.parameters = parameters
+        self.param = parameters
         self.X_original = X
         self.Y_original = Y
         self.variable_mask = []
@@ -106,45 +157,46 @@ class BaseEstimator:
         self.Y = Y
         self.nobj, self.nvarx = np.shape(X)
 
-        # Assign model attributes.
-        self.quantitative = self.parameters['quantitative']
-        self.autoscale = self.parameters['modelAutoscaling']
-        self.cv = self.parameters['ModelValidationCV']
-        self.n = self.parameters['ModelValidationN']
-        self.p = self.parameters['ModelValidationP']
-        self.learning_curve = parameters['ModelValidationLC']
-        self.conformal = self.parameters['conformal']
-        self.feature_selection = self.parameters["feature_selection"]
-        self.conformalSignificance = self.parameters['conformalSignificance']
 
-        # Check X and Y integrity.
-        if (self.nobj == 0) or (self.nvarx == 0):
-            LOG.error('No objects/variables in the matrix')
-            raise Exception('No objects/variables in the matrix')
-        if len(Y) == 0:
-            self.failed = True
-            LOG.error('No activity values')
-            raise ValueError("No activity values (Y)")
 
-        # Perform subsampling on the majoritary class. Consider to move.
-        # Only for qualititive endpoints.
-        if self.parameters["imbalance"] is not None and \
-         not self.parameters["quantitative"]:
+        # Get cross-validator 
+        # Consider to include a Random Seed for cross-validator
+        if self.param.getVal('ModelValidationCV'):
+            try:
+                self.cv = getCrossVal(self.param.getVal('ModelValidationCV'),
+                                46,
+                                self.param.getVal('ModelValidationN'),
+                                self.param.getVal('ModelValidationP'))
+                LOG.debug('Cross-validator retrieved')
+                LOG.info(f'cv is: {self.cv}')
+            except Exception as e:
+                LOG.error(f'Error retrieving cross-validator with'
+                           f'exception: {e}')
+                raise e
+
+        # Perform subsampling on the majority class. Consider to move.
+        # Only for qualitative endpoints.
+        if self.param.getVal("imbalance") is not None and \
+         not self.param.getVal("quantitative"):
             try:
                 self.X, self.Y = run_imbalance(
-                    self.parameters['imbalance'], self.X, self.Y, 46)
-                LOG.info(f'{self.parameters["imbalance"]}'
+                    self.param.getVal('imbalance'), self.X, self.Y, 46)
+                # This is necessary to avoid inconsistences in methods
+                # using self.nobj
+                LOG.info(f'{self.param.getVal("imbalance")}'
                              f'sampling method performed')
+                LOG.info(f'Number of objects after sampling: {self.nobj}')
             except Exception as e:
-                LOG.error(f'Unable to perform sampling'
+                LOG.error(f'Unable to perform sampling '
                             f'method with exception: {e}')
                 raise e
 
         # Run scaling.
-        if self.autoscale:
+        if self.param.getVal('modelAutoscaling'):
             try:
                 self.X, self.mux = center(self.X)
-                self.X, self.wgx = scale(self.X, self.autoscale)
+                self.X, self.wgx = scale(self.X, 
+                                    self.param.getVal('modelAutoscaling'))
                 # MinMaxScaler is used between range 1-0 so 
                 # there is no negative values.
                 scaler =  MinMaxScaler(copy=True, feature_range=(0,1))
@@ -167,17 +219,29 @@ class BaseEstimator:
             #     newX[:, i] = np.array(self.X[:, i] -list_min[i])
 
         # Run feature selection. Move to a instance method.
-        if self.feature_selection:
+        if self.param.getVal("feature_selection"):
             self.run_feature_selection()
+       
+        # Set the new number of instances/variables
+        # if sampling/feature selection performed
+        self.nobj, self.nvarx = np.shape(X)
 
+        # Check X and Y integrity.
+        if (self.nobj == 0) or (self.nvarx == 0):
+            LOG.error('No objects/variables in the matrix')
+            raise Exception('No objects/variables in the matrix')
+        if len(Y) == 0:
+            self.failed = True
+            LOG.error('No activity values')
+            raise ValueError("No activity values (Y)")
 
     def run_feature_selection(self):
         """Compute the number of variables to be retained.
         """
         # When auto, the 10% top informative variables are retained.
-        if self.parameters["feature_number"] == "auto":
+        if self.param.getVal("feature_number") == "auto":
             # Use 10% of the total number of objects:
-            # -The number of variables is greater than the 10% of the objects
+            # The number of variables is greater than the 10% of the objects
             # And the number of objects is greater than 100
             if self.nvarx > (self.nobj * 0.1) and not self.nobj < 100:
                 self.n_features = int(self.nobj * 0.1)
@@ -190,14 +254,15 @@ class BaseEstimator:
                 self.n_features = self.nvarx
         # Manual selection of number of variables
         else:
-            self.n_features = int(self.parameters["feature_number"])
+            self.n_features = int(self.param.getVal("feature_number"))
 
         # Apply variable selection.
         try:
             # Apply the variable selection algorithm obtaining
             # the variable mask.
             self.variable_mask = selectkBest(self.X, self.Y, 
-                                self.n_features, self.quantitative)
+                                self.n_features, 
+                                self.param.getVal('quantitative'))
             
             # The scaler has to be fitted to the reduced matrix
             # in order to be applied in prediction.
@@ -245,14 +310,18 @@ class BaseEstimator:
 
                 # Perform prediction on test set
                 prediction = conformal_pred.predict(
-                    X_test, self.conformalSignificance)
+                    X_test, self.param.getVal('conformalSignificance'))
                 # Add the n validation interval means
                 interval_means.append(
-                    np.mean(np.abs(prediction[:, 0]) - np.abs(prediction[:, 1])))
+                    np.mean(np.abs(prediction[:, 0]) - 
+                                np.abs(prediction[:, 1])))
                 Y_test = Y_test.reshape(-1, 1)
-                # Get boolean mask of instances within the applicability domain.
-                inside_interval = ((prediction[:, 0].reshape(-1, 1) < Y_test) & 
-                                     (prediction[:, 1].reshape(-1, 1) > Y_test))
+                # Get boolean mask of instances
+                #  within the applicability domain.
+                inside_interval = ((prediction[:, 0].reshape(-1, 1)
+                                     < Y_test) & 
+                                     (prediction[:, 1].reshape(-1, 1) 
+                                     > Y_test))
                 # Compute the accuracy (number of instances within the AD).
                 accuracy = np.sum(inside_interval)/len(Y_test)
                 # Add validation result to the list of accuracies.
@@ -271,9 +340,11 @@ class BaseEstimator:
         #Add quality metrics to results.
 
         results.append(('Conformal_mean_interval',
-                        'Conformal mean interval', self.conformal_mean_interval))
+                        'Conformal mean interval', 
+                        self.conformal_mean_interval))
         results.append(
-            ('Conformal_accuracy', 'Conformal accuracy', self.conformal_accuracy))
+            ('Conformal_accuracy', 'Conformal accuracy', 
+            self.conformal_accuracy))
 
         return True, (results,)
 
@@ -318,14 +389,14 @@ class BaseEstimator:
                 conformal_pred.fit(X_train, Y_train)
                 # Perform prediction on test set
                 prediction = conformal_pred.predict(
-                                X_test, self.conformalSignificance)
+                            X_test, self.param.getVal('conformalSignificance'))
                 
                 c0_correct = 0
                 c1_correct = 0
                 not_predicted = 0
                 c0_incorrect = 0
                 c1_incorrect = 0
-                
+
                 # Iterate over the prediction and check the result
                 for i in range(len(Y_test)):
                     real = float(Y_test[i])
@@ -364,8 +435,12 @@ class BaseEstimator:
         results.append(('FN', 'False negatives in cross-validation', self.FN))
         
         # Compute sensitivity and specificity
-        self.sensitivity = (self.TP / (self.TP + self.FN))
-        self.specificity = (self.TN / (self.TN + self.FP))
+        try:
+            self.sensitivity = (self.TP / (self.TP + self.FN))
+            self.specificity = (self.TN / (self.TN + self.FP))
+        except Exception as e:
+            LOG.error(f'Failed to compute sens/spe with'
+                        f'exception {e}')
         # Compute Matthews Correlation Coefficient
         self.mcc = (((self.TP * self.TN) - (self.FP * self.FN)) /
                     np.sqrt((self.TP + self.FP) * (self.TP + self.FN) *
@@ -436,8 +511,9 @@ class BaseEstimator:
         try:
             # Get predicted Y
             y_pred = cross_val_predict(copy.copy(self.estimator),
-                                         copy.copy(X), copy.copy(Y),
-                                             cv=self.cv, n_jobs=1)
+                            copy.copy(X), copy.copy(Y),
+                                cv=self.cv,
+                                    n_jobs=1)
             SSY0_out = np.sum(np.square(Ym - Y))
             SSY_out = np.sum(np.square(Y - y_pred))
             self.scoringP = mean_squared_error(Y, y_pred)
@@ -482,6 +558,7 @@ class BaseEstimator:
 
         # Get confusion matrix for predicted Y
         try:
+            print(self.estimator)
             self.TNpred, self.FPpred,\
             self.FNpred, self.TPpred = confusion_matrix(Y, Yp,
                                                      labels=[0, 1]).ravel()
@@ -508,7 +585,9 @@ class BaseEstimator:
 
         # Get cross-validated Y 
         try:
-            y_pred = cross_val_predict(self.estimator, X, Y, cv=self.cv, n_jobs=1)
+            y_pred = cross_val_predict(self.estimator, X, Y,
+                    cv=self.cv,
+                             n_jobs=1)
 
             # Get confusion matrix
             self.TN, self.FP, self.FN, self.TP = confusion_matrix(
@@ -545,7 +624,7 @@ class BaseEstimator:
             LOG.debug(f'Qualitative crossvalidation performed')
         except Exception as e:
             LOG.error(f'Error computing crossvalidated Y'
-                f'with exception {e}')
+                f' with exception {e}')
             raise e
 
         return True, (info, Yp, y_pred)
@@ -557,13 +636,13 @@ class BaseEstimator:
         if self.X is None or self.estimator is None:
             return False, 'no estimator'
 
-        if not self.conformal:
-            if self.quantitative:
+        if not self.param.getVal('conformal'):
+            if self.param.getVal('quantitative'):
                 success, results = self.quantitativeValidation()
             else:
                 success, results = self.qualitativeValidation()
         else:
-            if self.quantitative:
+            if self.param.getVal('quantitative'):
                 success, results = self.CF_quantitative_validation()
             else:
                 success, results = self.CF_qualitative_validation()
@@ -573,32 +652,36 @@ class BaseEstimator:
     def optimize(self, X, Y, estimator, tune_parameters):
         ''' optimizes a model using a grid search over a 
         range of values for diverse parameters'''
-
+        
+        LOG.info('Computing best hyperparameter values')
         metric = ""
         # Select the metric according to the type of model
-        if self.quantitative:
+        if self.param.getVal('quantitative'):
             metric = 'r2'
         else:
              metric = make_scorer(mcc)
 
         tune_parameters = [tune_parameters]
-
+        # Count computation time
+        LOG.debug("Hyperparameter optimization ")
         start = time.time()
-        print("tune_parameters")
-        print("metric: " + str(metric))
-        tclf = GridSearchCV(estimator, tune_parameters,
-                            scoring=metric, cv=3, n_jobs=4)
-        # n_splits=10, shuffle=False,
-        #   random_state=42), n_jobs= -1)
-        tclf.fit(X, Y)
-        self.estimator = copy.copy(tclf.best_estimator_)
-        print("best parameters: ", tclf.best_params_)
+        # Consider crossval number to be a parameter, not
+        # constant.
+        try:
+            tclf = GridSearchCV(estimator, tune_parameters,
+                                scoring=metric, cv=3, n_jobs=4)
+            tclf.fit(X, Y)
+            self.estimator = copy.copy(tclf.best_estimator_)
+        except Exception as e:
+            LOG.error(f'Error optimizing hyperparameters with'
+            f'exception {e}')
+            raise e
         end = time.time()
-        print("found in: ", end-start, " seconds")
-        # print self.estimator.get_params()
+        LOG.info(f'best parameters: , {tclf.best_params_}')
+        LOG.debug(f'Best estimator found in {end-start} seconds')
+        # Remove garbage in memory
         del(tclf)
         gc.collect()
-        len(gc.get_objects()) 
 
     # Projection section
 
@@ -617,9 +700,9 @@ class BaseEstimator:
          for obtaining predictions '''
 
         prediction = self.conformal_pred.predict(
-            Xb, significance=self.conformalSignificance)
+            Xb, significance=self.param.getVal('conformalSignificance'))
 
-        if self.quantitative:
+        if self.param.getVal('quantitative'):
             mean1 = np.mean(prediction, axis=1)
             lower_limit = prediction[:, 0]
             upper_limit = prediction[:, 1]
@@ -637,7 +720,6 @@ class BaseEstimator:
             #  predictions
             # / c0 / c1 / c2 /
             # /True/True/False/
-
             for i in range(len(prediction[0])):
                 class_key = 'c' + str(i)
                 class_label = 'Class ' + str(i)
@@ -654,20 +736,17 @@ class BaseEstimator:
         if self.estimator == None:
             results['error'] = 'failed to load classifier'
             return
-
-        if self.feature_selection:
+        # Apply variable mask to prediction vector/matrix
+        if self.param.getVal("feature_selection"):
             print ("feature selection")
             Xb = Xb[:, self.variable_mask]
-
-        if self.autoscale:
+        # Scale prediction vector/matrix
+        if self.param.getVal('modelAutoscaling'):
             Xb = Xb-self.mux
             Xb = Xb*self.wgx
-
             Xb = self.scaler.transform(Xb)
-
-
-
-        if not self.conformal:
+        # Select the type of projection
+        if not self.param.getVal('conformal'):
             self.regularProject(Xb, results)
         else:
             self.conformalProject(Xb, results)

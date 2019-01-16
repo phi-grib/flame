@@ -36,7 +36,7 @@ class Apply:
 
     def __init__(self, parameters, results):
 
-        self.parameters = parameters
+        self.param = parameters
         self.results = results
 
         self.results['origin'] = 'apply'
@@ -53,10 +53,10 @@ class Apply:
         # there are four variants of external validation, depending if the method
         # if conformal or non-conformal and the model is qualitative and quantitative
 
-        if not self.parameters["conformal"]:
+        if not self.param.getVal("conformal"):
 
             # non-conformal 
-            if not self.parameters["quantitative"]:
+            if not self.param.getVal("quantitative"):
                 
                 # non-conformal & qualitative
                 Yp = np.asarray(self.results["values"])
@@ -144,7 +144,7 @@ class Apply:
         else:
             # conformal external validation
 
-            if not self.parameters["quantitative"]:
+            if not self.param.getVal("quantitative"):
                 
                 # conformal & qualitative
                 Yp = np.concatenate((np.asarray(self.results['c0']).reshape(
@@ -289,7 +289,7 @@ class Apply:
             return
 
         # get model pickle
-        model_file = os.path.join(self.parameters['model_path'],
+        model_file = os.path.join(self.param.getVal('model_path'),
                                   'model.pkl')
 
         LOG.debug(f'Loading model from pickle file, path: {model_file}')
@@ -337,7 +337,7 @@ class Apply:
 
         Runs prediction tasks using the information present in self.results. 
 
-        Depending on the modelingToolkit defined in self.parameters this task will use internal methods
+        Depending on the modelingToolkit defined in self.param this task will use internal methods
         or make use if imported code in R/KNIME
 
         The custom option allows advanced uses to write their own function 'run_custom' method in 
@@ -345,15 +345,15 @@ class Apply:
 
         '''
 
-        if self.parameters['modelingToolkit'] == 'internal':
+        if self.param.getVal('modelingToolkit') == 'internal':
             self.run_internal()
-        elif self.parameters['modelingToolkit'] == 'R':
+        elif self.param.getVal('modelingToolkit') == 'R':
             self.run_R()
-        elif self.parameters['modelingToolkit'] == 'KNIME':
+        elif self.param.getVal('modelingToolkit') == 'KNIME':
             self.run_KNIME()
-        elif self.parameters['modelingToolkit'] == 'custom':
+        elif self.param.getVal('modelingToolkit') == 'custom':
             self.run_custom()
         else:
-            self.results['error'] = 'Unknown prediction toolkit to run ', self.parameters['modelingToolkit']
+            self.results['error'] = 'Unknown prediction toolkit to run ', self.param.getVal('modelingToolkit')
 
         return self.results

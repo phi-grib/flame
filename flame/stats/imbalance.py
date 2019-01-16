@@ -1,6 +1,6 @@
 #! -*- coding: utf-8 -*-
 
-# Description    imbalance data tools
+# Description    imbalance data methods
 ##
 # Authors:       Jose Carlos Gómez-Tamayo (josecarlos.gomez@upf.edu)
 ##
@@ -23,30 +23,44 @@
 
 import pandas as pd
 import numpy as np
-
+from flame.util import utils, get_logger, supress_log
+LOG = get_logger(__name__)
 
 def simple_subsampling(X, Y, random_seed):
     """
-    Simple subsampling, adjusts the number of negative samples to the positive one
+    Simple subsampling, adjusts the number of negative 
+    samples to the positive one or viceversa.
     """
-    
+    # Create a Pandas DataFrame to facilitate data
+    # handling
     frame = pd.DataFrame(X)
     frame["act"] = Y
 
     positives = frame[frame['act'] == 1]
     negatives = frame[frame['act'] == 0]
+    X_s, Y_s = "",""
 
-    neg_sub = negatives.sample(frac=(float(len(positives))
+    # Perform subsampling of negative instances
+    if len(negatives) > len(positives):
+        LOG.info('Subsampling of negative instances')
+        neg_sub = negatives.sample(frac=(float(len(positives))
                                 /len(negatives)), random_state=46)
-    new = pd.concat([positives, neg_sub], axis=0)
-    Y_s = (new["act"].values)
-    new = new.drop(["act"], axis=1)
-    X_s = new.values
-
+        new = pd.concat([positives, neg_sub], axis=0)
+        Y_s = (new["act"].values)
+        new = new.drop(["act"], axis=1)
+        X_s = new.values
+    # Perform subsampling of positive instances
+    else:
+        LOG.info('Subsampling of positive instances')
+        pos_sub = positives.sample(frac=(float(len(negatives))
+                                /len(positives)), random_state=46)
+        new = pd.concat([negatives, pos_sub], axis=0)
+        Y_s = (new["act"].values)
+        new = new.drop(["act"], axis=1)
+        X_s = new.values
     if Y_s.size == 0  or X_s.size == 0:
         raise ValueError("Error creating subsampled matrices")
     return X_s, Y_s
-
 
 def run_imbalance(method, X, Y, random_seed=46):
     X_s = []

@@ -62,7 +62,7 @@ def configuration_warning() -> None:
         print("Flame hasn't been configured yet. "
               "Model repository may be wrong. "
               "Please use 'flame -c config' before using flame")
-        sys.exit()  # force exit???
+        sys.exit()  # force exit
 
 
 def manage_cmd(args):
