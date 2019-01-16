@@ -26,14 +26,10 @@ import sys
 
 from flame.util import utils, get_logger
 from flame.util import config, change_config_status
-
 import flame.context as context
-import flame.manage as manage
-
 import logging
 
 LOG = get_logger(__name__)
-
 
 # TEMP: only to allow EBI model to run
 def sensitivity(y_true, y_pred):
@@ -63,45 +59,6 @@ def configuration_warning() -> None:
               "Model repository may be wrong. "
               "Please use 'flame -c config' before using flame")
         sys.exit()  # force exit
-
-
-def manage_cmd(args):
-    '''
-    Instantiates a Build object to build a model using the given input
-    file (training series) and model (name of endpoint, eg. 'CACO2')
-    '''
-
-    version = utils.intver(args.version)
-
-    if args.action == 'new':
-        # check if config model repo path is correct
-        utils.check_repository_path()
-        success, results = manage.action_new(args.endpoint)
-    elif args.action == 'kill':
-        success, results = manage.action_kill(args.endpoint)
-    elif args.action == 'remove':
-        success, results = manage.action_remove(args.endpoint, version)
-    elif args.action == 'publish':
-        success, results = manage.action_publish(args.endpoint)
-    elif args.action == 'list':
-        success, results = manage.action_list(args.endpoint)
-    elif args.action == 'import':
-        success, results = manage.action_import(args.infile)
-    elif args.action == 'export':
-        success, results = manage.action_export(args.endpoint)
-    elif args.action == 'refactoring':
-        success, results = manage.action_refactoring(args.file)
-    elif args.action == 'dir':
-        success, results = manage.action_dir()
-    elif args.action == 'info':
-        success, results = manage.action_info(args.endpoint, version)
-    elif args.action == 'results':
-        success, results = manage.action_results(args.endpoint, version)
-    else: 
-        raise ValueError("Specified action does not exist.")
-
-    print('flame : ', results)
-
 
 def main():
 
@@ -188,14 +145,14 @@ def main():
         # print('flame build : ', success, results)
 
     elif args.command == 'manage':
-        manage_cmd(args)
+        success, results = context.manage_cmd(args)
+        print('flame manage : ', success, results)
 
     elif args.command == 'config':
         config(args.path)
         change_config_status()
 
 # import multiprocessing
-
 
 if __name__ == '__main__':
     # used to reproduce speed problems in Linux platforms

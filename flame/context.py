@@ -28,6 +28,8 @@ import pathlib
 import multiprocessing as mp
 
 from flame.util import utils, get_logger
+import flame.manage as manage
+
 from flame.predict import Predict
 from flame.build import Build
 
@@ -146,7 +148,7 @@ def build_cmd(model, output_format=None):
 
         ifile = model['infile']
         epd = utils.model_path(model['endpoint'], 0)
-        lfile = os.path.join(epd, 'training.sdf')
+        lfile = os.path.join(epd, 'training_series')
 
         # when a new training series is provided in the command line
         # try to copy it to the model directory
@@ -164,5 +166,42 @@ def build_cmd(model, output_format=None):
 
         # run the model with the input file
         success, results = build.run(lfile)
+
+    return success, results
+
+def manage_cmd(args):
+    '''
+    Calls diverse model maintenance commands
+    '''
+
+    version = utils.intver(args.version)
+
+    if args.action == 'new':
+        # check if config model repo path is correct
+        utils.check_repository_path()
+        success, results = manage.action_new(args.endpoint)
+    elif args.action == 'kill':
+        success, results = manage.action_kill(args.endpoint)
+    elif args.action == 'remove':
+        success, results = manage.action_remove(args.endpoint, version)
+    elif args.action == 'publish':
+        success, results = manage.action_publish(args.endpoint)
+    elif args.action == 'list':
+        success, results = manage.action_list(args.endpoint)
+    elif args.action == 'import':
+        success, results = manage.action_import(args.infile)
+    elif args.action == 'export':
+        success, results = manage.action_export(args.endpoint)
+    elif args.action == 'refactoring':
+        success, results = manage.action_refactoring(args.file)
+    elif args.action == 'dir':
+        success, results = manage.action_dir()
+    elif args.action == 'info':
+        success, results = manage.action_info(args.endpoint, version)
+    elif args.action == 'results':
+        success, results = manage.action_results(args.endpoint, version)
+    else: 
+        success = False
+        results = "Specified manage action is not defined"
 
     return success, results
