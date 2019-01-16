@@ -38,6 +38,9 @@ class Parameters:
 
     def __init__(self):
         ''' constructor '''
+        self.extended = False
+        self.version = 1
+
         return
 
     # def loadDict (self, d):
@@ -65,6 +68,13 @@ class Parameters:
         except Exception as e:
             return False
 
+        if 'version' in self.p:
+            self.extended = True
+            self.version = self.getVal('version')
+        else:
+            self.extended = False
+            self.version = 1
+
         self.setVal('endpoint',model)
         self.setVal('version',version)
         self.setVal('model_path',parameters_file_path)
@@ -90,34 +100,61 @@ class Parameters:
         ''' Return the value of the key parameter or None if it is
             not found in the parameters dictionary
         ''' 
-        if key in self.p:
+        if not key in self.p:
+            return None
+
+        if self.extended:
+            if 'value' in self.p[key]:
+                return self.p[key]['value']
+            return None
+        else:
             return self.p[key]
-        return None
+
     
     def getDict(self, key):
         ''' Return the value of the key parameter or None if it is
             not found in the parameters dictionary
         ''' 
-        if key in self.p:
+        if self.extended:
+            d = {}
+            if key in self.p:
+                element = self.p[key]['value']
+                if isinstance(element ,dict):
+                    for k, v in element.items():
+                        if 'value' in v:
+                            d[k] = v['value']
+            return d
+        else:
             return self.p[key]
-        return None
     
-    def getOldParam(self):
-        ''' Returns the dictionary with the parameters
-            This function was defined only for compatibility purposes
-            during the implementation of this class
-        '''
-        return self.p
+    # def getOldParam(self):
+    #     ''' Returns the dictionary with the parameters
+    #         This function was defined only for compatibility purposes
+    #         during the implementation of this class
+    #     '''
+    #     return self.p
 
     def setVal(self, key, value):
         ''' Sets the parameter defined by key to the given value
         '''
-        self.p[key] = value
+        if self.extended:
+            if key in self.p:
+                if "value" in self.p[key]:
+                    self.p[key]["value"] = value
+            else:
+                self.p[key] = {'value': value}
+        else:
+            self.p[key]=value
 
     def appVal(self, key, value):
         ''' Appends value to the end of existing key list 
         '''
-        self.p[key].append(value)
+        if self.extended:
+            if key in self.p:
+                if "value" in self.p[key]:
+                    self.p[key]['value'].append(value)
+        else:
+            self.p[key].append(value)
 
     def getModelSet (self):
         ''' Returns a Boolean indicating if the model uses external input
