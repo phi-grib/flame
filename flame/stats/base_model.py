@@ -659,7 +659,7 @@ class BaseEstimator:
         if self.param.getVal('quantitative'):
             metric = 'r2'
         else:
-             metric = make_scorer(mcc)
+            metric = make_scorer(mcc)
 
         tune_parameters = [tune_parameters]
         # Count computation time

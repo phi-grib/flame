@@ -39,10 +39,10 @@ class Parameters:
         ''' constructor '''
         return
 
-    def loadDict (self, d):
-        ''' load the content from a dictionary '''
-        self.p = d    
-        return
+    # def loadDict (self, d):
+    #     ''' load the content from a dictionary '''
+    #     self.p = d    
+    #     return
 
     def loadYaml (self, model, version):       
         ''' load a set of parameters from the configuration file present 
@@ -78,7 +78,15 @@ class Parameters:
         if key in self.p:
             return self.p[key]
         return None
-
+    
+    def getDict(self, key):
+        ''' Return the value of the key parameter or None if it is
+            not found in the parameters dictionary
+        ''' 
+        if key in self.p:
+            return self.p[key]
+        return None
+    
     def getOldParam(self):
         ''' Returns the dictionary with the parameters
             This function was defined only for compatibility purposes
