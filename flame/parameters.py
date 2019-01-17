@@ -32,8 +32,14 @@ class Parameters:
         These parameters are loaded from a configuration file (typically 
         in yaml format) 
 
-        Every parameter is a dictionary with keys defining the parameter type, 
+        The version 1 of parameters.yaml is a simple "key-value" python dictionary
+        in yaml file
+
+        In version 2 every parameter is a dictionary with keys defining the parameter type, 
         value and providing a human-readable explanation used for the GUI
+
+        This code supports both versions of the parameter file, but the use of version 1
+        is deprecated and will not be supported indefinitely 
     '''
 
     def __init__(self):
@@ -55,10 +61,13 @@ class Parameters:
             adds some parameters identifying the model and the 
             hash of the configuration file 
         '''
+
+        # obtain the path and the default name of the model parameters
         parameters_file_path = utils.model_path(model, version)
         parameters_file_name = os.path.join (parameters_file_path,
                                             'parameters.yaml')
 
+        # load the main class dictionary (p) from this yaml file
         if not os.path.isfile(parameters_file_name):
             return False
 
@@ -68,6 +77,8 @@ class Parameters:
         except Exception as e:
             return False
 
+        # check version of the parameter file
+        # no 'version' key mans version < 2.0
         if 'version' in self.p:
             self.extended = True
             self.version = self.getVal('version')
@@ -75,6 +86,7 @@ class Parameters:
             self.extended = False
             self.version = 1
 
+        # add keys for the model and a MD5 hash
         self.setVal('endpoint',model)
         self.setVal('version',version)
         self.setVal('model_path',parameters_file_path)
@@ -103,29 +115,38 @@ class Parameters:
         if not key in self.p:
             return None
 
-        if self.extended:
-            if 'value' in self.p[key]:
-                return self.p[key]['value']
-            return None
-        else:
+        ## compatibility with version 1 (remove)
+        if not self.extended:
             return self.p[key]
+        ## ---------------------------------------
+
+        if 'value' in self.p[key]:
+            return self.p[key]['value']
+        return None
 
     
     def getDict(self, key):
         ''' Return the value of the key parameter or None if it is
             not found in the parameters dictionary
         ''' 
-        if self.extended:
-            d = {}
-            if key in self.p:
-                element = self.p[key]['value']
-                if isinstance(element ,dict):
-                    for k, v in element.items():
-                        if 'value' in v:
-                            d[k] = v['value']
+        d = {}
+        if not key in self.p:
             return d
-        else:
+
+        ## compatibility with version 1 (remove)
+        if not self.extended:
             return self.p[key]
+        ## ---------------------------------------
+
+        element = self.p[key]['value']
+        if isinstance(element ,dict):
+            # iterate keys and copy to the temp dictionary
+            # the key and the content of 'value'
+            for k, v in element.items():
+                if 'value' in v:
+                    d[k] = v['value']
+        return d
+
     
     # def getOldParam(self):
     #     ''' Returns the dictionary with the parameters
@@ -137,24 +158,37 @@ class Parameters:
     def setVal(self, key, value):
         ''' Sets the parameter defined by key to the given value
         '''
-        if self.extended:
-            if key in self.p:
-                if "value" in self.p[key]:
-                    self.p[key]["value"] = value
-            else:
-                self.p[key] = {'value': value}
-        else:
+        ## compatibility with version 1 (remove)
+        if not self.extended:
             self.p[key]=value
+            return
+        ## ---------------------------------------
+
+        # for existing keys, replace the contents of 'value'
+        if key in self.p:
+            if "value" in self.p[key]:
+                self.p[key]["value"] = value
+
+        # for new keys, create a new element with 'value' key
+        else:
+            self.p[key] = {'value': value}
+
 
     def appVal(self, key, value):
         ''' Appends value to the end of existing key list 
         '''
-        if self.extended:
-            if key in self.p:
-                if "value" in self.p[key]:
-                    self.p[key]['value'].append(value)
-        else:
+
+        if not key in self.p:
+            return 
+
+        ## compatibility with version 1 (remove)
+        if not self.extended:
             self.p[key].append(value)
+            return
+        ## ---------------------------------------
+
+        if "value" in self.p[key]:
+            self.p[key]['value'].append(value)
 
     def getModelSet (self):
         ''' Returns a Boolean indicating if the model uses external input
