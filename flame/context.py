@@ -200,6 +200,8 @@ def manage_cmd(args):
         success, results = manage.action_info(args.endpoint, version)
     elif args.action == 'results':
         success, results = manage.action_results(args.endpoint, version)
+    elif args.action == 'parameters':
+        success, results = manage.action_parameters(args.endpoint, version)
     else: 
         success = False
         results = "Specified manage action is not defined"
