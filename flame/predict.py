@@ -21,6 +21,7 @@
 # along with Flame. If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import sys
 import importlib
 
 from flame.util import utils, get_logger
@@ -34,7 +35,10 @@ class Predict:
         LOG.debug('Starting predict...')
         self.model = model
         self.version = version
-        self.param = Parameters(model, version)
+        self.param = Parameters()
+        if not self.param.loadYaml(model, version):
+            LOG.critical('Unable to load model parameters. Aborting...')
+            sys.exit()
 
         # add additional output formats included in the constructor 
         # this is requiered to add JSON format as output when the object is

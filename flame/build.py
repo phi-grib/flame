@@ -21,6 +21,7 @@
 # along with Flame. If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import sys
 import importlib
 
 from flame.util import utils, get_logger
@@ -33,7 +34,10 @@ class Build:
     def __init__(self, model, output_format=None):
         LOG.debug('Starting build...')
         self.model = model
-        self.param = Parameters(model, 0)
+        self.param = Parameters()
+        if not self.param.loadYaml(model, 0):
+            LOG.critical('Unable to load model parameters. Aborting...')
+            sys.exit()
 
         # add additional output formats included in the constructor 
         # this is requiered to add JSON format as output when the object is
