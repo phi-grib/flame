@@ -325,7 +325,7 @@ def action_dir():
     # print(json.dumps(results))
 
 
-def action_info(model, version=None, output='JSON'):
+def action_info(model, version=None, output='text'):
     '''
     Returns a text or JSON with results info for a given model and version
     '''
@@ -511,12 +511,24 @@ def action_parameters (model, version=None, oformat='JSON'):
         return True, param.dumpJSON()
     else:
         for k, v in param.p.items():
-            if 'value' in v:
-                if isinstance(v['value'] ,dict):
+            ivalue = ''
+            idescr = ''
 
-                    continue
-        
-                print (k,': ', v['value'])
+            if param.extended:
+                if 'value' in v:
+                    if not isinstance(v['value'] ,dict):
+                        ivalue = v['value']
+                    else:
+                        ivalue = '*dictionary*'
 
+                if 'description' in v:
+                    idescr = v['description'] 
+            else:
+                if not isinstance(v ,dict):
+                    ivalue = v
+                else:
+                    ivalue = '*dictionary*'
+
+            print ('{0:<30s} : {1:<30s} {2:s}'.format(k, str(ivalue), idescr))
 
         return True, 'parameters listed'
