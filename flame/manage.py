@@ -30,6 +30,7 @@ import pathlib
 import numpy as np
 
 from flame.util import utils, get_logger
+from flame.parameters import Parameters
 
 LOG = get_logger(__name__)
 
@@ -492,3 +493,30 @@ def action_results(model, version=None, ouput_variables=False):
             return False, 'unable to serialize to JSON the results'
 
     return True, output
+
+
+def action_parameters (model, version=None, oformat='JSON'):
+    ''' Returns a JSON with whole results info for a given model and version '''
+
+    if model is None:
+        return False, 'empty model label'
+
+    if version is None:
+        return False, 'no version provided'
+
+    param = Parameters()
+    param.loadYaml(model, version)
+
+    if oformat == 'JSON':
+        return True, param.dumpJSON()
+    else:
+        for k, v in param.p.items():
+            if 'value' in v:
+                if isinstance(v['value'] ,dict):
+
+                    continue
+        
+                print (k,': ', v['value'])
+
+
+        return True, 'parameters listed'
