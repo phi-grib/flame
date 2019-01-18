@@ -112,7 +112,7 @@ def predict_cmd(model, output_format=None):
     return success, results
 
 
-def build_cmd(model, output_format=None):
+def build_cmd(arguments, output_format=None):
     '''
     Instantiates a Build object to build a model using the given
     input file and model. 
@@ -124,19 +124,19 @@ def build_cmd(model, output_format=None):
     repo_path = pathlib.Path(utils.model_repository_path())
     model_list = os.listdir(repo_path)
 
-    if model['endpoint'] not in model_list:
+    if arguments['endpoint'] not in model_list:
         LOG.error('endpoint name not found in model repository.')
         raise ValueError('Wrong endpoint name. '
                          f"{model['endpoint']} does not exist")
 
-    build = Build(model['endpoint'], output_format)
+    build = Build(arguments['endpoint'], arguments['parameters'], output_format)
 
     ext_input, model_set = build.get_model_set()
 
     if ext_input:
 
         success, model_res = get_external_input(
-            build, model_set, model['infile'])
+            build, model_set, arguments['infile'])
 
         if not success:
             return False, model_res
@@ -146,8 +146,8 @@ def build_cmd(model, output_format=None):
 
     else:
 
-        ifile = model['infile']
-        epd = utils.model_path(model['endpoint'], 0)
+        ifile = arguments['infile']
+        epd = utils.model_path(arguments['endpoint'], 0)
         lfile = os.path.join(epd, 'training_series')
 
         # when a new training series is provided in the command line

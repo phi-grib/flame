@@ -1,5 +1,5 @@
-version: 
-  value: 2
+param_format: 
+  value: 2.0
 
 input_type:
   advanced: regular
@@ -339,6 +339,7 @@ RF_parameters:
   advanced: advanced
   object_type: dictionary
   writable: false
+  options: null
   value: 
     class_weight:
       object_type: string
@@ -392,7 +393,6 @@ RF_parameters:
         - 46
         - null
       description: ""
-  options: null
   description: "Random Forest Parameters"
   dependencies: 
     - model: RF
@@ -403,6 +403,7 @@ RF_optimize:
   advanced: advanced
   object_type: dictionary
   writable: false
+  options: null
   value:
     class_weight:
       object_type: string
@@ -443,7 +444,6 @@ RF_optimize:
       options:
         - 46
       description: ""
-  options:
   description: "Random Forest Optimize parameters"
   dependencies: 
     - model: RF
@@ -536,8 +536,8 @@ SVM_optimize:
   advanced: advanced
   object_type: dictionary
   writable: false
-  value: null
-  options:
+  options: null
+  value:
     class_weight:
       object_type: string
       writable: false
@@ -627,8 +627,8 @@ PLSR_parameters:
   advanced: advanced
   object_type: dictionary
   writable: false
-  value: null
-  options:
+  options: null
+  value:
     scale:
       object_type: boolean
       writable: false
@@ -670,8 +670,8 @@ PLSR_optimize:
   advanced: advanced
   object_type: dictionary
   writable: false
-  value: null
-  options:
+  options: null
+  value:
     n_components:
       object_type: int
       writable: true
@@ -695,8 +695,8 @@ PLSDA_parameters:
   advanced: advanced
   object_type: dictionary
   writable: false
-  value: null
-  options:
+  options: null
+  value:
     scale:
       object_type: boolean
       writable: false

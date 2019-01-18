@@ -82,6 +82,10 @@ def main():
                         help='Manage action.',
                         required=False)
 
+    parser.add_argument('-p', '--parameters',
+                        help='File with model building parameters.',
+                        required=False)
+
     parser.add_argument('-c', '--command',
                         action='store',
                         choices=['predict', 'build', 'manage', 'config'],
@@ -91,8 +95,8 @@ def main():
     # parser.add_argument('-log', '--loglevel',
     #                     help='Logger level of verbosity',)
 
-    parser.add_argument('-p', '--path',
-                        help='Defines de new path for models repository.',
+    parser.add_argument('-d', '--directory',
+                        help='Defines the directory for the models repository.',
                         required=False)
 
     args = parser.parse_args()
@@ -136,10 +140,10 @@ def main():
             print('flame build : endpoint argument is compulsory')
             return
 
-        command_build = {'endpoint': args.endpoint, 'infile': args.infile}
+        command_build = {'endpoint': args.endpoint, 'infile': args.infile, 'parameters': args.parameters}
 
         LOG.info(f'Starting building model {args.endpoint}'
-                 f' with file {args.infile}')
+                 f' with file {args.infile} and parameters {args.parameters}')
 
         success, results = context.build_cmd(command_build)
         # print('flame build : ', success, results)
@@ -151,7 +155,7 @@ def main():
             print (results)
 
     elif args.command == 'config':
-        config(args.path)
+        config(args.directory)
         change_config_status()
 
 # import multiprocessing
