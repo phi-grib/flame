@@ -93,7 +93,7 @@ class Parameters:
 
         return True
 
-    def delta (self, model, version, param_file):
+    def delta (self, model, version, param_file, iformat='YAML'):
         ''' load a set of parameters from the configuration file present 
             at the model directory
 
@@ -111,7 +111,10 @@ class Parameters:
         # a YAML-compatible format
         try:
             with open(param_file, 'r') as pfile:
-                newp = yaml.load(pfile)
+                if iformat == 'YAML':
+                    newp = yaml.load(pfile)
+                elif iformat == 'JSON':
+                    newp = json.load(pfile)
         except:
             #print ('parsing of delta failed')
             return False

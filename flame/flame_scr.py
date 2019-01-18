@@ -146,7 +146,9 @@ def main():
                  f' with file {args.infile} and parameters {args.parameters}')
 
         success, results = context.build_cmd(command_build)
-        # print('flame build : ', success, results)
+
+        if not success:
+            print(results)
 
     elif args.command == 'manage':
         success, results = context.manage_cmd(args)
