@@ -437,13 +437,6 @@ RF_optimize:
       max: 500
       min: 0
       description: ""
-    random_state:
-      object_type: int
-      writable: true
-      value: 46
-      options:
-        - 46
-      description: ""
   description: "Random Forest Optimize parameters"
   dependencies: 
     - model: RF
@@ -468,28 +461,28 @@ SVM_parameters:
     C:
       object_type: float
       writable: true
-      value: null
+      value: 1
       options:
         - null
       description: ""
     coef0:
       object_type: float
       writable: true
-      value: null
+      value: 0
       options: 
         - null
       description: ""
     degree:
       object_type: int
       writable: true
-      value: null
+      value: 3
       options: 
         - null
       description: ""
     gamma:
       object_type: float
       writable: true
-      value: null 
+      value: auto 
       options: 
         - null
       description: ""
@@ -504,10 +497,10 @@ SVM_parameters:
     kernel:
       object_type: str
       writable: false
-      value: null
+      value: rbf
       options:
         - null
-        - rfb
+        - rbf
         - linear
         - poly
       description: ""
@@ -521,7 +514,7 @@ SVM_parameters:
     shrinking: 
       object_type: boolean
       writable: false
-      value: null
+      value: true
       options:
         - true
         - false
@@ -541,7 +534,9 @@ SVM_optimize:
     class_weight:
       object_type: string
       writable: false
-      value: null
+      value: 
+        - null
+        - balanced
       options:
         - null
         - balanced
@@ -549,7 +544,10 @@ SVM_optimize:
     C:
       object_type: float
       writable: true
-      value: null
+      value: 
+        - 1
+        - 10
+        - 100
       options:
         - null
         - 1
@@ -559,7 +557,10 @@ SVM_optimize:
     coef0:
       object_type: float
       writable: true
-      value: null
+      value:
+        - 0
+        - 0.8
+        - 100
       options: 
         - null
         - 0
@@ -569,7 +570,10 @@ SVM_optimize:
     degree:
       object_type: int
       writable: true
-      value: null
+      value:
+        - 1
+        - 3 
+        - 5
       options: 
         - null
         - 1
@@ -579,23 +583,17 @@ SVM_optimize:
     gamma:
       object_type: float
       writable: true
-      value: null 
+      value: 
+        - auto 
       options: 
         - null
         - auto
       description: ""
-    random_state:
-      object_type: int
-      writable: true
-      value: 46
-      options:
-        - 46
-        - null
-      description: ""
     kernel:
       object_type: str
       writable: false
-      value: null
+      value: 
+        - rbf
       options:
         - null
         - rfb
@@ -605,14 +603,16 @@ SVM_optimize:
     probability:
       object_type: boolean 
       writable: false
-      value: true
+      value: 
+        - true
       options:
         - true
         - false
     shrinking: 
       object_type: boolean
       writable: false
-      value: null
+      value: 
+        - true
       options:
         - true
         - false
@@ -675,7 +675,13 @@ PLSR_optimize:
     n_components:
       object_type: int
       writable: true
-      value: 2
+      value: 
+        - 1
+        - 2
+        - 3
+        - 4
+        - 5
+        - 6
       options: 
         - 1
         - 2
@@ -708,7 +714,7 @@ PLSDA_parameters:
     tol:
       object_type: float
       writable: true
-      value: null
+      value: 0.000006
       options:
         - null
       description: ""
@@ -750,7 +756,9 @@ PLSDA_optimize:
     scale:
       object_type: boolean
       writable: false
-      value: true
+      value: 
+        - true
+        - false
       options:
         - true
         - false
@@ -758,14 +766,21 @@ PLSDA_optimize:
     tol:
       object_type: float
       writable: true
-      value: null
+      value: 
+        - 0.000006
       options:
         - null
       description: ""
     n_components:
       object_type: int
       writable: true
-      value: null
+      value:
+        - 1
+        - 2
+        - 3
+        - 4
+        - 5
+        - 6
       options: 
         - 1
         - 2
@@ -777,7 +792,10 @@ PLSDA_optimize:
     threshold:
       object_type: float
       writable: true
-      value: 0.4
+      value: 
+        - 0.4
+        - 0.5
+        - 0.6
       options: 
         - 0.4
         - 0.5
@@ -842,7 +860,7 @@ verbose_error:
   advanced: advanced
   object_type: boolean
   writable: false
-  value: false
+  value: true
   options:
     - true
     - false

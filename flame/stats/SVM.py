@@ -87,6 +87,7 @@ class SVM(BaseEstimator):
             self.estimator_parameters.pop("random_state", None)
             self.tune_parameters.pop("class_weight", None)
             self.tune_parameters.pop("random_state", None)
+            self.tune_parameters.pop("probability", None)
 
         else:
             # Remove parameters of SVR class and set the name
