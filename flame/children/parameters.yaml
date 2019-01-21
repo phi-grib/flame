@@ -815,7 +815,7 @@ output_format:
   advanced: regular
   object_type: list
   writable: false
-  value: molecule
+  value: JSON
   options:
     - JSON
     - TSV
