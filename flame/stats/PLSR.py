@@ -113,7 +113,7 @@ class PLSR(BaseEstimator):
             LOG.error(f'Error initializing BaseEstimator parent'
                         f'class with exception: {e}')
             raise e
-        self.estimator_parameters = self.param.getVal('PLSR_parameters')
+        self.estimator_parameters = self.param.getDict('PLSR_parameters')
         self.name = "PLSR"
 
         # Check if the model is quantitative
@@ -137,7 +137,7 @@ class PLSR(BaseEstimator):
                 try:
                     super(PLSR, self).optimize(X, Y, PLS_r(
                         **self.estimator_parameters), 
-                        self.param.getVal('PLSR_optimize'))
+                        self.param.getDict('PLSR_optimize'))
                     LOG.debug('Optimizing PLSR through SK-LearnGridSearch')
                 except Exception as e:
                     LOG.error(f'Error performing sk-learn GridSearch'
@@ -155,7 +155,7 @@ class PLSR(BaseEstimator):
                     
                     self.optimize(X, Y, PLS_r(
                         **self.estimator_parameters), 
-                        self.param.getVal('PLSR_optimize'))
+                        self.param.getDict('PLSR_optimize'))
                     LOG.debug('Optimizing PLSR')
                 except Exception as e:
                     LOG.error(f'Error performing manual GridSearch'

@@ -75,9 +75,9 @@ class SVM(BaseEstimator):
                     f'class with exception: {e}')
             raise e
         # Load estimator parameters
-        self.estimator_parameters = self.param.getVal('SVM_parameters')
+        self.estimator_parameters = self.param.getDict('SVM_parameters')
         # Load tune parameters
-        self.tune_parameters = self.param.getVal('SVM_optimize')
+        self.tune_parameters = self.param.getDict('SVM_optimize')
         if self.param.getVal('quantitative'):
             self.name = "SVM-R"
             # Remove parameters of SVC class and set the name

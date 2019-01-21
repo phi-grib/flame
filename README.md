@@ -75,10 +75,10 @@ flame -c conf
 
 will use a default directory structure following the XDG specification in GNU/Linux, %APPDATA% in windows and `~/Library/Application Support/flame_models` in Mac OS X.
 
-To specify a custom path use the `-p` parameter:
+To specify a custom path use the `-d` parameter:
 
 ```bash
-flame -c config -p /my/custom/path
+flame -c config -d /my/custom/path
 ```
 
 ## Main features
@@ -154,6 +154,7 @@ And then the model is immediately operative and able to produce exactly the same
 | -v/ --version | Version of the model, typically an integer. Version 0 refers to the model development "sandbox" which is created automatically upon model creation |
 | -a/ --action | Management action to be carried out. Acceptable values are *list*, *new*, *kill*, *publish*, *remove*, *export* and *import*. The meaning of these actions and examples of use are provided below   |
 | -f/ --infile | Name of the input file used by the command. This file can correspond to the training data (*build*) or the query compounds (*predict*) |
+| -p/ --parameters | Name of an input file used to pass a set of parameters used to training a model (*build*) |
 | -h/ --help | Shows a help message on the screen |
 
 Management commands deserve further description:
@@ -168,6 +169,9 @@ Management commands deserve further description:
 | publish | *flame -c manage -a publish -e NEWMODEL* | Clones the development version, creating a new version in the model repository. Versions are assigned sequential numbers |
 | remove | *flame -c manage -a remove -e NEWMODEL -v 2* | Removes the version specified from the NEWMODEL model repository |
 | list | *flame -c manage -a list* | Lists the models present in the repository and the published version for each one. If the name of a model is provided, lists only the published versions for this model  |
+| info | *flame -c manage -e MODEL -a info* | Shows summary information about the characteristics of model MODEL  |
+| parameters | *flame -c manage -e MODEL -a parameters* | Shows a list of the main modeling parameters usded by build to generate model MODEL  |
+| results | *flame -c manage -e MODEL -a results* | Shows complete information about the characteristics of model MODEL  |
 | export | *flame -c manage -a export -e NEWMODEL* | Exports the model entry NEWMODE, creating a tar compressed file *NEWMODEL.tgz* which contains all the versions. This file can be imported by another flame instance (installed in a different host or company) with the *-c manage import* command |
 | import | *flame -c manage -a import -e NEWMODEL* | Imports file *NEWMODEL.tgz*, typically generated using command *-c manage -a export* creating model NEWMODEL in the local model repository |
 
