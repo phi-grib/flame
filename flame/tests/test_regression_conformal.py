@@ -48,6 +48,7 @@ def test_regression_conformal(make_model, build_model, fixed_results):
     assert build_status is True
 
     predictor = predict.Predict(MODEL_NAME, 0)
+    predictor.param.setVal('output_format', 'JSON')
     _, results_str = predictor.run(SDF_FILE_NAME)
 
     prediction_results_dict = json.load(io.StringIO(results_str))
