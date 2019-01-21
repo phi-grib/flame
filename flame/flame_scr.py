@@ -26,14 +26,10 @@ import sys
 
 from flame.util import utils, get_logger
 from flame.util import config, change_config_status
-
 import flame.context as context
-import flame.manage as manage
-
 import logging
 
 LOG = get_logger(__name__)
-
 
 # TEMP: only to allow EBI model to run
 def sensitivity(y_true, y_pred):
@@ -64,45 +60,6 @@ def configuration_warning() -> None:
               "Please use 'flame -c config' before using flame")
         sys.exit()  # force exit
 
-
-def manage_cmd(args):
-    '''
-    Instantiates a Build object to build a model using the given input
-    file (training series) and model (name of endpoint, eg. 'CACO2')
-    '''
-
-    version = utils.intver(args.version)
-
-    if args.action == 'new':
-        # check if config model repo path is correct
-        utils.check_repository_path()
-        success, results = manage.action_new(args.endpoint)
-    elif args.action == 'kill':
-        success, results = manage.action_kill(args.endpoint)
-    elif args.action == 'remove':
-        success, results = manage.action_remove(args.endpoint, version)
-    elif args.action == 'publish':
-        success, results = manage.action_publish(args.endpoint)
-    elif args.action == 'list':
-        success, results = manage.action_list(args.endpoint)
-    elif args.action == 'import':
-        success, results = manage.action_import(args.infile)
-    elif args.action == 'export':
-        success, results = manage.action_export(args.endpoint)
-    elif args.action == 'refactoring':
-        success, results = manage.action_refactoring(args.file)
-    elif args.action == 'dir':
-        success, results = manage.action_dir()
-    elif args.action == 'info':
-        success, results = manage.action_info(args.endpoint, version)
-    elif args.action == 'results':
-        success, results = manage.action_results(args.endpoint, version)
-    else: 
-        raise ValueError("Specified action does not exist.")
-
-    print('flame : ', results)
-
-
 def main():
 
     LOG.debug('-------------NEW RUN-------------\n')
@@ -125,6 +82,10 @@ def main():
                         help='Manage action.',
                         required=False)
 
+    parser.add_argument('-p', '--parameters',
+                        help='File with model building parameters.',
+                        required=False)
+
     parser.add_argument('-c', '--command',
                         action='store',
                         choices=['predict', 'build', 'manage', 'config'],
@@ -134,8 +95,8 @@ def main():
     # parser.add_argument('-log', '--loglevel',
     #                     help='Logger level of verbosity',)
 
-    parser.add_argument('-p', '--path',
-                        help='Defines de new path for models repository.',
+    parser.add_argument('-d', '--directory',
+                        help='Defines the directory for the models repository.',
                         required=False)
 
     args = parser.parse_args()
@@ -175,27 +136,31 @@ def main():
 
     elif args.command == 'build':
 
-        if (args.endpoint is None) or (args.infile is None):
-            print('flame build : endpoint and input file arguments are compulsory')
+        if (args.endpoint is None):
+            print('flame build : endpoint argument is compulsory')
             return
 
-        command_build = {'endpoint': args.endpoint, 'infile': args.infile}
+        command_build = {'endpoint': args.endpoint, 'infile': args.infile, 'parameters': args.parameters}
 
         LOG.info(f'Starting building model {args.endpoint}'
-                 f' with file {args.infile}')
+                 f' with file {args.infile} and parameters {args.parameters}')
 
         success, results = context.build_cmd(command_build)
-        # print('flame build : ', success, results)
+
+        if not success:
+            print(results)
 
     elif args.command == 'manage':
-        manage_cmd(args)
+        success, results = context.manage_cmd(args)
+        # print('flame manage : ', success, results)
+        if success:
+            print (results)
 
     elif args.command == 'config':
-        config(args.path)
+        config(args.directory)
         change_config_status()
 
 # import multiprocessing
-
 
 if __name__ == '__main__':
     # used to reproduce speed problems in Linux platforms

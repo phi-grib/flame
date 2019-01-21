@@ -148,7 +148,7 @@ class PLSDA(BaseEstimator):
             LOG.error(f'Error initializing BaseEstimator parent'
                     f'class with exception: {e}')
 
-        self.estimator_parameters = self.param.getVal('PLSDA_parameters')
+        self.estimator_parameters = self.param.getDict('PLSDA_parameters')
         self.name = "PLSDA"
 
         if self.param.getVal('quantitative'):
@@ -182,7 +182,7 @@ class PLSDA(BaseEstimator):
                                             scale=False, max_iter=500,
                                             tol=1e-6, copy=True,
                                             threshold=0.5), 
-                                            self.param.getVal('PLSDA_optimize'))
+                                            self.param.getDict('PLSDA_optimize'))
                     LOG.debug('Optimizing PLSDA through SK-LearnGridSearch')
                 except Exception as e:
                     LOG.error(f'Error performing sk-learn GridSearch'
@@ -194,7 +194,7 @@ class PLSDA(BaseEstimator):
                 self.optimize(X, Y,
                             PLS_da(n_components=2, scale=False, max_iter=500,
                             tol=1e-6, copy=True, threshold=None),
-                            self.param.getVal('PLSDA_optimize'))
+                            self.param.getDict('PLSDA_optimize'))
                 LOG.debug('Optimizing PLSDA')
 
             else:

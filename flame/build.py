@@ -31,18 +31,29 @@ LOG = get_logger(__name__)
 
 class Build:
 
-    def __init__(self, model, output_format=None):
+    def __init__(self, model, param_file=None, output_format=None):
         LOG.debug('Starting build...')
         self.model = model
         self.param = Parameters()
-        if not self.param.loadYaml(model, 0):
+        
+        # load parameters
+        if param_file is not None:
+            # use the param_file to update existing parameters at the model
+            # directory and save changes to make them persistent
+            success = self.param.delta(model, 0, param_file)
+        else:
+            # load parameter file at the model directory
+            success = self.param.loadYaml(model, 0)
+
+        # being unable to load parameters is a critical error
+        if not success:
             LOG.critical('Unable to load model parameters. Aborting...')
-            sys.exit()
+            sys.exit(1)
 
         # add additional output formats included in the constructor 
         # this is requiered to add JSON format as output when the object is
         # instantiated from a web service call, requiring this output   
-        if output_format != None:
+        if output_format is not None:
             if output_format not in self.param.getVal('output_format'):
                 self.param.appVal('output_format',output_format)
  

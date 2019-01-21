@@ -30,6 +30,7 @@ import pathlib
 import numpy as np
 
 from flame.util import utils, get_logger
+from flame.parameters import Parameters
 
 LOG = get_logger(__name__)
 
@@ -324,7 +325,7 @@ def action_dir():
     # print(json.dumps(results))
 
 
-def action_info(model, version=None, output='JSON'):
+def action_info(model, version=None, output='text'):
     '''
     Returns a text or JSON with results info for a given model and version
     '''
@@ -492,3 +493,62 @@ def action_results(model, version=None, ouput_variables=False):
             return False, 'unable to serialize to JSON the results'
 
     return True, output
+
+
+def action_parameters (model, version=None, oformat='text'):
+    ''' Returns a JSON with whole results info for a given model and version '''
+
+    if model is None:
+        return False, 'empty model label'
+
+    if version is None:
+        return False, 'no version provided'
+
+    param = Parameters()
+    param.loadYaml(model, version)
+
+    if oformat == 'JSON':
+        return True, param.dumpJSON()
+    else:
+
+        order = ['input_type', 'quantitative', 'SDFile_activity', 'SDFile_name', 
+        'SDFile_experimental', 'normalize_method', 'ionize_method', 'convert3D_method', 
+        'computeMD_method', 'model', 'modelAutoscaling', 'tune', 'conformal', 
+        'conformalSignificance', 'ModelValidationCV', 'ModelValidationLC', 
+        'ModelValidationN', 'ModelValidationP', 'output_format', 'output_md', 
+        'TSV_activity', 'TSV_objnames', 'TSV_varnames', 'imbalance', 
+        'feature_selection', 'feature_number', 'mol_batch', 'ext_input', 
+        'model_set', 'numCPUs', 'verbose_error', 'modelingToolkit', 
+        # 'SVM_parameters','SVM_optimize','RF_parameters', 'RF_optimize', 
+        # 'GNB_parameters','PLSR_parameters', 'PLSR_optimize', 
+        # 'PLSDA_parameters', 'PLSDA_optimize',
+        'endpoint', 'model_path', 
+        #'md5', 
+        'version']
+
+        for ik in order:
+            if ik in param.p:
+                k = ik
+                v = param.p[k]
+
+                ivalue = ''
+                idescr = ''
+
+                if param.extended:
+                    if 'value' in v:
+                        if not isinstance(v['value'] ,dict):
+                            ivalue = v['value']
+                        else:
+                            ivalue = '*dictionary*'
+
+                    if 'description' in v:
+                        idescr = v['description'] 
+                else:
+                    if not isinstance(v ,dict):
+                        ivalue = v
+                    else:
+                        ivalue = '*dictionary*'
+
+                print ('{0:<30s} : {1:<30s} # {2:s}'.format(k, str(ivalue), idescr))
+
+        return True, 'parameters listed'

@@ -72,7 +72,7 @@ class GNB(BaseEstimator):
         except Exception as e:
             LOG.error(f'Error initializing BaseEstimator parent'
                 f'class with exception {e}')
-        self.estimator_parameters = self.param.getVal('GNB_parameters')
+        self.estimator_parameters = self.param.getDict('GNB_parameters')
         if self.param.getVal('quantitative'):
             raise Exception("GNB only applies to qualitative data")
         else:

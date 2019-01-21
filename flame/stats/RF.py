@@ -36,6 +36,7 @@ from flame.stats.model_validation import getCrossVal
 from flame.stats.scale import scale, center
 from flame.stats.model_validation import CF_QuanVal
 from flame.util import get_logger
+#from flame.parameters import Parameters
 
 LOG = get_logger(__name__)
 
@@ -75,9 +76,15 @@ class RF(BaseEstimator):
                     f'class with exception: {e}')
             raise e
         # Load estimator parameters
-        self.estimator_parameters = self.param.getVal('RF_parameters')
+
+        # alternative approach based in the use of a Parameters class for storing 
+        # estimator and optimizer parameters
+        # self.estimator_parametes = Parameters()
+        # self.estimator_parametes.loadDict(self.param.getVal('RF_parameters'))
+        self.estimator_parameters = self.param.getDict('RF_parameters')
+
         # Load tune parameters
-        self.tune_parameters = self.param.getVal('RF_optimize')
+        self.tune_parameters = self.param.getDict('RF_optimize')
 
         if self.param.getVal('quantitative'):
             self.name = "RF-R"

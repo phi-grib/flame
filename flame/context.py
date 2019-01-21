@@ -28,6 +28,8 @@ import pathlib
 import multiprocessing as mp
 
 from flame.util import utils, get_logger
+import flame.manage as manage
+
 from flame.predict import Predict
 from flame.build import Build
 
@@ -110,7 +112,7 @@ def predict_cmd(model, output_format=None):
     return success, results
 
 
-def build_cmd(model, output_format=None):
+def build_cmd(arguments, output_format=None):
     '''
     Instantiates a Build object to build a model using the given
     input file and model. 
@@ -122,19 +124,18 @@ def build_cmd(model, output_format=None):
     repo_path = pathlib.Path(utils.model_repository_path())
     model_list = os.listdir(repo_path)
 
-    if model['endpoint'] not in model_list:
+    if arguments['endpoint'] not in model_list:
         LOG.error('endpoint name not found in model repository.')
-        raise ValueError('Wrong endpoint name. '
-                         f"{model['endpoint']} does not exist")
+        return False, "Wrong endpoint name. "+arguments['endpoint']+" does not exist"
 
-    build = Build(model['endpoint'], output_format)
+    build = Build(arguments['endpoint'], arguments['parameters'], output_format)
 
     ext_input, model_set = build.get_model_set()
 
     if ext_input:
 
         success, model_res = get_external_input(
-            build, model_set, model['infile'])
+            build, model_set, arguments['infile'])
 
         if not success:
             return False, model_res
@@ -144,19 +145,64 @@ def build_cmd(model, output_format=None):
 
     else:
 
-        ifile = model['infile']
+        ifile = arguments['infile']
+        epd = utils.model_path(arguments['endpoint'], 0)
+        lfile = os.path.join(epd, 'training_series')
 
-        if not os.path.isfile(ifile):
-            return False, 'wrong training series file'
+        # when a new training series is provided in the command line
+        # try to copy it to the model directory
+        if ifile is not None:
+            if not os.path.isfile(ifile):
+                return False, 'wrong training series file'
+            try:
+                shutil.copy(ifile, lfile)
+            except:
+                return False, 'unable to copy input file to model directory'
 
-        epd = utils.model_path(model['endpoint'], 0)
-        lfile = os.path.join(epd, os.path.basename(ifile))
-        try:
-            shutil.copy(ifile, lfile)
-        except shutil.SameFileError:
-            LOG.warning('Building model with the input SDF'
-                        f' present in model folder {lfile}')
+        # check that the local copy of the input file exists
+        if not os.path.isfile(lfile):
+            return False, 'not training series found'
+
         # run the model with the input file
         success, results = build.run(lfile)
+
+    return success, results
+
+def manage_cmd(args):
+    '''
+    Calls diverse model maintenance commands
+    '''
+
+    version = utils.intver(args.version)
+
+    if args.action == 'new':
+        # check if config model repo path is correct
+        utils.check_repository_path()
+        success, results = manage.action_new(args.endpoint)
+    elif args.action == 'kill':
+        success, results = manage.action_kill(args.endpoint)
+    elif args.action == 'remove':
+        success, results = manage.action_remove(args.endpoint, version)
+    elif args.action == 'publish':
+        success, results = manage.action_publish(args.endpoint)
+    elif args.action == 'list':
+        success, results = manage.action_list(args.endpoint)
+    elif args.action == 'import':
+        success, results = manage.action_import(args.infile)
+    elif args.action == 'export':
+        success, results = manage.action_export(args.endpoint)
+    elif args.action == 'refactoring':
+        success, results = manage.action_refactoring(args.file)
+    elif args.action == 'dir':
+        success, results = manage.action_dir()
+    elif args.action == 'info':
+        success, results = manage.action_info(args.endpoint, version)
+    elif args.action == 'results':
+        success, results = manage.action_results(args.endpoint, version)
+    elif args.action == 'parameters':
+        success, results = manage.action_parameters(args.endpoint, version)
+    else: 
+        success = False
+        results = "Specified manage action is not defined"
 
     return success, results
