@@ -1209,20 +1209,34 @@ class Idata:
 
         # processing for molecular input (for now an SDFile)
         if (input_type == 'molecule'):
+                # trick to avoid RDKit dumping warnings to the console
+                if not self.param.getVal('verbose_error'):
+                    # When running from a ipython notebooks fileno() breaks
+                     # Handle the exception notifying the issue.
+                    try:
+                        stderr_fileno = sys.stderr.fileno()  # saves current syserr
+                        stderr_save = os.dup(stderr_fileno)
+                        # open a specific RDKit log file
+                        stderr_fd = open('errorRDKit.log', 'w')
+                        os.dup2(stderr_fd.fileno(), stderr_fileno)
+                    except:
+                        LOG.warning('Unable to log syserror, this'
+                        ' probably means flame is called from an ipython'
+                        ' interactive terminal. Otherwise, please'
+                        ' notify the developers')
 
-            # trick to avoid RDKit dumping warnings to the console
-            if not self.param.getVal('verbose_error'):
-                stderr_fileno = sys.stderr.fileno()  # saves current syserr
-                stderr_save = os.dup(stderr_fileno)
-                # open a specific RDKit log file
-                stderr_fd = open('errorRDKit.log', 'w')
-                os.dup2(stderr_fd.fileno(), stderr_fileno)
-
-            self._run_molecule()
-
-            if not self.param.getVal('verbose_error'):
-                stderr_fd.close()                     # close the RDKit log
-                os.dup2(stderr_save, stderr_fileno)   # restore old syserr
+                self._run_molecule()
+                
+                # Handle the exception due to undefined variable when
+                # previous catch fails to define syserr
+                try:
+                    if not self.param.getVal('verbose_error'):
+                        # close the RDKit log
+                        stderr_fd.close()  
+                        # restore old syserr                   
+                        os.dup2(stderr_save, stderr_fileno)   
+                except:
+                    pass
 
         # processing for non-molecular input (not implemented)
         elif (input_type == 'data'):
