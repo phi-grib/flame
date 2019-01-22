@@ -35,13 +35,17 @@ from flame.parameters import Parameters
 LOG = get_logger(__name__)
 
 
-def set_model_repository(path=None):
-    """
-    Set the model repository path.
-    This is the dir where flame is going to create and load models
-    """
-    utils.set_model_repository(path)
-    LOG.info(f'Model repository updated to {path}')
+# def set_model_repository(path=None):
+#     """
+#     Set the model repository path.
+#     This is the dir where flame is going to create and load models
+#     """
+#     utils.set_model_repository(path)
+
+#     # this is a console oriented tool which prints messages. Avoid use of LOG.info
+#     LOG.info(f'Model repository updated to {path}')
+#     #print(f'Model repository updated to {path}')
+#     return True, 'model repository updated'
 
 
 def action_new(model):
@@ -58,7 +62,7 @@ def action_new(model):
     # try to use this name. This is a simple workaround to prevent creating models 
     # with this name 
     if model == 'test':
-        LOG.warning(f'the name "test" is disallowed, please use any other name')
+        #LOG.warning(f'the name "test" is disallowed, please use any other name')
         return False, 'the name "test" is disallowed, please use any other name'
 
     # Model directory with /dev (default) level
@@ -66,11 +70,14 @@ def action_new(model):
 
     # check if there is already a tree for this endpoint
     if ndir.exists():
-        LOG.warning(f'Endpoint {model} already exists')
-        return False, 'This endpoint already exists'
+        #LOG.warning(f'Endpoint {model} already exists')
+        return False, f'Endpoint {model} already exists'
 
-    ndir.mkdir(parents=True)
-    LOG.debug(f'{ndir} created')
+    try:
+        ndir.mkdir(parents=True)
+        LOG.debug(f'{ndir} created')
+    except:
+        return False, f'Unable to create path for {model} endpoint'
 
     # Copy classes skeletons to ndir
     wkd = pathlib.Path(os.path.dirname(os.path.abspath(__file__)))
@@ -80,14 +87,19 @@ def action_new(model):
         filename = cname + '_child.py'
         src_path = wkd / 'children' / filename
         dst_path = ndir / filename
-        shutil.copy(src_path, dst_path)
+        try:
+            shutil.copy(src_path, dst_path)
+        except:
+            return False, f'Unable to copy {cname} file'
 
     LOG.debug(f'copied class skeletons from {src_path} to {dst_path}')
+    
     # copy parameter yml file
     params_path = wkd / 'children/parameters.yaml'
     shutil.copy(params_path, ndir)
 
     LOG.info(f'New endpoint {model} created')
+    #print(f'New endpoint {model} created')
     return True, 'new endpoint '+model+' created'
 
 
@@ -97,18 +109,22 @@ def action_kill(model):
     '''
 
     if not model:
-        return False, 'empty model label'
+        return False, 'Empty model name'
 
     ndir = utils.model_tree_path(model)
 
     if not os.path.isdir(ndir):
-        LOG.error(f'Model {model} not found')
-        return False, 'model not found'
+        #LOG.error(f'Model {model} not found')
+        return False, f'Model {model} not found'
 
-    shutil.rmtree(ndir, ignore_errors=True)
+    try:
+        shutil.rmtree(ndir, ignore_errors=True)
+    except:
+        return False, f'Failed to remove model {model}'
 
     LOG.info(f'Model {model} removed')
-    return True, 'model '+model+' removed'
+    #print(f'Model {model} removed')
+    return True, f'Model {model} removed'
 
 
 def action_publish(model):
@@ -118,32 +134,37 @@ def action_publish(model):
     '''
 
     if not model:
-        return False, 'empty model label'
+        return False, 'Empty model label'
 
-    bdir = utils.model_tree_path(model)
+    base_path = utils.model_tree_path(model)
 
-    if not os.path.isdir(bdir):
-        LOG.error(f'Model {model} not found')
-        return False, 'model not found'
+    if not os.path.isdir(base_path):
+        #LOG.error(f'Model {model} not found')
+        return False, f'Model {model} not found'
 
     # gets version number
-    v = [int(x[-6:]) for x in os.listdir(bdir) if x.startswith("ver")]
+    v = [int(x[-6:]) for x in os.listdir(base_path) if x.startswith("ver")]
 
     if not v:
         max_version = 0
     else:
         max_version = max(v)
 
-    new_dir = bdir+'/ver%0.6d' % (max_version+1)
+    new_path = os.path.join(base_path,f'ver{max_version+1:06}')
 
-    if os.path.isdir(new_dir):
-        LOG.error(f'Versin {v} of model {model} not found')
-        return False, 'version already exists'
+    if os.path.isdir(new_path):
+        #LOG.error(f'Versin {v} of model {model} not found')
+        return False, f'Version {max_version+1} of model {model} already exists'
 
-    src_path = bdir+'/dev'
-    shutil.copytree(src_path, new_dir)
-    LOG.info(f'New model version created from {src_path} to {new_dir}')
-    return True, 'development version published as version '+str(max_version+1)
+    src_path = os.path.join (base_path,'dev')
+
+    try:
+        shutil.copytree(src_path, new_path)
+    except:
+        return False, f'Unable to copy contents of dev version for model {model}'
+
+    LOG.info(f'New model version created from {src_path} to {new_path}')
+    return True, f'New model version created from {src_path} to {new_path}'
 
 
 def action_remove(model, version):
@@ -153,54 +174,50 @@ def action_remove(model, version):
     '''
 
     if not model:
-        LOG.error('empty model label')
-        return False, 'empty model label'
+        return False, 'Empty model label'
 
     if version == 0:
-        LOG.error('development version cannot be removed')
-        return False, 'development version cannot be removed'
+        return False, 'Development version cannot be removed, provide a version number'
 
     rdir = utils.model_path(model, version)
     if not os.path.isdir(rdir):
-        LOG.error('version {} not found')
-        return False, 'version not found'
+        return False, f'Version {version} not found'
 
     shutil.rmtree(rdir, ignore_errors=True)
-    LOG.info(f'version {version} of model {model} has removed')
-    return True, 'version '+str(version)+' of model '+model+' removed'
+    LOG.info(f'Version {version} of model {model} has been removed')
+    return True, f'Version {version} of model {model} has been removed'
 
 
 def action_list(model):
     '''
-    Lists available models (if no argument is provided)
-     and model versions (if "model" is provided as argument)
+    In no argument is provided lists all models present at the repository 
+     otherwyse lists all versions for the model provided as argument
     '''
 
-    # TODO: if no argument is provided, also list all models
+    # if no model name is provided, just list the model names
     if not model:
         rdir = utils.model_repository_path()
 
         num_models = 0
-        models = []
-        print(' Models found in repository:')
+        LOG.info('Models found in repository:')
         for x in os.listdir(rdir):
             num_models += 1
-            models.append(x)
-            print('\t- ', x)
+            LOG.info('\t'+x)
         LOG.debug(f'Retrieved list of models from {rdir}')
         return True, ''
+        return True, f'{num_models} models found'
 
-    bdir = utils.model_tree_path(model)
+
+    # if a model name is provided, list versions
+    base_path = utils.model_tree_path(model)
 
     num_versions = 0
-    for x in os.listdir(bdir):
+    for x in os.listdir(base_path):
         if x.startswith("ver"):
-
             num_versions += 1
-            print(model, ':', x)
+            LOG.info(f'\t{model} : {x}')
 
-    LOG.info(f'model {model} has {num_versions} published versions')
-    return True, 'model '+model+' has '+str(num_versions)+' published versions'
+    return True, f'Model {model} has {num_versions} published versions'
 
 
 def action_import(model):
@@ -209,41 +226,39 @@ def action_import(model):
     '''
 
     if not model:
-        return False, 'empty model label'
+        return False, 'Empty model label'
 
     # convert model to endpoint string
     base_model = os.path.basename(model)
     endpoint = os.path.splitext(base_model)[0]
     ext = os.path.splitext(base_model)[1]
 
-    bdir = utils.model_tree_path(endpoint)
+    base_path = utils.model_tree_path(endpoint)
 
-    if os.path.isdir(bdir):
-        LOG.error(f'Endpoint already exists: {model}')
-        return False, 'endpoint already exists'
+    if os.path.isdir(base_path):
+        return False, f'Endpoint {endpoint} already exists'
 
     if ext != '.tgz':
         importfile = os.path.abspath(model+'.tgz')
     else:
         importfile = model
 
-    LOG.info('importing {}'.format(importfile))
+    LOG.info(f'Importing {importfile} ...')
 
     if not os.path.isfile(importfile):
-        LOG.info('importing package {} not found'.format(importfile))
-        return False, 'importing package '+importfile+' not found'
+        LOG.info(f'Importing package {importfile} not found')
+        return False, f'Importing package {importfile} not found'
 
     try:
-        os.mkdir(bdir)
+        os.mkdir(base_path)
     except Exception as e:
-        LOG.error(f'error creating directory {bdir}: {e}')
-        raise e
-        # return False, 'error creating directory '+bdir
+        return False, f'error creating directory {base_path}: {e}'
 
     with tarfile.open(importfile, 'r:gz') as tar:
-        tar.extractall(bdir)
-    LOG.info('Endpoint {} imported OK'.format(endpoint))
-    return True, 'endpoint '+endpoint+' imported OK'
+        tar.extractall(base_path)
+
+    LOG.info(f'Endpoint {endpoint} imported OK')
+    return True, 'Endpoint '+endpoint+' imported OK'
 
 
 def action_export(model):
@@ -253,18 +268,18 @@ def action_export(model):
     '''
 
     if not model:
-        return False, 'empty model label'
+        return False, 'Empty model label'
 
     current_path = os.getcwd()
-    exportfile = current_path+'/'+model+'.tgz'
+    exportfile = os.path.join(current_path,model+'.tgz')
 
-    bdir = utils.model_tree_path(model)
+    base_path = utils.model_tree_path(model)
 
-    if not os.path.isdir(bdir):
-        LOG.error('Unable to export, model directory not found')
-        return False, 'endpoint directory not found'
+    if not os.path.isdir(base_path):
+        return False, 'Unable to export, endpoint directory not found'
 
-    os.chdir(bdir)
+    # change to model repository to tar the file from there
+    os.chdir(base_path)
 
     itemend = os.listdir()
     itemend.sort()
@@ -275,9 +290,11 @@ def action_export(model):
                 continue
             tar.add(iversion)
 
+    # return to current directory
     os.chdir(current_path)
-    LOG.info('Model exported as {}.tgz'.format(model))
-    return True, 'endpoint '+model+' exported as '+model+'.tgz'
+
+    LOG.info(f'Model {model} exported as {model}.tgz')
+    return True, f'Model {model} exported as {model}.tgz'
 
 
 # TODO: implement refactoring, starting with simple methods
@@ -325,23 +342,21 @@ def action_dir():
     # print(json.dumps(results))
 
 
-def action_info(model, version=None, output='text'):
+def action_info(model, version, output='text'):
     '''
     Returns a text or JSON with results info for a given model and version
     '''
 
     if model is None:
-        return False, 'empty model label'
+        return False, 'Empty model label'
 
-    if version is None:
-        return False, 'no version provided'
 
     rdir = utils.model_path(model, version)
     if not os.path.isfile(os.path.join(rdir, 'results.pkl')):
 
         # compatibity method. use info.pkl
         if not os.path.isfile(os.path.join(rdir, 'info.pkl')):
-            return False, 'info not found'
+            return False, 'Info file not found'
 
         with open(os.path.join(rdir, 'info.pkl'), 'rb') as handle:
             #retrieve a pickle file containing the keys 'model_build' 
@@ -352,6 +367,9 @@ def action_info(model, version=None, output='text'):
 
     else:
         # new method, use results.pkl
+        if not os.path.isfile(os.path.join(rdir, 'results.pkl')):
+            return False, 'Info file not found'
+
         with open(os.path.join(rdir, 'results.pkl'), 'rb') as handle:
             results = pickle.load(handle)
         
@@ -360,22 +378,25 @@ def action_info(model, version=None, output='text'):
             info =  results['model_build_info']
 
         if info == None:
-            return False, 'info not found'
+            return False, 'Info not found'
 
         if 'model_valid_info' in results:
             info += results['model_valid_info']
         
         if info == None:
-            return False, 'info not found'
+            return False, 'Info not found'
 
     # when this function is called from the console, output is 'text'
     # write and exit
     if output == 'text':
+
+        LOG.info (f'informing model {model} version {version}')
+
         for val in info:
             if len(val) < 3:
-                print(val)
+                LOG.info(val)
             else:
-                print(val[0], ' (', val[1], ') : ', val[2])
+                LOG.info(f'{val[0]} ({val[1]}) : {val[2]}')
         return True, 'model informed OK'
 
     # this is only reached when this funcion is called from a web service

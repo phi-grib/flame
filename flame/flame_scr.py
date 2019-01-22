@@ -153,8 +153,8 @@ def main():
     elif args.command == 'manage':
         success, results = context.manage_cmd(args)
         # print('flame manage : ', success, results)
-        if success:
-            print (results)
+        if not success:
+            LOG.error(results)
 
     elif args.command == 'config':
         config(args.directory)
