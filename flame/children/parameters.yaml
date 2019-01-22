@@ -296,6 +296,33 @@ imbalance:
   comments: ""
   group: modeling
 
+feature_selection:
+  advanced: regular
+  object_type: string
+  writable: false
+  value: null
+  options: 
+    - null
+    - Kbest
+  description: "Whether to perform or not feature selection"
+  dependencies: 
+    - null
+  comments: ""
+  group: modeling
+
+feature_number:
+  advanced: regular
+  object_type: string
+  writable: true
+  value: auto
+  options: 
+    - auto
+  description: "Number of features to keep"
+  dependencies: 
+    - feature_selection: true
+  comments: ""
+  group: modeling
+
 ModelValidationCV:
   advanced: regular
   object_type: string
@@ -359,7 +386,7 @@ RF_parameters:
     max_features:
       object_type: string
       writable: true
-      value: auto
+      value: sqrt
       options: 
         - auto
         - sqrt
@@ -369,7 +396,7 @@ RF_parameters:
     n_estimators:
       object_type: int
       writable: true
-      value: 50
+      value: 200
       options: 
         - 50
         - 100
