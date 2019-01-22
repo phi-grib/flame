@@ -35,17 +35,17 @@ from flame.parameters import Parameters
 LOG = get_logger(__name__)
 
 
-# def set_model_repository(path=None):
-#     """
-#     Set the model repository path.
-#     This is the dir where flame is going to create and load models
-#     """
-#     utils.set_model_repository(path)
+def set_model_repository(path=None):
+    """
+    Set the model repository path.
+    This is the dir where flame is going to create and load models
+    """
+    utils.set_model_repository(path)
 
-#     # this is a console oriented tool which prints messages. Avoid use of LOG.info
-#     LOG.info(f'Model repository updated to {path}')
-#     #print(f'Model repository updated to {path}')
-#     return True, 'model repository updated'
+    # this is a console oriented tool which prints messages. Avoid use of LOG.info
+    LOG.info(f'Model repository updated to {path}')
+    #print(f'Model repository updated to {path}')
+    return True, 'model repository updated'
 
 
 def action_new(model):
@@ -309,39 +309,6 @@ def action_refactoring(file):
     return True, 'OK'
 
 
-def action_dir():
-    '''
-    Returns a JSON with the list of models and versions
-    '''
-    # get de model repo path
-    models_path = pathlib.Path(utils.model_repository_path())
-
-    # get directories in model repo path
-    dirs = [x for x in models_path.iterdir() if x.is_dir()]
-
-    # if dir contains dev/ -> is model (NAIVE APPROACH)
-    # get last dir name [-1]: model name
-    model_dirs = [d.parts[-1] for d in dirs if list(d.glob('dev'))]
-
-    results = []
-    for imodel in model_dirs:
-
-        # versions = ['dev']
-        versions = [{'text': 'dev'}]
-
-        for iversion in os.listdir(utils.model_tree_path(imodel)):
-            if iversion.startswith('ver'):
-                # versions.append (iversion)
-                versions.append({'text': iversion})
-
-        # results.append ((imodel,versions))
-        results.append({'text': imodel, 'nodes': versions})
-
-    return True, json.dumps(results)
-
-    # print(json.dumps(results))
-
-
 def action_info(model, version, output='text'):
     '''
     Returns a text or JSON with results info for a given model and version
@@ -439,14 +406,12 @@ def action_info(model, version, output='text'):
 
     return True, json.dumps(json_results)
 
+
 def action_results(model, version=None, ouput_variables=False):
     ''' Returns a JSON with whole results info for a given model and version '''
 
     if model is None:
-        return False, 'empty model label'
-
-    if version is None:
-        return False, 'no version provided'
+        return False, 'Empty model label'
 
     rdir = utils.model_path(model, version)
     if not os.path.isfile(os.path.join(rdir, 'results.pkl')):
@@ -511,7 +476,7 @@ def action_results(model, version=None, ouput_variables=False):
         try:
             output = json.dumps(json_results)
         except:
-            return False, 'unable to serialize to JSON the results'
+            return False, 'Unable to serialize to JSON the model results'
 
     return True, output
 
@@ -520,16 +485,14 @@ def action_parameters (model, version=None, oformat='text'):
     ''' Returns a JSON with whole results info for a given model and version '''
 
     if model is None:
-        return False, 'empty model label'
-
-    if version is None:
-        return False, 'no version provided'
+        return False, 'Empty model label'
 
     param = Parameters()
     param.loadYaml(model, version)
 
     if oformat == 'JSON':
         return True, param.dumpJSON()
+
     else:
 
         order = ['input_type', 'quantitative', 'SDFile_activity', 'SDFile_name', 
@@ -570,6 +533,72 @@ def action_parameters (model, version=None, oformat='text'):
                     else:
                         ivalue = '*dictionary*'
 
-                print ('{0:<30s} : {1:<30s} # {2:s}'.format(k, str(ivalue), idescr))
+                print (f'{k:30} : {str(ivalue):30} # {idescr}')
 
         return True, 'parameters listed'
+
+
+## the following commands are argument-less, intended to be called from a web-service to 
+## generate JSON output only
+
+def action_dir():
+    '''
+    Returns a JSON with the list of models and versions
+    '''
+    # get de model repo path
+    models_path = pathlib.Path(utils.model_repository_path())
+
+    # get directories in model repo path
+    dirs = [x for x in models_path.iterdir() if x.is_dir()]
+
+    # if dir contains dev/ -> is model (NAIVE APPROACH)
+    # get last dir name [-1]: model name
+    model_dirs = [d.parts[-1] for d in dirs if list(d.glob('dev'))]
+
+    results = []
+    for imodel in model_dirs:
+
+        # versions = ['dev']
+        versions = [{'text': 'dev'}]
+
+        for iversion in os.listdir(utils.model_tree_path(imodel)):
+            if iversion.startswith('ver'):
+                # versions.append (iversion)
+                versions.append({'text': iversion})
+
+        # results.append ((imodel,versions))
+        results.append({'text': imodel, 'nodes': versions})
+
+    return True, json.dumps(results)
+
+
+def action_report():
+    '''
+    Returns a JSON with the list of models and the results of each one
+    '''
+    # get de model repo path
+    models_path = pathlib.Path(utils.model_repository_path())
+
+    # get directories in model repo path
+    dirs = [x for x in models_path.iterdir() if x.is_dir()]
+
+    # if dir contains dev/ -> is model (NAIVE APPROACH)
+    # get last dir name [-1]: model name
+    model_dirs = [d.parts[-1] for d in dirs if list(d.glob('dev'))]
+
+    results = []
+    
+    # iterate for models
+    for imodel in model_dirs:
+
+        isuccess, ijson = action_info(imodel, 0, output='JSON')
+
+        if not isuccess:
+            continue
+
+        iresults = {}
+        iresults ['model'] = imodel
+        iresults ['results'] = json.loads(ijson)
+        results.append(iresults)
+
+    return True, json.dumps(results)

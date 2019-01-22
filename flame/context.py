@@ -193,14 +193,16 @@ def manage_cmd(args):
         success, results = manage.action_export(args.endpoint)
     elif args.action == 'refactoring':
         success, results = manage.action_refactoring(args.file)
-    elif args.action == 'dir':
-        success, results = manage.action_dir()
     elif args.action == 'info':
         success, results = manage.action_info(args.endpoint, version)
     elif args.action == 'results':
         success, results = manage.action_results(args.endpoint, version)
     elif args.action == 'parameters':
         success, results = manage.action_parameters(args.endpoint, version)
+    elif args.action == 'dir':
+        success, results = manage.action_dir()
+    elif args.action == 'report':
+        success, results = manage.action_report()
     else: 
         success = False
         results = "Specified manage action is not defined"
