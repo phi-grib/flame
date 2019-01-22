@@ -114,34 +114,65 @@ class Learn:
             self.results['error'] = model_validation_results
             return
 
-        # model_validation_results is a tuple which contains model_validation_info and 
+        # model_validation_results is a dictionary which contains model_validation_info and 
         # (optionally) Y_adj and Y_pred, depending on the model type    
         
         utils.add_result(self.results,
-            model_validation_results[0],
+            model_validation_results['quality'],
             'model_valid_info',
             'model validation information',
             'method',
             'single',
             'Information about the model validation')
 
-        if len(model_validation_results)>1:
+        # non-conformal qualitative and quantitative models
+        if 'Y_adj' in model_validation_results:
             utils.add_result(self.results,
-                model_validation_results[1],
+                model_validation_results['Y_adj'],
                 'Y_adj',
                 'Y fitted',
                 'result',
                 'objs',
                 'Y values of the training series fitted by the model')
         
-        if len(model_validation_results)>2:
+        if 'Y_pred' in model_validation_results:
             utils.add_result(self.results,
-                model_validation_results[2],
+                model_validation_results['Y_pred'],
                 'Y_pred',
                 'Y predicted',
                 'result',
                 'objs',
                 'Y values of the training series predicted by the model')
+
+        # conformal qualitative models produce a list of tuples, indicating
+        # if the object is predicted to belong to class 0 and 1
+        if 'classes' in model_validation_results:
+            for i in range(len(model_validation_results['classes'][0])):
+                class_key = 'c' + str(i)
+                class_label = 'Class ' + str(i)
+                class_list = model_validation_results['classes'][:, i].tolist()
+                utils.add_result(self.results, class_list, 
+                                class_key, class_label,
+                                'result', 'objs', 
+                                'Conformal class assignment',
+                                    'main')
+
+        # conformal quantitataive models produce a list of tuples, indicating
+        # the minumum and maximum value
+
+        # if 'interval' in model_validation_results:
+            # mean1 = np.mean(model_validation_results['classes'], axis=1)
+            # lower_limit = model_validation_results['classes'][:, 0]
+            # upper_limit = model_validation_results['classes'][:, 1]
+            # utils.add_result(results, mean1, 'values', 'Prediction',
+            #                  'result', 'objs',
+            #                   'Results of the prediction', 'main')
+            # utils.add_result(results, lower_limit, 'lower_limit',
+            #                  'Lower limit', 'confidence', 'objs',
+            #                   'Lower limit of the conformal prediction')
+            # utils.add_result(results, upper_limit, 'upper_limit',
+            #                  'Upper limit', 'confidence', 'objs',
+            #                   'Upper limit of the conformal prediction')
 
         # TODO: compute AD (when applicable)
 

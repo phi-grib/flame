@@ -293,7 +293,7 @@ class BaseEstimator:
         interval_means = []
         # Accuracies for each aggregated conformal estimator (out of 3)
         accuracies = []
-        results = []
+        info = []
         try:
             for i in range(len(seeds)):
                 # Generate training a test sets
@@ -334,19 +334,23 @@ class BaseEstimator:
         # Compute mean interval_means and accuracy.
         interval_means = np.mean(interval_means)
         accuracies = np.mean(accuracies)
+
         # Cut into two decimals.
         self.conformal_accuracy = float("{0:.2f}".format(accuracies))
         self.conformal_mean_interval = float("{0:.2f}".format(interval_means))
-        #Add quality metrics to results.
 
-        results.append(('Conformal_mean_interval',
+        #Add quality metrics to results.
+        info.append(('Conformal_mean_interval',
                         'Conformal mean interval', 
                         self.conformal_mean_interval))
-        results.append(
+        info.append(
             ('Conformal_accuracy', 'Conformal accuracy', 
             self.conformal_accuracy))
 
-        return True, (results,)
+        results = {}
+        results ['quality'] = info
+        #results ['interval'] = prediction
+        return True, results
 
     def CF_qualitative_validation(self):
         ''' performs validation for conformal qualitative models '''
@@ -369,7 +373,7 @@ class BaseEstimator:
         # Total number of instances out of the applicability domain.
         not_predicted_all = []
 
-        results = []
+        info = []
         # Iterate over the seeds.
         try:
             for i in range(len(seeds)):
@@ -429,10 +433,10 @@ class BaseEstimator:
         self.FN = np.int(np.mean(c1_incorrect_all))
         not_predicted_all = np.int(np.mean(not_predicted_all))
 
-        results.append(('TP', 'True positives in cross-validation', self.TP))
-        results.append(('TN', 'True negatives in cross-validation', self.TN))
-        results.append(('FP', 'False positives in cross-validation', self.FP))
-        results.append(('FN', 'False negatives in cross-validation', self.FN))
+        info.append(('TP', 'True positives in cross-validation', self.TP))
+        info.append(('TN', 'True negatives in cross-validation', self.TN))
+        info.append(('FP', 'False positives in cross-validation', self.FP))
+        info.append(('FN', 'False negatives in cross-validation', self.FN))
         
         # Compute sensitivity and specificity
         try:
@@ -445,13 +449,13 @@ class BaseEstimator:
         self.mcc = (((self.TP * self.TN) - (self.FP * self.FN)) /
                     np.sqrt((self.TP + self.FP) * (self.TP + self.FN) *
                             (self.TN + self.FP) * (self.TN + self.FN)))
-        results.append(
+        info.append(
             ('Sensitivity', 'Sensitivity in cross-validation', 
                 self.sensitivity))
-        results.append(
+        info.append(
             ('Specificity', 'Specificity in cross-validation', 
                 self.specificity))
-        results.append(
+        info.append(
             ('MCC', 'Matthews Correlation Coefficient in cross-validation',
                  self.mcc))
 
@@ -464,14 +468,17 @@ class BaseEstimator:
         self.conformal_accuracy = float(
             self.TN + self.TP) / float(self.FP + self.FN + self.TN + self.TP)
 
-        results.append(
+        info.append(
             ('Conformal_coverage', 'Conformal coverage',
                  self.conformal_coverage))
-        results.append(
+        info.append(
             ('Conformal_accuracy', 'Conformal accuracy', 
                 self.conformal_accuracy))
 
-        return True, (results,)
+        results = {}
+        results ['quality'] = info
+        #results ['classes'] = prediction
+        return True, results
 
     def quantitativeValidation(self):
         ''' performs validation for quantitative models '''
@@ -538,7 +545,11 @@ class BaseEstimator:
                         f' with exception {e}')
             raise e
               
-        return True, (info, Yp, y_pred)
+        results = {}
+        results ['quality'] = info
+        results ['Y_adj'] = Yp
+        results ['Y_pred'] = y_pred
+        return True, results
 
     def qualitativeValidation(self):
         ''' performs validation for qualitative models '''
@@ -627,7 +638,11 @@ class BaseEstimator:
                 f' with exception {e}')
             raise e
 
-        return True, (info, Yp, y_pred)
+        results = {}
+        results ['quality'] = info
+        results ['Y_adj'] = Yp
+        results ['Y_pred'] = y_pred
+        return True, results
 
     def validate(self):
         ''' Validates the model and computes suitable
