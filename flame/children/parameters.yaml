@@ -244,7 +244,7 @@ conformal:
   advanced: regular
   object_type: boolean
   writable: false
-  value: false
+  value: true
   options: 
     - true
     - false
