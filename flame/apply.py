@@ -210,9 +210,6 @@ class Apply:
                 ext_val_results.append(('FN',
                                         'False negatives in external-validation',
                                         float(FN)))
-                ext_val_results.append(('Coverage',
-                                        'Conformal coverage in external-validation',
-                                        float(coverage)))
                 ext_val_results.append(('Sensitivity',
                                         'Sensitivity in external-validation',
                                         float(sensitivity)))
@@ -222,6 +219,9 @@ class Apply:
                 ext_val_results.append(('MCC',
                                         'Mattews Correlation Coefficient in external-validation',
                                         float(MCC)))
+                ext_val_results.append(('Conformal_coverage',
+                                        'Conformal coverage in external-validation',
+                                        float(coverage)))
                 utils.add_result(self.results,
                                  ext_val_results,
                                  'external-validation',
