@@ -140,7 +140,8 @@ class RF(BaseEstimator):
             except Exception as e:
                 LOG.error(f'Exception building RF' 
                           f'estimator with exception {e}')
-        self.estimator_temp = copy(self.estimator.fit(X, Y))
+        self.estimator.fit(X, Y)
+        self.estimator_temp = copy(self.estimator)
         # Create the conformal estimator
         if self.param.getVal('conformal'):
             try:
@@ -149,7 +150,7 @@ class RF(BaseEstimator):
                     underlying_model = RegressorAdapter(self.estimator_temp)
                     normalizing_model = RegressorAdapter(
                         KNeighborsRegressor(n_neighbors=5))
-                    # normalizing_model = RegressorAdapter(estimator)
+                    normalizing_model = RegressorAdapter(self.estimator_temp)
                     normalizer = RegressorNormalizer(
                                     underlying_model,
                                     normalizing_model,

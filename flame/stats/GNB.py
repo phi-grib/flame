@@ -94,14 +94,14 @@ class GNB(BaseEstimator):
         self.estimator = GaussianNB(**self.estimator_parameters)
         results.append(('model', 'model type', 'GNB qualitative'))
         # If conformal, then create aggregated conformal classifier
+        self.estimator.fit(X, Y)
+        self.estimator_temp = copy(self.estimator)
         if self.param.getVal('conformal'):
-            self.conformal_pred = AggregatedCp(
+            self.estimator = AggregatedCp(
                 IcpClassifier(ClassifierNc(ClassifierAdapter(
-                self.estimator), MarginErrFunc())), BootstrapSampler())
+                self.estimator_temp), MarginErrFunc())), BootstrapSampler())
             # Fit estimator to the data
-            self.conformal_pred.fit(X, Y)
+            self.estimator.fit(X, Y)
             results.append(
                 ('model', 'model type', 'conformal GNB qualitative'))
-
-        self.estimator.fit(X, Y)
         return True, results
