@@ -24,8 +24,8 @@ from flame.util import utils
 from flame.stats.imbalance import *  
 from flame.stats.model_validation import *
 from flame.stats.scale import center, scale
-from flame.stats.feature_selection import * 
-
+from flame.stats.feature_selection import *
+import pickle
 import numpy as np
 import os
 import copy
@@ -37,7 +37,6 @@ import matplotlib.pyplot as plt
 import warnings
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
-
 from sklearn.model_selection import cross_val_predict
 from sklearn.model_selection import LeaveOneOut
 from sklearn.model_selection import cross_val_score
@@ -50,9 +49,7 @@ from sklearn.metrics import make_scorer
 from sklearn.metrics import confusion_matrix
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler 
-
 # nonconformist imports
-
 from nonconformist.base import ClassifierAdapter, RegressorAdapter
 from nonconformist.icp import IcpClassifier, IcpRegressor
 from nonconformist.nc import MarginErrFunc
@@ -150,90 +147,93 @@ class BaseEstimator:
         """
 
         self.param = parameters
-        self.X_original = X
-        self.Y_original = Y
-        self.variable_mask = []
-        self.X = X
-        self.Y = Y
-        self.nobj, self.nvarx = np.shape(X)
+        self.scaler = None
+        self.variable_mask = None
 
+        if X is not None:
+            self.X_original = X
+            self.Y_original = Y
+            self.variable_mask = []
+            self.X = X
+            self.Y = Y
+            self.nobj, self.nvarx = np.shape(X)
 
+            # Get cross-validator
+            # Consider to include a Random Seed for cross-validator
+            if self.param.getVal('ModelValidationCV'):
+                try:
+                    self.cv = getCrossVal(
+                                    self.param.getVal('ModelValidationCV'),
+                                    46,
+                                    self.param.getVal('ModelValidationN'),
+                                    self.param.getVal('ModelValidationP'))
+                    LOG.debug('Cross-validator retrieved')
+                    LOG.info(f'cv is: {self.cv}')
+                except Exception as e:
+                    LOG.error(f'Error retrieving cross-validator with'
+                            f'exception: {e}')
+                    raise e
 
-        # Get cross-validator 
-        # Consider to include a Random Seed for cross-validator
-        if self.param.getVal('ModelValidationCV'):
-            try:
-                self.cv = getCrossVal(self.param.getVal('ModelValidationCV'),
-                                46,
-                                self.param.getVal('ModelValidationN'),
-                                self.param.getVal('ModelValidationP'))
-                LOG.debug('Cross-validator retrieved')
-                LOG.info(f'cv is: {self.cv}')
-            except Exception as e:
-                LOG.error(f'Error retrieving cross-validator with'
-                           f'exception: {e}')
-                raise e
+            # Perform subsampling on the majority class. Consider to move.
+            # Only for qualitative endpoints.
+            if self.param.getVal("imbalance") is not None and \
+            not self.param.getVal("quantitative"):
+                try:
+                    self.X, self.Y = run_imbalance(
+                        self.param.getVal('imbalance'), self.X, self.Y, 46)
+                    # This is necessary to avoid inconsistences in methods
+                    # using self.nobj
+                    LOG.info(f'{self.param.getVal("imbalance")}'
+                                f'sampling method performed')
+                    LOG.info(f'Number of objects after sampling: {self.nobj}')
+                except Exception as e:
+                    LOG.error(f'Unable to perform sampling '
+                                f'method with exception: {e}')
+                    raise e
 
-        # Perform subsampling on the majority class. Consider to move.
-        # Only for qualitative endpoints.
-        if self.param.getVal("imbalance") is not None and \
-         not self.param.getVal("quantitative"):
-            try:
-                self.X, self.Y = run_imbalance(
-                    self.param.getVal('imbalance'), self.X, self.Y, 46)
-                # This is necessary to avoid inconsistences in methods
-                # using self.nobj
-                LOG.info(f'{self.param.getVal("imbalance")}'
-                             f'sampling method performed')
-                LOG.info(f'Number of objects after sampling: {self.nobj}')
-            except Exception as e:
-                LOG.error(f'Unable to perform sampling '
-                            f'method with exception: {e}')
-                raise e
+            # Run scaling.
+            if self.param.getVal('modelAutoscaling'):
+                try:
+                    # self.X, self.mux = center(self.X)
+                    # self.X, self.wgx = scale(self.X, 
+                    #                     self.param.getVal('modelAutoscaling'))
+                    # MinMaxScaler is used between range 1-0 so 
+                    # there is no negative values.
+                    scaler = MinMaxScaler(copy=True, feature_range=(0,1))
+                    # The scaler is saved so it can be used later
+                    # to prediction instances.
+                    self.scaler = scaler.fit(self.X)
+                    # Scale the data.
+                    self.X = scaler.transform(self.X)
+                    LOG.info('Data scaling performed')
+                except Exception as e:
+                    LOG.error(f'Unable to perform scaling'
+                    ' with exception : {e}')
+                    raise e
 
-        # Run scaling.
-        if self.param.getVal('modelAutoscaling'):
-            try:
-                self.X, self.mux = center(self.X)
-                self.X, self.wgx = scale(self.X, 
-                                    self.param.getVal('modelAutoscaling'))
-                # MinMaxScaler is used between range 1-0 so 
-                # there is no negative values.
-                scaler =  MinMaxScaler(copy=True, feature_range=(0,1))
-                # The scaler is saved so it can be used later
-                # to prediction instances.
-                self.scaler = scaler.fit(self.X)
-                # Scale the data.
-                self.X = scaler.transform(self.X)
-                LOG.info('Data scaling performed')
-            except Exception as e:
-                LOG.error(f'Unable to perform scaling'
-                ' with exception : {e}')
-                raise e
+            #### Alternative way to make all values positives (sum the minimum 
+            #### of each column to the column)
+                # list_min = np.min(self.X, axis=0)
+                # newX = copy.copy(self.X)
+                # for i in range(len(self.X[0])):
+                #     newX[:, i] = np.array(self.X[:, i] -list_min[i])
 
-        #### Alternative way to make all values positives (sum the minimum 
-        #### of each column to the column)
-            # list_min = np.min(self.X, axis=0)
-            # newX = copy.copy(self.X)
-            # for i in range(len(self.X[0])):
-            #     newX[:, i] = np.array(self.X[:, i] -list_min[i])
+            # Run feature selection. Move to a instance method.
+            if self.param.getVal("feature_selection"):
+                self.run_feature_selection()
+        
+            # Set the new number of instances/variables
+            # if sampling/feature selection performed
+            self.nobj, self.nvarx = np.shape(X)
 
-        # Run feature selection. Move to a instance method.
-        if self.param.getVal("feature_selection"):
-            self.run_feature_selection()
-       
-        # Set the new number of instances/variables
-        # if sampling/feature selection performed
-        self.nobj, self.nvarx = np.shape(X)
-
-        # Check X and Y integrity.
-        if (self.nobj == 0) or (self.nvarx == 0):
-            LOG.error('No objects/variables in the matrix')
-            raise Exception('No objects/variables in the matrix')
-        if len(Y) == 0:
-            self.failed = True
-            LOG.error('No activity values')
-            raise ValueError("No activity values (Y)")
+            # Check X and Y integrity.
+            if (self.nobj == 0) or (self.nvarx == 0):
+                LOG.error('No objects/variables in the matrix')
+                raise Exception('No objects/variables in the matrix')
+            if len(Y) == 0:
+                self.failed = True
+                LOG.error('No activity values')
+                raise ValueError("No activity values (Y)")
 
     def run_feature_selection(self):
         """Compute the number of variables to be retained.
@@ -270,10 +270,10 @@ class BaseEstimator:
             self.X = self.X[:, self.variable_mask]
             self.scaler = self.scaler.fit(self.X)
             self.X = self.scaler.transform(self.X)
-            self.mux = self.mux.reshape(1, -1)[:, self.variable_mask]
-            self.wgx = self.wgx.reshape(1, -1)[:, self.variable_mask]
+            # self.mux = self.mux.reshape(1, -1)[:, self.variable_mask]
+            # self.wgx = self.wgx.reshape(1, -1)[:, self.variable_mask]
             LOG.info(f'Variable selection applied, number of final variables:'
-                         f'{self.n_features}')
+                        f'{self.n_features}')
         except Exception as e:
             LOG.error(f'Error performing feature selection'
                         f' with exception: {e}')
@@ -303,7 +303,7 @@ class BaseEstimator:
                 # Create the aggregated conformal regressor.
                 conformal_pred = AggregatedCp(IcpRegressor(
                                     RegressorNc(RegressorAdapter(
-                                        self.estimator))),
+                                        self.estimator_temp))),
                                             BootstrapSampler())
                 # Fit conformal regressor to the data
                 conformal_pred.fit(X_train, Y_train)
@@ -386,7 +386,7 @@ class BaseEstimator:
                 # Create the aggregated conformal classifier.
                 conformal_pred = AggregatedCp(IcpClassifier(
                                             ClassifierNc(ClassifierAdapter(
-                                                            self.estimator),
+                                                            self.estimator_temp),
                                                 MarginErrFunc())),
                                             BootstrapSampler())
                 # Fit the conformal classifier to the data
@@ -569,7 +569,6 @@ class BaseEstimator:
 
         # Get confusion matrix for predicted Y
         try:
-            print(self.estimator)
             self.TNpred, self.FPpred,\
             self.FNpred, self.TPpred = confusion_matrix(Y, Yp,
                                                      labels=[0, 1]).ravel()
@@ -714,7 +713,7 @@ class BaseEstimator:
         ''' projects a collection of query objects in a conformal model,
          for obtaining predictions '''
 
-        prediction = self.conformal_pred.predict(
+        prediction = self.estimator.predict(
             Xb, significance=self.param.getVal('conformalSignificance'))
 
         if self.param.getVal('quantitative'):
@@ -753,15 +752,63 @@ class BaseEstimator:
             return
         # Apply variable mask to prediction vector/matrix
         if self.param.getVal("feature_selection"):
-            print ("feature selection")
             Xb = Xb[:, self.variable_mask]
         # Scale prediction vector/matrix
         if self.param.getVal('modelAutoscaling'):
-            Xb = Xb-self.mux
-            Xb = Xb*self.wgx
+            # Xb = Xb-self.mux
+            # Xb = Xb*self.wgx
             Xb = self.scaler.transform(Xb)
         # Select the type of projection
         if not self.param.getVal('conformal'):
             self.regularProject(Xb, results)
         else:
             self.conformalProject(Xb, results)
+    
+    def save_model(self):
+        ''' This function saves estimator and scaler in a pickle file '''
+
+        # This dictionary contain all the objects which will be needed
+        # for prediction
+        dict_estimator = {'estimator' : self.estimator,\
+                            'scaler' : self.scaler,\
+                            'variable_mask' : self.variable_mask}
+
+        model_pkl_path = os.path.join(self.param.getVal('model_path'),
+                                      'estimator.pkl')
+        with open(model_pkl_path, 'wb') as handle:
+            pickle.dump(dict_estimator, handle, 
+                        protocol=pickle.HIGHEST_PROTOCOL)
+        LOG.debug('Model saved as:{}'.format(model_pkl_path))
+
+        return
+
+
+    def load_model(self):
+        ''' This function loads estimator and scaler in a pickle file '''
+
+        model_file = os.path.join(self.param.getVal('model_path'),
+                                  'estimator.pkl')
+        LOG.debug(f'Loading model from pickle file, path: {model_file}')
+        try:
+            with open(model_file, "rb") as input_file:
+                dict_estimator = pickle.load(input_file)
+        except FileNotFoundError:
+            LOG.error(f'No valid model estimator found at: {model_file}')
+            raise FileNotFoundError
+
+        # Load model in a extensible way.
+        self.estimator = dict_estimator['estimator']
+        if self.estimator is None:
+            LOG.error('Estimator is None.'
+            'Probably model building was not successful')
+            raise Exception('Loaded estimator is None.'
+                            'Probably model building was not successful')
+        
+        # TODO: Improve exception handling by checking parameter values.
+        # i.e: if parameter modelAutoscaling=True, then scaler cannot
+        # be None
+        if 'scaler' in dict_estimator.keys():
+            self.scaler = dict_estimator['scaler']
+        if 'variable_mask' in dict_estimator.keys():
+            self.variable_mask = dict_estimator['variable_mask']
+        return

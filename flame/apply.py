@@ -24,6 +24,12 @@ import numpy as np
 import pickle
 import os
 
+from flame.stats.RF import RF
+from flame.stats.SVM import SVM
+from flame.stats.GNB import GNB
+from flame.stats.PLSR import PLSR
+from flame.stats.PLSDA import PLSDA
+
 from sklearn.metrics import mean_squared_error, matthews_corrcoef as mcc
 from sklearn.metrics import f1_score
 from sklearn.metrics import make_scorer
@@ -270,7 +276,7 @@ class Apply:
         # assume X matrix is present in 'xmatrix'
         X = self.results["xmatrix"]
 
-        # use in single mol prdictions
+        # use in single mol predictions
         if X.ndim < 2:  # if flat array
             X = X.reshape(1, -1)  # to 1 row matrix
 
@@ -278,7 +284,7 @@ class Apply:
         nobj, nvarx = np.shape(X)
 
         # check that the dimensions of the X matrix are acceptable
-        if (nobj == 0) :
+        if (nobj == 0):
             LOG.error('No object found')
             self.results['error'] = 'No object found'
             return
@@ -288,22 +294,39 @@ class Apply:
             self.results['error'] = 'Failed to generate MDs'
             return
 
-        # get model pickle
-        model_file = os.path.join(self.param.getVal('model_path'),
-                                  'model.pkl')
+        # Load model 
 
-        LOG.debug(f'Loading model from pickle file, path: {model_file}')
+        # expand with new methods here:
+        registered_methods = [('RF', RF),
+                              ('SVM', SVM),
+                              ('GNB', GNB),
+                              ('PLSR', PLSR),
+                              ('PLSDA', PLSDA), ]
 
+        # instantiate an appropriate child of base_model
+        model = None
+        for imethod in registered_methods:
+            if imethod[0] == self.param.getVal('model'):
+                model = imethod[1](None, None, self.param)
+                LOG.debug('Recognized learner: '
+                          f"{self.param.getVal('model')}")
+                break
+
+        if not model:
+            self.results['error'] = 'modeling method not recognized'
+            LOG.error(f'Modeling method {self.param.getVal("model")}'
+                      'not recognized')
+            return
         try:
-            with open(model_file, "rb") as input_file:
-                estimator = pickle.load(input_file)
-        except FileNotFoundError:
-            LOG.error(f'No valid model estimator found at: {model_file}')
-            self.results['error'] = f'No valid model estimator found at: {model_file}'
+            model.load_model()
+            LOG.debug(f'Loading model from pickle file')
+        except Exception as e:
+            LOG.error(f'No valid model estimator found with exception {e}')
+            self.results['error'] = f'No valid model estimator found at'
             return
 
         # project the X matrix into the model and save predictions in self.results
-        estimator.project(X, self.results)
+        model.project(X, self.results)
 
         # if the input file contains activity values use them to run external validation 
         if 'ymatrix' in self.results:

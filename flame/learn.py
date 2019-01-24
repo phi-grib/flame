@@ -76,7 +76,7 @@ class Learn:
                               ('PLSR', PLSR),
                               ('PLSDA', PLSDA), ]
 
-        # instanciate an appropriate child of base_model
+        # instantiate an appropriate child of base_model
         model = None
         for imethod in registered_methods:
             if imethod[0] == self.param.getVal('model'):
@@ -176,14 +176,10 @@ class Learn:
 
         # TODO: compute AD (when applicable)
 
-        LOG.info('Model finished succesfully')
+        LOG.info('Model finished successfully')
 
         # save model
-        model_pkl_path = os.path.join(self.param.getVal('model_path'),
-                                      'model.pkl')
-        with open(model_pkl_path, 'wb') as handle:
-            pickle.dump(model, handle, protocol=pickle.HIGHEST_PROTOCOL)
-        LOG.debug('Model saved as:{}'.format(model_pkl_path))
+        model.save_model()
 
         return
 
