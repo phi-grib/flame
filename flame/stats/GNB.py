@@ -35,7 +35,7 @@ from nonconformist.acp import BootstrapSampler
 from nonconformist.icp import IcpClassifier, IcpRegressor
 from nonconformist.nc import ClassifierNc, MarginErrFunc, RegressorNc
 from flame.util import get_logger
-
+from copy import copy
 LOG = get_logger(__name__)
 
 
@@ -98,8 +98,11 @@ class GNB(BaseEstimator):
         self.estimator_temp = copy(self.estimator)
         if self.param.getVal('conformal'):
             self.estimator = AggregatedCp(
-                IcpClassifier(ClassifierNc(ClassifierAdapter(
-                self.estimator_temp), MarginErrFunc())), BootstrapSampler())
+                IcpClassifier(ClassifierNc(
+                    ClassifierAdapter(
+                        self.estimator_temp),
+                    MarginErrFunc())),
+                BootstrapSampler())
             # Fit estimator to the data
             self.estimator.fit(X, Y)
             results.append(

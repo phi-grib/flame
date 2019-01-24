@@ -28,6 +28,7 @@ from flame.stats.scale import scale, center
 from flame.stats.model_validation import CF_QuanVal
 
 from sklearn import svm
+from copy import copy
 
 from nonconformist.base import ClassifierAdapter, RegressorAdapter
 from nonconformist.acp import AggregatedCp
@@ -39,6 +40,7 @@ from nonconformist.nc import AbsErrorErrFunc, RegressorNormalizer
 from flame.util import get_logger
 
 LOG = get_logger(__name__)
+
 
 class SVM(BaseEstimator):
     """
@@ -135,16 +137,17 @@ class SVM(BaseEstimator):
                     results.append(('model', 'model type', 'SVM qualitative'))
             except Exception as e:
                 LOG.error(f'Exception building SVM' 
-                        f'estimator with exception {e}')
-
+                          f'estimator with exception {e}')
+        self.estimator.fit(X, Y)
+        self.estimator_temp = copy(self.estimator)
         if self.param.getVal('conformal'):
             try:
                 LOG.info("Building aggregated conformal SVM model")
                 if self.param.getVal('quantitative'):
-                    underlying_model = RegressorAdapter(self.estimator)
-                    normalizing_model = RegressorAdapter(
-                        KNeighborsRegressor(n_neighbors=5))
-                    normalizing_model = RegressorAdapter(self.estimator)
+                    underlying_model = RegressorAdapter(self.estimator_temp)
+                    # normalizing_model = RegressorAdapter(
+                        # KNeighborsRegressor(n_neighbors=5))
+                    normalizing_model = RegressorAdapter(self.estimator_temp)
                     normalizer = RegressorNormalizer(
                         underlying_model, normalizing_model, AbsErrorErrFunc())
                     nc = RegressorNc(underlying_model,
@@ -153,30 +156,28 @@ class SVM(BaseEstimator):
                     # RegressorNc(RegressorAdapter(self.estimator))),
                     #                                   BootstrapSampler())
 
-                    self.conformal_pred = AggregatedCp(IcpRegressor(nc),
-                                                    BootstrapSampler())
-                    self.conformal_pred.fit(X, Y)
+                    self.estimator = AggregatedCp(IcpRegressor(nc),
+                                                        BootstrapSampler())
+                    self.estimator.fit(X, Y)
                     # overrides non-conformal
                     results.append(
                         ('model', 'model type', 'conformal SVM quantitative'))
 
                 else:
-                    self.conformal_pred = AggregatedCp(
+                    self.estimator = AggregatedCp(
                         IcpClassifier(
                             ClassifierNc(
-                                ClassifierAdapter(self.estimator),
+                                ClassifierAdapter(self.estimator_temp),
                                     MarginErrFunc())), 
                         BootstrapSampler())
-                    self.conformal_pred.fit(X, Y)
+                    self.estimator.fit(X, Y)
                     # overrides non-conformal
                     results.append(
                         ('model', 'model type', 'conformal SVM qualitative'))
             except Exception as e:
                 LOG.error(f'Exception building aggregated conformal SVM ' 
-                        f'estimator with exception {e}')
+                          f'estimator with exception {e}')
         # Fit estimator to the data
-        self.estimator.fit(X, Y)
-
         return True, results
 
 
