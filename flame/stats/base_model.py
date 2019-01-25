@@ -287,19 +287,16 @@ class BaseEstimator:
         X = self.X.copy()
         Y = self.Y.copy()
 
-        # Number of external validations for the aggregated conformal estimator.
-        seeds = [5, 7, 35]
-        # Interval means for each aggregated  conformal estimator (out of 3)
-        interval_means = []
-        # Accuracies for each aggregated conformal estimator (out of 3)
-        accuracies = []
         info = []
+        kf = KFold(n_splits=5, shuffle=True)
+        # Copy Y vector to use it as template to assign predictions
+        Y_pred = copy.copy(Y).tolist()
         try:
-            for i in range(len(seeds)):
+            for train_index, test_index in kf.split(X):
+                # Generate training and test sets
+                X_train, X_test = X[train_index], X[test_index]
+                Y_train, Y_test = Y[train_index], Y[test_index]
                 # Generate training a test sets
-                X_train, X_test, Y_train, Y_test = train_test_split(
-                        X, Y, test_size=0.25,
-                        random_state=i, shuffle=False)
                 # Create the aggregated conformal regressor.
                 conformal_pred = AggregatedCp(IcpRegressor(
                                     RegressorNc(RegressorAdapter(
@@ -311,33 +308,32 @@ class BaseEstimator:
                 # Perform prediction on test set
                 prediction = conformal_pred.predict(
                     X_test, self.param.getVal('conformalSignificance'))
-                # Add the n validation interval means
-                interval_means.append(
-                    np.mean(np.abs(prediction[:, 0]) - 
-                                np.abs(prediction[:, 1])))
-                Y_test = Y_test.reshape(-1, 1)
-                # Get boolean mask of instances
-                #  within the applicability domain.
-                inside_interval = ((prediction[:, 0].reshape(-1, 1)
-                                     < Y_test) & 
-                                     (prediction[:, 1].reshape(-1, 1) 
-                                     > Y_test))
-                # Compute the accuracy (number of instances within the AD).
-                accuracy = np.sum(inside_interval)/len(Y_test)
-                # Add validation result to the list of accuracies.
-                accuracies.append(accuracy)
+                # Assign the prediction its original index
+                for index, el in enumerate(test_index):
+                    Y_pred[el] = prediction[index]
+
         except Exception as e:
             LOG.error(f'Quantitative conformal validation'
                         f' failed with exception: {e}')
             raise e
 
-        # Compute mean interval_means and accuracy.
-        interval_means = np.mean(interval_means)
-        accuracies = np.mean(accuracies)
+        Y_pred = np.asarray(Y_pred)
+        # Add the n validation interval means
+        interval_mean = np.mean(np.abs((Y_pred[:, 0]) - 
+                        (Y_pred[:, 1])))
+        # Get boolean mask of instances
+        #  within the applicability domain.
+        inside_interval = ((Y_pred[:, 0].reshape(-1, 1)
+                                < Y) & 
+                                (Y_pred[:, 1].reshape(-1, 1) 
+                                > Y))
+        # Compute the accuracy (number of instances within the AD).
+        accuracy = np.sum(inside_interval)/len(Y)
 
         # Cut into two decimals.
-        self.conformal_accuracy = float("{0:.2f}".format(accuracies))
-        self.conformal_mean_interval = float("{0:.2f}".format(interval_means))
+        self.conformal_interval_medians = (np.mean(Y_pred, axis=1))
+        self.conformal_accuracy = float("{0:.2f}".format(accuracy))
+        self.conformal_mean_interval = float("{0:.2f}".format(interval_mean))
 
         #Add quality metrics to results.
         info.append(('Conformal_mean_interval',
@@ -346,10 +342,17 @@ class BaseEstimator:
         info.append(
             ('Conformal_accuracy', 'Conformal accuracy', 
             self.conformal_accuracy))
+        info.append(
+            ('Conformal_interval_medians',
+             'Conformal interval medians', 
+            self.conformal_interval_medians))
+        info.append(
+            ('Conformal_prediction_ranges',
+             'Conformal prediction ranges', 
+             Y_pred))
 
         results = {}
         results ['quality'] = info
-        #results ['interval'] = prediction
         return True, results
 
     def CF_qualitative_validation(self):
@@ -359,30 +362,27 @@ class BaseEstimator:
         X = self.X.copy()
         Y = self.Y.copy()
 
-        # Number of external validations for the 
-        # aggregated conformal estimator.
-        seeds = [5, 7, 35]
         # Total number of class 0 correct predictions.
-        c0_correct_all = []
+        c0_correct_all = 0
         # Total number of class 0 incorrect predictions.
-        c0_incorrect_all = []
+        c0_incorrect_all = 0
         # Total number of class 1 correct predictions.
-        c1_correct_all = []
+        c1_correct_all = 0
         # Total number of class 1 incorrect predictions
-        c1_incorrect_all = []
+        c1_incorrect_all = 0
         # Total number of instances out of the applicability domain.
-        not_predicted_all = []
+        not_predicted_all = 0
 
         info = []
-        # Iterate over the seeds.
+
+        kf = KFold(n_splits=5, shuffle=True)
+        # Copy Y vector to use it as template to assign predictions
+        Y_pred = copy.copy(Y).tolist()
         try:
-            for i in range(len(seeds)):
+            for train_index, test_index in kf.split(X):
                 # Generate training and test sets
-                X_train, X_test,\
-                Y_train, Y_test = train_test_split(X, Y,
-                                                    test_size=0.25,
-                                                    random_state=i, 
-                                                    shuffle=True)
+                X_train, X_test = X[train_index], X[test_index]
+                Y_train, Y_test = Y[train_index], Y[test_index]
                 # Create the aggregated conformal classifier.
                 conformal_pred = AggregatedCp(IcpClassifier(
                                             ClassifierNc(ClassifierAdapter(
@@ -394,44 +394,35 @@ class BaseEstimator:
                 # Perform prediction on test set
                 prediction = conformal_pred.predict(
                             X_test, self.param.getVal('conformalSignificance'))
-                
-                c0_correct = 0
-                c1_correct = 0
-                not_predicted = 0
-                c0_incorrect = 0
-                c1_incorrect = 0
+                # Assign the prediction the correct index. 
+                for index, el in enumerate(test_index):
+                    Y_pred[el] = prediction[index]
+            # Iterate over the prediction and check the result
+            for i in range(len(Y_pred)):
+                real = float(Y[i])
+                predicted = Y_pred[i]
+                if predicted[0] != predicted[1]:
+                    if real == 0 and predicted[0] == True:
+                        c0_correct_all += 1
+                    if real == 0 and predicted[1] == True:
+                        c0_incorrect_all += 1
+                    if real == 1 and predicted[1] == True:
+                        c1_correct_all += 1
+                    if real == 1 and predicted[0] == True:
+                        c1_incorrect_all += 1
+                else:
+                    not_predicted_all += 1
 
-                # Iterate over the prediction and check the result
-                for i in range(len(Y_test)):
-                    real = float(Y_test[i])
-                    predicted = prediction[i]
-                    if predicted[0] != predicted[1]:
-                        if real == 0 and predicted[0] == True:
-                            c0_correct += 1
-                        if real == 0 and predicted[1] == True:
-                            c0_incorrect += 1
-                        if real == 1 and predicted[1] == True:
-                            c1_correct += 1
-                        if real == 1 and predicted[0] == True:
-                            c1_incorrect += 1
-                    else:
-                        not_predicted += 1
-                # Add the results to the lists.
-                c0_correct_all.append(c0_correct)
-                c0_incorrect_all.append(c0_incorrect)
-                c1_correct_all.append(c1_correct)
-                c1_incorrect_all.append(c1_incorrect)
-                not_predicted_all.append(not_predicted)
         except Exception as e:
             LOG.error(f'Qualitative conformal validation'
                         f' failed with exception: {e}')
             raise e
         # Get the mean confusion matrix.
-        self.TN = np.int(np.mean(c0_correct_all))
-        self.FP = np.int(np.mean(c0_incorrect_all))
-        self.TP = np.int(np.mean(c1_correct_all))
-        self.FN = np.int(np.mean(c1_incorrect_all))
-        not_predicted_all = np.int(np.mean(not_predicted_all))
+        self.TN = c0_correct_all
+        self.FP = c0_incorrect_all
+        self.TP = c1_correct_all
+        self.FN = c1_incorrect_all
+        not_predicted_all = not_predicted_all
 
         info.append(('TP', 'True positives in cross-validation', self.TP))
         info.append(('TN', 'True negatives in cross-validation', self.TN))
@@ -459,7 +450,7 @@ class BaseEstimator:
             ('MCC', 'Matthews Correlation Coefficient in cross-validation',
                  self.mcc))
 
-        # Compute coverage (% of compouds inside the applicability domain)
+        # Compute coverage (% of compounds inside the applicability domain)
         self.conformal_coverage = (self.TN + self.FP + self.TP +
                                     self.FN) / ((self.TN + self.FP +
                                      self.TP + self.FN) +
