@@ -95,13 +95,13 @@ class Learn:
         LOG.info('Starting model building')
         success, model_building_results = model.build()
         if not success:
-            self.results['error'] = model_buidling_results
+            self.results['error'] = model_building_results
             return
 
         utils.add_result(self.results,
                     model_building_results,
                     'model_build_info',
-                    'model buidling information',
+                    'model building information',
                     'method',
                     'single',
                     'Information about the model')
@@ -179,7 +179,11 @@ class Learn:
         LOG.info('Model finished successfully')
 
         # save model
-        model.save_model()
+        try:
+            model.save_model()
+        except Exception as e:
+            LOG.error(f'Error saving model with exception {e}')
+            return False, 'An error ocurred saving the model'
 
         return
 

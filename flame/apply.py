@@ -323,7 +323,7 @@ class Apply:
         except Exception as e:
             LOG.error(f'No valid model estimator found with exception {e}')
             self.results['error'] = f'No valid model estimator found at'
-            return
+            return False, f'Exception ocurred when loading model: {e}'
 
         # project the X matrix into the model and save predictions in self.results
         model.project(X, self.results)
