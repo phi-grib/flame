@@ -24,8 +24,8 @@ from flame.util import utils
 from flame.stats.imbalance import *  
 from flame.stats.model_validation import *
 from flame.stats.scale import center, scale
-from flame.stats.feature_selection import * 
-
+from flame.stats.feature_selection import *
+import pickle
 import numpy as np
 import os
 import copy
@@ -37,7 +37,6 @@ import matplotlib.pyplot as plt
 import warnings
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
-
 from sklearn.model_selection import cross_val_predict
 from sklearn.model_selection import LeaveOneOut
 from sklearn.model_selection import cross_val_score
@@ -50,9 +49,7 @@ from sklearn.metrics import make_scorer
 from sklearn.metrics import confusion_matrix
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler 
-
 # nonconformist imports
-
 from nonconformist.base import ClassifierAdapter, RegressorAdapter
 from nonconformist.icp import IcpClassifier, IcpRegressor
 from nonconformist.nc import MarginErrFunc
@@ -150,90 +147,93 @@ class BaseEstimator:
         """
 
         self.param = parameters
-        self.X_original = X
-        self.Y_original = Y
-        self.variable_mask = []
-        self.X = X
-        self.Y = Y
-        self.nobj, self.nvarx = np.shape(X)
+        self.scaler = None
+        self.variable_mask = None
 
+        if X is not None:
+            self.X_original = X
+            self.Y_original = Y
+            self.variable_mask = []
+            self.X = X
+            self.Y = Y
+            self.nobj, self.nvarx = np.shape(X)
 
+            # Get cross-validator
+            # Consider to include a Random Seed for cross-validator
+            if self.param.getVal('ModelValidationCV'):
+                try:
+                    self.cv = getCrossVal(
+                                    self.param.getVal('ModelValidationCV'),
+                                    46,
+                                    self.param.getVal('ModelValidationN'),
+                                    self.param.getVal('ModelValidationP'))
+                    LOG.debug('Cross-validator retrieved')
+                    LOG.info(f'cv is: {self.cv}')
+                except Exception as e:
+                    LOG.error(f'Error retrieving cross-validator with'
+                            f'exception: {e}')
+                    raise e
 
-        # Get cross-validator 
-        # Consider to include a Random Seed for cross-validator
-        if self.param.getVal('ModelValidationCV'):
-            try:
-                self.cv = getCrossVal(self.param.getVal('ModelValidationCV'),
-                                46,
-                                self.param.getVal('ModelValidationN'),
-                                self.param.getVal('ModelValidationP'))
-                LOG.debug('Cross-validator retrieved')
-                LOG.info(f'cv is: {self.cv}')
-            except Exception as e:
-                LOG.error(f'Error retrieving cross-validator with'
-                           f'exception: {e}')
-                raise e
+            # Perform subsampling on the majority class. Consider to move.
+            # Only for qualitative endpoints.
+            if self.param.getVal("imbalance") is not None and \
+            not self.param.getVal("quantitative"):
+                try:
+                    self.X, self.Y = run_imbalance(
+                        self.param.getVal('imbalance'), self.X, self.Y, 46)
+                    # This is necessary to avoid inconsistences in methods
+                    # using self.nobj
+                    LOG.info(f'{self.param.getVal("imbalance")}'
+                                f'sampling method performed')
+                    LOG.info(f'Number of objects after sampling: {self.nobj}')
+                except Exception as e:
+                    LOG.error(f'Unable to perform sampling '
+                                f'method with exception: {e}')
+                    raise e
 
-        # Perform subsampling on the majority class. Consider to move.
-        # Only for qualitative endpoints.
-        if self.param.getVal("imbalance") is not None and \
-         not self.param.getVal("quantitative"):
-            try:
-                self.X, self.Y = run_imbalance(
-                    self.param.getVal('imbalance'), self.X, self.Y, 46)
-                # This is necessary to avoid inconsistences in methods
-                # using self.nobj
-                LOG.info(f'{self.param.getVal("imbalance")}'
-                             f'sampling method performed')
-                LOG.info(f'Number of objects after sampling: {self.nobj}')
-            except Exception as e:
-                LOG.error(f'Unable to perform sampling '
-                            f'method with exception: {e}')
-                raise e
+            # Run scaling.
+            if self.param.getVal('modelAutoscaling'):
+                try:
+                    # self.X, self.mux = center(self.X)
+                    # self.X, self.wgx = scale(self.X, 
+                    #                     self.param.getVal('modelAutoscaling'))
+                    # MinMaxScaler is used between range 1-0 so 
+                    # there is no negative values.
+                    scaler = MinMaxScaler(copy=True, feature_range=(0,1))
+                    # The scaler is saved so it can be used later
+                    # to prediction instances.
+                    self.scaler = scaler.fit(self.X)
+                    # Scale the data.
+                    self.X = scaler.transform(self.X)
+                    LOG.info('Data scaling performed')
+                except Exception as e:
+                    LOG.error(f'Unable to perform scaling'
+                    ' with exception : {e}')
+                    raise e
 
-        # Run scaling.
-        if self.param.getVal('modelAutoscaling'):
-            try:
-                self.X, self.mux = center(self.X)
-                self.X, self.wgx = scale(self.X, 
-                                    self.param.getVal('modelAutoscaling'))
-                # MinMaxScaler is used between range 1-0 so 
-                # there is no negative values.
-                scaler =  MinMaxScaler(copy=True, feature_range=(0,1))
-                # The scaler is saved so it can be used later
-                # to prediction instances.
-                self.scaler = scaler.fit(self.X)
-                # Scale the data.
-                self.X = scaler.transform(self.X)
-                LOG.info('Data scaling performed')
-            except Exception as e:
-                LOG.error(f'Unable to perform scaling'
-                ' with exception : {e}')
-                raise e
+            #### Alternative way to make all values positives (sum the minimum 
+            #### of each column to the column)
+                # list_min = np.min(self.X, axis=0)
+                # newX = copy.copy(self.X)
+                # for i in range(len(self.X[0])):
+                #     newX[:, i] = np.array(self.X[:, i] -list_min[i])
 
-        #### Alternative way to make all values positives (sum the minimum 
-        #### of each column to the column)
-            # list_min = np.min(self.X, axis=0)
-            # newX = copy.copy(self.X)
-            # for i in range(len(self.X[0])):
-            #     newX[:, i] = np.array(self.X[:, i] -list_min[i])
+            # Run feature selection. Move to a instance method.
+            if self.param.getVal("feature_selection"):
+                self.run_feature_selection()
+        
+            # Set the new number of instances/variables
+            # if sampling/feature selection performed
+            self.nobj, self.nvarx = np.shape(X)
 
-        # Run feature selection. Move to a instance method.
-        if self.param.getVal("feature_selection"):
-            self.run_feature_selection()
-       
-        # Set the new number of instances/variables
-        # if sampling/feature selection performed
-        self.nobj, self.nvarx = np.shape(X)
-
-        # Check X and Y integrity.
-        if (self.nobj == 0) or (self.nvarx == 0):
-            LOG.error('No objects/variables in the matrix')
-            raise Exception('No objects/variables in the matrix')
-        if len(Y) == 0:
-            self.failed = True
-            LOG.error('No activity values')
-            raise ValueError("No activity values (Y)")
+            # Check X and Y integrity.
+            if (self.nobj == 0) or (self.nvarx == 0):
+                LOG.error('No objects/variables in the matrix')
+                raise Exception('No objects/variables in the matrix')
+            if len(Y) == 0:
+                self.failed = True
+                LOG.error('No activity values')
+                raise ValueError("No activity values (Y)")
 
     def run_feature_selection(self):
         """Compute the number of variables to be retained.
@@ -270,10 +270,10 @@ class BaseEstimator:
             self.X = self.X[:, self.variable_mask]
             self.scaler = self.scaler.fit(self.X)
             self.X = self.scaler.transform(self.X)
-            self.mux = self.mux.reshape(1, -1)[:, self.variable_mask]
-            self.wgx = self.wgx.reshape(1, -1)[:, self.variable_mask]
+            # self.mux = self.mux.reshape(1, -1)[:, self.variable_mask]
+            # self.wgx = self.wgx.reshape(1, -1)[:, self.variable_mask]
             LOG.info(f'Variable selection applied, number of final variables:'
-                         f'{self.n_features}')
+                        f'{self.n_features}')
         except Exception as e:
             LOG.error(f'Error performing feature selection'
                         f' with exception: {e}')
@@ -287,23 +287,20 @@ class BaseEstimator:
         X = self.X.copy()
         Y = self.Y.copy()
 
-        # Number of external validations for the aggregated conformal estimator.
-        seeds = [5, 7, 35]
-        # Interval means for each aggregated  conformal estimator (out of 3)
-        interval_means = []
-        # Accuracies for each aggregated conformal estimator (out of 3)
-        accuracies = []
         info = []
+        kf = KFold(n_splits=5, shuffle=True)
+        # Copy Y vector to use it as template to assign predictions
+        Y_pred = copy.copy(Y).tolist()
         try:
-            for i in range(len(seeds)):
+            for train_index, test_index in kf.split(X):
+                # Generate training and test sets
+                X_train, X_test = X[train_index], X[test_index]
+                Y_train, Y_test = Y[train_index], Y[test_index]
                 # Generate training a test sets
-                X_train, X_test, Y_train, Y_test = train_test_split(
-                        X, Y, test_size=0.25,
-                        random_state=i, shuffle=False)
                 # Create the aggregated conformal regressor.
                 conformal_pred = AggregatedCp(IcpRegressor(
                                     RegressorNc(RegressorAdapter(
-                                        self.estimator))),
+                                        self.estimator_temp))),
                                             BootstrapSampler())
                 # Fit conformal regressor to the data
                 conformal_pred.fit(X_train, Y_train)
@@ -311,33 +308,32 @@ class BaseEstimator:
                 # Perform prediction on test set
                 prediction = conformal_pred.predict(
                     X_test, self.param.getVal('conformalSignificance'))
-                # Add the n validation interval means
-                interval_means.append(
-                    np.mean(np.abs(prediction[:, 0]) - 
-                                np.abs(prediction[:, 1])))
-                Y_test = Y_test.reshape(-1, 1)
-                # Get boolean mask of instances
-                #  within the applicability domain.
-                inside_interval = ((prediction[:, 0].reshape(-1, 1)
-                                     < Y_test) & 
-                                     (prediction[:, 1].reshape(-1, 1) 
-                                     > Y_test))
-                # Compute the accuracy (number of instances within the AD).
-                accuracy = np.sum(inside_interval)/len(Y_test)
-                # Add validation result to the list of accuracies.
-                accuracies.append(accuracy)
+                # Assign the prediction its original index
+                for index, el in enumerate(test_index):
+                    Y_pred[el] = prediction[index]
+
         except Exception as e:
             LOG.error(f'Quantitative conformal validation'
                         f' failed with exception: {e}')
             raise e
 
-        # Compute mean interval_means and accuracy.
-        interval_means = np.mean(interval_means)
-        accuracies = np.mean(accuracies)
+        Y_pred = np.asarray(Y_pred)
+        # Add the n validation interval means
+        interval_mean = np.mean(np.abs((Y_pred[:, 0]) - 
+                        (Y_pred[:, 1])))
+        # Get boolean mask of instances
+        #  within the applicability domain.
+        inside_interval = ((Y_pred[:, 0].reshape(-1, 1)
+                                < Y) & 
+                                (Y_pred[:, 1].reshape(-1, 1) 
+                                > Y))
+        # Compute the accuracy (number of instances within the AD).
+        accuracy = np.sum(inside_interval)/len(Y)
 
         # Cut into two decimals.
-        self.conformal_accuracy = float("{0:.2f}".format(accuracies))
-        self.conformal_mean_interval = float("{0:.2f}".format(interval_means))
+        self.conformal_interval_medians = (np.mean(Y_pred, axis=1))
+        self.conformal_accuracy = float("{0:.2f}".format(accuracy))
+        self.conformal_mean_interval = float("{0:.2f}".format(interval_mean))
 
         #Add quality metrics to results.
         info.append(('Conformal_mean_interval',
@@ -346,10 +342,17 @@ class BaseEstimator:
         info.append(
             ('Conformal_accuracy', 'Conformal accuracy', 
             self.conformal_accuracy))
+        info.append(
+            ('Conformal_interval_medians',
+             'Conformal interval medians', 
+            self.conformal_interval_medians))
+        info.append(
+            ('Conformal_prediction_ranges',
+             'Conformal prediction ranges', 
+             Y_pred))
 
         results = {}
         results ['quality'] = info
-        #results ['interval'] = prediction
         return True, results
 
     def CF_qualitative_validation(self):
@@ -359,34 +362,31 @@ class BaseEstimator:
         X = self.X.copy()
         Y = self.Y.copy()
 
-        # Number of external validations for the 
-        # aggregated conformal estimator.
-        seeds = [5, 7, 35]
         # Total number of class 0 correct predictions.
-        c0_correct_all = []
+        c0_correct_all = 0
         # Total number of class 0 incorrect predictions.
-        c0_incorrect_all = []
+        c0_incorrect_all = 0
         # Total number of class 1 correct predictions.
-        c1_correct_all = []
+        c1_correct_all = 0
         # Total number of class 1 incorrect predictions
-        c1_incorrect_all = []
+        c1_incorrect_all = 0
         # Total number of instances out of the applicability domain.
-        not_predicted_all = []
+        not_predicted_all = 0
 
         info = []
-        # Iterate over the seeds.
+
+        kf = KFold(n_splits=5, shuffle=True)
+        # Copy Y vector to use it as template to assign predictions
+        Y_pred = copy.copy(Y).tolist()
         try:
-            for i in range(len(seeds)):
+            for train_index, test_index in kf.split(X):
                 # Generate training and test sets
-                X_train, X_test,\
-                Y_train, Y_test = train_test_split(X, Y,
-                                                    test_size=0.25,
-                                                    random_state=i, 
-                                                    shuffle=True)
+                X_train, X_test = X[train_index], X[test_index]
+                Y_train, Y_test = Y[train_index], Y[test_index]
                 # Create the aggregated conformal classifier.
                 conformal_pred = AggregatedCp(IcpClassifier(
                                             ClassifierNc(ClassifierAdapter(
-                                                            self.estimator),
+                                                            self.estimator_temp),
                                                 MarginErrFunc())),
                                             BootstrapSampler())
                 # Fit the conformal classifier to the data
@@ -394,44 +394,35 @@ class BaseEstimator:
                 # Perform prediction on test set
                 prediction = conformal_pred.predict(
                             X_test, self.param.getVal('conformalSignificance'))
-                
-                c0_correct = 0
-                c1_correct = 0
-                not_predicted = 0
-                c0_incorrect = 0
-                c1_incorrect = 0
+                # Assign the prediction the correct index. 
+                for index, el in enumerate(test_index):
+                    Y_pred[el] = prediction[index]
+            # Iterate over the prediction and check the result
+            for i in range(len(Y_pred)):
+                real = float(Y[i])
+                predicted = Y_pred[i]
+                if predicted[0] != predicted[1]:
+                    if real == 0 and predicted[0] == True:
+                        c0_correct_all += 1
+                    if real == 0 and predicted[1] == True:
+                        c0_incorrect_all += 1
+                    if real == 1 and predicted[1] == True:
+                        c1_correct_all += 1
+                    if real == 1 and predicted[0] == True:
+                        c1_incorrect_all += 1
+                else:
+                    not_predicted_all += 1
 
-                # Iterate over the prediction and check the result
-                for i in range(len(Y_test)):
-                    real = float(Y_test[i])
-                    predicted = prediction[i]
-                    if predicted[0] != predicted[1]:
-                        if real == 0 and predicted[0] == True:
-                            c0_correct += 1
-                        if real == 0 and predicted[1] == True:
-                            c0_incorrect += 1
-                        if real == 1 and predicted[1] == True:
-                            c1_correct += 1
-                        if real == 1 and predicted[0] == True:
-                            c1_incorrect += 1
-                    else:
-                        not_predicted += 1
-                # Add the results to the lists.
-                c0_correct_all.append(c0_correct)
-                c0_incorrect_all.append(c0_incorrect)
-                c1_correct_all.append(c1_correct)
-                c1_incorrect_all.append(c1_incorrect)
-                not_predicted_all.append(not_predicted)
         except Exception as e:
             LOG.error(f'Qualitative conformal validation'
                         f' failed with exception: {e}')
             raise e
         # Get the mean confusion matrix.
-        self.TN = np.int(np.mean(c0_correct_all))
-        self.FP = np.int(np.mean(c0_incorrect_all))
-        self.TP = np.int(np.mean(c1_correct_all))
-        self.FN = np.int(np.mean(c1_incorrect_all))
-        not_predicted_all = np.int(np.mean(not_predicted_all))
+        self.TN = c0_correct_all
+        self.FP = c0_incorrect_all
+        self.TP = c1_correct_all
+        self.FN = c1_incorrect_all
+        not_predicted_all = not_predicted_all
 
         info.append(('TP', 'True positives in cross-validation', self.TP))
         info.append(('TN', 'True negatives in cross-validation', self.TN))
@@ -459,7 +450,7 @@ class BaseEstimator:
             ('MCC', 'Matthews Correlation Coefficient in cross-validation',
                  self.mcc))
 
-        # Compute coverage (% of compouds inside the applicability domain)
+        # Compute coverage (% of compounds inside the applicability domain)
         self.conformal_coverage = (self.TN + self.FP + self.TP +
                                     self.FN) / ((self.TN + self.FP +
                                      self.TP + self.FN) +
@@ -569,7 +560,6 @@ class BaseEstimator:
 
         # Get confusion matrix for predicted Y
         try:
-            print(self.estimator)
             self.TNpred, self.FPpred,\
             self.FNpred, self.TPpred = confusion_matrix(Y, Yp,
                                                      labels=[0, 1]).ravel()
@@ -714,7 +704,7 @@ class BaseEstimator:
         ''' projects a collection of query objects in a conformal model,
          for obtaining predictions '''
 
-        prediction = self.conformal_pred.predict(
+        prediction = self.estimator.predict(
             Xb, significance=self.param.getVal('conformalSignificance'))
 
         if self.param.getVal('quantitative'):
@@ -753,15 +743,75 @@ class BaseEstimator:
             return
         # Apply variable mask to prediction vector/matrix
         if self.param.getVal("feature_selection"):
-            print ("feature selection")
             Xb = Xb[:, self.variable_mask]
         # Scale prediction vector/matrix
         if self.param.getVal('modelAutoscaling'):
-            Xb = Xb-self.mux
-            Xb = Xb*self.wgx
+            # Xb = Xb-self.mux
+            # Xb = Xb*self.wgx
             Xb = self.scaler.transform(Xb)
         # Select the type of projection
         if not self.param.getVal('conformal'):
             self.regularProject(Xb, results)
         else:
             self.conformalProject(Xb, results)
+    
+    def save_model(self):
+        ''' This function saves estimator and scaler in a pickle file '''
+
+        # This dictionary contain all the objects which will be needed
+        # for prediction
+        dict_estimator = {'estimator' : self.estimator,\
+                            'scaler' : self.scaler,\
+                            'variable_mask' : self.variable_mask,\
+                            'version' : 1}
+
+        model_pkl_path = os.path.join(self.param.getVal('model_path'),
+                                      'estimator.pkl')
+        
+        with open(model_pkl_path, 'wb') as handle:
+            pickle.dump(dict_estimator, handle, 
+                        protocol=pickle.HIGHEST_PROTOCOL)
+        LOG.debug('Model saved as:{}'.format(model_pkl_path))
+
+        return
+
+
+    def load_model(self):
+        ''' This function loads estimator and scaler in a pickle file '''
+
+        model_file = os.path.join(self.param.getVal('model_path'),'estimator.pkl')
+        LOG.debug(f'Loading model from pickle file, path: {model_file}')
+        try:
+            with open(model_file, "rb") as input_file:
+                dict_estimator = pickle.load(input_file)
+        except FileNotFoundError:
+            LOG.error(f'No valid model estimator found at: {model_file}')
+            raise FileNotFoundError
+
+        # Load model
+        self.estimator = dict_estimator['estimator']
+        self.version = dict_estimator['version']
+        if self.estimator is None:
+            LOG.error('Estimator is None.'
+            'Probably model building was not successful')
+            raise Exception('Loaded estimator is None.'
+                            'Probably model building was not successful')
+        
+        # Load rest of info in an extensible way
+        # This allows to add new variables keeping
+        # Retro-compatibility
+        if 'scaler' in dict_estimator.keys():
+            self.scaler = dict_estimator['scaler']
+        if 'variable_mask' in dict_estimator.keys():
+            self.variable_mask = dict_estimator['variable_mask']
+
+        # Check consistency between parameter file and pickle info
+        if self.param.getVal('modelAutoscaling') and \
+            self.scaler is None:
+            raise Exception('Inconsistency error. Autoscaling is True'
+            ' in parameter file but no Scaler loaded')
+        if self.param.getVal('feature_selection') and \
+            self.variable_mask is None:
+            raise Exception('Inconsistency error. Feature is True'
+            ' in parameter file but no variable mask loaded')
+        return

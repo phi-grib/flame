@@ -27,7 +27,6 @@ from flame.stats.base_model import getCrossVal
 from flame.stats.scale import scale, center
 from flame.stats.model_validation import CF_QuanVal
 
-import copy
 from sklearn.cross_decomposition import PLSCanonical, PLSRegression, CCA
 
 
@@ -38,6 +37,7 @@ from nonconformist.icp import IcpClassifier, IcpRegressor
 from nonconformist.nc import ClassifierNc, MarginErrFunc, RegressorNc
 
 import numpy as np
+from copy import copy
 from sklearn.model_selection import cross_val_predict
 from sklearn.metrics import r2_score
 from sklearn.neighbors import KNeighborsRegressor
@@ -159,8 +159,8 @@ class PLSR(BaseEstimator):
                     LOG.debug('Optimizing PLSR')
                 except Exception as e:
                     LOG.error(f'Error performing manual GridSearch'
-                            f' on  PLSR estimator with exception'
-                            f' {e}')
+                              f' on  PLSR estimator with exception'
+                              f' {e}')
                     raise e
             else: 
                 LOG.error('Type of tune not recognized, check the input')
@@ -178,36 +178,36 @@ class PLSR(BaseEstimator):
                 self.estimator = PLS_r(**self.estimator_parameters)
             except Exception as e:
                 LOG.error(f'Error at PLS_r instantiation with '
-                f'exception {e}')
+                          f'exception {e}')
                 raise e
             results.append(('model', 'model type', 'PLSR quantitative'))
-
+        self.estimator.fit(X, Y)
+        self.estimator_temp = copy(self.estimator)
         if self.param.getVal('conformal'):
             try:
-                underlying_model = RegressorAdapter(self.estimator)
-                normalizing_model = RegressorAdapter(
-                    KNeighborsRegressor(n_neighbors=1))
-                normalizing_model = RegressorAdapter(self.estimator)
+                underlying_model = RegressorAdapter(self.estimator_temp)
+                #normalizing_model = RegressorAdapter(
+                    #KNeighborsRegressor(n_neighbors=1))
+                normalizing_model = RegressorAdapter(self.estimator_temp)
                 normalizer = RegressorNormalizer(
                     underlying_model, normalizing_model, AbsErrorErrFunc())
-                nc = RegressorNc(underlying_model, AbsErrorErrFunc(), normalizer)
-                self.conformal_pred = AggregatedCp(IcpRegressor(nc),
+                nc = RegressorNc(underlying_model, AbsErrorErrFunc(), 
+                                 normalizer)
+                self.estimator = AggregatedCp(IcpRegressor(nc),
                                                 BootstrapSampler())
                 LOG.info('Building PLSR aggregated conformal predictor')
             except Exception as e:
                 LOG.error(f'Error building aggregated PLSR conformal'
-                            f' regressor with exception: {e}')
+                          f' regressor with exception: {e}')
                 # self.conformal_pred = AggregatedCp(IcpRegressor(
                 # RegressorNc(RegressorAdapter(self.estimator))),
                 #                                    BootstrapSampler())
 
             # Fit conformal estimator to the data
-            self.conformal_pred.fit(X, Y)
+            self.estimator.fit(X, Y)
             # overrides non-conformal
             results.append(
                 ('model', 'model type', 'conformal PLSR quantitative'))
-
-        self.estimator.fit(X, Y)
 
         return True, results
 
@@ -216,8 +216,8 @@ class PLSR(BaseEstimator):
         range of values for diverse parameters'''
 
         LOG.info('Optimizing PLSR algorithm using local ' 
-        'implementation of gridsearch cv specially designed '
-        'for PLS regression')   
+                 'implementation of gridsearch cv specially designed '
+                 'for PLS regression')   
         # Max number of latent variables
         latent_variables = tune_parameters['n_components']
         # Best r2

@@ -76,7 +76,7 @@ class Learn:
                               ('PLSR', PLSR),
                               ('PLSDA', PLSDA), ]
 
-        # instanciate an appropriate child of base_model
+        # instantiate an appropriate child of base_model
         model = None
         for imethod in registered_methods:
             if imethod[0] == self.param.getVal('model'):
@@ -95,13 +95,13 @@ class Learn:
         LOG.info('Starting model building')
         success, model_building_results = model.build()
         if not success:
-            self.results['error'] = model_buidling_results
+            self.results['error'] = model_building_results
             return
 
         utils.add_result(self.results,
                     model_building_results,
                     'model_build_info',
-                    'model buidling information',
+                    'model building information',
                     'method',
                     'single',
                     'Information about the model')
@@ -176,14 +176,14 @@ class Learn:
 
         # TODO: compute AD (when applicable)
 
-        LOG.info('Model finished succesfully')
+        LOG.info('Model finished successfully')
 
         # save model
-        model_pkl_path = os.path.join(self.param.getVal('model_path'),
-                                      'model.pkl')
-        with open(model_pkl_path, 'wb') as handle:
-            pickle.dump(model, handle, protocol=pickle.HIGHEST_PROTOCOL)
-        LOG.debug('Model saved as:{}'.format(model_pkl_path))
+        try:
+            model.save_model()
+        except Exception as e:
+            LOG.error(f'Error saving model with exception {e}')
+            return False, 'An error ocurred saving the model'
 
         return
 
