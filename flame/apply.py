@@ -321,8 +321,8 @@ class Apply:
             model.load_model()
             LOG.debug(f'Loading model from pickle file')
         except Exception as e:
-            LOG.error(f'No valid model estimator found with exception {e}')
-            self.results['error'] = f'No valid model estimator found at'
+            #LOG.error(f'No valid model estimator found with exception "{e}"')
+            self.results['error'] = f'No valid model estimator found with exception "{e}"'
             return False, f'Exception ocurred when loading model: {e}'
 
         # project the X matrix into the model and save predictions in self.results

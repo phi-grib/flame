@@ -531,6 +531,7 @@ class BaseEstimator:
             # newy.append (
             #     ('Y_pred', 'Predicted Y values (after cross-validation)', y_pred) )  
             LOG.debug(f'Squared-Q calculated: {self.scoringP}')
+
         except Exception as e:
             LOG.error(f'Error cross-validating the estimator'
                         f' with exception {e}')
@@ -775,7 +776,6 @@ class BaseEstimator:
 
         return
 
-
     def load_model(self):
         ''' This function loads estimator and scaler in a pickle file '''
 
@@ -789,11 +789,15 @@ class BaseEstimator:
             raise FileNotFoundError
 
         # Load model
-        self.estimator = dict_estimator['estimator']
         self.version = dict_estimator['version']
+
+        # check if the pickle was created with a compatible version
+        # currently 1
+        if self.version is not 1:
+            raise Exception ('Incompatible model version')
+
+        self.estimator = dict_estimator['estimator']
         if self.estimator is None:
-            LOG.error('Estimator is None.'
-            'Probably model building was not successful')
             raise Exception('Loaded estimator is None.'
                             'Probably model building was not successful')
         
@@ -802,6 +806,7 @@ class BaseEstimator:
         # Retro-compatibility
         if 'scaler' in dict_estimator.keys():
             self.scaler = dict_estimator['scaler']
+
         if 'variable_mask' in dict_estimator.keys():
             self.variable_mask = dict_estimator['variable_mask']
 
@@ -810,8 +815,10 @@ class BaseEstimator:
             self.scaler is None:
             raise Exception('Inconsistency error. Autoscaling is True'
             ' in parameter file but no Scaler loaded')
+
         if self.param.getVal('feature_selection') and \
             self.variable_mask is None:
             raise Exception('Inconsistency error. Feature is True'
             ' in parameter file but no variable mask loaded')
+
         return

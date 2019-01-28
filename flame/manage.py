@@ -29,7 +29,7 @@ import pickle
 import pathlib
 import numpy as np
 
-from flame.util import utils, get_logger
+from flame.util import utils, get_logger 
 from flame.parameters import Parameters
 
 LOG = get_logger(__name__)
@@ -368,41 +368,12 @@ def action_info(model, version, output='text'):
 
     # this is only reached when this funcion is called from a web service
     # asking for a JSON
-    # 
+    
     # this code serializes the results in a list and then converts it 
     # to a JSON  
     json_results = []
     for i in info:
-        # results must be checked to avoid numpy elements not JSON serializable
-        if 'numpy.int64' in str(type(i[2])):
-            try:
-                v = int(i[2])
-            except Exception as e:
-                LOG.error(e)
-                v = None
-            json_results.append((i[0], i[1], v))
-
-        elif 'numpy.float64' in str(type(i[2])):
-            try:
-                v = float(i[2])
-            except Exception as e:
-                LOG.error(e)
-                v = None
-            json_results.append((i[0], i[1], v))
-
-        elif isinstance(i[2], np.ndarray):
-            if 'bool_' in str(type(i[2][0])):
-                temp_results = [
-                    'True' if x else 'False' for x in i[2]]
-            else:
-                # This removes NaN and and creates
-                # a plain list of formatted floats from ndarrays
-                temp_results = [float("{0:.4f}".format(x)) if not np.isnan(x) else None for x in i[2]]
-
-            json_results.append((i[0], i[1], temp_results ))
-
-        else:
-            json_results.append(i)
+        json_results.append(utils.results_info_to_JSON(i))
 
     return True, json.dumps(json_results)
 
@@ -451,28 +422,37 @@ def action_results(model, version=None, ouput_variables=False):
 
         value = results[key]
 
+        # these keys contain tupes of three elements which require a particular treatment
+        if key in ['model_build_info', 'model_valid_info']:
+            json_temp = []
+            for i in value:
+                json_temp.append(utils.results_info_to_JSON(i))
+
+            json_results[key] = json_temp
+
         # np.arrays cannot be serialized to JSON and must be transformed
-        if isinstance(value, np.ndarray):
+        elif isinstance(value, np.ndarray):
+            json_results[key]=value.tolist()
 
-            # do not process bi-dimensional arrays
-            if len (np.shape(value)) > 1 :
-                continue
+            # # do not process bi-dimensional arrays
+            # if len (np.shape(value)) > 1 :
+            #     continue
 
-            # boolean must be transformed to 'True' or 'False' strings
-            if 'bool_' in str(type(value[0])):
-                json_results[key] = [
-                    'True' if x else 'False' for x in value]
+            # # boolean must be transformed to 'True' or 'False' strings
+            # if 'bool_' in str(type(value[0])):
+            #     json_results[key] = [
+            #         'True' if x else 'False' for x in value]
 
-            # we assume that np.array must contain np.floats
-            else:
-                # This removes NaN and and creates
-                # a plain list from ndarrays
-                json_results[key] = [x if not np.isnan(
-                    x) else None for x in value]
+            # # we assume that np.array must contain np.floats
+            # else:
+            #     # This removes NaN and and creates
+            #     # a plain list from ndarrays
+            #     json_results[key] = [x if not np.isnan(
+            #         x) else None for x in value]
 
         else:
             json_results[key] = value
-        
+
         try:
             output = json.dumps(json_results)
         except:

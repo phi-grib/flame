@@ -335,7 +335,7 @@ class Odata():
         sending only the error and the error source
         '''
         LOG.debug('formating errors in results')
-        white_list = ['error', 'warning', 'origin']
+        white_list = ['error', 'warning']
         error_json = {key: val for key,
                       val in self.results.items() if key in white_list}
 

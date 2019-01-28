@@ -29,6 +29,7 @@ import string
 import pathlib
 import re
 import warnings
+import numpy as np
 
 from flame.util import get_logger
 
@@ -329,6 +330,40 @@ def add_result(results, var, _key, _label, _type, _dimension='objs',
             results['meta'] = {'main': [_key]}
         else:
             results['meta']['main'].append(_key)
+
+
+def results_info_to_JSON (i):
+    ''' Results describing the model quality and characteristics are tuples 
+        with three elements
+
+        This function returns a version of this tuple suitable for being 
+        serialized to JSON
+    '''
+    # results must be checked to avoid numpy elements not JSON serializable
+
+    # int64
+    if 'numpy.int64' in str(type(i[2])):
+        try:
+            v = int(i[2])
+        except Exception as e:
+            LOG.error(e)
+            v = None
+        return((i[0], i[1], v))
+
+    # int64
+    if 'numpy.float64' in str(type(i[2])):
+        try:
+            v = float(i[2])
+        except Exception as e:
+            LOG.error(e)
+            v = None
+        return((i[0], i[1], v))
+
+    # ndarrays
+    if isinstance(i[2], np.ndarray):
+        return((i[0], i[1], i[2].tolist()) )
+
+    return i
 
 
 def is_empty(mylist):
