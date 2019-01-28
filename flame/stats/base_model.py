@@ -762,7 +762,8 @@ class BaseEstimator:
         # for prediction
         dict_estimator = {'estimator' : self.estimator,\
                             'scaler' : self.scaler,\
-                            'variable_mask' : self.variable_mask}
+                            'variable_mask' : self.variable_mask,\
+                            'version' : 1}
 
         model_pkl_path = os.path.join(self.param.getVal('model_path'),
                                       'estimator.pkl')
@@ -789,6 +790,7 @@ class BaseEstimator:
 
         # Load model
         self.estimator = dict_estimator['estimator']
+        self.version = dict_estimator['version']
         if self.estimator is None:
             LOG.error('Estimator is None.'
             'Probably model building was not successful')
