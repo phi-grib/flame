@@ -779,7 +779,6 @@ class BaseEstimator:
         ''' This function loads estimator and scaler in a pickle file '''
 
         model_file = os.path.join(self.param.getVal('model_path'),'estimator.pkl')
-        print(model_file)
         LOG.debug(f'Loading model from pickle file, path: {model_file}')
         try:
             with open(model_file, "rb") as input_file:
@@ -810,7 +809,7 @@ class BaseEstimator:
             raise Exception('Inconsistency error. Autoscaling is True'
             ' in parameter file but no Scaler loaded')
         if self.param.getVal('feature_selection') and \
-            self.feature_selection is None:
+            self.variable_mask is None:
             raise Exception('Inconsistency error. Feature is True'
             ' in parameter file but no variable mask loaded')
         return
