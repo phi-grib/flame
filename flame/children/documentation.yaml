@@ -1,5 +1,5 @@
-param_format: 
-  value: 2.0
+documentation_version: 
+  value: 0.1
 
 ID:
   level: 1
