@@ -397,6 +397,33 @@ def get_sdf_activity_value(mol, parameters: dict) -> float:
 
     return activity_num
 
+def qualitative_Y (Y):
+
+    neg = 0
+    pos = 0
+    nan = 0
+    ext = 0
+    for y in Y:
+        if y == 0.000:
+            neg+=1
+        elif y == 1.000:
+            pos+=1
+        elif np.isnan(y):
+            nan+=1 
+        else:
+            ext+=1
+
+    LOG.debug (f'Y analized. Found {neg} negative, {pos} positive, {nan} NaN and {ext} others objects')
+
+    if neg == 0 or pos == 0:
+        return False, f'Y values not suitable for building a qualitative model. Found {neg} negative and {pos} positive objects'
+
+    if ext > 0:
+        return False, f'Y values not suitable for building a qualitative model. Found {ext} objects not 1.000 or 0.000'
+    
+    return True, 'OK'
+
+
 def get_sdf_value(mol, value_label) :
     """ Returns the value of the certain field present in a SDFIle mol 
     

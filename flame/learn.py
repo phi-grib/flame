@@ -69,6 +69,14 @@ class Learn:
         but also saved to the model folder as a pickle (info.pkl)
         for being displayed in manage tools.
         '''
+
+        # check suitability of Y matrix
+        if not self.param.getVal('quantitative') :
+            success, yresult  = utils.qualitative_Y(self.Y)
+            if not success:
+                self.results['error'] = yresult
+                return
+
         # expand with new methods here:
         registered_methods = [('RF', RF),
                               ('SVM', SVM),
