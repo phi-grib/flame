@@ -204,7 +204,6 @@ def action_list(model):
             num_models += 1
             LOG.info('\t'+x)
         LOG.debug(f'Retrieved list of models from {rdir}')
-        return True, ''
         return True, f'{num_models} models found'
 
 
@@ -483,12 +482,22 @@ def action_parameters (model, version=None, oformat='text'):
         'TSV_activity', 'TSV_objnames', 'TSV_varnames', 'imbalance', 
         'feature_selection', 'feature_number', 'mol_batch', 'ext_input', 
         'model_set', 'numCPUs', 'verbose_error', 'modelingToolkit', 
-        # 'SVM_parameters','SVM_optimize','RF_parameters', 'RF_optimize', 
-        # 'GNB_parameters','PLSR_parameters', 'PLSR_optimize', 
-        # 'PLSDA_parameters', 'PLSDA_optimize',
         'endpoint', 'model_path', 
         #'md5', 
         'version']
+
+
+        if param.extended:
+            if 'RF' in param.p['model']['value']:
+                order+=['RF_parameters','RF_optimize']
+            elif 'SVM' in param.p['model']['value']:
+                order+=['SVM_parameters','SVM_optimize']
+            elif 'PLSDA' in param.p['model']['value']:
+                order+=['PLSDA_parameters','PLSDA_optimize']
+            elif 'PLSR' in param.p['model']['value']:
+                order+=['PLSR_parameters','PLSR_optimize']
+            elif 'GNB' in param.p['model']['value']:
+                order+='GNB_parameters'
 
         for ik in order:
             if ik in param.p:
@@ -503,15 +512,25 @@ def action_parameters (model, version=None, oformat='text'):
                         if not isinstance(v['value'] ,dict):
                             ivalue = v['value']
                         else:
-                            ivalue = '*dictionary*'
+                            # print header of dictionaty
+                            print (f'{k:30} >>>')
+
+                            # iterate keys assuming existence of value and description
+                            for intk in v['value']:
+                                intv = v['value'][intk]
+                                print (f'   {intk:27} : {str(intv["value"]):30} # {intv["description"]}')
+                            continue
 
                     if 'description' in v:
                         idescr = v['description'] 
+
+                ### compatibility: old stile parameters
                 else:
                     if not isinstance(v ,dict):
                         ivalue = v
                     else:
                         ivalue = '*dictionary*'
+                ### end compatibility
 
                 print (f'{k:30} : {str(ivalue):30} # {idescr}')
 
