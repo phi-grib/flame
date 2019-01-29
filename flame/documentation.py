@@ -81,4 +81,6 @@ class Documentation:
         #self.fields['md5']
 
     def load_results(self, results, params):
-        
+        '''This function takes info from results and
+        param file and assigns it to corresponding fields
+        in documentation dictionary'''
