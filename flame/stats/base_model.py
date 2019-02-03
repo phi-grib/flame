@@ -691,17 +691,17 @@ class BaseEstimator:
 
     # Projection section
 
-    def regularProject(self, Xb, results):
+    def regularProject(self, Xb, conveyor):
         ''' projects a collection of query objects in a regular model,
          for obtaining predictions '''
 
         Yp = self.estimator.predict(Xb)
 
-        utils.add_result(results, Yp, 'values', 'Prediction',
-                         'result', 'objs',
-                          'Results of the prediction', 'main')
+        conveyor.addVal(Yp, 'values', 'Prediction',
+                        'result', 'objs',
+                        'Results of the prediction', 'main')
 
-    def conformalProject(self, Xb, results):
+    def conformalProject(self, Xb, conveyor):
         ''' projects a collection of query objects in a conformal model,
          for obtaining predictions '''
 
@@ -712,13 +712,13 @@ class BaseEstimator:
             mean1 = np.mean(prediction, axis=1)
             lower_limit = prediction[:, 0]
             upper_limit = prediction[:, 1]
-            utils.add_result(results, mean1, 'values', 'Prediction',
+            conveyor.addVal(mean1, 'values', 'Prediction',
                              'result', 'objs',
                               'Results of the prediction', 'main')
-            utils.add_result(results, lower_limit, 'lower_limit',
+            conveyor.addVal(lower_limit, 'lower_limit',
                              'Lower limit', 'confidence', 'objs',
                               'Lower limit of the conformal prediction')
-            utils.add_result(results, upper_limit, 'upper_limit',
+            conveyor.addVal(upper_limit, 'upper_limit',
                              'Upper limit', 'confidence', 'objs',
                               'Upper limit of the conformal prediction')
         else:
@@ -730,17 +730,18 @@ class BaseEstimator:
                 class_key = 'c' + str(i)
                 class_label = 'Class ' + str(i)
                 class_list = prediction[:, i].tolist()
-                utils.add_result(results, class_list, 
-                                class_key, class_label,
+                conveyor.addVal(class_list, 
+                                class_key, 
+                                class_label,
                                 'result', 'objs', 
                                 'Conformal class assignment',
                                  'main')
 
-    def project(self, Xb, results):
+    def project(self, Xb, conveyor):
         ''' Uses the X matrix provided as argument to predict Y'''
 
         if self.estimator == None:
-            results['error'] = 'failed to load classifier'
+            conveyor.setError('failed to load classifier')
             return
         # Apply variable mask to prediction vector/matrix
         if self.param.getVal("feature_selection"):
@@ -752,9 +753,9 @@ class BaseEstimator:
             Xb = self.scaler.transform(Xb)
         # Select the type of projection
         if not self.param.getVal('conformal'):
-            self.regularProject(Xb, results)
+            self.regularProject(Xb, conveyor)
         else:
-            self.conformalProject(Xb, results)
+            self.conformalProject(Xb, conveyor)
     
     def save_model(self):
         ''' This function saves estimator and scaler in a pickle file '''

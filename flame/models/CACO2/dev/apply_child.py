@@ -25,6 +25,6 @@ from flame.apply import Apply
 
 class ApplyChild(Apply):
 
-    def __init__(self, parameters, results):
+    def __init__(self, parameters, conveyor):
 
-        Apply.__init__(self, parameters, results)
+        Apply.__init__(self, parameters, conveyor)

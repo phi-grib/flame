@@ -40,7 +40,7 @@ class Learn:
 
         self.param = parameters
         self.conveyor = conveyor
-        self.conveyor.setVal('origin') = 'learn'
+        self.conveyor.setOrigin('learn')
 
         self.X = self.conveyor.getVal('xmatrix')
         self.Y = self.conveyor.getVal('ymatrix')

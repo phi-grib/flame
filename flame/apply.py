@@ -40,12 +40,12 @@ LOG = get_logger(__name__)
 
 class Apply:
 
-    def __init__(self, parameters, results):
+    def __init__(self, parameters, conveyor):
 
         self.param = parameters
-        self.results = results
+        self.conveyor = conveyor
+        self.conveyor.setOrigin('apply')
 
-        self.results['origin'] = 'apply'
 
     def external_validation(self):
         ''' when experimental values are available for the predicted compounds,
@@ -54,7 +54,7 @@ class Apply:
         ext_val_results = []
         
         # Ye are the y values present in the input file
-        Ye = np.asarray(self.results["ymatrix"])
+        Ye = np.asarray(self.conveyor.getVal("ymatrix"))
 
         # there are four variants of external validation, depending if the method
         # if conformal or non-conformal and the model is qualitative and quantitative
@@ -65,7 +65,7 @@ class Apply:
             if not self.param.getVal("quantitative"):
                 
                 # non-conformal & qualitative
-                Yp = np.asarray(self.results["values"])
+                Yp = np.asarray(self.conveyor.getVal("values"))
 
                 if Ye.size == 0:
                     raise ValueError("Experimental activity vector is empty")
@@ -116,7 +116,7 @@ class Apply:
             else:
 
                 # non-conformal & quantitative
-                Yp = np.asarray(self.results["values"])
+                Yp = np.asarray(self.conveyor.getVal("values"))
 
                 if Ye.size == 0:
                     raise ValueError("Experimental activity vector is empty")
@@ -139,7 +139,7 @@ class Apply:
                 ext_val_results.append(
                     ('SDEP_ex', 'Standard Deviation Error of the Predictions', SDEP))
 
-            utils.add_result(self.results,
+            self.conveyor.addVal(
                              ext_val_results,
                              'external-validation',
                              'external validation',
@@ -153,8 +153,8 @@ class Apply:
             if not self.param.getVal("quantitative"):
                 
                 # conformal & qualitative
-                Yp = np.concatenate((np.asarray(self.results['c0']).reshape(
-                    -1, 1), np.asarray(self.results['c1']).reshape(-1, 1)), axis=1)
+                Yp = np.concatenate((np.asarray(self.conveyor.getVal('c0')).reshape(
+                    -1, 1), np.asarray(self.conveyor.getVal('c1')).reshape(-1, 1)), axis=1)
 
                 if Ye.size == 0:
                     raise ValueError("Experimental activity vector is empty")
@@ -228,7 +228,7 @@ class Apply:
                 ext_val_results.append(('Conformal_coverage',
                                         'Conformal coverage in external-validation',
                                         float(coverage)))
-                utils.add_result(self.results,
+                self.conveyor.addVal(
                                  ext_val_results,
                                  'external-validation',
                                  'external validation',
@@ -238,8 +238,8 @@ class Apply:
             else:
 
                 # conformal & quantitative
-                Yp_lower = self.results['lower_limit']
-                Yp_upper = self.results['upper_limit']
+                Yp_lower = self.conveyor.getVal('lower_limit')
+                Yp_upper = self.conveyor.getVal('upper_limit')
 
                 mean_interval = np.mean(np.abs(Yp_lower) - np.abs(Yp_upper))
                 inside_interval = (Yp_lower.reshape(-1, 1) <
@@ -256,7 +256,7 @@ class Apply:
                                         'Conformal accuracy',
                                         conformal_accuracy))
 
-                utils.add_result(self.results,
+                self.conveyor.addVal(
                                  ext_val_results,
                                  'external-validation',
                                  'external validation',
@@ -274,7 +274,7 @@ class Apply:
         '''
 
         # assume X matrix is present in 'xmatrix'
-        X = self.results["xmatrix"]
+        X = self.conveyor.getVal("xmatrix")
 
         # use in single mol predictions
         if X.ndim < 2:  # if flat array
@@ -286,12 +286,12 @@ class Apply:
         # check that the dimensions of the X matrix are acceptable
         if (nobj == 0):
             LOG.error('No object found')
-            self.results['error'] = 'No object found'
+            self.conveyor.setError('No object found')
             return
 
         if (nvarx == 0):
             LOG.error('Failed to generate MDs')
-            self.results['error'] = 'Failed to generate MDs'
+            self.conveyor.setError('Failed to generate MDs')
             return
 
         # Load model 
@@ -313,7 +313,7 @@ class Apply:
                 break
 
         if not model:
-            self.results['error'] = 'modeling method not recognized'
+            self.conveyor.setError('modeling method not recognized')
             LOG.error(f'Modeling method {self.param.getVal("model")}'
                       'not recognized')
             return
@@ -322,26 +322,26 @@ class Apply:
             LOG.debug(f'Loading model from pickle file')
         except Exception as e:
             #LOG.error(f'No valid model estimator found with exception "{e}"')
-            self.results['error'] = f'No valid model estimator found with exception "{e}"'
+            self.conveyor.setError(f'No valid model estimator found with exception "{e}"')
             return False, f'Exception ocurred when loading model: {e}'
 
-        # project the X matrix into the model and save predictions in self.results
-        model.project(X, self.results)
+        # project the X matrix into the model and save predictions in self.conveyor
+        model.project(X, self.conveyor)
 
         # if the input file contains activity values use them to run external validation 
-        if 'ymatrix' in self.results:
+        if self.conveyor.isKey('ymatrix'):
             self.external_validation()
 
         return
 
     def run_R(self):
         ''' Runs prediction tasks using an importer KNIME workflow '''
-        self.results['error'] = 'R toolkit is not supported in this version'
+        self.conveyor.setError('R toolkit is not supported in this version')
         return
 
     def run_KNIME(self):
         ''' Runs prediction tasks using R code '''
-        self.results['error'] = 'KNIME toolkit is not supported in this version'
+        self.conveyor.setError('KNIME toolkit is not supported in this version')
         return
 
     def run_custom(self):
@@ -351,8 +351,7 @@ class Apply:
             Output: add prediction results to self.results using the utils.add_result() method 
 
         '''
-
-        self.results['error'] = 'custom prediction must be defined in the model apply_chlid class'
+        self.conveyor.setError('custom prediction must be defined in the model apply_chlid class')
         return
 
     def run(self):
@@ -368,15 +367,17 @@ class Apply:
 
         '''
 
-        if self.param.getVal('modelingToolkit') == 'internal':
+        toolkit = self.param.getVal('modelingToolkit')
+
+        if toolkit == 'internal':
             self.run_internal()
-        elif self.param.getVal('modelingToolkit') == 'R':
+        elif toolkit == 'R':
             self.run_R()
-        elif self.param.getVal('modelingToolkit') == 'KNIME':
+        elif toolkit == 'KNIME':
             self.run_KNIME()
-        elif self.param.getVal('modelingToolkit') == 'custom':
+        elif toolkit == 'custom':
             self.run_custom()
         else:
-            self.results['error'] = 'Unknown prediction toolkit to run ', self.param.getVal('modelingToolkit')
-
-        return self.results
+            self.conveyor.setError('Unknown prediction toolkit to run ')
+            
+        return 

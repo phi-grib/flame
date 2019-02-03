@@ -26,6 +26,7 @@ import importlib
 
 from flame.util import utils, get_logger
 from flame.parameters import Parameters
+from flame.conveyor import Conveyor
 
 LOG = get_logger(__name__)
 
@@ -36,6 +37,8 @@ class Predict:
         self.model = model
         self.version = version
         self.param = Parameters()
+        self.conveyor = Conveyor()
+
         if not self.param.loadYaml(model, version):
             LOG.critical('Unable to load model parameters. Aborting...')
             sys.exit()
@@ -62,19 +65,15 @@ class Predict:
     def run(self, input_source):
         ''' Executes a default predicton workflow '''
 
-        results = {}
-
+        # path to endpoint
         # path to endpoint
         endpoint = utils.model_path(self.model, self.version)
         if not os.path.isdir(endpoint):
+            self.conveyor.setError(f'Unable to find model {self.model}, version {self.version}')
+            #LOG.error(f'Unable to find model {self.model}')
 
-            LOG.debug('Unable to find model'
-                      ' {} version {}'.format(self.model, self.version))
 
-            results['error'] = 'unable to find model: ' + \
-                self.model+' version: '+str(self.version)
-
-        if 'error' not in results:
+        if not self.conveyor.getError():
             # uses the child classes within the 'model' folder,
             # to allow customization of
             # the processing applied to each model
@@ -90,22 +89,23 @@ class Predict:
                       f' {odata_child.__name__}')
 
             # run idata object, in charge of generate model data from input
-            idata = idata_child.IdataChild(self.param, input_source)
-            results = idata.run()
+            idata = idata_child.IdataChild(self.param, self.conveyor, input_source)
+            idata.run()
             LOG.debug(f'idata child {idata_child.__name__} completed `run()`')
 
-        if 'error' not in results:
-            if 'xmatrix' not in results:
+        if not self.conveyor.getError():
+            if not self.conveyor.isKey('xmatrix'):
                 LOG.debug(f'Failed to compute MDs')
-                results['error'] = 'Failed to compute MDs'
+                self.conveyor.setError(f'Failed to compute MDs')
 
-        if 'error' not in results:
+        if not self.conveyor.getError():
             # run apply object, in charge of generate a prediction from idata
-            apply = apply_child.ApplyChild(self.param, results)
-            results = apply.run()
+            apply = apply_child.ApplyChild(self.param, self.conveyor)
+            apply.run()
             LOG.debug(f'apply child {apply_child.__name__} completed `run()`')
 
         # run odata object, in charge of formatting the prediction results or any error
-        odata = odata_child.OdataChild(self.param, results)
+        odata = odata_child.OdataChild(self.param, self.conveyor)
         LOG.info('Prediction completed')
+
         return odata.run()

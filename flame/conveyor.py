@@ -61,13 +61,13 @@ class Conveyor:
         return self.error is not None
     
     def getWarning (self):
-        return self.error is not None
+        return self.warning is not None
 
     def getErrorMessage (self):
         return self.error 
 
     def getWarningMessage (self):
-        return self.message 
+        return self.warning
 
     def setError (self, message):
         self.error = 'message'
@@ -143,6 +143,12 @@ class Conveyor:
 
     def getMain (self):
         return self.meta['main']
+
+    def getOrigin (self):
+        return self.origin
+    
+    def setOrigin (self, value):
+        self.origin = value
 
     def getJSON (self):
         # TODO
