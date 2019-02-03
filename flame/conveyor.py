@@ -21,26 +21,13 @@
 # along with Flame. If not, see <http://www.gnu.org/licenses/>.
 
 import pickle
-# import os
-# import yaml
-# import json
-
-# from flame.util import utils
+import numpy as np
+import json
+from flame.util import utils
 
 class Conveyor:
-    ''' Class storing a large set of parameters defining how a model is built
+    ''' Class storing ***
 
-        These parameters are loaded from a configuration file (typically 
-        in yaml format) 
-
-        The version 1 of parameters.yaml is a simple "key-value" python dictionary
-        in yaml file
-
-        In version 2 every parameter is a dictionary with keys defining the parameter type, 
-        value and providing a human-readable explanation used for the GUI
-
-        This code supports both versions of the parameter file, but the use of version 1
-        is deprecated and will not be supported indefinitely 
     '''
 
     def __init__(self):
@@ -109,6 +96,13 @@ class Conveyor:
                 object_elements.append(i['key'])
 
         return object_elements
+    
+    def singleKeys (self):
+        single_elements = []
+        for i in self.manifest:
+            if i['dimension'] == 'single':
+                single_elements.append(i['key'])
+        return single_elements
 
     def addVal(self, var, _key, _label, _type, _dimension='objs',
                _description=None, _relevance=None):
@@ -170,5 +164,37 @@ class Conveyor:
         self.origin = value
 
     def getJSON (self):
-        # TODO
-        return ''
+
+        temp_json = {}
+
+        if self.error is not None:
+            temp_json['error']
+            return json.dumps(temp_json)
+
+        if self.warning is not None:
+            temp_json['warning']
+
+        temp_json['manifest'] = self.manifest
+        temp_json['meta'] = self.meta
+
+        white_keys  = self.objectKeys()
+        white_keys += self.singleKeys()
+
+        for key in white_keys:
+            value = self.data[key]
+
+            if key in ['model_build_info', 'model_valid_info']:
+                json_temp = []
+                for i in value:
+                    json_temp.append(utils.results_info_to_JSON(i))
+                temp_json[key] = json_temp
+
+            # np.arrays cannot be serialized to JSON and must be transformed
+            elif isinstance(value, np.ndarray):
+                temp_json[key]=value.tolist()
+            else:
+                temp_json[key]=value
+
+        print (json.dumps(temp_json))
+        
+        return json.dumps(temp_json)

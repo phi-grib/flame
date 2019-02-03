@@ -31,6 +31,7 @@ import numpy as np
 
 from flame.util import utils, get_logger 
 from flame.parameters import Parameters
+from flame.conveyor import Conveyor
 
 LOG = get_logger(__name__)
 
@@ -336,18 +337,12 @@ def action_info(model, version, output='text'):
         if not os.path.isfile(os.path.join(rdir, 'results.pkl')):
             return False, 'Info file not found'
 
+        conveyor = Conveyor()
         with open(os.path.join(rdir, 'results.pkl'), 'rb') as handle:
-            results = pickle.load(handle)
+            conveyor.load(handle)
         
-        info = None
-        if 'model_build_info' in results:
-            info =  results['model_build_info']
-
-        if info == None:
-            return False, 'Info not found'
-
-        if 'model_valid_info' in results:
-            info += results['model_valid_info']
+        info =  conveyor.getVal('model_build_info')
+        info += conveyor.getVal('model_valid_info')
         
         if info == None:
             return False, 'Info not found'
@@ -387,77 +382,11 @@ def action_results(model, version=None, ouput_variables=False):
     if not os.path.isfile(os.path.join(rdir, 'results.pkl')):
         return False, 'results not found'
 
-    # retrieve a pickle file containing the keys 'model_build' 
-    # and 'model_validate' of results
+    conveyor = Conveyor()
     with open(os.path.join(rdir, 'results.pkl'), 'rb') as handle:
-        results = pickle.load(handle)
+        conveyor.load(handle)
 
-    # this code serializes the results in a list and then converts it 
-    # to a JSON  
-
-    json_results = {}
-
-    # creates a list with the keys which should NOT be included
-    black_list = []
-    for k in results['manifest']:
-
-        ###
-        # By default do not include 'var' arrays, only 'obj' arrays
-        # to avoid including the X matrix and save space
-        # 
-        # this black list can be easily tuned to include everything
-        # or to remove other keys
-        ###
-        if not ouput_variables:
-            if (k['dimension'] in ['vars']):
-                black_list.append(k['key'])
-
-    # iterate keys and for those not in the black list
-    # format the information to JSON
-    for key in results:
-
-        if key in black_list:
-            continue
-
-        value = results[key]
-
-        # these keys contain tupes of three elements which require a particular treatment
-        if key in ['model_build_info', 'model_valid_info']:
-            json_temp = []
-            for i in value:
-                json_temp.append(utils.results_info_to_JSON(i))
-
-            json_results[key] = json_temp
-
-        # np.arrays cannot be serialized to JSON and must be transformed
-        elif isinstance(value, np.ndarray):
-            json_results[key]=value.tolist()
-
-            # # do not process bi-dimensional arrays
-            # if len (np.shape(value)) > 1 :
-            #     continue
-
-            # # boolean must be transformed to 'True' or 'False' strings
-            # if 'bool_' in str(type(value[0])):
-            #     json_results[key] = [
-            #         'True' if x else 'False' for x in value]
-
-            # # we assume that np.array must contain np.floats
-            # else:
-            #     # This removes NaN and and creates
-            #     # a plain list from ndarrays
-            #     json_results[key] = [x if not np.isnan(
-            #         x) else None for x in value]
-
-        else:
-            json_results[key] = value
-
-        try:
-            output = json.dumps(json_results)
-        except:
-            return False, 'Unable to serialize to JSON the model results'
-
-    return True, output
+    return True, conveyor.getJSON()
 
 
 def action_parameters (model, version=None, oformat='text'):

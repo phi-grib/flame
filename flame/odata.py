@@ -124,7 +124,8 @@ class Odata():
         results_pkl_path = os.path.join(self.param.getVal('model_path'), 'results.pkl')
         LOG.debug('saving model results to:{}'.format(results_pkl_path))
         with open(results_pkl_path, 'wb') as handle:
-            pickle.dump(self.conveyor, handle)
+            self.conveyor.save(handle)
+            #pickle.dump(self.conveyor, handle)
 
         ####
         # 2. console output
@@ -175,10 +176,12 @@ class Odata():
                     line = ''
                     for key in key_list:
 
-                        if i >= len(self.conveyor.getVal(key)):
+                        val_array = self.conveyor.getVal(key)
+
+                        if i >= len(val_array):
                             val = None
                         else:
-                            val = self.conveyor.getVal(key)[i]
+                            val = val_array[i]
 
                         if val is None:
                             line += '-'
@@ -292,41 +295,7 @@ class Odata():
         ###
         # returns a JSON with the prediction results
         if 'JSON' in self.format:
-            LOG.info('writting results in JSON format')
-
-            # do not output var arrays, only 'obj' arrays
-            # black_list = []
-            # for k in self.results['manifest']:
-            #     if not (k['dimension'] in ['objs', 'single']):
-            #         black_list.append(k['key'])
-
-            # print (black_list)
-
             output = self.conveyor.getJSON()
-
-            # for key in self.results:
-
-            #     if key in black_list:
-            #         continue
-
-            #     value = self.results[key]
-
-            #     # print (key, value, type(value))
-            #     # if 'numpy.ndarray' in str(type(value)):
-            #     if isinstance(value, np.ndarray):
-            #         if 'bool_' in str(type(value[0])):
-            #             temp_json[key] = [
-            #                 'True' if x else 'False' for x in value]
-            #         else:
-            #             # This removes NaN and and creates
-            #             # a plain list from ndarrays
-            #             temp_json[key] = [x if not np.isnan(
-            #                 x) else None for x in value]
-
-            #     else:
-            #         temp_json[key] = value
-
-            # output = json.dumps(temp_json)
 
         return True, output
 
