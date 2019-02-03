@@ -7,18 +7,24 @@ class results:
     def addValue(self,x,y):
         self.d[x] = y
 
-def do_something (r,a,b):
 
-    r.addValue(a,b)
+class doer:
+    def __init__(self, conveyor):
+        self.conveyor = conveyor
+    
+    def do_something (self,a,b):
+        self.conveyor.addValue(a,b)
 
 
 my_result = results ()
 print (my_result.d)
 
-do_something(my_result,'primero',1)
+my_doer = doer (my_result)
+
+my_doer.do_something('primero',1)
 print (my_result.d)
 
-do_something(my_result,'segundo',2)
+my_doer.do_something('segundo',2)
 print (my_result.d)
 
 

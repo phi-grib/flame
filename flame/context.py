@@ -125,8 +125,8 @@ def build_cmd(arguments, output_format=None):
     model_list = os.listdir(repo_path)
 
     if arguments['endpoint'] not in model_list:
-        LOG.error('endpoint name not found in model repository.')
-        return False, "Wrong endpoint name. "+arguments['endpoint']+" does not exist"
+        LOG.error('Endpoint name not found in model repository.')
+        return False, 'Endpoint name not found in model repository.'
 
     build = Build(arguments['endpoint'], arguments['parameters'], output_format)
 

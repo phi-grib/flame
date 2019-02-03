@@ -26,6 +26,7 @@ import importlib
 
 from flame.util import utils, get_logger
 from flame.parameters import Parameters
+from flame.conveyor import Conveyor
 
 LOG = get_logger(__name__)
 
@@ -35,7 +36,8 @@ class Build:
         LOG.debug('Starting build...')
         self.model = model
         self.param = Parameters()
-        
+        self.conveyor = Conveyor()
+
         # load parameters
         if param_file is not None:
             # use the param_file to update existing parameters at the model
@@ -57,7 +59,6 @@ class Build:
             if output_format not in self.param.getVal('output_format'):
                 self.param.appVal('output_format',output_format)
  
-        return
 
     def get_model_set(self):
         ''' Returns a Boolean indicating if the model uses external input
@@ -72,15 +73,14 @@ class Build:
     def run(self, input_source):
         ''' Executes a default predicton workflow '''
 
-        results = {}
-
         # path to endpoint
         epd = utils.model_path(self.model, 0)
         if not os.path.isdir(epd):
-            LOG.error(f'Unable to find model {self.model}')
-            results['error'] = 'unable to find model: '+self.model
+            self.conveyor.setError(f'Unable to find model {self.model}')
+            #LOG.error(f'Unable to find model {self.model}')
 
-        if 'error' not in results:
+        # import ichild classes
+        if not self.conveyor.getError():
             # uses the child classes within the 'model' folder,
             # to allow customization of  the processing applied to each model
             modpath = utils.module_path(self.model, 0)
@@ -94,29 +94,29 @@ class Build:
                       f' {learn_child.__name__},'
                       f' {odata_child.__name__}')
 
-            # run idata object, in charge of generate model
-            idata = idata_child.IdataChild(self.param, input_source)
+            # instantiate idata (gets data for modeling) and run it
+            idata = idata_child.IdataChild(self.param, self.conveyor, input_source)
             results = idata.run() 
             LOG.debug(f'idata child {idata_child.__name__} completed `run()`')
 
-        if 'error' not in results:
+        # check there is a suitable X and Y
+        if not self.conveyor.getError():
             if 'xmatrix' not in results:
-                LOG.error(f'Failed to compute MDs')
-                results['error'] = 'Failed to compute MDs'
+                self.conveyor.addError(f'Failed to compute MDs')
 
             if 'ymatrix' not in results:
-                LOG.error(f'No activity data (Y) found in training series')
-                results['error'] = 'No activity data (Y) found in training series'
-        
-        if 'error' not in results:
-            # run learn object, in charge of generate a prediction from idata
+                self.conveyor.addError(f'No activity data (Y) found in training series')
+
+        # instantiate lear (build a model from idata) and run it
+        if not self.conveyor.getError():
             learn = learn_child.LearnChild(self.param, results)
             results = learn.run()
             LOG.debug(f'learn child {learn_child.__name__} completed `run()`')
 
         # run odata object, in charge of formatting the prediction results
         # note that if any of the above steps failed, an error has been inserted in the
-        # results and odata will take case of showing an error message
+        # conveyor and odata will take case of showing an error message
         odata = odata_child.OdataChild(self.param, results)
         LOG.info('Building completed')
+
         return odata.run()
