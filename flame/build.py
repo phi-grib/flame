@@ -102,10 +102,10 @@ class Build:
         # check there is a suitable X and Y
         if not self.conveyor.getError():
             if not self.conveyor.isKey ('xmatrix'):
-                self.conveyor.addError(f'Failed to compute MDs')
+                self.conveyor.setError(f'Failed to compute MDs')
 
             if not self.conveyor.isKey ('ymatrix'):
-                self.conveyor.addError(f'No activity data (Y) found in training series')
+                self.conveyor.setError(f'No activity data (Y) found in training series')
 
         # instantiate lear (build a model from idata) and run it
         if not self.conveyor.getError():

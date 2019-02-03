@@ -815,12 +815,13 @@ class Idata:
             # keys are experim or ymatrix are numpy arrays
             # if 'numpy.ndarray' in str(type(ilist)):
             if isinstance(ilist, np.ndarray):
-                self.conveyor.setVal(ikey) = np.delete(ilist, remove_index)
+                ilist = np.delete(ilist, remove_index)
             # other keys are regular list
             else:
                 for i in sorted(remove_index, reverse=True):
                     del ilist[i]
-                self.conveyor.setVal(ikey) = ilist
+
+            self.conveyor.setVal(ikey, ilist)
 
         message = 'Failed to process ' + \
             str(len(warning_list))+' molecules : '+str(warning_list)
@@ -857,7 +858,7 @@ class Idata:
             success, results = sdfu.split_SDFile(lfile, ncpu)
 
             if not success:
-                self.results['error'] = 'unable to split input molecule'
+                self.conveyor.setError('Unable to split input molecule')
                 return
 
             split_files_names = results[0]
@@ -1029,8 +1030,10 @@ class Idata:
         for item in first_manifest:
             if item['type'] in obj_common:
                 item_key = item['key']
-                self.results[item_key] = first_results[item_key]
-                self.results['manifest'].append(item)
+                self.conveyor.addVal(first_results[item_key], item_key, '', item['type'])
+
+                # self.results[item_key] = first_results[item_key]
+                # self.results['manifest'].append(item)
 
         # extract usable data from every source and add to 'combo' np.array
         combined_md = None
@@ -1053,7 +1056,7 @@ class Idata:
                         num_obj = len(i_result[item_key])
                     else:  # append laterally
                         if len(i_result[item_key]) != num_obj:
-                            self.results['error'] = 'incompatible size of results obtained from external sources'
+                            self.conveyor.setError('incompatible size of results obtained from external sources')
                             return
 
                         combined_md = np.c_[combined_md, np.array(
@@ -1100,21 +1103,20 @@ class Idata:
         input_type = self.param.getVal('input_type')
         LOG.info('Running with input type: {}'.format(input_type))
 
-        if (input_type != 'ext_data'):
+        if input_type != 'ext_data':
 
             # if the input file is not found return
             if not os.path.isfile(self.ifile):
-                self.results['error'] = 'input data file '+self.ifile+' not found'
-                LOG.debug('input data file '+self.ifile+' not found')
-                return self.results
+                self.conveyor.setError(f'input data file {self.ifile} not found')
+                return 
 
             # check for the presence of a valid pickle file
             if self.load():
-                return self.results
+                return 
 
 
         # processing for molecular input (for now an SDFile)
-        if (input_type == 'molecule'):
+        if input_type == 'molecule':
                 # trick to avoid RDKit dumping warnings to the console
                 if not self.param.getVal('verbose_error'):
                     # When running from a ipython notebooks fileno() breaks
@@ -1145,19 +1147,19 @@ class Idata:
                     pass
 
         # processing for non-molecular input (not implemented)
-        elif (input_type == 'data'):
+        elif input_type == 'data':
             self._run_data()
 
         # processing for external data
-        elif (input_type == 'ext_data'):
+        elif input_type == 'ext_data':
             self._run_ext_data()
 
         else:
             LOG.debug('Unknown input data format')
-            self.results['error'] = 'unknown input data format'
+            self.conveyor.setError('Unknown input data format')
 
         # save in a pickle file stamped with MD5 hash of file and control
-        if 'error' not in self.results:
+        if not self.conveyor.getError():
             self.save()
 
-        return self.results
+        return 
