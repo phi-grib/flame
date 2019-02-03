@@ -168,11 +168,11 @@ class Conveyor:
         temp_json = {}
 
         if self.error is not None:
-            temp_json['error']
+            temp_json['error'] = self.error
             return json.dumps(temp_json)
 
         if self.warning is not None:
-            temp_json['warning']
+            temp_json['warning'] = self.warning
 
         temp_json['manifest'] = self.manifest
         temp_json['meta'] = self.meta
@@ -195,6 +195,6 @@ class Conveyor:
             else:
                 temp_json[key]=value
 
-        print (json.dumps(temp_json))
-        
+        #print (json.dumps(temp_json))
+
         return json.dumps(temp_json)

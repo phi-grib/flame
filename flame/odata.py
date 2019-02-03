@@ -193,7 +193,7 @@ class Odata():
                         line += '\t'
                     fo.write(line+'\n')
 
-        return True  # 'building OK'
+        return True, 'building OK'
 
     def run_apply(self):
         ''' Process the results of apply.
@@ -338,15 +338,15 @@ class Odata():
         origin = self.conveyor.getOrigin()
 
         if self.conveyor.getError():
-            success = self.run_error()
+            success, results = self.run_error()
 
         elif origin == 'learn':
-            success = self.run_learn()
+            success, results = self.run_learn()
 
         elif origin == 'apply':
-            success = self.run_apply()
+            success, results = self.run_apply()
 
         else:
             return False, 'error'
 
-        return success, 'OK'
+        return success, results
