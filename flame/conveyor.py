@@ -45,6 +45,7 @@ class Conveyor:
     def __init__(self):
         ''' constructor '''
         self.results_format = 1
+        self.origin = 'undefined'
         self.data = {}
         self.manifest = []
         self.meta = { 'main' : [] }
@@ -58,6 +59,15 @@ class Conveyor:
 
     def getError (self):
         return self.error is not None
+    
+    def getWarning (self):
+        return self.error is not None
+
+    def getErrorMessage (self):
+        return self.error 
+
+    def getWarningMessage (self):
+        return self.message 
 
     def setError (self, message):
         self.error = 'message'
@@ -130,3 +140,10 @@ class Conveyor:
 
     def addMain (self, value):
         self.meta['main'].append(value)
+
+    def getMain (self):
+        return self.meta['main']
+
+    def getJSON (self):
+        # TODO
+        return ''

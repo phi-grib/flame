@@ -36,11 +36,11 @@ class Odata():
     TODO: Expand Class docstring
     """
 
-    def __init__(self, parameters, results):
+    def __init__(self, parameters, conveyor):
 
         # previous results (eg. object names, mol descriptors) are retained
-        self.results = results
         self.param = parameters
+        self.conveyor = conveyor
         self.format = self.param.getVal('output_format')
 
     def _output_md(self):
@@ -54,16 +54,16 @@ class Odata():
                 # header: obj:name + var name
 
                 header = 'name'
-                var_nam = self.results['var_nam']
+                var_nam = self.conveyor.getVal('var_nam')
 
                 for nam in var_nam:
                     header += '\t'+nam
                 fo.write(header+'\n')
 
-            if 'xmatrix' in self.results and 'obj_nam' in self.results:
+            if self.conveyor.isKey('xmatrix') and self.conveyor.isKey('obj_nam'):
                 # extract obj_name and xmatrix
-                xmatrix = self.results['xmatrix']
-                obj_nam = self.results['obj_nam']
+                xmatrix = self.conveyor.getVal('xmatrix')
+                obj_nam = self.conveyor.getVal('obj_nam')
 
                 # iterate for objects
                 shape = np.shape(xmatrix)
@@ -130,12 +130,12 @@ class Odata():
         # 2. console output
         ####
 
-        if 'model_build_info' in self.results:
-            for val in self.results['model_build_info']:
+        if self.conveyor.isKey('model_build_info'):
+            for val in self.conveyor.getVal('model_build_info'):
                 self.print_result (val)
 
-        if 'model_valid_info' in self.results:
-            for val in self.results['model_valid_info']:
+        if self.conveyor.isKey('model_valid_info'):
+            for val in self.conveyor.getVal('model_valid_info'):
                 self.print_result (val)
 
         ###
@@ -156,13 +156,13 @@ class Odata():
                 key_list.append('SMILES')
 
             # main result
-            key_list += self.results['meta']['main']
+            key_list += self.conveyor.getMain()
 
             # add all object type results
-            manifest = self.results['manifest']
-            for item in manifest:
-                if item['dimension'] == 'objs' and item['key'] not in key_list:
-                    key_list.append(item['key'])
+            manifest = self.conveyor['manifest']
+            for item in self.conveyor.objectKeys():
+                if item not in key_list:
+                    key_list.append()
 
             with open('output.tsv', 'w') as fo:
                 header = ''
@@ -170,16 +170,16 @@ class Odata():
                     header += label+'\t'
                 fo.write(header+'\n')
 
-                obj_num = int(self.results['obj_num'])
+                obj_num = int(self.conveyor.getVal('obj_num'))
 
                 for i in range(obj_num):
                     line = ''
                     for key in key_list:
 
-                        if i >= len(self.results[key]):
+                        if i >= len(self.conveyor.getVal(key)):
                             val = None
                         else:
-                            val = self.results[key][i]
+                            val = self.conveyor.getVal(key)[i]
 
                         if val is None:
                             line += '-'
@@ -191,7 +191,7 @@ class Odata():
                         line += '\t'
                     fo.write(line+'\n')
 
-        return True, self.results  # 'building OK'
+        return True  # 'building OK'
 
     def run_apply(self):
         ''' Process the results of apply.
@@ -302,31 +302,31 @@ class Odata():
 
             # print (black_list)
 
-            temp_json = {}
+            output = self.conveyor.getJSON()
 
-            for key in self.results:
+            # for key in self.results:
 
-                if key in black_list:
-                    continue
+            #     if key in black_list:
+            #         continue
 
-                value = self.results[key]
+            #     value = self.results[key]
 
-                # print (key, value, type(value))
-                # if 'numpy.ndarray' in str(type(value)):
-                if isinstance(value, np.ndarray):
-                    if 'bool_' in str(type(value[0])):
-                        temp_json[key] = [
-                            'True' if x else 'False' for x in value]
-                    else:
-                        # This removes NaN and and creates
-                        # a plain list from ndarrays
-                        temp_json[key] = [x if not np.isnan(
-                            x) else None for x in value]
+            #     # print (key, value, type(value))
+            #     # if 'numpy.ndarray' in str(type(value)):
+            #     if isinstance(value, np.ndarray):
+            #         if 'bool_' in str(type(value[0])):
+            #             temp_json[key] = [
+            #                 'True' if x else 'False' for x in value]
+            #         else:
+            #             # This removes NaN and and creates
+            #             # a plain list from ndarrays
+            #             temp_json[key] = [x if not np.isnan(
+            #                 x) else None for x in value]
 
-                else:
-                    temp_json[key] = value
+            #     else:
+            #         temp_json[key] = value
 
-            output = json.dumps(temp_json)
+            # output = json.dumps(temp_json)
 
         return True, output
 
@@ -335,9 +335,13 @@ class Odata():
         sending only the error and the error source
         '''
         LOG.debug('formating errors in results')
-        white_list = ['error', 'warning']
-        error_json = {key: val for key,
-                      val in self.results.items() if key in white_list}
+
+        error_json = {}
+        if self.conveyor.getError():
+            error_json['error'] = self.conveyor.getErrorMessage()
+
+        if self.conveyor.getWarning():
+            error_json['warning'] = self.conveyor.getWarningMessage()
 
         # write to console
         for key, value in error_json.items():
@@ -362,16 +366,16 @@ class Odata():
     def run(self):
         '''Formats the results produced by "learn" or "apply"'''
 
-        if 'error' in self.results:
-            success, results = self.run_error()
+        if self.conveyor.getError():
+            success = self.run_error()
 
-        elif self.results['origin'] == 'learn':
-            success, results = self.run_learn()
+        elif self.getValue('originl') == 'learn':
+            success = self.run_learn()
 
-        elif self.results['origin'] == 'apply':
-            success, results = self.run_apply()
+        elif self.getValue('origin') == 'apply':
+            success = self.run_apply()
 
         else:
             return False, 'invalid result format'
 
-        return success, results
+        return success
