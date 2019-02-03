@@ -20,6 +20,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Flame. If not, see <http://www.gnu.org/licenses/>.
 
+import pickle
 # import os
 # import yaml
 # import json
@@ -52,6 +53,24 @@ class Conveyor:
         self.error = None
         self.warning = None
 
+    def save(self,fo):
+        pickle.dump(self.results_format, fo)
+        pickle.dump(self.origin, fo)
+        pickle.dump(self.data, fo)
+        pickle.dump(self.manifest, fo)
+        pickle.dump(self.meta, fo)
+        pickle.dump(self.error, fo)
+        pickle.dump(self.warning, fo)
+        
+    def load(self, fi):
+        self.results_format = pickle.load(fi)
+        self.origin = pickle.load(fi)
+        self.data = pickle.load(fi)
+        self.manifest = pickle.load(fi)
+        self.meta = pickle.load(fi)
+        self.error = pickle.load(fi)
+        self.warning = pickle.load(fi)
+
     def getVal(self, key):
         if not key in self.data:
             return None
@@ -70,10 +89,10 @@ class Conveyor:
         return self.warning
 
     def setError (self, message):
-        self.error = 'message'
+        self.error = message
 
     def setWarning (self, message):
-        self.warning = 'message'
+        self.warning = message
     
     def isKey(self, _key):
         return _key in self.data

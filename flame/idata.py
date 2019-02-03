@@ -582,7 +582,7 @@ class Idata:
                 pickle.dump(md5_parameters, fo)
                 pickle.dump(md5_input, fo)
 
-                pickle.dump(self.conveyor, fo)
+                self.conveyor.save (fo)
 
         except Exception as e:
             LOG.error(f"Can't serialize descriptors because of exception: {e}")
@@ -610,19 +610,14 @@ class Idata:
                 if md5_input != utils.md5sum(self.ifile):
                     return False
 
-                self.conveyor = pickle.load(fi)
-
-                # # these values are added programatically and therefore not
-                # # checked by the md5
-                # self.results['meta']['endpoint'] = self.param.getVal('endpoint')
-                # self.results['meta']['version'] = self.param.getVal('version')
+                self.conveyor.load(fi)
 
         except Exception as e:
+            self.conveyor.setError('Error loading pickle with exception: {}'.format(e))
             LOG.error('Error loading pickle with exception: {}'.format(e))
             return False
 
-        dest_path_pkl = os.path.join(self.dest_path, 'data.pkl')
-        LOG.info(f'Recycling data from {dest_path_pkl}')
+        LOG.info(f'Recycling data from {picklfile}')
 
         return True
 
@@ -1112,6 +1107,9 @@ class Idata:
 
             # check for the presence of a valid pickle file
             if self.load():
+
+                #print (self.conveyor.data)
+
                 return 
 
 

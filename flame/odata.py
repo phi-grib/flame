@@ -368,8 +368,6 @@ class Odata():
 
         origin = self.conveyor.getOrigin()
 
-        print (origin)
-
         if self.conveyor.getError():
             success = self.run_error()
 

@@ -153,15 +153,18 @@ def build_cmd(arguments, output_format=None):
         # try to copy it to the model directory
         if ifile is not None:
             if not os.path.isfile(ifile):
-                return False, 'wrong training series file'
+                LOG.error(f'Wrong training series file {ifile}')
+                return False, f'Wrong training series file {ifile}'
             try:
                 shutil.copy(ifile, lfile)
             except:
-                return False, 'unable to copy input file to model directory'
+                LOG.error(f'Unable to copy input file to model directory')
+                return False, 'Unable to copy input file to model directory'
 
         # check that the local copy of the input file exists
         if not os.path.isfile(lfile):
-            return False, 'not training series found'
+            LOG.error(f'No training series found')
+            return False, 'No training series found'
 
         # run the model with the input file
         success, results = build.run(lfile)
