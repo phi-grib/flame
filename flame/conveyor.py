@@ -47,11 +47,12 @@ class Conveyor:
         self.results_format = 1
         self.data = {}
         self.manifest = []
-        self.main = []
+        self.meta = { 'main' : [] }
         self.error = None
+        self.warning = None
 
-    def getVal(sel, key):
-        if not _key in self.r:
+    def getVal(self, key):
+        if not key in self.data:
             return None
         return self.data[key]
 
@@ -60,9 +61,27 @@ class Conveyor:
 
     def setError (self, message):
         self.error = 'message'
-    
 
-    def setVal(self, var, _key, _label, _type, _dimension='objs',
+    def setWarning (self, message):
+        self.warning = 'message'
+    
+    def isKey(self, _key):
+        return _key in self.data
+
+    def setVal(self, key, value):
+        if not key in self.data:
+            return
+        self.data[key]=value
+
+    def objectKeys (self):
+        object_elements = []
+        for i in self.manifest:
+            if i['dimension'] == 'objs':
+                object_elements.append(i['key'])
+
+        return object_elements
+
+    def addVal(self, var, _key, _label, _type, _dimension='objs',
                _description=None, _relevance=None):
         '''
         Utility function to insert information within the "result" dictionary, indexing 
@@ -88,7 +107,7 @@ class Conveyor:
                         the main label is asigned to data to be highlighed 
         '''
         
-        # add the data to results
+        # add the data 
         self.data[_key] = var
 
         # insert the information in manifest
@@ -104,4 +123,10 @@ class Conveyor:
 
         # if the are adding data of type 'main' insert the key in main
         if _relevance == 'main':
-            self.main.append(_key)
+            self.addMain(_key)
+
+    def addMeta (self, key, value):
+        self.meta[key] = value
+
+    def addMain (self, value):
+        self.meta['main'].append(value)

@@ -45,7 +45,7 @@ LOG = get_logger(__name__)
 
 class Idata:
 
-    def __init__(self, parameters, input_source: str):
+    def __init__(self, parameters, conveyor, input_source: str):
         """
         Input data class to standarize mol inputs
 
@@ -64,15 +64,13 @@ class Idata:
         """
         # control object defining the processing
         self.param = parameters
+        self.conveyor = conveyor
+
         # path for temp files (fallback default)
         self.dest_path = '.'
-        self.results = {
-            'manifest': [],
-            'meta': {'main': [],
-                     'endpoint': self.param.getVal('endpoint'),
-                     'version': self.param.getVal('version'),
-                     }
-        }    # create empty context index ('manifest')
+
+        self.conveyor.addMeta('endpoint',self.param.getVal('endpoint'))
+        self.conveyor.addMeta('version',self.param.getVal('version'))
 
         if self.param.getVal('ext_input'):
             LOG.debug('"ext_input" found in parameters')
@@ -101,13 +99,14 @@ class Idata:
         except Exception as e:
             LOG.debug('Unable to create mol supplier with the exception: '
                       f'{e}')
-            self.results['error'] = f'unable to open {ifile}. {e}'
+            self.conveyor.setError(f'unable to open {ifile}. {e}')
             return
 
         # Raise error if SDF is empty
         if len(suppl) == 0:
-            LOG.critical('ifile {} is empty'.format(ifile))
-            raise ValueError('Input SDF is empty')
+            LOG.debug(f'Input file {ifile} is empty')
+            self.conveyor.setError(f'Input file {ifile} is empty')
+            return
 
         # Initate lists which will contain the extracted values
         obj_nam = []
@@ -164,24 +163,24 @@ class Idata:
             obj_num += 1
 
         # Insert the values as lists in 'results' using an utility function
-        utils.add_result(self.results, obj_num, 'obj_num', 'Num mol',
+        self.conveyor.addVal(obj_num, 'obj_num', 'Num mol',
                          'method', 'single',
                          'Number of molecules present in the input file')
-        utils.add_result(self.results, obj_nam, 'obj_nam', 'Mol name',
+        self.conveyor.addVal(obj_nam, 'obj_nam', 'Mol name',
                          'label', 'objs',
                          'Name of the molecule, as present in the input file')
-        utils.add_result(self.results, obj_sml, 'SMILES', 'SMILES',
+        self.conveyor.addVal(obj_sml, 'SMILES', 'SMILES',
                          'smiles', 'objs',
                          'Structure of the molecule in SMILES format')
 
         if not utils.is_empty(obj_bio):
-            utils.add_result(self.results, np.array(obj_bio, dtype=np.float64),
+            self.conveyor.addVal(np.array(obj_bio, dtype=np.float64),
                              'ymatrix', 'Activity',
                              'decoration', 'objs',
                              'Biological anotation to be predicted by the model')
 
         if not utils.is_empty(obj_exp):
-            utils.add_result(self.results, np.array(obj_exp, dtype=np.float64),
+            self.conveyor.addVal(np.array(obj_exp, dtype=np.float64),
                              'experim', 'Experim.',
                              'decoration', 'objs',
                              'Experimental anotation present in the input file')
@@ -366,12 +365,11 @@ class Idata:
         if not all(m in registered_methods for m in methods):
             # find the non member methods
             no_recog_meth = [m for m in methods if m not in registered_methods]
-            LOG.error(f'Methods {no_recog_meth} not recognized')
+            return False, f'Methods {no_recog_meth} not recognized'
 
             if len(no_recog_meth) == len(methods):
                 # then no md method is correct... so error
-                raise ValueError(f'Methods {no_recog_meth} not recognized.'
-                                 ' No valid method found.')
+                return False, f'Methods {no_recog_meth} not recognized. No valid method found.'
 
             # remove bad methods
             methods = [m for m in methods if m not in no_recog_meth]
@@ -418,96 +416,7 @@ class Idata:
 
         return True, (combined_md, combined_nm, combined_sc)
 
-    # def computeMD_FUTURE(self, ifile: str, methods: list):
-    #     """ Computes molecular descriptors.
-
-    #     Computes and concatenates all the descriptor methods 
-    #     passed in `methods` parameter.
-
-    #     Parameters
-    #     ----------
-
-    #     ifile: str
-    #         Input SDF file
-
-
-    #     methods: list
-    #         list of methods to compute molecular descriptors with
-
-    #     Returns
-    #     -------
-
-    #     success: bool
-    #         If computation was successfull
-
-    #     xmatrix_filtered: np.ndarray
-    #         Descriptors matrix filtered without failed molecules
-
-    #     var_names: list
-    #         Variable names or descriptor names
-
-    #     success_list: list
-    #         List with bool values indicating if mol
-    #         had any issues during supplier (None) or in the
-    #         descriptor array (presence of NaNs).
-    #     """
-
-    #     if not methods:
-    #         raise ValueError('Must provide at least one method')
-
-    #     LOG.info(f'Computing molecular descriptors with methods {methods}...')
-
-    #     registered_methods = dict([('RDKit_properties', computeMD._RDKit_properties),
-    #                                ('RDKit_md', computeMD._RDKit_descriptors),
-    #                                ('padel', computeMD._padel_descriptors),
-    #                                ('custom', self.computeMD_custom)])
-
-    #     # check if input methods are members of registered methods
-    #     if not all(m in registered_methods for m in methods):
-    #         # find the non member methods
-    #         no_recog_meth = [m for m in methods if m not in registered_methods]
-    #         LOG.error(f'Methods {no_recog_meth} not recognized')
-
-    #         # check is any single good method
-    #         if len(no_recog_meth) == len(methods):
-    #             # then not a single md method is correct... so error
-    #             raise ValueError(f'Methods {no_recog_meth} not recognized.'
-    #                              ' No valid method found.')
-
-    #         # remove bad methods
-    #         methods = [m for m in methods if m not in no_recog_meth]
-
-    #     success_lists = []
-    #     # more tha one method
-    #     if len(methods) > 1:
-
-    #         xmatrix_ls = []
-    #         var_names = []
-
-    #         for method in methods:
-    #             results = registered_methods[method](ifile)
-
-    #             xmatrix_ls.append(results['matrix'])
-    #             var_names.extend(results['names'])
-    #             success_lists.append(results['success_arr'])
-    #         # horizontally concat results
-    #         xmatrix = self._concat_descriptors_matrix(xmatrix_ls)
-
-    #     # do for a single method. Skipping concatenation
-    #     else:
-    #         results = registered_methods[methods[0]](ifile)
-
-    #         xmatrix = results['matrix']
-    #         var_names = results['names']
-    #         # still append to list to maintain
-    #         # the behaviour of _filter_matrix
-    #         success_lists.append(results['success_arr'])
-
-    #     # filter molecules with failed status during computing descriptors
-    #     xmatrix_filtered, success_list = self._filter_matrix(
-    #         xmatrix, success_lists)
-    #     return True, (xmatrix_filtered, var_names, success_list)
-
+   
     @staticmethod
     def _filter_matrix(matrix: np.ndarray, succes_list: list):
         """Filters matrix via boolean mask.
@@ -673,7 +582,7 @@ class Idata:
                 pickle.dump(md5_parameters, fo)
                 pickle.dump(md5_input, fo)
 
-                pickle.dump(self.results, fo)
+                pickle.dump(self.conveyor, fo)
 
         except Exception as e:
             LOG.error(f"Can't serialize descriptors because of exception: {e}")
@@ -701,12 +610,12 @@ class Idata:
                 if md5_input != utils.md5sum(self.ifile):
                     return False
 
-                self.results = pickle.load(fi)
+                self.conveyor = pickle.load(fi)
 
-                # these values are added programatically and therefore not
-                # checked by the md5
-                self.results['meta']['endpoint'] = self.param.getVal('endpoint')
-                self.results['meta']['version'] = self.param.getVal('version')
+                # # these values are added programatically and therefore not
+                # # checked by the md5
+                # self.results['meta']['endpoint'] = self.param.getVal('endpoint')
+                # self.results['meta']['version'] = self.param.getVal('version')
 
         except Exception as e:
             LOG.error('Error loading pickle with exception: {}'.format(e))
@@ -885,40 +794,40 @@ class Idata:
         remove_index = []
         warning_list = []
         obj_num = 0
+        obj_nam = self.conveyor.getVal('obj_nam')
+
         for i in range(len(workflow)):
             if inform[i] and not workflow[i]:
                 remove_index.append(i)
-                warning_list.append(self.results['obj_nam'][i])
+                warning_list.append(obj_nam[i])
             if inform[i] and workflow[i]:
                 obj_num += 1
 
         LOG.debug('(@ammend_objects) going to remove these'
                   'indexes from manifest: {}'.format(remove_index))
-        if 'obj_num' in self.results:
-            self.results['obj_num'] = obj_num
+        self.conveyor.setVal('obj_num', obj_num)
 
-        manifest = self.results['manifest']
-        for element in manifest:
-            if element['dimension'] == 'objs':
 
-                ikey = element['key']
-                ilist = self.results[ikey]
+        objkeys = self.conveyor.objectKeys()
+        for ikey in objkeys: 
+            ilist = self.conveyor.getVal(ikey)
 
-                # keys are experim or ymatrix are numpy arrays
-                # if 'numpy.ndarray' in str(type(ilist)):
-                if isinstance(ilist, np.ndarray):
-                    self.results[ikey] = np.delete(ilist, remove_index)
-                # other keys are regular list
-                else:
-                    for i in sorted(remove_index, reverse=True):
-                        del ilist[i]
+            # keys are experim or ymatrix are numpy arrays
+            # if 'numpy.ndarray' in str(type(ilist)):
+            if isinstance(ilist, np.ndarray):
+                self.conveyor.setVal(ikey) = np.delete(ilist, remove_index)
+            # other keys are regular list
+            else:
+                for i in sorted(remove_index, reverse=True):
+                    del ilist[i]
+                self.conveyor.setVal(ikey) = ilist
 
         message = 'Failed to process ' + \
             str(len(warning_list))+' molecules : '+str(warning_list)
         message += '\nWill show results for the rest of the series...'
         message += '\nCheck the error.log file for further details'
 
-        self.results['warning'] = message
+        self.conveyor.setWarning(message)
 
         return
 
@@ -931,10 +840,10 @@ class Idata:
         # extract useful information from file
 
         success_inform = self.extractInformation(self.ifile)
-        if 'error' in self.results:
+        if self.conveyor.getError():
             return
 
-        nobj = self.results['obj_num']
+        nobj = self.conveyor.getVal('obj_num')
         ncpu = min(nobj, self.param.getVal('numCPUs'))
 
         # copy the input file to a temp file which will be cleaned at the end
@@ -973,10 +882,10 @@ class Idata:
         # series processing (1 or n CPUs) can produce a success == False if
         # any of the series/pieces contains an error. Abort the processing...
         if not success:
-            self.results['error'] = results
+            self.conveyor.setError(results)
 
         # check if any molecule failed to complete the workflow and then
-        # ammend object annotations in self.results
+        # ammend object annotations in self.conveyor
 
         success_workflow = results[2]
 
@@ -987,8 +896,8 @@ class Idata:
                       ' This is because some molecules failed during'
                       ' the standarization or descriptors computations.')
 
-            self.results['error'] = ('number of molecules informed'
-                                     ' and processed does not match')
+            self.conveyor.setError('number of molecules informed'
+                                   ' and processed does not match')
 
             return
 
@@ -1005,7 +914,7 @@ class Idata:
                              ' there is a serious workflow issue and the '
                              ' molecule should be cured or eliminated.')
 
-                self.results['error'] = 'Unknown error processing input file. Probably the format is wrong or not supported'
+                self.conveyor.setError('Unknown error processing input file. Probably the format is wrong or not supported')
                 return
 
         # check if a molecule informed did not
@@ -1018,12 +927,10 @@ class Idata:
         # remove the temp directory with all the temp files inside
         shutil.rmtree(temp_path)
 
-        utils.add_result(
-            self.results, results[0], 'xmatrix', 'X matrix',
+        self.conveyor.addVal(results[0], 'xmatrix', 'X matrix',
             'method', 'vars', 'Molecular descriptors')
 
-        utils.add_result(
-            self.results, results[1], 'var_nam',
+        self.conveyor.addVal(results[1], 'var_nam',
             'Var names', 'method', 'vars', 'Names of the X variables')
 
         return
@@ -1033,8 +940,7 @@ class Idata:
         version of Run for data input (TSV tabular format)
         '''
         if not os.path.isfile(self.ifile):
-            self.results['error'] = '{} not found'.format(self.ifile)
-            # raise FileNotFoundError('{} not found'.format(self.ifile))
+            self.conveyor.setError(f'{self.ifile} not found')
             return
 
         #  Reading TSV by hand
@@ -1080,27 +986,27 @@ class Idata:
             col = var_nam.index(activity_param)
             ymatrix = xmatrix[:, col]
             xmatrix = np.delete(xmatrix, col, 1)
-            utils.add_result(self.results, ymatrix, 'ymatrix', 'Activity', 'decoration',
+            self.conveyor.addVal( ymatrix, 'ymatrix', 'Activity', 'decoration',
                              'objs', 'Biological anotation to be predicted by the model')
 
-        utils.add_result(self.results, obj_num, 'obj_num', 'Num mol', 'method',
+        self.conveyor.addVal( obj_num, 'obj_num', 'Num mol', 'method',
                          'single', 'Number of molecules present in the input file')
-        utils.add_result(self.results, xmatrix, 'xmatrix',
+        self.conveyor.addVal( xmatrix, 'xmatrix',
                          'X matrix', 'method', 'vars', 'Molecular descriptors')
 
         if self.param.getVal('TSV_varnames'):
-            utils.add_result(self.results, var_nam, 'var_nam', 'Var names',
+            self.conveyor.addVal( var_nam, 'var_nam', 'Var names',
                              'method', 'vars', 'Names of the X variables')
 
         if not self.param.getVal('TSV_objnames'):
             for i in range(obj_num):
                 obj_nam.append('obj%.10f' % i)
 
-        utils.add_result(self.results, obj_nam, 'obj_nam', 'Mol name', 'label',
+        self.conveyor.addVal( obj_nam, 'obj_nam', 'Mol name', 'label',
                          'objs', 'Name of the molecule, as present in the input file')
 
         if len(smiles) > 0:
-            utils.add_result(self.results, smiles, 'SMILES', 'SMILES',
+            self.conveyor.addVal( smiles, 'SMILES', 'SMILES',
                              'smiles', 'objs', 'Structure of the molecule in SMILES format')
         return
 
@@ -1168,13 +1074,13 @@ class Idata:
                     combined_cf_names.append(
                         item_key+':'+i_meta['endpoint']+':'+str(i_meta['version']))
 
-        utils.add_result(self.results, combined_md, 'xmatrix', 'X matrix',
+        self.conveyor.addVal( combined_md, 'xmatrix', 'X matrix',
                          'results', 'objs', 'Combined output from external sources')
-        utils.add_result(self.results, combined_cf, 'confidence', 'Confidence',
+        self.conveyor.addVal( combined_cf, 'confidence', 'Confidence',
                          'confidence', 'objs', 'Combined confidence from external sources')
-        utils.add_result(self.results, combined_md_names, 'var_nam', 'Var. names',
+        self.conveyor.addVal( combined_md_names, 'var_nam', 'Var. names',
                          'method', 'vars', 'Variable names from external sources')
-        utils.add_result(self.results, combined_cf_names, 'conf_nam', 'Conf. names',
+        self.conveyor.addVal( combined_cf_names, 'conf_nam', 'Conf. names',
                          'method', 'vars', 'Confidence indexes from external sources')
 
         return

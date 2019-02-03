@@ -96,27 +96,27 @@ class Build:
 
             # instantiate idata (gets data for modeling) and run it
             idata = idata_child.IdataChild(self.param, self.conveyor, input_source)
-            results = idata.run() 
+            idata.run() 
             LOG.debug(f'idata child {idata_child.__name__} completed `run()`')
 
         # check there is a suitable X and Y
         if not self.conveyor.getError():
-            if 'xmatrix' not in results:
+            if not self.conveyor.isKey ('xmatrix'):
                 self.conveyor.addError(f'Failed to compute MDs')
 
-            if 'ymatrix' not in results:
+            if not self.conveyor.isKey ('ymatrix'):
                 self.conveyor.addError(f'No activity data (Y) found in training series')
 
         # instantiate lear (build a model from idata) and run it
         if not self.conveyor.getError():
-            learn = learn_child.LearnChild(self.param, results)
-            results = learn.run()
+            learn = learn_child.LearnChild(self.param, self.conveyor)
+            learn.run()
             LOG.debug(f'learn child {learn_child.__name__} completed `run()`')
 
         # run odata object, in charge of formatting the prediction results
         # note that if any of the above steps failed, an error has been inserted in the
         # conveyor and odata will take case of showing an error message
-        odata = odata_child.OdataChild(self.param, results)
+        odata = odata_child.OdataChild(self.param, self.conveyor)
         LOG.info('Building completed')
 
         return odata.run()
