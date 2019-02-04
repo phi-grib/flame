@@ -25,14 +25,26 @@ import numpy as np
 import json
 from flame.util import utils
 
-class Conveyor:
-    ''' Class storing ***
+CONVEYOR_VER = 1    # update only for major changes
 
+class Conveyor:
+    ''' Class storing all data generated in the workflows. This class is 
+    declared by workflow objects like Build or Predict and passed as an 
+    argument to every step
+
+    The class contains data (data) an index (manifest) and an auxiliar 
+    dictionary for identifying important data
+
+    It is also used to handle workflow errors. Errors are dumped here and
+    checked frequently in the code. When detected, the workflow is aborted
+
+    The class contains method for pickle storage and for convering to JSON
     '''
+
 
     def __init__(self):
         ''' constructor '''
-        self.results_format = 1
+        self.conveyor_ver = CONVEYOR_VER
         self.origin = 'undefined'
         self.data = {}
         self.manifest = []
@@ -40,8 +52,9 @@ class Conveyor:
         self.error = None
         self.warning = None
 
-    def save(self,fo):
-        pickle.dump(self.results_format, fo)
+    def save(self,fo):        
+        ''' constructor '''
+        pickle.dump(self.conveyor_ver, fo)
         pickle.dump(self.origin, fo)
         pickle.dump(self.data, fo)
         pickle.dump(self.manifest, fo)
@@ -50,65 +63,73 @@ class Conveyor:
         pickle.dump(self.warning, fo)
         
     def load(self, fi):
-        self.results_format = pickle.load(fi)
-        self.origin = pickle.load(fi)
-        self.data = pickle.load(fi)
-        self.manifest = pickle.load(fi)
-        self.meta = pickle.load(fi)
-        self.error = pickle.load(fi)
-        self.warning = pickle.load(fi)
+        ''' constructor '''
+        pickled_ver = pickle.load(fi)
+        if pickled_ver != self.conveyor_ver:
+            return False, 'Wrong version'
+        try:
+            self.origin = pickle.load(fi)
+            self.data = pickle.load(fi)
+            self.manifest = pickle.load(fi)
+            self.meta = pickle.load(fi)
+            self.error = pickle.load(fi)
+            self.warning = pickle.load(fi)
+        except:
+            return False, 'Error extracting pickle'
 
-    def getVal(self, key):
-        if not key in self.data:
-            return None
-        return self.data[key]
+        return True
+
+    def isKey(self, _key):
+        return _key in self.data
+
+    def getOrigin (self):
+        return self.origin
+    
+    def setOrigin (self, value):
+        self.origin = value
+
+    def getMain (self):
+        return self.meta['main']
+
+    def addMain (self, value):
+        self.meta['main'].append(value)
+
+    def addMeta (self, key, value):
+        self.meta[key] = value
 
     def getError (self):
         return self.error is not None
     
-    def getWarning (self):
-        return self.warning is not None
-
     def getErrorMessage (self):
         return self.error 
-
-    def getWarningMessage (self):
-        return self.warning
 
     def setError (self, message):
         self.error = message
 
+    def getWarning (self):
+        return self.warning is not None
+
+    def getWarningMessage (self):
+        return self.warning
+
     def setWarning (self, message):
         self.warning = message
     
-    def isKey(self, _key):
-        return _key in self.data
+    def getVal(self, key):
+        if not key in self.data:
+            return None
+        return self.data[key]
 
     def setVal(self, key, value):
         if not key in self.data:
             return
         self.data[key]=value
 
-    def objectKeys (self):
-        object_elements = []
-        for i in self.manifest:
-            if i['dimension'] == 'objs':
-                object_elements.append(i['key'])
-
-        return object_elements
-    
-    def singleKeys (self):
-        single_elements = []
-        for i in self.manifest:
-            if i['dimension'] == 'single':
-                single_elements.append(i['key'])
-        return single_elements
-
     def addVal(self, var, _key, _label, _type, _dimension='objs',
                _description=None, _relevance=None):
         '''
-        Utility function to insert information within the "result" dictionary, indexing 
-        it appropriatelly in the "manifest" and "meta" keys
+        Insert new items at the data dictionary, indexing 
+        it appropriatelly in the "manifest" and "meta" 
         
         _key         (str)
                     key for including this data in results dictionary
@@ -148,23 +169,29 @@ class Conveyor:
         if _relevance == 'main':
             self.addMain(_key)
 
-    def addMeta (self, key, value):
-        self.meta[key] = value
+    def objectKeys (self):
+        ''' returns data keys containing objects values '''
+        object_elements = []
+        for i in self.manifest:
+            if i['dimension'] == 'objs':
+                object_elements.append(i['key'])
 
-    def addMain (self, value):
-        self.meta['main'].append(value)
-
-    def getMain (self):
-        return self.meta['main']
-
-    def getOrigin (self):
-        return self.origin
+        return object_elements
     
-    def setOrigin (self, value):
-        self.origin = value
+    def singleKeys (self):
+        ''' returns data keys containing single values '''
+        single_elements = []
+        for i in self.manifest:
+            if i['dimension'] == 'single':
+                single_elements.append(i['key'])
+        return single_elements
 
     def getJSON (self):
-
+        ''' returns a JSON containing 
+            - error/warnings 
+            - manifest and meta
+            - data (only single and object)
+         '''
         temp_json = {}
 
         if self.error is not None:
