@@ -56,6 +56,14 @@ class Apply:
         # Ye are the y values present in the input file
         Ye = np.asarray(self.conveyor.getVal("ymatrix"))
 
+        # For qualitative models, make sure the Y is qualitative as well
+        if not self.param.getVal("quantitative"):
+            qy, message = utils.qualitative_Y(Ye)
+            if not qy:
+                self.conveyor.setWarning(f'No qualitative activity suitable for external validation "{message}". Skipping.')
+                LOG.warning(f'No qualitative activity suitable for external validation "{message}". Skipping.')
+                return
+
         # there are four variants of external validation, depending if the method
         # if conformal or non-conformal and the model is qualitative and quantitative
 

@@ -27,6 +27,9 @@ import importlib
 from flame.util import utils, get_logger
 from flame.parameters import Parameters
 from flame.conveyor import Conveyor
+from flame.idata import Idata
+from flame.apply import Apply
+from flame.odata import Odata
 
 LOG = get_logger(__name__)
 
@@ -83,29 +86,40 @@ class Predict:
             apply_child = importlib.import_module(modpath+".apply_child")
             odata_child = importlib.import_module(modpath+".odata_child")
 
-            LOG.debug('child modules imported: '
-                      f' {idata_child.__name__},'
-                      f' {apply_child.__name__},'
-                      f' {odata_child.__name__}')
-
             # run idata object, in charge of generate model data from input
-            idata = idata_child.IdataChild(self.param, self.conveyor, input_source)
+            try:
+                idata = idata_child.IdataChild(self.param, self.conveyor, input_source)
+            except:
+                LOG.warning ('Idata child architecture mismatch, defaulting to Idata parent')
+                idata = Idata(self.param, self.conveyor, input_source)
+
             idata.run()
-            LOG.debug(f'idata child {idata_child.__name__} completed `run()`')
+            LOG.debug(f'idata child {type(idata).__name__} completed `run()`')
 
         if not self.conveyor.getError():
+            # make sure there is X data
             if not self.conveyor.isKey('xmatrix'):
                 LOG.debug(f'Failed to compute MDs')
                 self.conveyor.setError(f'Failed to compute MDs')
 
         if not self.conveyor.getError():
             # run apply object, in charge of generate a prediction from idata
-            apply = apply_child.ApplyChild(self.param, self.conveyor)
-            apply.run()
-            LOG.debug(f'apply child {apply_child.__name__} completed `run()`')
+            try:
+                apply = apply_child.ApplyChild(self.param, self.conveyor)
+            except:
+                LOG.warning ('Apply child architecture mismatch, defaulting to Apply parent')
+                apply = Apply(self.param, self.conveyor)
 
-        # run odata object, in charge of formatting the prediction results or any error
-        odata = odata_child.OdataChild(self.param, self.conveyor)
-        LOG.info('Prediction completed')
+            apply.run()
+            LOG.debug(f'apply child {type(apply).__name__} completed `run()`')
+
+        # run odata object, in charge of formatting the prediction results
+        # note that if any of the above steps failed, an error has been inserted in the
+        # conveyor and odata will take case of showing an error message
+        try:
+            odata = odata_child.OdataChild(self.param, self.conveyor)
+        except:
+            LOG.warning ('Odata child architecture mismatch, defaulting to Odata parent')
+            odata = Odata(self.param, self.conveyor)
 
         return odata.run()

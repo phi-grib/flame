@@ -77,6 +77,8 @@ def get_external_input(task, model_set, infile):
     if False in model_suc:
         return False, 'Some external input sources failed: ', str(model_suc)
 
+    LOG.info('Building completed')
+
     return True, model_res
 
 
@@ -108,6 +110,8 @@ def predict_cmd(model, output_format=None):
 
         # run the model with the input file
         success, results = predict.run(model['infile'])
+
+    LOG.info('Prediction completed...')
 
     return success, results
 

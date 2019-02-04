@@ -27,6 +27,9 @@ import importlib
 from flame.util import utils, get_logger
 from flame.parameters import Parameters
 from flame.conveyor import Conveyor
+from flame.idata import Idata
+from flame.learn import Learn
+from flame.odata import Odata
 
 LOG = get_logger(__name__)
 
@@ -89,34 +92,43 @@ class Build:
             learn_child = importlib.import_module(modpath+".learn_child")
             odata_child = importlib.import_module(modpath+".odata_child")
 
-            LOG.debug('child modules imported: '
-                      f' {idata_child.__name__},'
-                      f' {learn_child.__name__},'
-                      f' {odata_child.__name__}')
-
-            # instantiate idata (gets data for modeling) and run it
-            idata = idata_child.IdataChild(self.param, self.conveyor, input_source)
+            # run idata object, in charge of generate model data from input
+            try:
+                idata = idata_child.IdataChild(self.param, self.conveyor, input_source)
+            except:
+                LOG.warning ('Idata child architecture mismatch, defaulting to Idata parent')
+                idata = Idata(self.param, self.conveyor, input_source)
             idata.run() 
-            LOG.debug(f'idata child {idata_child.__name__} completed `run()`')
+            LOG.debug(f'idata child {type(idata).__name__} completed `run()`')
 
-        # check there is a suitable X and Y
         if not self.conveyor.getError():
+            # check there is a suitable X and Y
             if not self.conveyor.isKey ('xmatrix'):
                 self.conveyor.setError(f'Failed to compute MDs')
 
             if not self.conveyor.isKey ('ymatrix'):
                 self.conveyor.setError(f'No activity data (Y) found in training series')
 
-        # instantiate lear (build a model from idata) and run it
         if not self.conveyor.getError():
+            # instantiate learn (build a model from idata) and run it
             learn = learn_child.LearnChild(self.param, self.conveyor)
             learn.run()
-            LOG.debug(f'learn child {learn_child.__name__} completed `run()`')
+
+            try:
+                learn = learn_child.LearnChild(self.param, self.conveyor)
+            except:
+                LOG.warning ('Learn child architecture mismatch, defaulting to Learn parent')
+                learn = Learn(self.param, self.conveyor)
+
+            LOG.debug(f'learn child {type(learn).__name__} completed `run()`')
 
         # run odata object, in charge of formatting the prediction results
         # note that if any of the above steps failed, an error has been inserted in the
         # conveyor and odata will take case of showing an error message
-        odata = odata_child.OdataChild(self.param, self.conveyor)
-        LOG.info('Building completed')
+        try:
+            odata = odata_child.OdataChild(self.param, self.conveyor)
+        except:
+            LOG.warning ('Odata child architecture mismatch, defaulting to Odata parent')
+            odata = Odata(self.param, self.conveyor)
 
         return odata.run()

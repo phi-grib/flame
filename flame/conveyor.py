@@ -64,8 +64,7 @@ class Conveyor:
         
     def load(self, fi):
         ''' constructor '''
-        pickled_ver = pickle.load(fi)
-        if pickled_ver != self.conveyor_ver:
+        if pickle.load(fi) != self.conveyor_ver:
             return False, 'Wrong version'
         try:
             self.origin = pickle.load(fi)
@@ -77,7 +76,7 @@ class Conveyor:
         except:
             return False, 'Error extracting pickle'
 
-        return True
+        return True, 'OK'
 
     def isKey(self, _key):
         return _key in self.data

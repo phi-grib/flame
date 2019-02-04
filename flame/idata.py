@@ -610,7 +610,13 @@ class Idata:
                 if md5_input != utils.md5sum(self.ifile):
                     return False
 
-                self.conveyor.load(fi)
+                #self.conveyor.load(fi)
+
+                success, message = self.conveyor.load(fi)
+
+                if not success:
+                    LOG.error(f'Failed to load pickle file with error: "{message}"')
+                    return False
 
         except Exception as e:
             self.conveyor.setError('Error loading pickle with exception: {}'.format(e))
