@@ -25,6 +25,6 @@ from flame.learn import Learn
 
 class LearnChild(Learn):
 
-    def __init__(self, parameters, results):
+    def __init__(self, parameters, conveyor):
 
-        Learn.__init__(self, parameters, results)
+        Learn.__init__(self, parameters, conveyor)

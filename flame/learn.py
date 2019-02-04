@@ -36,16 +36,14 @@ LOG = get_logger(__name__)
 
 class Learn:
 
-    def __init__(self, parameters, results):
+    def __init__(self, parameters, conveyor):
 
         self.param = parameters
+        self.conveyor = conveyor
+        self.conveyor.setOrigin('learn')
 
-        self.X = results['xmatrix']
-        self.Y = results['ymatrix']
-        # TODO: make use of other results items
-
-        self.results = results
-        self.results['origin'] = 'learn'
+        self.X = self.conveyor.getVal('xmatrix')
+        self.Y = self.conveyor.getVal('ymatrix')
 
     def run_custom(self):
         '''
@@ -53,8 +51,7 @@ class Learn:
         classes.
         '''
 
-        self.results['error'] = 'not implemented'
-        return
+        self.conveyor.setError ('Not implemented')
 
     def run_internal(self):
         '''
@@ -74,7 +71,8 @@ class Learn:
         if not self.param.getVal('quantitative') :
             success, yresult  = utils.qualitative_Y(self.Y)
             if not success:
-                self.results['error'] = yresult
+
+                self.conveyor.setError(yresult)
                 return
 
         # expand with new methods here:
@@ -94,19 +92,20 @@ class Learn:
                 break
 
         if not model:
-            self.results['error'] = 'modeling method not recognised'
+            self.conveyor.setError(f'Modeling method {self.param.getVal("model")}'
+                                    'not recognized')
             LOG.error(f'Modeling method {self.param.getVal("model")}'
-                      'not recognized')
+                       'not recognized')
             return
 
         # build model
         LOG.info('Starting model building')
         success, model_building_results = model.build()
         if not success:
-            self.results['error'] = model_building_results
+            self.conveyor.setError(model_building_results)
             return
 
-        utils.add_result(self.results,
+        self.conveyor.addVal(
                     model_building_results,
                     'model_build_info',
                     'model building information',
@@ -119,13 +118,13 @@ class Learn:
         LOG.info('Starting model validation')
         success, model_validation_results = model.validate()
         if not success:
-            self.results['error'] = model_validation_results
+            self.conveyor.setError(model_validation_results)
             return
 
         # model_validation_results is a dictionary which contains model_validation_info and 
         # (optionally) Y_adj and Y_pred, depending on the model type    
         
-        utils.add_result(self.results,
+        self.conveyor.addVal(
             model_validation_results['quality'],
             'model_valid_info',
             'model validation information',
@@ -135,7 +134,7 @@ class Learn:
 
         # non-conformal qualitative and quantitative models
         if 'Y_adj' in model_validation_results:
-            utils.add_result(self.results,
+            self.conveyor.addVal(
                 model_validation_results['Y_adj'],
                 'Y_adj',
                 'Y fitted',
@@ -144,7 +143,7 @@ class Learn:
                 'Y values of the training series fitted by the model')
         
         if 'Y_pred' in model_validation_results:
-            utils.add_result(self.results,
+            self.conveyor.addVal(
                 model_validation_results['Y_pred'],
                 'Y_pred',
                 'Y predicted',
@@ -159,7 +158,7 @@ class Learn:
                 class_key = 'c' + str(i)
                 class_label = 'Class ' + str(i)
                 class_list = model_validation_results['classes'][:, i].tolist()
-                utils.add_result(self.results, class_list, 
+                self.conveyor.addVal( class_list, 
                                 class_key, class_label,
                                 'result', 'objs', 
                                 'Conformal class assignment',
@@ -210,7 +209,7 @@ class Learn:
             self.run_custom()
         else:
             LOG.error("Modeling toolkit is not yet supported")
-            self.results['error'] = 'modeling Toolkit ' + \
-                toolkit+' is not supported yet'
+            self.conveyor.setError( 'modeling Toolkit ' + \
+                toolkit+' is not supported yet')
 
-        return self.results
+        return 

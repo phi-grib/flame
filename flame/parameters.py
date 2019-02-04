@@ -45,7 +45,7 @@ class Parameters:
     def __init__(self):
         ''' constructor '''
         self.extended = False
-        self.version = 1
+        self.param_format = 1
 
         return
 
