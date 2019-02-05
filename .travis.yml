@@ -19,7 +19,7 @@ before_script:
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo mkdir -m 777 /home/testmodels/; fi
 script:
   # Your test script goes here 
-  - source activate flame
+  - conda activate flame
   - py.test -vv
 
 sudo: required
