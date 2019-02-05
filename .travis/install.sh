@@ -11,7 +11,7 @@ if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
     conda info -a
     conda env create -f environment.yml
     source activate flame
-    python setup.py install
+    python setup.py install;
 
 else
     # Install some custom requirements on Linux  - sudo apt-get update
@@ -27,5 +27,5 @@ else
     conda info -a
     conda env create -f environment.yml
     source activate flame
-    python setup.py install
+    python setup.py install;
 fi
