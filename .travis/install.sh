@@ -10,7 +10,7 @@ if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
     #Useful for debugging any issues with conda
     conda info -a
     conda env create -f environment.yml
-    conda activate flame
+    source activate flame
     python setup.py install
 
 else
@@ -26,6 +26,6 @@ else
     #Useful for debugging any issues with conda
     conda info -a
     conda env create -f environment.yml
-    conda activate flame
+    source activate flame
     python setup.py install
 fi
