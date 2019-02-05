@@ -5,7 +5,7 @@ os:
 python:
   - "3.6"
 install:
-  - ./.travis/install.sh
+  - bash ./.travis/install.sh
 before_script:
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then sudo mkdir -m 777 /home/testmodels/; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo mkdir -m 777 /home/testmodels/; fi
