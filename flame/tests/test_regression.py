@@ -12,7 +12,8 @@ from flame import build
 from flame import predict
 
 # paths configs
-MODEL_REPOSITORY = Path('/home/testmodels')
+from repo_config import MODEL_REPOSITORY
+
 MODEL_NAME = 'REGR'
 current = Path(__file__).parent.resolve()
 SDF_FILE_NAME = str(current / 'data' / 'minicaco.sdf')

@@ -11,7 +11,8 @@ from flame import manage
 from flame import build
 from flame import predict
 
-MODEL_REPOSITORY = '/home/testmodels'
+from repo_config import MODEL_REPOSITORY
+
 MODEL_NAME = 'CLASSIF'
 SDF = Path('data/classification.sdf')
 current = Path(__file__).parent.resolve()

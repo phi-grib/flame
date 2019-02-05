@@ -8,9 +8,9 @@ from pathlib import Path
 from flame.util import utils
 from flame import manage
 
-MODEL_NAME = 'TESTPARAMS'
-MODEL_REPOSITORY = '/home/testmodels'
+from repo_config import MODEL_REPOSITORY
 
+MODEL_NAME = 'TESTPARAMS'
 
 # @pytest.fixture
 # def make_model():

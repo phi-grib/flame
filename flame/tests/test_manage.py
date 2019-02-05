@@ -4,7 +4,8 @@ import pathlib
 import os
 from flame import manage
 
-MODEL_REPOSITORY = '/home/testmodels'
+from repo_config import MODEL_REPOSITORY
+
 MODEL_NAME = 'TESTMODEL'
 
 

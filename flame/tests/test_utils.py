@@ -7,7 +7,8 @@ import sys
 from flame.util import utils
 from flame import manage
 
-MODEL_REPOSITORY = '/home/testmodels'
+from repo_config import MODEL_REPOSITORY
+
 MODEL_NAME = 'TESTMODEL'
 
 
