@@ -77,6 +77,8 @@ def get_external_input(task, model_set, infile):
     if False in model_suc:
         return False, 'Some external input sources failed: ', str(model_suc)
 
+    LOG.info('Building completed')
+
     return True, model_res
 
 
@@ -109,6 +111,8 @@ def predict_cmd(model, output_format=None):
         # run the model with the input file
         success, results = predict.run(model['infile'])
 
+    LOG.info('Prediction completed...')
+
     return success, results
 
 
@@ -125,8 +129,8 @@ def build_cmd(arguments, output_format=None):
     model_list = os.listdir(repo_path)
 
     if arguments['endpoint'] not in model_list:
-        LOG.error('endpoint name not found in model repository.')
-        return False, "Wrong endpoint name. "+arguments['endpoint']+" does not exist"
+        LOG.error('Endpoint name not found in model repository.')
+        return False, 'Endpoint name not found in model repository.'
 
     build = Build(arguments['endpoint'], arguments['parameters'], output_format)
 
@@ -153,15 +157,18 @@ def build_cmd(arguments, output_format=None):
         # try to copy it to the model directory
         if ifile is not None:
             if not os.path.isfile(ifile):
-                return False, 'wrong training series file'
+                LOG.error(f'Wrong training series file {ifile}')
+                return False, f'Wrong training series file {ifile}'
             try:
                 shutil.copy(ifile, lfile)
             except:
-                return False, 'unable to copy input file to model directory'
+                LOG.error(f'Unable to copy input file to model directory')
+                return False, 'Unable to copy input file to model directory'
 
         # check that the local copy of the input file exists
         if not os.path.isfile(lfile):
-            return False, 'not training series found'
+            LOG.error(f'No training series found')
+            return False, 'No training series found'
 
         # run the model with the input file
         success, results = build.run(lfile)

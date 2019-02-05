@@ -30,7 +30,7 @@ from nonconformist.icp import IcpClassifier, IcpRegressor
 from nonconformist.nc import ClassifierNc, MarginErrFunc, RegressorNc
 from sklearn.neighbors import KNeighborsRegressor
 from nonconformist.nc import AbsErrorErrFunc, RegressorNormalizer
-
+from copy import copy
 from flame.stats.base_model import BaseEstimator
 from flame.stats.model_validation import getCrossVal
 from flame.stats.scale import scale, center
@@ -115,14 +115,14 @@ class RF(BaseEstimator):
                             'RF quantitative (optimized)'))
                     else:
                         self.optimize(X, Y, RandomForestClassifier(),
-                                    self.tune_parameters)
+                                      self.tune_parameters)
                         results.append(
                             ('model', 'model type', 
-                            'RF qualitative (optimized)'))
+                             'RF qualitative (optimized)'))
                     LOG.debug('RF estimator optimized')
                 except Exception as e:
                     LOG.error(f'Exception optimizing RF' 
-                            f'estimator with exception {e}')
+                              f'estimator with exception {e}')
 
         else:
             try:
@@ -139,55 +139,57 @@ class RF(BaseEstimator):
                     results.append(('model', 'model type', 'RF qualitative'))
             except Exception as e:
                 LOG.error(f'Exception building RF' 
-                        f'estimator with exception {e}')
-            
+                          f'estimator with exception {e}')
+        self.estimator.fit(X, Y)
+        self.estimator_temp = copy(self.estimator)
         # Create the conformal estimator
         if self.param.getVal('conformal'):
             try:
                 LOG.info("Building aggregated conformal RF model")
                 if self.param.getVal('quantitative'):
-                    underlying_model = RegressorAdapter(self.estimator)
-                    normalizing_model = RegressorAdapter(
-                        KNeighborsRegressor(n_neighbors=5))
-                    normalizing_model = RegressorAdapter(self.estimator)
+                    underlying_model = RegressorAdapter(self.estimator_temp)
+                    #normalizing_model = RegressorAdapter(
+                        #KNeighborsRegressor(n_neighbors=5))
+                    normalizing_model = RegressorAdapter(self.estimator_temp)
                     normalizer = RegressorNormalizer(
-                            underlying_model, normalizing_model,
-                                AbsErrorErrFunc())
+                                    underlying_model,
+                                    normalizing_model,
+                                    AbsErrorErrFunc())
                     nc = RegressorNc(underlying_model,
-                                    AbsErrorErrFunc(), normalizer)
+                                         AbsErrorErrFunc(),
+                                         normalizer)
                     # self.conformal_pred = AggregatedCp(IcpRegressor
                     # (RegressorNc(RegressorAdapter(self.estimator))),
                     #                                   BootstrapSampler())
 
-                    self.conformal_pred = AggregatedCp(IcpRegressor(nc),
+                    self.estimator = AggregatedCp(IcpRegressor(nc),
                                                     BootstrapSampler())
-                    self.conformal_pred.fit(X, Y)
+                    self.estimator.fit(X, Y)
                     # overrides non-conformal
                     results.append(
                         ('model', 'model type', 'conformal RF quantitative'))
                 # Conformal classifier
                 else:
-                    self.conformal_pred = AggregatedCp(
-                                            IcpClassifier(
-                                                ClassifierNc(
-                                                    ClassifierAdapter(
-                                                        self.estimator),
-                                                        MarginErrFunc())),
-                                            BootstrapSampler())
+                    self.estimator = AggregatedCp(
+                                        IcpClassifier(
+                                            ClassifierNc(
+                                                ClassifierAdapter(
+                                                    self.estimator_temp),
+                                                MarginErrFunc())),
+                                        BootstrapSampler())
                     # Fit estimator to the data
-                    self.conformal_pred.fit(X, Y)
+                    self.estimator.fit(X, Y)
                     results.append(
                         ('model', 'model type', 'conformal RF qualitative'))
             except Exception as e:
                 LOG.error(f'Exception building aggregated conformal Random'
-                        f'Forest estimator with exception {e}')
-        self.estimator.fit(X, Y)
+                          f'Forest estimator with exception {e}')
 
         return True, results
 
 
 
-#### Overriding of parent methods
+## Overriding of parent methods
 
     # def CF_quantitative_validation(self):
     #     ''' performs validation for conformal quantitative models '''

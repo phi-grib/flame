@@ -29,6 +29,7 @@ import string
 import pathlib
 import re
 import warnings
+import numpy as np
 
 from flame.util import get_logger
 
@@ -331,6 +332,40 @@ def add_result(results, var, _key, _label, _type, _dimension='objs',
             results['meta']['main'].append(_key)
 
 
+def results_info_to_JSON (i):
+    ''' Results describing the model quality and characteristics are tuples 
+        with three elements
+
+        This function returns a version of this tuple suitable for being 
+        serialized to JSON
+    '''
+    # results must be checked to avoid numpy elements not JSON serializable
+
+    # int64
+    if 'numpy.int64' in str(type(i[2])):
+        try:
+            v = int(i[2])
+        except Exception as e:
+            LOG.error(e)
+            v = None
+        return((i[0], i[1], v))
+
+    # int64
+    if 'numpy.float64' in str(type(i[2])):
+        try:
+            v = float(i[2])
+        except Exception as e:
+            LOG.error(e)
+            v = None
+        return((i[0], i[1], v))
+
+    # ndarrays
+    if isinstance(i[2], np.ndarray):
+        return((i[0], i[1], i[2].tolist()) )
+
+    return i
+
+
 def is_empty(mylist):
     for i in mylist:
         if i is not None:
@@ -361,6 +396,33 @@ def get_sdf_activity_value(mol, parameters: dict) -> float:
                             f' to float: {e}')
 
     return activity_num
+
+def qualitative_Y (Y):
+
+    neg = 0
+    pos = 0
+    nan = 0
+    ext = 0
+    for y in Y:
+        if y == 0.000:
+            neg+=1
+        elif y == 1.000:
+            pos+=1
+        elif np.isnan(y):
+            nan+=1 
+        else:
+            ext+=1
+
+    LOG.debug (f'Y analized. Found {neg} negative, {pos} positive, {nan} NaN and {ext} others objects')
+
+    if neg == 0 or pos == 0:
+        return False, f'Y values not suitable for building a qualitative model. Found {neg} negative and {pos} positive objects'
+
+    if ext > 0:
+        return False, f'Y values not suitable for building a qualitative model. Found {ext} objects not 1.000 or 0.000'
+    
+    return True, 'OK'
+
 
 def get_sdf_value(mol, value_label) :
     """ Returns the value of the certain field present in a SDFIle mol 
