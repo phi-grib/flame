@@ -28,3 +28,4 @@ else
     conda env create -f environment.yml
     conda activate flame
     python setup.py install
+fi
