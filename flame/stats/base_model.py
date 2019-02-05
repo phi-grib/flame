@@ -288,7 +288,7 @@ class BaseEstimator:
         Y = self.Y.copy()
 
         info = []
-        kf = KFold(n_splits=5, shuffle=True)
+        kf = KFold(n_splits=5, shuffle=True, random_state=46)
         # Copy Y vector to use it as template to assign predictions
         Y_pred = copy.copy(Y).tolist()
         try:
@@ -375,7 +375,7 @@ class BaseEstimator:
 
         info = []
 
-        kf = KFold(n_splits=5, shuffle=True)
+        kf = KFold(n_splits=5, shuffle=True, random_state=46)
         # Copy Y vector to use it as template to assign predictions
         Y_pred = copy.copy(Y).tolist()
         try:
