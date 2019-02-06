@@ -202,6 +202,13 @@ def action_list(model):
         num_models = 0
         LOG.info('Models found in repository:')
         for x in os.listdir(rdir):
+            xpath = os.path.join(rdir,x) 
+            # discard if the item is not a directory
+            if not os.path.isdir(xpath):
+                continue
+            # discard if the directory does not contain a 'dev' directory inside
+            if not os.path.isdir(os.path.join(xpath,'dev')):
+                continue
             num_models += 1
             LOG.info('\t'+x)
         LOG.debug(f'Retrieved list of models from {rdir}')
