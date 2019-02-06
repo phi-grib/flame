@@ -9,9 +9,9 @@ matrix:
 # commented bcause using conda 
 # python:
 #   - "3.6"
-
+before_install:
+  - chmod +x .travis/install.sh
 install:
-  - chmod -x .travis/install.sh
   - ./.travis/install.sh
 before_script:
   - sudo mkdir -m 777 $HOME/testmodels
