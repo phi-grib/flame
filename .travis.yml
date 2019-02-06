@@ -13,10 +13,9 @@ matrix:
 #   - "3.6"
 
 install:
-  - bash ./.travis/install.sh
+  - sh ./.travis/install.sh
 before_script:
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then sudo mkdir -m 777 /Home/travis/testmodels/; fi
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo mkdir -m 777 /home/testmodels/; fi
+  - sudo mkdir -m 777 $HOME/testmodels 
 script:
   # Your test script goes here 
   - source activate flame
