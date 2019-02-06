@@ -18,6 +18,6 @@ script:
   # Your test script goes here 
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then source $HOME/.bash_profile; else source $HOME/.bashrc; fi
   # - conda activate flame
-  - py.test -vv
+  - pytest -vv
 
 sudo: required
