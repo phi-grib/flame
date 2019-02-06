@@ -4,13 +4,13 @@ if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
     # e.g. brew install pyenv-virtualenv
     wget https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-x86_64.sh -O miniconda.sh
     bash miniconda.sh -b -p $HOME/miniconda
-    export PATH="$HOME/miniconda/bin:$PATH"
+    export PATH="$HOME/miniconda/condabin:$PATH"
     conda config --set always_yes yes --set changeps1 no
     conda update -q conda
     #Useful for debugging any issues with conda
     conda info -a
     conda env create -f environment.yml
-    source activate flame
+    conda activate flame
     python setup.py install;
 
 else
@@ -19,13 +19,13 @@ else
     # version is the same.
     wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
     bash miniconda.sh -b -p $HOME/miniconda
-    export PATH="$HOME/miniconda/bin:$PATH"
+    export PATH="$HOME/miniconda/condabin:$PATH"
     hash -r
     conda config --set always_yes yes --set changeps1 no
     conda update -q conda
     #Useful for debugging any issues with conda
     conda info -a
     conda env create -f environment.yml
-    source activate flame
+    conda activate flame
     python setup.py install;
 fi
