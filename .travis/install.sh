@@ -7,7 +7,7 @@ if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
     export PATH="$HOME/miniconda/bin:$PATH"
     conda config --set always_yes yes
     conda update -q conda
-    conda init
+    conda init bash
     source $HOME/.bash_profile
     #Useful for debugging any issues with conda
     conda info -a
@@ -26,7 +26,7 @@ else
     export PATH="$HOME/miniconda/bin:$PATH"
     conda config --set always_yes yes
     conda update -q conda
-    conda init
+    conda init bash
     source $HOME/.bashrc
     #Useful for debugging any issues with conda
     conda info -a
