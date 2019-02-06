@@ -5,9 +5,9 @@ if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
     wget https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-x86_64.sh -O miniconda.sh
     bash miniconda.sh -b -p $HOME/miniconda
     export PATH="$HOME/miniconda/bin:$PATH"
-    conda init
     conda config --set always_yes yes
     conda update -q conda
+    conda init
     #Useful for debugging any issues with conda
     conda info -a
     conda env create -f environment.yml
@@ -21,9 +21,9 @@ else
     wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
     bash miniconda.sh -b -p $HOME/miniconda
     export PATH="$HOME/miniconda/bin:$PATH"
-    conda init
     conda config --set always_yes yes
     conda update -q conda
+    conda init
     #Useful for debugging any issues with conda
     conda info -a
     conda env create -f environment.yml
