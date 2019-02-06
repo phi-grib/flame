@@ -550,10 +550,10 @@ def action_report():
                 continue
             
             # build a tuple (version, JSON) for each version and append 
-            imodel_vers_info.append((iver,ijson))
+            imodel_vers_info.append((iver, json.loads(ijson) ))
 
         # build a tuple (model_name, [version_info]) for each model and append
         results.append((imodel_name, imodel_vers_info))
         
-    #print (results)
+    print (json.dumps(results))
     return True, json.dumps(results)
