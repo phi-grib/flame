@@ -13,12 +13,12 @@ matrix:
 install:
   - bash ./.travis/install.sh
 before_script:
-  - sudo mkdir -m 777 $HOME/testmodels 
-script:
-  # Your test script goes here 
-  # - conda activate flame
+  - sudo mkdir -m 777 $HOME/testmodels
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then source $HOME/.bash_profile; else source $HOME/.bashrc; fi
+  - conda activate flame
   - echo "------ Using Python `which python` -----------"
+  - echo "------ Using Flame `which flame` -----------"
+script:
   - pytest -vv
 
 sudo: required
