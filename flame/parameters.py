@@ -46,7 +46,6 @@ class Parameters:
         ''' constructor '''
         self.extended = False
         self.param_format = 1
-
         return
 
     # def loadDict (self, d):

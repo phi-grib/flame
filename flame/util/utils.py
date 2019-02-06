@@ -27,8 +27,8 @@ import yaml
 import random
 import string
 import pathlib
-import re
-import warnings
+# import re
+# import warnings
 import numpy as np
 
 from flame.util import get_logger
@@ -64,7 +64,7 @@ def _read_configuration() -> dict:
     --------
     dict
     '''
-    # LOG.info('reading configuration')
+    #LOG.info('reading configuration')
     with open(get_conf_yml_path(), 'r') as config_file:
         conf = yaml.load(config_file)
 
@@ -83,6 +83,7 @@ def check_repository_path() -> None:
     Checks existence of module repository path in config file
     Use only in flame_scr, it uses user input so it's a CLI tools
     """
+
     LOG.debug('reading configuration')
 
     config_path = get_conf_yml_path()
