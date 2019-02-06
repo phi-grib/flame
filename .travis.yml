@@ -18,7 +18,7 @@ before_script:
   - sudo mkdir -m 777 $HOME/testmodels 
 script:
   # Your test script goes here 
-  - source activate flame
+  - conda activate flame
   - py.test -vv
 
 sudo: required
