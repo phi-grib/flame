@@ -316,7 +316,7 @@ def action_refactoring(file):
     return True, 'OK'
 
 
-def action_info(model, version, output='text'):
+def action_info(model, version, output='JSON'):
     '''
     Returns a text or JSON with results info for a given model and version
     '''
@@ -376,6 +376,7 @@ def action_info(model, version, output='text'):
     for i in info:
         json_results.append(utils.results_info_to_JSON(i))
 
+    #print (json.dumps(json_results))
     return True, json.dumps(json_results)
 
 
@@ -517,23 +518,42 @@ def action_report():
     # get directories in model repo path
     dirs = [x for x in models_path.iterdir() if x.is_dir()]
 
-    # if dir contains dev/ -> is model (NAIVE APPROACH)
-    # get last dir name [-1]: model name
-    model_dirs = [d.parts[-1] for d in dirs if list(d.glob('dev'))]
+    # # if dir contains dev/ -> is model (NAIVE APPROACH)
+    # # get last dir name [-1]: model name
+    # model_dirs = [d.parts[-1] for d in dirs if list(d.glob('dev'))]
 
     results = []
-    
-    # iterate for models
-    for imodel in model_dirs:
 
-        isuccess, ijson = action_info(imodel, 0, output='JSON')
-
-        if not isuccess:
+    # iterate models
+    for d in dirs:
+        imodel_name = d.parts[-1]
+        imodel_vers = [x.parts[-1] for x in d.iterdir() if x.is_dir()]
+        
+        # make sure the model contains 'dev' to recognize models
+        if 'dev' not in imodel_vers:
             continue
+        
+        imodel_vers_info = []
+        for ivtag in imodel_vers:
+            if ivtag == 'dev':
+                iver = 0
+            else:
+                iver = int(ivtag[-6:])
 
-        iresults = {}
-        iresults ['model'] = imodel
-        iresults ['results'] = json.loads(ijson)
-        results.append(iresults)
+            # now we have the model name and version, try to get the ijson text
+            try:
+                isuccess, ijson = action_info(imodel_name, iver, output='JSON')
+            except:
+                continue
 
+            if not isuccess:
+                continue
+            
+            # build a tuple (version, JSON) for each version and append 
+            imodel_vers_info.append((iver,ijson))
+
+        # build a tuple (model_name, [version_info]) for each model and append
+        results.append((imodel_name, imodel_vers_info))
+        
+    #print (results)
     return True, json.dumps(results)
