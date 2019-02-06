@@ -11,9 +11,9 @@ if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
     source $HOME/.bash_profile
     #Useful for debugging any issues with conda
     conda info -a
-    conda env create -f environment.yml
-    conda activate flame
-    echo "------FLAME ENV ACTIVATED--------"
+    conda env update -f=environment.yml
+    # conda activate flame
+    echo "------ Using Python: `which python` -----------"
     python setup.py install
 
 else
@@ -29,8 +29,8 @@ else
     source $HOME/.bashrc
     #Useful for debugging any issues with conda
     conda info -a
-    conda env create -f environment.yml
-    conda activate flame
-    echo "------FLAME ENV ACTIVATED--------"
+    conda env update -f=environment.yml
+    # conda activate flame
+    echo "------ Using Python: `which python` -----------"
     python setup.py install
 fi
