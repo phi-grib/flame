@@ -535,10 +535,8 @@ def action_report():
         
         imodel_vers_info = []
         for ivtag in imodel_vers:
-            if ivtag == 'dev':
-                iver = 0
-            else:
-                iver = int(ivtag[-6:])
+
+            iver = utils.modeldir2ver(ivtag)
 
             # now we have the model name and version, try to get the ijson text
             try:

@@ -180,3 +180,32 @@ def getName(mol, count=1, field=None, suppl=None):
             name = name.replace(' ', '_')
 
     return name
+
+
+def get_sdf_value(mol, value_label) :
+    """ Returns the value of the certain field present in a SDFIle mol 
+    
+    The field containing this value is recognized using the value_label
+    If this field does not exists or is not a float, it returns None
+
+    Returns either a float or None
+    """
+
+    value_num = None
+
+    # if the SDFile contains the field
+    if mol.HasProp(value_label):  
+
+        value_str = mol.GetProp(value_label)
+        
+        # cast val to float to be sure it is such or return None otherwyse
+        try:
+            
+            value_num = float(value_str)  
+
+        except Exception as e:
+            
+            LOG.error('An SDFile value cannot be converted'
+                        f' to float: {e}')
+
+    return value_num

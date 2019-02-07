@@ -136,14 +136,14 @@ class Idata:
             # for the model training and is provided as a prediction for new compounds
             bio = None
             if self.param.getVal('SDFile_activity') is not None:
-                bio = utils.get_sdf_value(mol, self.param.getVal('SDFile_activity'))
+                bio = sdfu.get_sdf_value(mol, self.param.getVal('SDFile_activity'))
             
             # extracts experimental information, if any.
             # note that experimental information is used only in prediction, as a value
             # which overrides any model predicted value
             exp = None    
             if self.param.getVal('SDFile_experimental') is not None:
-                exp = utils.get_sdf_value(mol, self.param.getVal('SDFile_experimental'))
+                exp = sdfu.get_sdf_value(mol, self.param.getVal('SDFile_experimental'))
 
             # generates a SMILES
             sml = None
