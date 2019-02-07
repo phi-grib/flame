@@ -30,11 +30,10 @@ import pathlib
 import numpy as np
 
 from flame.util import utils, get_logger 
-from flame.parameters import Parameters
-from flame.conveyor import Conveyor
+# from flame.parameters import Parameters
+# from flame.conveyor import Conveyor
 
 LOG = get_logger(__name__)
-
 
 def set_model_repository(path=None):
     """
@@ -344,6 +343,8 @@ def action_info(model, version, output='JSON'):
         if not os.path.isfile(os.path.join(rdir, 'results.pkl')):
             return False, 'Info file not found'
 
+        from flame.conveyor import Conveyor
+
         conveyor = Conveyor()
         with open(os.path.join(rdir, 'results.pkl'), 'rb') as handle:
             conveyor.load(handle)
@@ -374,7 +375,7 @@ def action_info(model, version, output='JSON'):
     # to a JSON  
     json_results = []
     for i in info:
-        json_results.append(utils.results_info_to_JSON(i))
+        json_results.append(conveyor.modelInfoJSON(i))
 
     #print (json.dumps(json_results))
     return True, json.dumps(json_results)
@@ -390,6 +391,8 @@ def action_results(model, version=None, ouput_variables=False):
     if not os.path.isfile(os.path.join(rdir, 'results.pkl')):
         return False, 'results not found'
 
+    from flame.conveyor import Conveyor
+
     conveyor = Conveyor()
     with open(os.path.join(rdir, 'results.pkl'), 'rb') as handle:
         conveyor.load(handle)
@@ -402,6 +405,8 @@ def action_parameters (model, version=None, oformat='text'):
 
     if model is None:
         return False, 'Empty model label'
+
+    from flame.parameters import Parameters
 
     param = Parameters()
     param.loadYaml(model, version)

@@ -34,7 +34,7 @@ from rdkit import Chem
 
 from standardiser import standardise
 
-import flame.chem.sdfileutils as sdfu
+import flame.chem.sdfileutils as sdfutils
 import flame.chem.compute_md as computeMD
 import flame.chem.convert_3d as convert3D
 
@@ -129,21 +129,21 @@ class Idata:
                 continue
 
             # extract the molecule name, using a sdfileutils algorithm 
-            name = sdfu.getName(
+            name = sdfutils.getName(
                 mol, count=obj_num, field=self.param.getVal('SDFile_name'), suppl=suppl)
 
             # extracts biological information (activity) which is used as dependent variable
             # for the model training and is provided as a prediction for new compounds
             bio = None
             if self.param.getVal('SDFile_activity') is not None:
-                bio = sdfu.get_sdf_value(mol, self.param.getVal('SDFile_activity'))
+                bio = sdfutils.getVal(mol, self.param.getVal('SDFile_activity'))
             
             # extracts experimental information, if any.
             # note that experimental information is used only in prediction, as a value
             # which overrides any model predicted value
             exp = None    
             if self.param.getVal('SDFile_experimental') is not None:
-                exp = sdfu.get_sdf_value(mol, self.param.getVal('SDFile_experimental'))
+                exp = sdfutils.getVal(mol, self.param.getVal('SDFile_experimental'))
 
             # generates a SMILES
             sml = None
@@ -209,7 +209,7 @@ class Idata:
 
         '''
         
-        success_list = [True for i in range(sdfu.count_mols(ifile))]
+        success_list = [True for i in range(sdfutils.count_mols(ifile))]
         
         if not method :
             method = ''
@@ -237,7 +237,7 @@ class Idata:
                               f' #{mcount+1} in {ifile}')
                     continue
 
-                name = sdfu.getName(m, count=mcount,
+                name = sdfutils.getName(m, count=mcount,
                                     field=self.param.getVal('SDFile_name'),
                                     suppl=suppl)
 
@@ -299,7 +299,7 @@ class Idata:
         using a given pH.
         '''
         
-        success_list = [True for i in range(sdfu.count_mols(ifile))]
+        success_list = [True for i in range(sdfutils.count_mols(ifile))]
     
         if not method:
             
@@ -316,7 +316,7 @@ class Idata:
         Assigns 3D structures to the molecular structures provided as input.
         '''
         
-        success_list = [True for i in range(sdfu.count_mols(ifile))]
+        success_list = [True for i in range(sdfutils.count_mols(ifile))]
 
         if not method:
             return success_list, ifile
@@ -639,8 +639,8 @@ class Idata:
         va_results = []
 
         # split in single molecule pieces
-        num_mol = sdfu.count_mols(input_file)
-        success, results = sdfu.split_SDFile(input_file, num_mol)
+        num_mol = sdfutils.count_mols(input_file)
+        success, results = sdfutils.split_SDFile(input_file, num_mol)
 
         if not success:
             return success, results
@@ -725,7 +725,7 @@ class Idata:
 
         '''
 
-        mol_index = [True for i in range(sdfu.count_mols(input_file))]
+        mol_index = [True for i in range(sdfutils.count_mols(input_file))]
 
         ###
         # 1. normalize
@@ -853,7 +853,7 @@ class Idata:
         # Execute the workflow in 1 or n CPUs
         if ncpu > 1:
             LOG.debug('Entering molecule workflow for {} cpus'.format(ncpu))
-            success, results = sdfu.split_SDFile(lfile, ncpu)
+            success, results = sdfutils.split_SDFile(lfile, ncpu)
 
             if not success:
                 self.conveyor.setError('Unable to split input molecule')

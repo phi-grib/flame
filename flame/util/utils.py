@@ -295,38 +295,38 @@ def id_generator(size=10, chars=string.ascii_uppercase + string.digits):
 #     return True, parameters
 
 
-def results_info_to_JSON (i):
-    ''' Results describing the model quality and characteristics are tuples 
-        with three elements
+# def results_info_to_JSON (i):
+#     ''' Results describing the model quality and characteristics are tuples 
+#         with three elements
 
-        This function returns a version of this tuple suitable for being 
-        serialized to JSON
-    '''
-    # results must be checked to avoid numpy elements not JSON serializable
+#         This function returns a version of this tuple suitable for being 
+#         serialized to JSON
+#     '''
+#     # results must be checked to avoid numpy elements not JSON serializable
 
-    # int64
-    if 'numpy.int64' in str(type(i[2])):
-        try:
-            v = int(i[2])
-        except Exception as e:
-            LOG.error(e)
-            v = None
-        return((i[0], i[1], v))
+#     # int64
+#     if 'numpy.int64' in str(type(i[2])):
+#         try:
+#             v = int(i[2])
+#         except Exception as e:
+#             LOG.error(e)
+#             v = None
+#         return((i[0], i[1], v))
 
-    # int64
-    if 'numpy.float64' in str(type(i[2])):
-        try:
-            v = float(i[2])
-        except Exception as e:
-            LOG.error(e)
-            v = None
-        return((i[0], i[1], v))
+#     # int64
+#     if 'numpy.float64' in str(type(i[2])):
+#         try:
+#             v = float(i[2])
+#         except Exception as e:
+#             LOG.error(e)
+#             v = None
+#         return((i[0], i[1], v))
 
-    # ndarrays
-    if isinstance(i[2], np.ndarray):
-        return((i[0], i[1], i[2].tolist()) )
+#     # ndarrays
+#     if isinstance(i[2], np.ndarray):
+#         return((i[0], i[1], i[2].tolist()) )
 
-    return i
+#     return i
 
 
 def is_empty(mylist):

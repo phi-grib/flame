@@ -182,7 +182,7 @@ def getName(mol, count=1, field=None, suppl=None):
     return name
 
 
-def get_sdf_value(mol, value_label) :
+def getVal(mol, value_label) :
     """ Returns the value of the certain field present in a SDFIle mol 
     
     The field containing this value is recognized using the value_label
