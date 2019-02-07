@@ -130,7 +130,7 @@ class Idata:
 
             # extract the molecule name, using a sdfileutils algorithm 
             name = sdfutils.getName(
-                mol, count=obj_num, field=self.param.getVal('SDFile_name'), suppl=suppl)
+                mol, count=obj_num, field=self.param.getVal('SDFile_name'))
 
             # extracts biological information (activity) which is used as dependent variable
             # for the model training and is provided as a prediction for new compounds
@@ -238,8 +238,7 @@ class Idata:
                     continue
 
                 name = sdfutils.getName(m, count=mcount,
-                                    field=self.param.getVal('SDFile_name'),
-                                    suppl=suppl)
+                                    field=self.param.getVal('SDFile_name'))
 
                 parent = None
 
