@@ -8,18 +8,18 @@ matrix:
 install:
   - if [[ $TRAVIS_OS_NAME == 'osx' ]]; then chmod +x .travis/install.sh; ./.travis/install.sh; fi
   - wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
-    bash miniconda.sh -b -p $HOME/miniconda
-    export PATH="$HOME/miniconda/bin:$PATH"
-    conda config --set always_yes yes
-    conda update -q conda
-    conda init bash
-    source $HOME/.bashrc
-    conda info -a
-    conda env create -f environment.yml
-    conda activate flame
-    echo "------ Using Python `which python` -----------"
-    python setup.py install
-    echo "------ Using Flame `which flame` -----------"
+  - bash miniconda.sh -b -p $HOME/miniconda
+  - export PATH="$HOME/miniconda/bin:$PATH"
+  - conda config --set always_yes yes
+  - conda update -q conda
+  - conda init bash
+  - source $HOME/.bashrc
+  - conda info -a
+  - conda env create -f environment.yml
+  - conda activate flame
+  - echo "------ Using Python `which python` -----------"
+  - python setup.py install
+  - echo "------ Using Flame `which flame` -----------"
 
 before_script:
   - sudo mkdir -m 777 $HOME/testmodels
