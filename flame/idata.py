@@ -301,7 +301,6 @@ class Idata:
         success_list = [True for i in range(sdfutils.count_mols(ifile))]
     
         if not method:
-            
             return success_list, ifile
 
         else:
@@ -314,14 +313,16 @@ class Idata:
         '''
         Assigns 3D structures to the molecular structures provided as input.
         '''
-        
+
         success_list = [True for i in range(sdfutils.count_mols(ifile))]
 
         if not method:
             return success_list, ifile
-
-        if 'ETKDG' in method:
+        
+        if method is 'ETKDG':
             success_list, ofile = convert3D._ETKDG(ifile)
+        else:
+            ofile = ifile
 
         return success_list, ofile
 

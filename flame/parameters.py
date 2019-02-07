@@ -122,8 +122,17 @@ class Parameters:
         black_list = ['param_format','version','model_path','endpoint','md5']
         for key in newp:
             if key not in black_list:
-                #print ('@delta: adding +'+key+'+'+str(newp[key])+'+')
-                self.setVal(key,newp[key])
+
+                val = newp[key]
+
+                # YAML define null values as 'None, which are interpreted 
+                # as strings
+                if val == 'None':
+                    val = None
+
+                #print ('@delta: adding',key,val,type(val))
+
+                self.setVal(key,val)
 
         # dump internal dict to the parameters file
         parameters_file_path = utils.model_path(model, version)
@@ -201,6 +210,7 @@ class Parameters:
     def setVal(self, key, value):
         ''' Sets the parameter defined by key to the given value
         '''
+
         ## compatibility with version 1 (remove)
         if not self.extended:
             self.p[key]=value
