@@ -1,7 +1,7 @@
 name: flame
 channels:
   - rdkit
-  - defaults
+  - conda-forge
 dependencies:
   - cherrypy=>18
   - numpy=1.14.0
