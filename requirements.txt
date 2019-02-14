@@ -8,5 +8,5 @@ statsmodels
 pyyaml
 requests
 pytest
-git+https://github.com/phi-grib/standardiser/archive/master.git
-git+https://github.com/josecarlosgomezt/nonconformist/archive/master.git
+git+https://github.com/phi-grib/standardiser.git
+git+https://github.com/josecarlosgomezt/nonconformist.git
