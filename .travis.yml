@@ -12,6 +12,7 @@ before_install:
       apt update
       apt install python-pip python-rdkit librdkit1 rdkit-data
       pip install -f requirements.txt
+    fi
 install:
   - |
     if [[ $TRAVIS_OS_NAME == 'osx' ]]; then 
