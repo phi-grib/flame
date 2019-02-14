@@ -9,9 +9,9 @@ matrix:
 before_install:
   - | 
     if [[ $TRAVIS_OS_NAME == 'linux' ]]; then
-      apt update
-      apt install python-pip python-rdkit librdkit1 rdkit-data
-      pip install -f requirements.txt
+      sudo apt update
+      sudo apt install python-pip python-rdkit librdkit1 rdkit-data
+      pip install -r requirements.txt
     fi
 install:
   - |
