@@ -1,0 +1,30 @@
+matrix:
+    include:
+        - os: linux
+          language: python
+          python: "3.6"
+        - os: osx
+          language: generic
+
+before_install:
+  - | 
+    if [[ $TRAVIS_OS_NAME == 'linux' ]]; then
+      sudo apt update
+      sudo apt install python-pip python-rdkit librdkit1 rdkit-data
+      pip install -r requirements.txt
+    fi
+install:
+  - |
+    if [[ $TRAVIS_OS_NAME == 'osx' ]]; then 
+      chmod +x .travis/install.sh
+      ./.travis/install.sh
+    else
+      python setup.py install
+    fi
+before_script:
+  - sudo mkdir -m 777 $HOME/testmodels
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then source $HOME/.bash_profile; conda activate flame; fi
+script:
+  - pytest -vv
+
+sudo: required
