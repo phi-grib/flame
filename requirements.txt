@@ -1,0 +1,12 @@
+cherrypy
+numpy
+matplotlib
+scipy
+setuptools
+scikit-learn
+statsmodels
+pyyaml
+requests
+pytest
+git+git://github.com/phi-grib/standardiser/archive/master.zip
+git+git://github.com/josecarlosgomezt/nonconformist/archive/master.zip

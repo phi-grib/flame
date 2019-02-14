@@ -1,23 +1,26 @@
 matrix:
     include:
         - os: linux
-          language: python
-          python: "3.7"
+          language: generic
         - os: osx
           language: generic
 
-before_install:
-  - | 
-    if [[ $TRAVIS_OS_NAME == 'linux' ]]; then
-      apt update
-      apt install python-pip python-rdkit librdkit1 rdkit-data
-      pip install -f requirements.txt
 install:
   - |
     if [[ $TRAVIS_OS_NAME == 'osx' ]]; then 
       chmod +x .travis/install.sh
       ./.travis/install.sh
     else
+      wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
+      bash miniconda.sh -b -p $HOME/miniconda
+      export PATH="$HOME/miniconda/bin:$PATH"
+      conda config --set always_yes yes
+      conda update -q conda
+      conda init bash
+      source $HOME/.bashrc
+      conda info -a
+      conda env create -f environment.yml
+      conda activate flame
       python setup.py install
     fi
 before_script:
