@@ -12,7 +12,7 @@ input_type:
     - ext_data
   description: Type of input data.
   dependencies: null
-  comments: ""
+  comments: 
   group: data
 
 modelAutoscaling:
@@ -25,7 +25,7 @@ modelAutoscaling:
     - false
   description: Whether to perform or not scaling on the data
   dependencies: null
-  comments: ""
+  comments: 
   group: data
 
 normalize_method:
@@ -38,8 +38,8 @@ normalize_method:
     - standardize
   description: Selection of a standardization method
   dependencies: 
-    - input_type:molecule
-  comments: ""
+    input_type: molecule
+  comments: 
   group: data
 
 ionize_method:
@@ -51,8 +51,8 @@ ionize_method:
     - moka
   description: Selection of a ionization method
   dependencies: 
-    -input_type:molecule
-  comments: ""
+    input_type: molecule
+  comments: 
   group: data
 
 quantitative:
@@ -65,8 +65,8 @@ quantitative:
     - false
   description: Selection of a standardization method
   dependencies: 
-    - input_type:molecule
-  comments: ""
+    input_type: molecule
+  comments: 
   group: data
 
 convert3D_method:
@@ -79,8 +79,8 @@ convert3D_method:
     - null
   description: Selection of a 3D conversion method
   dependencies: 
-    - input_type:molecule
-  comments: ""
+    input_type: molecule
+  comments: 
   group: data
 
 SDFile_activity:
@@ -91,13 +91,13 @@ SDFile_activity:
   options: null
   description: Name of the activity field in the SDF file
   dependencies: 
-    - input_type:molecule
+    input_type: molecule
   comments: This data is provided my the user input file at the web interface
   group: data
 
 SDFile_name:
   advanced: regular
-  object_type: string
+  object_type: list
   writable: false
   value: 
     - GENERIC_NAME
@@ -105,7 +105,7 @@ SDFile_name:
   options: null
   description: Name of the identifier field in the SDF file
   dependencies: 
-    - input_type:molecule
+    input_type: molecule
   comments: This data is provided my the user input file at the web interface
   group: data
 
@@ -117,7 +117,7 @@ TSV_activity:
   options: null
   description: Name of the activity field in the TSV file
   dependencies: 
-    - input_type:data
+    input_type: data
   comments: This data is provided my the user input file at the web interface
   group: data 
 
@@ -129,10 +129,10 @@ TSV_objnames:
   options: 
     - true
     - false
-  description: True if object names in first column of data matrix.
+  description: True if object names in first column of data matrix
   dependencies: 
-    - input_type:data
-  comments: ""
+    input_type: data
+  comments: 
   group: data 
 
 TSV_varnames:
@@ -143,10 +143,10 @@ TSV_varnames:
   options: 
     - true
     - false
-  description: True if variable names in first row of data matrix.
+  description: True if variable names in first row of data matrix
   dependencies: 
-    - input_type:data
-  comments: ""
+    input_type: data
+  comments: 
   group: data 
 
 computeMD_method:
@@ -161,7 +161,7 @@ computeMD_method:
     - morganFP
     - padel
     - custom
-  description: Selection of molecular descriptors to be used in model generation.
+  description: Selection of molecular descriptors to be used in model generation
   dependencies: 
     - ext_input:false
     - input_type:molecule
@@ -204,21 +204,21 @@ ext_input:
   options: 
     - true
     - false
-  description: Whether to use or not external input source (from other models).
+  description: Whether to use or not external input source (from other models)
   dependencies: null
-  comments: ""
+  comments: 
   group: data    
 
 model_set:
   advanced: advanced
-  object_type: string
+  object_type: list
   writable: false
   value: null
   options: null
-  description: "Selection of available models to get the input from"
+  description: Selection of available models to get the input from
   dependencies: 
-    - ext_input:true
-  comments: Values are obtained from available models.
+    ext_input: true
+  comments: Values are obtained from available models
   group: data    
 
 SDFile_experimental:
@@ -229,9 +229,8 @@ SDFile_experimental:
   options: null
   description: Experimental measure field in the SDF file
   dependencies: 
-    - ext_input:false
-    - input_type:molecule
-  comments: Values are obtained from SDF file.
+    input_type: molecule
+  comments: Values are obtained from SDFile
   group: data    
 
 modelingToolkit:
@@ -246,9 +245,8 @@ modelingToolkit:
     - custom
   description: List of toolkits usable to build models
   dependencies: 
-    - ext_input:false
-    - input_type:molecule
-  comments: ""
+    input_type: molecule
+  comments: 
   group: modeling
 
 model:
@@ -262,11 +260,10 @@ model:
     - PLSR
     - PLSDA
     - GNB
-  description: List of availablealgorithms.
+  description: List of available algorithms
   dependencies: 
-    - ext_input:false
-    - input_type:molecule
-  comments: ""
+    input_type: molecule
+  comments: 
   group: modeling
 
 conformal:
@@ -277,10 +274,10 @@ conformal:
   options: 
     - true
     - false
-  description: ""
+  description: 
   dependencies: 
-    - model:!PLSDA
-  comments: "So far it can not be applied to PLSDA"
+    model: RF
+  comments: So far it can not be applied to PLSDA
   group: modeling    
 
 conformalSignificance:
@@ -291,10 +288,10 @@ conformalSignificance:
   options: null
   min: 0
   max: 1
-  description: "Conformal estimator significance (from 0 to 1)"
+  description: Conformal estimator significance (from 0 to 1)
   dependencies: 
-    - conformal: true
-  comments: "So far it can not be applied to PLSDA"
+    conformal: true
+  comments: So far it can not be applied to PLSDA
   group: modeling
 
 tune:
@@ -305,10 +302,9 @@ tune:
   options: 
     - true
     - false
-  description: "Whether to perform or not algorithm hyperparameter optimization"
-  dependencies: 
-    - null
-  comments: "It might last long"
+  description: Whether to perform or not algorithm hyperparameter optimization
+  dependencies: null
+  comments: It might last long
   group: modeling
 
 imbalance:
@@ -319,10 +315,9 @@ imbalance:
   options: 
     - null
     - simple_subsampling
-  description: "Whether to perform or not sub/over sampling strategies"
-  dependencies: 
-    - null
-  comments: ""
+  description: Whether to perform or not sub/over sampling strategies
+  dependencies: null
+  comments: 
   group: modeling
 
 feature_selection:
@@ -333,10 +328,9 @@ feature_selection:
   options: 
     - null
     - Kbest
-  description: "Whether to perform or not feature selection"
-  dependencies: 
-    - null
-  comments: ""
+  description: Whether to perform or not feature selection
+  dependencies: null
+  comments: 
   group: modeling
 
 feature_number:
@@ -346,10 +340,10 @@ feature_number:
   value: auto
   options: 
     - auto
-  description: "Number of features to keep"
+  description: Number of features to keep
   dependencies: 
-    - feature_selection: true
-  comments: ""
+    feature_selection: Kbest
+  comments: 
   group: modeling
 
 ModelValidationCV:
@@ -361,10 +355,9 @@ ModelValidationCV:
     - loo
     - kfold
     - lpo
-  description: "Selection of cross-validation method"
-  dependencies: 
-    - null
-  comments: ""
+  description: Selection of cross-validation method
+  dependencies: null
+  comments: 
   group: modeling
 
 ModelValidationN:
@@ -373,10 +366,10 @@ ModelValidationN:
   writable: true
   value: 2
   options: null
-  description: "Number of folds"
+  description: Number of folds
   dependencies: 
-    - ModelValidationCV:kfold
-  comments: ""
+    ModelValidationCV: kfold
+  comments: 
   group: modeling
 
 ModelValidationP:
@@ -385,10 +378,10 @@ ModelValidationP:
   writable: true
   value: 1
   options: null
-  description: "Size of the test set"
+  description: Size of the test set
   dependencies: 
-    - ModelValidationCV:lpo
-  comments: ""
+    ModelValidationCV: lpo
+  comments: 
   group: modeling
 
 RF_parameters:
@@ -404,14 +397,14 @@ RF_parameters:
       options:
         - null
         - balanced
-      description: ""
+      description: 
     max_depth:
       object_type: string
       writable: true
       value: null
       options:
         - null
-      description: ""
+      description: 
     max_features:
       object_type: string
       writable: true
@@ -421,7 +414,7 @@ RF_parameters:
         - sqrt
         - log2
         - null
-      description: ""
+      description: 
     n_estimators:
       object_type: int
       writable: true
@@ -432,7 +425,7 @@ RF_parameters:
         - 150
       max: 500
       min: 1
-      description: ""
+      description: 
     oob_score:
       object_type: boolean
       writable: false
@@ -440,7 +433,7 @@ RF_parameters:
       options: 
         - true
         - false
-      description: ""
+      description: 
     random_state:
       object_type: int
       writable: true
@@ -448,11 +441,11 @@ RF_parameters:
       options:
         - 46
         - null
-      description: ""
-  description: "Random Forest Parameters"
+      description: 
+  description: Random Forest Parameters
   dependencies: 
-    - model: RF
-  comments: ""
+    model: RF
+  comments: 
   group: modeling
 
 RF_optimize:
@@ -470,7 +463,7 @@ RF_optimize:
       options:
         - null
         - balanced
-      description: ""
+      description: 
     max_features:
       object_type: string
       writable: true
@@ -482,7 +475,7 @@ RF_optimize:
         - sqrt
         - log2
         - null
-      description: ""
+      description: 
     n_estimators:
       object_type: int
       writable: true
@@ -492,12 +485,12 @@ RF_optimize:
       options: null
       max: 500
       min: 0
-      description: ""
-  description: "Random Forest Optimize parameters"
+      description: 
+  description: Random Forest Optimize parameters
   dependencies: 
-    - model: RF
-    - tune: true
-  comments: ""
+    model: RF
+    tune: true
+  comments: 
   group: modeling
 
 SVM_parameters:
@@ -513,35 +506,35 @@ SVM_parameters:
       options:
         - null
         - balanced
-      description: ""
+      description: 
     C:
       object_type: float
       writable: true
       value: 1
       options:
         - null
-      description: ""
+      description: 
     coef0:
       object_type: float
       writable: true
       value: 0
       options: 
         - null
-      description: ""
+      description: 
     degree:
       object_type: int
       writable: true
       value: 3
       options: 
         - null
-      description: ""
+      description: 
     gamma:
       object_type: float
       writable: true
       value: auto 
       options: 
         - null
-      description: ""
+      description: 
     random_state:
       object_type: int
       writable: true
@@ -549,7 +542,7 @@ SVM_parameters:
       options:
         - 46
         - null
-      description: ""
+      description: 
     kernel:
       object_type: str
       writable: false
@@ -559,7 +552,7 @@ SVM_parameters:
         - rbf
         - linear
         - poly
-      description: ""
+      description: 
     probability:
       object_type: boolean 
       writable: false
@@ -574,11 +567,11 @@ SVM_parameters:
       options:
         - true
         - false
-      description: ""
-  description: "SVM Parameters"
+      description: 
+  description: SVM Parameters
   dependencies: 
-    - model: SVM
-  comments: ""
+    model: SVM
+  comments: 
   group: modeling
 
 SVM_optimize:
@@ -596,7 +589,7 @@ SVM_optimize:
       options:
         - null
         - balanced
-      description: ""
+      description: 
     C:
       object_type: float
       writable: true
@@ -609,7 +602,7 @@ SVM_optimize:
         - 1
         - 3
         - 5
-      description: ""
+      description: 
     coef0:
       object_type: float
       writable: true
@@ -622,7 +615,7 @@ SVM_optimize:
         - 0
         - 0.8
         - 100
-      description: ""
+      description: 
     degree:
       object_type: int
       writable: true
@@ -635,7 +628,7 @@ SVM_optimize:
         - 1
         - 3 
         - 5
-      description: ""
+      description: 
     gamma:
       object_type: float
       writable: true
@@ -644,7 +637,7 @@ SVM_optimize:
       options: 
         - null
         - auto
-      description: ""
+      description: 
     kernel:
       object_type: str
       writable: false
@@ -655,7 +648,7 @@ SVM_optimize:
         - rfb
         - linear
         - poly  
-      description: ""
+      description: 
     probability:
       object_type: boolean 
       writable: false
@@ -672,11 +665,11 @@ SVM_optimize:
       options:
         - true
         - false
-      description: ""
-  description: "SVM optimize parameters"
+      description: 
+  description: SVM optimize parameters
   dependencies: 
-    - model: SVM
-  comments: ""
+    model: SVM
+  comments: 
   group: modeling
 
 PLSR_parameters:
@@ -692,21 +685,21 @@ PLSR_parameters:
       options:
         - true
         - false
-      description: ""
+      description: 
     tol:
       object_type: float
       writable: true
       value: 0.000006
       options:
         - null
-      description: ""
+      description: 
     n_components:
       object_type: int
       writable: true
       value: 2
       options: 
         - null
-      description: ""
+      description: 
     optimize:
       object_type: string
       writable: true
@@ -714,12 +707,12 @@ PLSR_parameters:
       options: 
         - manual
         - auto
-      description: ""
-  description: "PLSR Parameters"
+      description: 
+  description: PLSR Parameters
   dependencies: 
-    - model: PLSR
-    - quantitative: true
-  comments: ""
+    model: PLSR
+    quantitative: true
+  comments: 
   group: modeling
 
 PLSR_optimize:
@@ -729,7 +722,7 @@ PLSR_optimize:
   options: null
   value:
     n_components:
-      object_type: int
+      object_type: list
       writable: true
       value: 
         - 1
@@ -745,12 +738,12 @@ PLSR_optimize:
         - 4
         - 5
         - 6
-      description: ""
-  description: "PLSR optimize parameters"
+      description: 
+  description: PLSR optimize parameters
   dependencies: 
-    - model: PLSR
-    - quantitative: true
-  comments: ""
+    model: PLSR
+    quantitative: true
+  comments: 
   group: modeling
 
 PLSDA_parameters:
@@ -766,21 +759,21 @@ PLSDA_parameters:
       options:
         - true
         - false
-      description: ""
+      description: 
     tol:
       object_type: float
       writable: true
       value: 0.000006
       options:
         - null
-      description: ""
+      description: 
     n_components:
       object_type: int
       writable: true
       value: 2
       options: 
         - null
-      description: ""
+      description: 
     optimize:
       object_type: string
       writable: true
@@ -788,19 +781,19 @@ PLSDA_parameters:
       options: 
         - manual
         - auto
-      description: ""
+      description: 
     threshold:
       object_type: float
       writable: true
       value: 0.5
       options: 
         - 0.5
-      description: ""
-  description: "PLSDA Parameters"
+      description: 
+  description: PLSDA Parameters
   dependencies: 
-    - model: PLSDA
-    - quantitative: false
-  comments: ""
+    model: PLSDA
+    quantitative: false
+  comments: 
   group: modeling
 
 PLSDA_optimize:
@@ -818,7 +811,7 @@ PLSDA_optimize:
       options:
         - true
         - false
-      description: ""
+      description: 
     tol:
       object_type: float
       writable: true
@@ -826,7 +819,7 @@ PLSDA_optimize:
         - 0.000006
       options:
         - null
-      description: ""
+      description: 
     n_components:
       object_type: int
       writable: true
@@ -844,7 +837,7 @@ PLSDA_optimize:
         - 4
         - 5
         - 6
-      description: ""
+      description: 
     threshold:
       object_type: float
       writable: true
@@ -856,12 +849,12 @@ PLSDA_optimize:
         - 0.4
         - 0.5
         - 0.6
-      description: ""
-  description: "PLSDA optimize parameters"
+      description: 
+  description: PLSDA optimize parameters
   dependencies: 
-    - model: PLSDA
-    - quantitative: false
-  comments: ""
+    model: PLSDA
+    quantitative: false
+  comments: 
   group: modeling
 
 GNB_parameters:
@@ -876,13 +869,13 @@ GNB_parameters:
       value: null
       options:
         - null
-      description: ""
+      description: 
 
-  description: "GNB Parameters"
+  description: GNB Parameters
   dependencies: 
-    - model: GNB
-    - quantitative: false
-  comments: ""
+    model: GNB
+    quantitative: false
+  comments: 
   group: modeling
 
 output_format:
@@ -895,7 +888,7 @@ output_format:
     - TSV
   description: Output data format
   dependencies: null
-  comments: ""
+  comments: 
   group: preferences
 
 output_md:
@@ -906,10 +899,9 @@ output_md:
   options:
     - true
     - false
-  description: Dump descriptors to a tsv file
-  dependencies: 
-    - computeMD: true
-  comments: ""
+  description: Dump descriptors to a TSV file
+  dependencies: null 
+  comments: 
   group: preferences
 
 verbose_error:
@@ -920,10 +912,9 @@ verbose_error:
   options:
     - true
     - false
-  description: ""
-  dependencies: 
-    - computeMD: true
-  comments: ""
+  description: When false, RDKit errors are captured and not shown
+  dependencies: null
+  comments: 
   group: preferences
 
 numCPUs:
@@ -933,9 +924,9 @@ numCPUs:
   value: 1
   options:
     - null
-  description: ""
+  description: Number of independent threads used to compute MD
   dependencies: null
-  comments: ""
+  comments: 
   group: preferences
 
 mol_batch:
@@ -948,5 +939,5 @@ mol_batch:
     - objects
   description: How molecules are going to be processed
   dependencies: null
-  comments: ""
+  comments: 
   group: preferences

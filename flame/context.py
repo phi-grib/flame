@@ -2,22 +2,22 @@
 
 # Description    Context wrapps calls to predict and build to
 # support models making use of extenal input sources
-##
+#
 # Authors:       Manuel Pastor (manuel.pastor@upf.edu)
-##
+#
 # Copyright 2018 Manuel Pastor
-##
+#
 # This file is part of Flame
-##
+#
 # Flame is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation version 3.
-##
+#
 # Flame is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-##
+#
 # You should have received a copy of the GNU General Public License
 # along with Flame. If not, see <http://www.gnu.org/licenses/>.
 
@@ -25,20 +25,12 @@ import os
 import shutil
 import pathlib
 
-import multiprocessing as mp
-
 from flame.util import utils, get_logger
-import flame.manage as manage
-
-from flame.predict import Predict
-from flame.build import Build
-
 
 # if the number of models is higher, try to run in multithread
 MAX_MODELS_SINGLE_CPU = 4
 
 LOG = get_logger(__name__)
-
 
 def get_external_input(task, model_set, infile):
     '''
@@ -62,6 +54,9 @@ def get_external_input(task, model_set, infile):
     # obtaining the results
 
     if parallel:
+
+        import multiprocessing as mp
+        
         pool = mp.Pool(len(model_set))
         model_temp = pool.map(predict_cmd, model_set)
 
@@ -90,6 +85,7 @@ def predict_cmd(model, output_format=None):
     This method must be self-contained and suitable for being called in
     cascade, by models which use the output of other models as input.
     '''
+    from flame.predict import Predict
 
     predict = Predict(model['endpoint'], model['version'], output_format)
 
@@ -124,6 +120,9 @@ def build_cmd(arguments, output_format=None):
     This method must be self-contained and suitable for being called in
     cascade, by models which use the output of other models as input
     '''
+    
+    from flame.build import Build
+
     # safety check if model exists
     repo_path = pathlib.Path(utils.model_repository_path())
     model_list = os.listdir(repo_path)
@@ -179,6 +178,8 @@ def manage_cmd(args):
     '''
     Calls diverse model maintenance commands
     '''
+
+    import flame.manage as manage
 
     version = utils.intver(args.version)
 

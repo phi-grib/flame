@@ -212,7 +212,7 @@ class Conveyor:
             if key in ['model_build_info', 'model_valid_info']:
                 json_temp = []
                 for i in value:
-                    json_temp.append(utils.results_info_to_JSON(i))
+                    json_temp.append(self.modelInfoJSON(i))
                 temp_json[key] = json_temp
 
             # np.arrays cannot be serialized to JSON and must be transformed
@@ -224,3 +224,33 @@ class Conveyor:
         #print (json.dumps(temp_json))
 
         return json.dumps(temp_json)
+
+    def modelInfoJSON (self,i):
+        ''' Results describing the model quality and characteristics are tuples 
+            with three elements
+
+            This function returns a version of this tuple suitable for being 
+            serialized to JSON
+        '''
+
+        # int64
+        if 'numpy.int64' in str(type(i[2])):
+            try:
+                v = int(i[2])
+            except:
+                v = None
+            return((i[0], i[1], v))
+
+        # int64
+        if 'numpy.float64' in str(type(i[2])):
+            try:
+                v = float(i[2])
+            except:
+                v = None
+            return((i[0], i[1], v))
+
+        # ndarrays
+        if isinstance(i[2], np.ndarray):
+            return((i[0], i[1], i[2].tolist()) )
+
+        return i
