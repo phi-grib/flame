@@ -1,22 +1,22 @@
 #! -*- coding: utf-8 -*-
 
 # Description    Flame Manage class
-##
+#
 # Authors:       Manuel Pastor (manuel.pastor@upf.edu)
-##
+#
 # Copyright 2018 Manuel Pastor
-##
+#
 # This file is part of Flame
-##
+#
 # Flame is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation version 3.
-##
+#
 # Flame is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-##
+#
 # You should have received a copy of the GNU General Public License
 # along with Flame. If not, see <http://www.gnu.org/licenses/>.
 
@@ -30,11 +30,10 @@ import pathlib
 import numpy as np
 
 from flame.util import utils, get_logger 
-from flame.parameters import Parameters
-from flame.conveyor import Conveyor
+# from flame.parameters import Parameters
+# from flame.conveyor import Conveyor
 
 LOG = get_logger(__name__)
-
 
 def set_model_repository(path=None):
     """
@@ -202,6 +201,13 @@ def action_list(model):
         num_models = 0
         LOG.info('Models found in repository:')
         for x in os.listdir(rdir):
+            xpath = os.path.join(rdir,x) 
+            # discard if the item is not a directory
+            if not os.path.isdir(xpath):
+                continue
+            # discard if the directory does not contain a 'dev' directory inside
+            if not os.path.isdir(os.path.join(xpath,'dev')):
+                continue
             num_models += 1
             LOG.info('\t'+x)
         LOG.debug(f'Retrieved list of models from {rdir}')
@@ -309,7 +315,7 @@ def action_refactoring(file):
     return True, 'OK'
 
 
-def action_info(model, version, output='text'):
+def action_info(model, version, output='JSON'):
     '''
     Returns a text or JSON with results info for a given model and version
     '''
@@ -336,6 +342,8 @@ def action_info(model, version, output='text'):
         # new method, use results.pkl
         if not os.path.isfile(os.path.join(rdir, 'results.pkl')):
             return False, 'Info file not found'
+
+        from flame.conveyor import Conveyor
 
         conveyor = Conveyor()
         with open(os.path.join(rdir, 'results.pkl'), 'rb') as handle:
@@ -367,8 +375,9 @@ def action_info(model, version, output='text'):
     # to a JSON  
     json_results = []
     for i in info:
-        json_results.append(utils.results_info_to_JSON(i))
+        json_results.append(conveyor.modelInfoJSON(i))
 
+    #print (json.dumps(json_results))
     return True, json.dumps(json_results)
 
 
@@ -382,6 +391,8 @@ def action_results(model, version=None, ouput_variables=False):
     if not os.path.isfile(os.path.join(rdir, 'results.pkl')):
         return False, 'results not found'
 
+    from flame.conveyor import Conveyor
+
     conveyor = Conveyor()
     with open(os.path.join(rdir, 'results.pkl'), 'rb') as handle:
         conveyor.load(handle)
@@ -394,6 +405,8 @@ def action_parameters (model, version=None, oformat='text'):
 
     if model is None:
         return False, 'Empty model label'
+
+    from flame.parameters import Parameters
 
     param = Parameters()
     param.loadYaml(model, version)
@@ -510,23 +523,40 @@ def action_report():
     # get directories in model repo path
     dirs = [x for x in models_path.iterdir() if x.is_dir()]
 
-    # if dir contains dev/ -> is model (NAIVE APPROACH)
-    # get last dir name [-1]: model name
-    model_dirs = [d.parts[-1] for d in dirs if list(d.glob('dev'))]
+    # # if dir contains dev/ -> is model (NAIVE APPROACH)
+    # # get last dir name [-1]: model name
+    # model_dirs = [d.parts[-1] for d in dirs if list(d.glob('dev'))]
 
     results = []
-    
-    # iterate for models
-    for imodel in model_dirs:
 
-        isuccess, ijson = action_info(imodel, 0, output='JSON')
-
-        if not isuccess:
+    # iterate models
+    for d in dirs:
+        imodel_name = d.parts[-1]
+        imodel_vers = [x.parts[-1] for x in d.iterdir() if x.is_dir()]
+        
+        # make sure the model contains 'dev' to recognize models
+        if 'dev' not in imodel_vers:
             continue
+        
+        imodel_vers_info = []
+        for ivtag in imodel_vers:
 
-        iresults = {}
-        iresults ['model'] = imodel
-        iresults ['results'] = json.loads(ijson)
-        results.append(iresults)
+            iver = utils.modeldir2ver(ivtag)
 
+            # now we have the model name and version, try to get the ijson text
+            try:
+                isuccess, ijson = action_info(imodel_name, iver, output='JSON')
+            except:
+                continue
+
+            if not isuccess:
+                continue
+            
+            # build a tuple (version, JSON) for each version and append 
+            imodel_vers_info.append((iver, json.loads(ijson) ))
+
+        # build a tuple (model_name, [version_info]) for each model and append
+        results.append((imodel_name, imodel_vers_info))
+        
+    print (json.dumps(results))
     return True, json.dumps(results)
