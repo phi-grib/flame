@@ -211,16 +211,19 @@ class Parameters:
         ''' Sets the parameter defined by key to the given value
         '''
 
-        ## compatibility with version 1 (remove)
+        # compatibility with version 1 (remove)
         if not self.extended:
-            self.p[key]=value
+            self.p[key] = value
             return
-        ## ---------------------------------------
 
         # for existing keys, replace the contents of 'value'
         if key in self.p:
             if "value" in self.p[key]:
-                self.p[key]["value"] = value
+                if not isinstance(self.p[key]['value'], dict):
+                    self.p[key]["value"] = value
+                else:
+                    for k in value.keys():
+                        self.p[key][k] = value[k]
 
         # for new keys, create a new element with 'value' key
         else:
