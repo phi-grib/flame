@@ -355,8 +355,13 @@ class Idata:
         FIXIT
         '''
         LOG.info(f'Computing molecular descriptors with methods {methods}...')
+        
+        # Load descriptor settings
+
+        md_settings = self.param.getDict('MD_settings')
 
         registered_methods = dict([('RDKit_properties', computeMD._RDKit_properties),
+                                   ('morganFP', computeMD._RDKit_morganFPS),
                                    ('RDKit_md', computeMD._RDKit_descriptors),
                                    ('padel', computeMD._padel_descriptors),
                                    ('custom', self.computeMD_custom)])
@@ -378,8 +383,7 @@ class Idata:
 
         for method in methods:
             # success, results = registered_methods[method](ifile)
-
-            success, results = registered_methods[method](ifile)
+            success, results = registered_methods[method](ifile, **md_settings)
 
             if not success:  # if computing returns False in status
                 return success, results

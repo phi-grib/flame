@@ -185,7 +185,7 @@ class BaseEstimator:
                     # using self.nobj
                     LOG.info(f'{self.param.getVal("imbalance")}'
                                 f'sampling method performed')
-                    LOG.info(f'Number of objects after sampling: {self.nobj}')
+                    LOG.info(f'Number of objects after sampling: {self.X.shape[0]}')
                 except Exception as e:
                     LOG.error(f'Unable to perform sampling '
                                 f'method with exception: {e}')
@@ -288,7 +288,8 @@ class BaseEstimator:
         Y = self.Y.copy()
 
         info = []
-        kf = KFold(n_splits=5, shuffle=True, random_state=46)
+        kf = KFold(n_splits=self.param.getVal('ModelValidationN')
+                   , shuffle=True, random_state=46)
         # Copy Y vector to use it as template to assign predictions
         Y_pred = copy.copy(Y).tolist()
         try:
@@ -375,7 +376,8 @@ class BaseEstimator:
 
         info = []
 
-        kf = KFold(n_splits=5, shuffle=True, random_state=46)
+        kf = KFold(self.param.getVal('ModelValidationN'),
+                   shuffle=True, random_state=46)
         # Copy Y vector to use it as template to assign predictions
         Y_pred = copy.copy(Y).tolist()
         try:

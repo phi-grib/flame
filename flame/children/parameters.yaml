@@ -151,20 +151,49 @@ TSV_varnames:
 
 computeMD_method:
   advanced: regular
-  object_type: list
+  object_type: list(string)
   writable: false
   value: 
     - RDKit_properties
   options: 
     - RDKit_properties 
     - RDKit_md
+    - morganFP
     - padel
     - custom
   description: Selection of molecular descriptors to be used in model generation
   dependencies: 
-    ext_input: false
-    input_type: molecule
-  comments: 
+    - ext_input:false
+    - input_type:molecule
+  comments: ""
+  group: data
+
+MD_settings:
+  advanced: regular
+  object_type: dictionary
+  writable: false
+  value: 
+    morgan_features:
+      object_type: boolean
+      writable: false
+      value: true
+      options:
+        - true
+        - false
+      description: Whether to use or not feature-based invariants.
+    morgan_radius:
+      object_type: integer
+      writable: true
+      value: 2
+      options:
+        - null
+      description: Morgan fingerprint radius
+  options: null
+  description: Settings for molecular descriptors (when needed) 
+  dependencies: 
+    - ext_input: false
+    - input_type: molecule
+  comments: ""
   group: data 
 
 ext_input:
