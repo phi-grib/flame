@@ -1,4 +1,3 @@
-
 import pytest
 import pathlib
 import os
@@ -9,11 +8,12 @@ from flame import manage
 
 from repo_config import MODEL_REPOSITORY
 
-MODEL_NAME = 'TESTMODEL'
+MODEL_NAME = "TESTMODEL"
 
 
 def test_read_congiguration():
     assert isinstance(utils._read_configuration(), dict)
+
 
 # Must rethink the following test
 
@@ -26,9 +26,9 @@ def test_read_congiguration():
 
 
 def test_custom_model_repository_path():
-    utils.set_model_repository('.')
+    utils.set_model_repository(".")
     model_path = utils.model_repository_path()
-    realpath = str(pathlib.Path('.').resolve())
+    realpath = str(pathlib.Path(".").resolve())
     assert model_path == realpath
 
 
@@ -52,4 +52,4 @@ def test_module_path_module_name():
     manage.set_model_repository(models_dir)
     manage.action_new(MODEL_NAME)
     module_name = utils.module_path(MODEL_NAME, 0)
-    assert module_name == (MODEL_NAME + '.dev')
+    assert module_name == (MODEL_NAME + ".dev")

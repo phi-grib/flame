@@ -1,4 +1,3 @@
-
 import pytest
 import pathlib
 import os
@@ -6,7 +5,7 @@ from flame import manage
 
 from repo_config import MODEL_REPOSITORY
 
-MODEL_NAME = 'TESTMODEL'
+MODEL_NAME = "TESTMODEL"
 
 
 def test_manage_new_model():
