@@ -47,7 +47,7 @@ def test_classification_conformal(make_model, build_model, fixed_results):
     """test predict comparing results"""
 
     make_status, message = make_model
-    assert (make_status is True) or (message == "This endpoint already exists")
+    assert (make_status is True) or (message == f"Endpoint {MODEL_NAME} already exists")
 
     build_status, _ = build_model
     assert build_status is True
