@@ -376,8 +376,7 @@ class BaseEstimator:
 
         info = []
 
-        kf = KFold(self.param.getVal('ModelValidationN'),
-                   shuffle=True, random_state=46)
+        kf = KFold(n_splits=5, shuffle=True, random_state=46)
         # Copy Y vector to use it as template to assign predictions
         Y_pred = copy.copy(Y).tolist()
         try:
@@ -431,17 +430,29 @@ class BaseEstimator:
         info.append(('FP', 'False positives in cross-validation', self.FP))
         info.append(('FN', 'False negatives in cross-validation', self.FN))
         
-        # Compute sensitivity and specificity
+        # Compute sensitivity, specificity and MCC
         try:
             self.sensitivity = (self.TP / (self.TP + self.FN))
+        except Exception as e:
+            LOG.error(f'Failed to compute sensibility with'
+                        f'exception {e}')
+            self.sensitivity = '-'
+        try:
             self.specificity = (self.TN / (self.TN + self.FP))
         except Exception as e:
-            LOG.error(f'Failed to compute sens/spe with'
+            LOG.error(f'Failed to compute specificity with'
                         f'exception {e}')
-        # Compute Matthews Correlation Coefficient
-        self.mcc = (((self.TP * self.TN) - (self.FP * self.FN)) /
-                    np.sqrt((self.TP + self.FP) * (self.TP + self.FN) *
-                            (self.TN + self.FP) * (self.TN + self.FN)))
+            self.specificity = '-'
+        try:
+            # Compute Matthews Correlation Coefficient
+            self.mcc = (((self.TP * self.TN) - (self.FP * self.FN)) /
+                        np.sqrt((self.TP + self.FP) * (self.TP + self.FN) *
+                         (self.TN + self.FP) * (self.TN + self.FN)))
+        except Exception as e:
+            LOG.error(f'Failed to compute Mathews Correlation Coefficient'
+                        f'exception {e}')
+            self.mcc = '-'
+
         info.append(
             ('Sensitivity', 'Sensitivity in cross-validation', 
                 self.sensitivity))
@@ -451,16 +462,27 @@ class BaseEstimator:
         info.append(
             ('MCC', 'Matthews Correlation Coefficient in cross-validation',
                  self.mcc))
-
-        # Compute coverage (% of compounds inside the applicability domain)
-        self.conformal_coverage = (self.TN + self.FP + self.TP +
-                                    self.FN) / ((self.TN + self.FP +
-                                     self.TP + self.FN) +
-                                      not_predicted_all)
-        # Compute accuracy (% of correct predictions)
-        self.conformal_accuracy = float(
-            self.TN + self.TP) / float(self.FP + self.FN + self.TN + self.TP)
-
+        try:
+            # Compute coverage (% of compounds inside the applicability domain)
+            self.conformal_coverage = (self.TN + self.FP + self.TP +
+                                        self.FN) / ((self.TN + self.FP +
+                                        self.TP + self.FN) +
+                                        not_predicted_all)
+        except Exception as e:
+            LOG.error(f'Failed to compute conformal coverage with'
+                        f'exception {e}')
+            self.conformal_coverage = '-'
+        
+        try:
+            # Compute accuracy (% of correct predictions)
+            self.conformal_accuracy = (float(self.TN + self.TP) /
+                                        float(self.FP + self.FN + 
+                                            self.TN + self.TP))
+        except Exception as e:
+            LOG.error(f'Failed to compute conformal accuracy with'
+                        f'exception {e}')
+            self.conformal_accuracy = '-'
+                                                    
         info.append(
             ('Conformal_coverage', 'Conformal coverage',
                  self.conformal_coverage))
@@ -591,45 +613,69 @@ class BaseEstimator:
         try:
             y_pred = cross_val_predict(self.estimator, X, Y,
                     cv=self.cv,
-                             n_jobs=1)
-
-            # Get confusion matrix
+                             n_jobs=-1)
+        except Exception as e:
+            LOG.error(f'Cross-validation failed with exception' 
+                        f'exception {e}')
+            raise e
+        # Get confusion matrix
+        try:
             self.TN, self.FP, self.FN, self.TP = confusion_matrix(
                 Y, y_pred, labels=[0, 1]).ravel()
-            self.sensitivity = (self.TP / (self.TP + self.FN))
-            self.specificity = (self.TN / (self.TN + self.FP))
-            self.mcc = mcc(Y, y_pred)
-
-            info.append(('TP', 'True positives in cross-validation',
-             self.TP))
-            info.append(('TN', 'True negatives in cross-validation',
-             self.TN))
-            info.append(('FP', 'False positives in cross-validation',
-             self.FP))
-            info.append(('FN', 'False negatives in cross-validation',
-             self.FN))
-
-            info.append(
-                ('Sensitivity', 'Sensitivity in cross-validation',
-                 self.sensitivity))
-            info.append(
-                ('Specificity', 'Specificity in cross-validation',
-                 self.specificity))
-            info.append(
-                ('MCC', 'Matthews Correlation Coefficient in cross-validation',
-                 self.mcc))
-            info.append (
-                ('Y_adj', 'Adjusted Y values', Y) ) 
-            info.append (
-                ('Y_adj', 'Adjusted Y values', Yp) )          
-            info.append (
-                ('Y_pred', 'Predicted Y values after cross-validation',
-                 y_pred))
-            LOG.debug(f'Qualitative crossvalidation performed')
         except Exception as e:
-            LOG.error(f'Error computing crossvalidated Y'
-                f' with exception {e}')
+            LOG.error(f'Failed to compute confusion matrix with'
+                        f'exception {e}')
             raise e
+        try:
+            self.sensitivity = (self.TP / (self.TP + self.FN))
+        except Exception as e:
+            LOG.error(f'Failed to compute sensibility with'
+                        f'exception {e}')
+            self.sensitivity = '-'
+        try:
+            self.specificity = (self.TN / (self.TN + self.FP))
+        except Exception as e:
+            LOG.error(f'Failed to compute specificity with'
+                        f'exception {e}')
+            self.specificity = '-'
+        try:
+            # Compute Matthews Correlation Coefficient
+            self.mcc = (((self.TP * self.TN) - (self.FP * self.FN)) /
+                        np.sqrt((self.TP + self.FP) * (self.TP + self.FN) *
+                         (self.TN + self.FP) * (self.TN + self.FN)))
+        except Exception as e:
+            LOG.error(f'Failed to compute Mathews Correlation Coefficient'
+                        f'exception {e}')
+            self.mcc = '-'
+
+
+        info.append(('TP', 'True positives in cross-validation',
+            self.TP))
+        info.append(('TN', 'True negatives in cross-validation',
+            self.TN))
+        info.append(('FP', 'False positives in cross-validation',
+            self.FP))
+        info.append(('FN', 'False negatives in cross-validation',
+            self.FN))
+
+        info.append(
+            ('Sensitivity', 'Sensitivity in cross-validation',
+                self.sensitivity))
+        info.append(
+            ('Specificity', 'Specificity in cross-validation',
+                self.specificity))
+        info.append(
+            ('MCC', 'Matthews Correlation Coefficient in cross-validation',
+                self.mcc))
+        info.append (
+            ('Y_adj', 'Adjusted Y values', Y) ) 
+        info.append (
+            ('Y_adj', 'Adjusted Y values', Yp) )          
+        info.append (
+            ('Y_pred', 'Predicted Y values after cross-validation',
+                y_pred))
+        LOG.debug(f'Qualitative crossvalidation performed')
+
 
         results = {}
         results ['quality'] = info
