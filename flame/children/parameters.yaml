@@ -560,6 +560,7 @@ SVM_parameters:
       options:
         - true
         - false
+      description:
     shrinking: 
       object_type: boolean
       writable: false
@@ -657,6 +658,7 @@ SVM_optimize:
       options:
         - true
         - false
+      description:
     shrinking: 
       object_type: boolean
       writable: false
