@@ -235,25 +235,27 @@ class Parameters:
             self.p[key] = {'value': value}
 
     def setInnerVal(self, okey, ikey, value):
-        ''' Sets the parameter defined by key to the given value
+        ''' Sets a parameter within an internal dictionary. The entry is defined
+            by a key of the outer dictionary (okey) and a second key in the inner
+            dicctionary (ikey). The paramenter will be set to the given value
+
+            This function test the existence of all the keys and dictionaries to 
+            prevent crashes and returns without setting the value if any error is 
+            found
         '''
 
         if not okey in self.p:
-            print ('error1')
             return
 
         if not "value" in self.p[okey]:
-            print ('error2')
             return
 
         odict = self.p[okey]['value']
 
         if not isinstance(odict, dict):
-            print ('error3')
             return
         
         if not ikey in odict:
-            print ('error4')
             return
 
         if "value" in odict[ikey]:

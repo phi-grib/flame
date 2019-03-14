@@ -465,13 +465,20 @@ def action_parameters (model, version=None, oformat='text'):
 
                             # iterate keys assuming existence of value and description
                             for intk in v['value']:
-                                intv = v['value'][intk]                                
-                                iivalue = intv["value"]
+                                intv = v['value'][intk]
+
+                                iivalue = ''
+                                if "value" in intv:                                
+                                    iivalue = intv["value"]
+
+                                iidescr = ''
+                                if "description" in intv:
+                                    iidescr = intv["description"]
 
                                 if isinstance (iivalue, float):
                                     iivalue =  f'{iivalue:f}'
 
-                                print (f'   {intk:27} : {str(iivalue):30} # {intv["description"]}')
+                                print (f'   {intk:27} : {str(iivalue):30} # {iidescr}')
                             continue
 
                     if 'description' in v:
