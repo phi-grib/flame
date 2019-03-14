@@ -1,34 +1,35 @@
 #! -*- coding: utf-8 -*-
 
 # Description    Misc tools
-##
+#
 # Authors:       Manuel Pastor (manuel.pastor@upf.edu)
-##
+#
 # Copyright 2018 Manuel Pastor
-##
+#
 # This file is part of Flame
-##
+#
 # Flame is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation version 3.
-##
+#
 # Flame is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-##
+#
 # You should have received a copy of the GNU General Public License
 # along with Flame. If not, see <http://www.gnu.org/licenses/>.
 
-import hashlib
 import os
 import sys
 import yaml
 import random
 import string
+import hashlib
 import pathlib
-import re
-import warnings
+# import re
+# import warnings
+import numpy as np
 
 from flame.util import get_logger
 
@@ -63,7 +64,7 @@ def _read_configuration() -> dict:
     --------
     dict
     '''
-    # LOG.info('reading configuration')
+    #LOG.info('reading configuration')
     with open(get_conf_yml_path(), 'r') as config_file:
         conf = yaml.load(config_file)
 
@@ -82,6 +83,7 @@ def check_repository_path() -> None:
     Checks existence of module repository path in config file
     Use only in flame_scr, it uses user input so it's a CLI tools
     """
+
     LOG.debug('reading configuration')
 
     config_path = get_conf_yml_path()
@@ -133,7 +135,6 @@ def write_config(config: dict) -> None:
     """Writes the configuration to disk"""
     with open(get_conf_yml_path(), 'w') as f:
         yaml.dump(config, f, default_flow_style=False)
-
 
 def set_model_repository(path=None):
     """
@@ -249,6 +250,20 @@ def intver(raw_version):
 
     return version
 
+def modeldir2ver (modeldir):
+    '''
+    The argument is the name of the directory hosting a
+    model version (e.g. '/dev' or '/ver00007'). This function tries to 
+    convert it to an integer
+    '''
+    if modeldir == 'dev':
+        return 0
+    try:
+        version = int(modeldir[-6:])
+    except:
+        version = 0
+    return version
+
 
 def id_generator(size=10, chars=string.ascii_uppercase + string.digits):
     '''
@@ -258,41 +273,60 @@ def id_generator(size=10, chars=string.ascii_uppercase + string.digits):
     return ''.join(random.choice(chars) for _ in range(size))
 
 
-def add_result(results, var, _key, _label, _type, _dimension='objs',
-               _description=None, _relevance=None):
+# def get_parameters(model, version):
 
-    if 'manifest' not in results:
-        results['manifest'] = []
+#     parameters_file_path = model_path(model, version)
+#     parameters_file_name = os.path.join (parameters_file_path,'parameters.yaml')
 
-    manifest = results['manifest']
+#     if not os.path.isfile(parameters_file_name):
+#         return False, None
 
-    # TODO: check if the _key already exist and add _1 _2 _3 etc as needed
+#     try:
+#         with open(parameters_file_name, 'r') as pfile:
+#             parameters = yaml.load(pfile)
+#     except Exception as e:
+#         return False, e
 
-    results[_key] = var
+#     parameters['endpoint'] = model
+#     parameters['version'] = version
+#     parameters['model_path'] = parameters_file_path
+#     parameters['md5'] = md5sum(parameters_file_name)
 
-    # key in results
-    # descriptive text
-    # label, decoration, smiles, result, confidence, method
-    # can be single | vars | objs
-    # main | None
-    manifest_item = {'key': _key,
-                     'label': _label,
-                     'type': _type,
-                     'dimension': _dimension,
-                     # descriptive text (long)
-                     'description': _description,
-                     'relevance': _relevance
-                     }
+#     return True, parameters
 
-    manifest.append(manifest_item)
 
-    if _relevance == 'main':
-        if 'meta' not in results:
-            results['meta'] = {'main': [_key]}
-        else:
-            results['meta']['main'].append(_key)
+# def results_info_to_JSON (i):
+#     ''' Results describing the model quality and characteristics are tuples 
+#         with three elements
 
-# what is this??
+#         This function returns a version of this tuple suitable for being 
+#         serialized to JSON
+#     '''
+#     # results must be checked to avoid numpy elements not JSON serializable
+
+#     # int64
+#     if 'numpy.int64' in str(type(i[2])):
+#         try:
+#             v = int(i[2])
+#         except Exception as e:
+#             LOG.error(e)
+#             v = None
+#         return((i[0], i[1], v))
+
+#     # int64
+#     if 'numpy.float64' in str(type(i[2])):
+#         try:
+#             v = float(i[2])
+#         except Exception as e:
+#             LOG.error(e)
+#             v = None
+#         return((i[0], i[1], v))
+
+#     # ndarrays
+#     if isinstance(i[2], np.ndarray):
+#         return((i[0], i[1], i[2].tolist()) )
+
+#     return i
 
 
 def is_empty(mylist):
@@ -302,45 +336,60 @@ def is_empty(mylist):
     return True
 
 
-def get_sdf_activity_value(mol, parameters: dict) -> float:
-    """ Checks if activity prop is the same in parameters and SDF input file
+# def get_sdf_activity_value(mol, parameters: dict) -> float:
+#     """ Returns the value of the activity present in a SDFIle mol 
+    
+#     The field containing this value is recognized using the parameter 'SDFile_activity"
+#     If this value is undefined or the field does not exists or is not a float, it returns None
 
-    Returns activity value as float if possible
-    """
-    if parameters['SDFile_activity'] is None:
-        activity_num = None
+#     Returns activity value as float or None
+#     """
 
-    else:
-        if mol.HasProp(parameters['SDFile_activity']):
-            # get sdf activity field value
-            activity_str = mol.GetProp(parameters['SDFile_activity'])
-            try:
-                # cast val to float to be sure it is num
-                activity_num = float(activity_str)
-            except Exception as e:
-                LOG.error('while casting activity to'
-                          f' float an exception has ocurred: {e}')
-                activity_num = None
-        # defence when prop is not in parameter file
-        else:  # SDF doesn't have param prop name
-            activity_num = None
-            # raise ValueError(f"SDFile_activity parameter '{parameters['SDFile_activity']}'"
-            #                  " not found in input SDF."
-            #                  "Change SDFile_activity param in parameter.yml"
-            #                  " to match the target prop in SDF")
-    return activity_num
+#     activity_num = None
+
+#     if parameters['SDFile_activity'] is not None:  # if the parameter exists
+
+#         if mol.HasProp(parameters['SDFile_activity']):  # if the SDFile contains the field
+           
+#             activity_str = mol.GetProp(parameters['SDFile_activity'])
+#             try:
+#                 activity_num = float(activity_str) # cast val to float to be sure it is 
+#             except Exception as e:
+#                 LOG.error('The SDFile activity value cannot be converted'
+#                             f' to float: {e}')
+
+#     return activity_num
+
+def qualitative_Y (Y):
+    ''' Checks if the Y nparray provided as an argument contains only 1 and 0 values and 
+        is therefore suitable for being used in qualitative models
+
+    '''
+
+    neg = 0
+    pos = 0
+    nan = 0
+    ext = 0
+    for y in Y:
+        if y == 0.000:
+            neg+=1
+        elif y == 1.000:
+            pos+=1
+        elif np.isnan(y):
+            nan+=1 
+        else:
+            ext+=1
+
+    LOG.debug (f'Y analized. Found {neg} negative, {pos} positive, {nan} NaN and {ext} others objects')
+
+    if neg == 0 or pos == 0:
+        return False, f'Y values not suitable for building a qualitative model. Found {neg} negative and {pos} positive objects'
+
+    if ext > 0:
+        return False, f'Y values not suitable for building a qualitative model. Found {ext} objects not 1.000 or 0.000'
+    
+    return True, 'OK'
 
 
-def check_sdf_activity_type(mol, parameters: dict) -> None:
-    """ Type check the activity prop fot the model type.
 
-    If the model is quantitative and the activty
-    field is not float it Raises TypeError
-    """
-    activity = mol.GetProp(parameters['SDFile_activity'])
-    is_quant = parameters['quantitative']
-    if is_quant and not isinstance(activity, float):
-        raise TypeError(
-            'Expected float activity value for a quantitative model')
-    else:
-        pass
+

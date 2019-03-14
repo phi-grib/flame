@@ -26,6 +26,7 @@ import tempfile
 import requests
 import numpy as np
 from rdkit import Chem
+from rdkit.Chem import AllChem
 from rdkit.Chem import rdMolDescriptors
 from rdkit.Chem import Descriptors
 from rdkit.ML.Descriptors import MoleculeDescriptors
@@ -48,9 +49,8 @@ def _calc_descriptors(md_function, ifile: str,  descrip_names: list) -> (np.ndar
     ifile: str
         SDF input file
 
-    n_cols: int
-        number of columns that the matrix needs. Obtained in
-        the function that uses this helper.
+    descrip_names: list
+        list of descriptor names
 
     Returns
     -------
@@ -152,7 +152,7 @@ def _RDKit_descriptors_FUTURE(ifile: str) -> dict:
     return results_dict
 
 
-def _RDKit_properties_FUTURE(ifile) -> dict:
+def _RDKit_properties_FUTURE(ifile) -> (dict):
     '''Computes RDKit properties for the SDF provided as argument
 
     Parameters
@@ -192,7 +192,77 @@ def _RDKit_properties_FUTURE(ifile) -> dict:
     return results_dict
 
 
-def _RDKit_morganFPS():
+def _RDKit_morganFPS(ifile, **kwargs) -> (bool, (np.ndarray, list, list)):
+    ''' 
+    Morgan circular FP using RDkit output is a boolean and
+    a tupla with the xmatrix and the variable names
+    '''
+    try:
+        suppl = Chem.SDMolSupplier(ifile)
+    except Exception as e:
+        LOG.error(f'Unable to create supplier with exception {e}')
+        return False, 'unable to create supplier'
+
+    morgan_radius = kwargs['morgan_radius']
+    morgan_features = kwargs['morgan_features']
+
+    LOG.info(f'computing MorganFP fingerprint... with r={morgan_radius}')
+
+    # get from here num of properties
+
+    success_list = []
+    xmatrix = []
+
+    try:
+        num_obj = 0
+        for mol in suppl:
+            if mol is None:
+                LOG.error(
+                    f'Unable to process molecule #{num_obj+1} in {ifile}')
+                success_list.append(False)
+                continue
+
+            # xmatrix [num_obj] = properties.ComputeProperties(mol)
+            if num_obj == 0:
+                fp = AllChem.GetMorganFingerprintAsBitVect(mol,
+			                    morgan_radius,  
+                                useFeatures=morgan_features)
+                # what is going on here??
+                if np.isnan(xmatrix).any():
+                    success_list.append(False)
+                    continue
+                else:
+                    xmatrix = fp
+            else:
+                fp = AllChem.GetMorganFingerprintAsBitVect(mol,
+			                    morgan_radius,  
+                                useFeatures=morgan_features)
+                if np.isnan(fp).any():
+                    success_list.append(False)
+                    continue
+                xmatrix = np.vstack(
+                    (xmatrix, fp))
+
+            success_list.append(True)
+            num_obj += 1
+
+    except Exception as e:
+        LOG.error(f'Failed computing RDKit properties for molecule #{num_obj+1} in {ifile}'
+                  f' with exception: {e}')
+        return False, 'Failed computing RDKit properties for molecule' + str(num_obj+1) + 'in file ' + ifile
+
+    LOG.debug(f'computed RDKit properties matrix with shape {np.shape(xmatrix)}')
+    if num_obj == 0:
+        return False, 'Unable to compute RDKit properties for molecule '+ifile
+
+    results = {
+        'matrix': xmatrix,
+        'names' : [],
+        'success_arr': success_list
+    }
+    return True, results
+
+
     raise NotImplementedError
 
 def _parse_csv(ifile):
@@ -318,7 +388,7 @@ def _padel_descriptors(ifile):
     return (index > 1), (xmatrix, var_nam, success_list)
 
 
-def _RDKit_descriptors(ifile) -> (bool, (np.ndarray, list, list)):
+def _RDKit_descriptors(ifile, **kwargs) -> (bool, (np.ndarray, list, list)):
     '''
     computes RDKit descriptors for the file provided as argument
 
@@ -382,7 +452,7 @@ def _RDKit_descriptors(ifile) -> (bool, (np.ndarray, list, list)):
     return True, results
 
 
-def _RDKit_properties(ifile) -> (bool, (np.ndarray, list, list)):
+def _RDKit_properties(ifile, **kwargs) -> (bool, (np.ndarray, list, list)):
     ''' 
     computes RDKit properties for the file provided as argument
 

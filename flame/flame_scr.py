@@ -1,22 +1,22 @@
 #! -*- coding: utf-8 -*-
 
 # Description    Flame command
-##
+#
 # Authors:       Manuel Pastor (manuel.pastor@upf.edu)
-##
+#
 # Copyright 2018 Manuel Pastor
-##
+#
 # This file is part of Flame
-##
+#
 # Flame is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation version 3.
-##
+#
 # Flame is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-##
+#
 # You should have received a copy of the GNU General Public License
 # along with Flame. If not, see <http://www.gnu.org/licenses/>.
 
@@ -26,25 +26,21 @@ import sys
 
 from flame.util import utils, get_logger
 from flame.util import config, change_config_status
-
 import flame.context as context
-import flame.manage as manage
-
-import logging
+#import logging
 
 LOG = get_logger(__name__)
 
+# # TEMP: only to allow EBI model to run
+# def sensitivity(y_true, y_pred):
+#     tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
+#     return(tp / (tp+fn))
 
-# TEMP: only to allow EBI model to run
-def sensitivity(y_true, y_pred):
-    tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
-    return(tp / (tp+fn))
 
-
-# TEMP: only to allow EBI model to run
-def specificity(y_true, y_pred):
-    tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
-    return(tn / (tn+fp))
+# # TEMP: only to allow EBI model to run
+# def specificity(y_true, y_pred):
+#     tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
+#     return(tn / (tn+fp))
 
 
 def configuration_warning() -> None:
@@ -62,42 +58,7 @@ def configuration_warning() -> None:
         print("Flame hasn't been configured yet. "
               "Model repository may be wrong. "
               "Please use 'flame -c config' before using flame")
-        sys.exit()  # force exit???
-
-
-def manage_cmd(args):
-    '''
-    Instantiates a Build object to build a model using the given input
-    file (training series) and model (name of endpoint, eg. 'CACO2')
-    '''
-
-    version = utils.intver(args.version)
-
-    if args.action == 'new':
-        # check if config model repo path is correct
-        utils.check_repository_path()
-        success, results = manage.action_new(args.endpoint)
-    elif args.action == 'kill':
-        success, results = manage.action_kill(args.endpoint)
-    elif args.action == 'remove':
-        success, results = manage.action_remove(args.endpoint, version)
-    elif args.action == 'publish':
-        success, results = manage.action_publish(args.endpoint)
-    elif args.action == 'list':
-        success, results = manage.action_list(args.endpoint)
-    elif args.action == 'import':
-        success, results = manage.action_import(args.infile)
-    elif args.action == 'export':
-        success, results = manage.action_export(args.endpoint)
-    elif args.action == 'refactoring':
-        success, results = manage.action_refactoring(args.file)
-    elif args.action == 'dir':
-        success, results = manage.action_dir()
-    elif args.action == 'info':
-        success, results = manage.action_info(args.endpoint, version)
-
-    # print('flame : ', results)
-
+        sys.exit()  # force exit
 
 def main():
 
@@ -121,6 +82,10 @@ def main():
                         help='Manage action.',
                         required=False)
 
+    parser.add_argument('-p', '--parameters',
+                        help='File with model building parameters.',
+                        required=False)
+
     parser.add_argument('-c', '--command',
                         action='store',
                         choices=['predict', 'build', 'manage', 'config'],
@@ -130,8 +95,8 @@ def main():
     # parser.add_argument('-log', '--loglevel',
     #                     help='Logger level of verbosity',)
 
-    parser.add_argument('-p', '--path',
-                        help='Defines de new path for models repository.',
+    parser.add_argument('-d', '--directory',
+                        help='Defines the directory for the models repository.',
                         required=False)
 
     args = parser.parse_args()
@@ -146,6 +111,11 @@ def main():
     #         raise ValueError('Invalid log level: {}'.format(args.loglevel))
     #     logging.basicConfig(level=numeric_level)
 
+    # make sure flame has been configured before running any command, unless this command if used to 
+    # configure flame
+    if args.command != 'config':
+        configuration_warning()
+
     if args.command == 'predict':
 
         if (args.endpoint is None) or (args.infile is None):
@@ -154,45 +124,43 @@ def main():
 
         version = utils.intver(args.version)
 
-        # wrong, input file is not part of the model
-        model = {'endpoint': args.endpoint,
+        command_predict = {'endpoint': args.endpoint,
                  'version': version,
                  'infile': args.infile}
-
-        configuration_warning()
 
         LOG.info(f'Starting prediction with model {args.endpoint}'
                  f' version {version} for file {args.infile}')
 
-        success, results = context.predict_cmd(model)
-        print('flame predict : ', success, results)
+        success, results = context.predict_cmd(command_predict)
+        # print('flame predict : ', success, results)
 
     elif args.command == 'build':
 
-        if (args.endpoint is None) or (args.infile is None):
-            print('flame build : endpoint and input file arguments are compulsory')
+        if (args.endpoint is None):
+            print('flame build : endpoint argument is compulsory')
             return
 
-        model = {'endpoint': args.endpoint,
-                 'infile': args.infile}
-
-        configuration_warning()
+        command_build = {'endpoint': args.endpoint, 'infile': args.infile, 'parameters': args.parameters}
 
         LOG.info(f'Starting building model {args.endpoint}'
-                 f' with file {args.infile}')
+                 f' with file {args.infile} and parameters {args.parameters}')
 
-        success, results = context.build_cmd(model)
-        # print('flame build : ', success, results)
+        success, results = context.build_cmd(command_build)
+
+        if not success:
+            print(results)
 
     elif args.command == 'manage':
-        configuration_warning()
-        manage_cmd(args)
+        success, results = context.manage_cmd(args)
+        # print('flame manage : ', success, results)
+        if not success:
+            LOG.error(results)
 
     elif args.command == 'config':
-        config(args.path)
+        config(args.directory)
         change_config_status()
-# import multiprocessing
 
+# import multiprocessing
 
 if __name__ == '__main__':
     # used to reproduce speed problems in Linux platforms

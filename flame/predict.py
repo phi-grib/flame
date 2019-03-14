@@ -21,59 +21,62 @@
 # along with Flame. If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import sys
 import importlib
 
 from flame.util import utils, get_logger
-from flame.control import Control
+from flame.parameters import Parameters
+from flame.conveyor import Conveyor
+from flame.idata import Idata
+from flame.apply import Apply
+from flame.odata import Odata
 
-log = get_logger(__name__)
-
+LOG = get_logger(__name__)
 
 class Predict:
-    """
-    TODO: Expand class docstring
-    """
 
     def __init__(self, model, version, output_format=None):
-
+        LOG.debug('Starting predict...')
         self.model = model
         self.version = version
+        self.param = Parameters()
+        self.conveyor = Conveyor()
 
-        # instance Control object
-        self.control = Control(model, version)
-        self.parameters = self.control.get_parameters()
+        if not self.param.loadYaml(model, version):
+            LOG.critical('Unable to load model parameters. Aborting...')
+            sys.exit()
 
-        # set parameter overriding value in
+        # add additional output formats included in the constructor 
+        # this is requiered to add JSON format as output when the object is
+        # instantiated from a web service call, requiring this output   
         if output_format != None:
-            self.parameters['output_format'] = output_format
-
+            if output_format not in self.param.getVal('output_format'):
+                self.param.appVal('output_format',output_format)
+ 
         return
 
     def get_model_set(self):
         ''' Returns a Boolean indicating if the model uses external input
             sources and a list with these sources '''
-        return self.control.get_model_set()
+        return self.param.getModelSet()
 
-    def set_single_CPU(self):
+    def set_single_CPU(self) -> None:
         ''' Forces the use of a single CPU '''
-        self.parameters['numCPUs'] = 1
+        LOG.debug('parameter "numCPUs" forced to be 1')
+        self.param.setVal('numCPUs',1)
 
     def run(self, input_source):
         ''' Executes a default predicton workflow '''
 
-        results = {}
-
+        # path to endpoint
         # path to endpoint
         endpoint = utils.model_path(self.model, self.version)
         if not os.path.isdir(endpoint):
+            self.conveyor.setError(f'Unable to find model {self.model}, version {self.version}')
+            #LOG.error(f'Unable to find model {self.model}')
 
-            log.error('Unable to find model'
-                      ' {} version {}'.format(self.model, self.version))
 
-            results['error'] = 'unable to find model: ' + \
-                self.model+' version: '+str(self.version)
-
-        if 'error' not in results:
+        if not self.conveyor.getError():
             # uses the child classes within the 'model' folder,
             # to allow customization of
             # the processing applied to each model
@@ -84,15 +87,39 @@ class Predict:
             odata_child = importlib.import_module(modpath+".odata_child")
 
             # run idata object, in charge of generate model data from input
-            idata = idata_child.IdataChild(self.parameters, input_source)
-            results = idata.run()
+            try:
+                idata = idata_child.IdataChild(self.param, self.conveyor, input_source)
+            except:
+                LOG.warning ('Idata child architecture mismatch, defaulting to Idata parent')
+                idata = Idata(self.param, self.conveyor, input_source)
 
-        if 'error' not in results:
+            idata.run()
+            LOG.debug(f'idata child {type(idata).__name__} completed `run()`')
+
+        if not self.conveyor.getError():
+            # make sure there is X data
+            if not self.conveyor.isKey('xmatrix'):
+                LOG.debug(f'Failed to compute MDs')
+                self.conveyor.setError(f'Failed to compute MDs')
+
+        if not self.conveyor.getError():
             # run apply object, in charge of generate a prediction from idata
-            apply = apply_child.ApplyChild(self.parameters, results)
-            results = apply.run()
+            try:
+                apply = apply_child.ApplyChild(self.param, self.conveyor)
+            except:
+                LOG.warning ('Apply child architecture mismatch, defaulting to Apply parent')
+                apply = Apply(self.param, self.conveyor)
 
-        # run odata object, in charge of formatting the prediction results or any error
-        odata = odata_child.OdataChild(self.parameters, results)
-        log.info('Prediction finished. ')
+            apply.run()
+            LOG.debug(f'apply child {type(apply).__name__} completed `run()`')
+
+        # run odata object, in charge of formatting the prediction results
+        # note that if any of the above steps failed, an error has been inserted in the
+        # conveyor and odata will take case of showing an error message
+        try:
+            odata = odata_child.OdataChild(self.param, self.conveyor)
+        except:
+            LOG.warning ('Odata child architecture mismatch, defaulting to Odata parent')
+            odata = Odata(self.param, self.conveyor)
+
         return odata.run()
