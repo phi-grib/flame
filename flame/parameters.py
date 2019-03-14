@@ -130,9 +130,14 @@ class Parameters:
                 if val == 'None':
                     val = None
 
-                #print ('@delta: adding',key,val,type(val))
-
-                self.setVal(key,val)
+                if isinstance(val ,dict):
+                    for inner_key in val:
+                        inner_val = val[inner_key]
+                        self.setInnerVal(key, inner_key, inner_val)
+                        #print ('@delta: adding',key, inner_key, inner_val)
+                else:
+                    self.setVal(key,val)
+                    #print ('@delta: adding',key,val,type(val))
 
         # dump internal dict to the parameters file
         parameters_file_path = utils.model_path(model, version)
@@ -228,6 +233,33 @@ class Parameters:
         # for new keys, create a new element with 'value' key
         else:
             self.p[key] = {'value': value}
+
+    def setInnerVal(self, okey, ikey, value):
+        ''' Sets the parameter defined by key to the given value
+        '''
+
+        if not okey in self.p:
+            print ('error1')
+            return
+
+        if not "value" in self.p[okey]:
+            print ('error2')
+            return
+
+        odict = self.p[okey]['value']
+
+        if not isinstance(odict, dict):
+            print ('error3')
+            return
+        
+        if not ikey in odict:
+            print ('error4')
+            return
+
+        if "value" in odict[ikey]:
+            odict[ikey]["value"] = value
+        else:
+            odict[ikey] = {'value': value}
 
 
     def appVal(self, key, value):

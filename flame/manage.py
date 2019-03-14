@@ -455,12 +455,18 @@ def action_parameters (model, version=None, oformat='text'):
                             ivalue = v['value']
                         else:
                             # print header of dictionaty
-                            print (f'{k:30} >>>')
+                            #print (f'{k:30} :')
+                            print (f'{k} :')
 
                             # iterate keys assuming existence of value and description
                             for intk in v['value']:
-                                intv = v['value'][intk]
-                                print (f'   {intk:27} : {str(intv["value"]):30} # {intv["description"]}')
+                                intv = v['value'][intk]                                
+                                iivalue = intv["value"]
+
+                                if isinstance (iivalue, float):
+                                    iivalue =  f'{iivalue:f}'
+
+                                print (f'   {intk:27} : {str(iivalue):30} # {intv["description"]}')
                             continue
 
                     if 'description' in v:
@@ -473,6 +479,9 @@ def action_parameters (model, version=None, oformat='text'):
                     else:
                         ivalue = '*dictionary*'
                 ### end compatibility
+
+                if isinstance (ivalue, float):
+                    ivalue =  f'{ivalue:f}'
 
                 print (f'{k:30} : {str(ivalue):30} # {idescr}')
 
