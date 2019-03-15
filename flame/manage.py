@@ -477,6 +477,8 @@ def action_parameters (model, version=None, oformat='text'):
 
                                 if isinstance (iivalue, float):
                                     iivalue =  f'{iivalue:f}'
+                                elif iivalue is None:
+                                    iivalue = ''
 
                                 print (f'   {intk:27} : {str(iivalue):30} # {iidescr}')
                             continue
@@ -494,6 +496,8 @@ def action_parameters (model, version=None, oformat='text'):
 
                 if isinstance (ivalue, float):
                     ivalue =  f'{ivalue:f}'
+                elif ivalue is None:
+                    ivalue = ''
 
                 print (f'{k:30} : {str(ivalue):30} # {idescr}')
 

@@ -457,9 +457,7 @@ RF_optimize:
     class_weight:
       object_type: string
       writable: false
-      value: 
-        - null
-        - balanced
+      value: null
       options:
         - null
         - balanced
@@ -584,9 +582,7 @@ SVM_optimize:
     class_weight:
       object_type: string
       writable: false
-      value: 
-        - null
-        - balanced
+      value: null
       options:
         - null
         - balanced
@@ -817,10 +813,9 @@ PLSDA_optimize:
     tol:
       object_type: float
       writable: true
-      value: 
-        - 0.000006
+      value: 0.000006
       options:
-        - null
+        - 0.000006
       description: 
     n_components:
       object_type: int
