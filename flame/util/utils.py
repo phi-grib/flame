@@ -66,7 +66,7 @@ def _read_configuration() -> dict:
     '''
     #LOG.info('reading configuration')
     with open(get_conf_yml_path(), 'r') as config_file:
-        conf = yaml.load(config_file)
+        conf = yaml.safe_load(config_file)
 
     model_path = pathlib.Path(conf['model_repository_path'])
 
@@ -88,7 +88,7 @@ def check_repository_path() -> None:
 
     config_path = get_conf_yml_path()
     with open(config_path, 'r') as config_file:
-        config = yaml.load(config_file)
+        config = yaml.safe_load(config_file)
 
     old_model_path = config['model_repository_path']
 
@@ -149,7 +149,7 @@ def set_model_repository(path=None):
     None
     """
     with open(get_conf_yml_path(), 'r') as f:
-        configuration = yaml.load(f)
+        configuration = yaml.safe_load(f)
 
     if path is None:  # set to default path
         model_root_path = os.path.join(
