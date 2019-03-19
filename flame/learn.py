@@ -30,6 +30,9 @@ from flame.stats.SVM import SVM
 from flame.stats.GNB import GNB
 from flame.stats.PLSR import PLSR
 from flame.stats.PLSDA import PLSDA
+
+from flame.stats.imbalance import *  
+
 from flame.util import utils, get_logger
 LOG = get_logger(__name__)
 
@@ -53,6 +56,58 @@ class Learn:
 
         self.conveyor.setError ('Not implemented')
 
+    def preprocess(self):
+
+        # Perform subsampling on the majority class. Consider to move.
+        # Only for qualitative endpoints.
+        if self.param.getVal("imbalance") is not None and \
+        not self.param.getVal("quantitative"):
+            try:
+                self.X, self.Y = run_imbalance(
+                    self.param.getVal('imbalance'), self.X, self.Y, 46)
+                # This is necessary to avoid inconsistences in methods
+                # using self.nobj
+                LOG.info(f'{self.param.getVal("imbalance")}'
+                            f'sampling method performed')
+                LOG.info(f'Number of objects after sampling: {self.X.shape[0]}')
+            except Exception as e:
+                return False, f'Unable to perform sampling method with exception: {e}'
+
+        # Run scaling.
+        if self.param.getVal('modelAutoscaling'):
+            try:
+                # MinMaxScaler is used between range 1-0 so 
+                # there is no negative values.
+                scaler = MinMaxScaler(copy=True, feature_range=(0,1))
+                # The scaler is saved so it can be used later
+                # to prediction instances.
+                self.scaler = scaler.fit(self.X)
+                # Scale the data.
+                self.X = scaler.transform(self.X)
+                LOG.info('Data scaling performed')
+            except Exception as e:
+                return False, f'Unable to perform scaling with exception: {e}'
+          
+
+        # Run feature selection. Move to a instance method.
+        if self.param.getVal("feature_selection"):
+            self.variable_mask = run_feature_selection()
+    
+        # Set the new number of instances/variables
+        # if sampling/feature selection performed
+        self.nobj, self.nvarx = np.shape(self.X)
+
+        # Check X and Y integrity.
+        if (self.nobj == 0) or (self.nvarx == 0):
+            return False, 'No objects/variables in the matrix'
+
+        if len(self.Y) == 0:
+            self.failed = True
+            return False, 'No activity values'
+
+        return True, 'OK'
+
+
     def run_internal(self):
         '''
         Builds a model using the internally defined machine learning tools.
@@ -71,9 +126,17 @@ class Learn:
         if not self.param.getVal('quantitative') :
             success, yresult  = utils.qualitative_Y(self.Y)
             if not success:
-
                 self.conveyor.setError(yresult)
                 return
+
+        # pre-process data
+        success, message = self.preprocess()
+        if not success:
+            self.conveyor.setError(message)
+            return
+
+        # TODO: preprocess has created scaler and variable mask. If these are not null, they must be saved from here and loaded from here
+        # and not within base_model as 
 
         # expand with new methods here:
         registered_methods = [('RF', RF),
@@ -97,6 +160,7 @@ class Learn:
             LOG.error(f'Modeling method {self.param.getVal("model")}'
                        'not recognized')
             return
+
 
         # build model
         LOG.info('Starting model building')
@@ -188,6 +252,9 @@ class Learn:
         # save model
         try:
             model.save_model()
+
+            # TODO: save scaled and variable_mask
+
         except Exception as e:
             LOG.error(f'Error saving model with exception {e}')
             return False, 'An error ocurred saving the model'

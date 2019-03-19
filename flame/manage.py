@@ -479,10 +479,6 @@ def action_parameters (model, version=None, oformat='text'):
 
                                 if isinstance (iivalue, float):
                                     iivalue =  f'{iivalue:f}'
-                                elif isinstance (iivalue, list):
-                                    for ii in range(len(iivalue)):
-                                        if iivalue[ii] is None or iivalue[ii] is 'None':
-                                            iivalue[ii]='default'
                                 elif iivalue is None:
                                     iivalue = ''
 

@@ -272,6 +272,10 @@ class Apply:
                                  'single',
                                  'External validation results')
 
+    def preprocess(self):
+        return True, 'OK'
+
+
     def run_internal(self): 
         ''' 
 
@@ -300,6 +304,15 @@ class Apply:
         if (nvarx == 0):
             LOG.error('Failed to generate MDs')
             self.conveyor.setError('Failed to generate MDs')
+            return
+
+        # Load scaler and variable mask and preprocess the data
+        # TODO: Load scaler and variable mask and preprocess the data
+
+        # preprocess
+        success, message = self.preprocess()
+        if not success:
+            self.conveyor.setError(message)
             return
 
         # Load model 
