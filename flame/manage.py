@@ -454,6 +454,8 @@ def action_parameters (model, version=None, oformat='text'):
                 ivalue = ''
                 idescr = ''
 
+                ## newest parameter formats are extended and contain
+                ## rich metainformation for each entry
                 if param.extended:
                     if 'value' in v:
                         if not isinstance(v['value'] ,dict):
@@ -477,6 +479,10 @@ def action_parameters (model, version=None, oformat='text'):
 
                                 if isinstance (iivalue, float):
                                     iivalue =  f'{iivalue:f}'
+                                elif isinstance (iivalue, list):
+                                    for ii in range(len(iivalue)):
+                                        if iivalue[ii] is None or iivalue[ii] is 'None':
+                                            iivalue[ii]='default'
                                 elif iivalue is None:
                                     iivalue = ''
 

@@ -706,7 +706,14 @@ class BaseEstimator:
     def optimize(self, X, Y, estimator, tune_parameters):
         ''' optimizes a model using a grid search over a 
         range of values for diverse parameters'''
-        
+
+        # the default value is represented as 'default' in the YAML parameter file to
+        # avoid problems with empty values and must be replaced by None here        
+        for key, value in tune_parameters.items():
+            if 'default' in value:
+                tune_parameters[key] = [None if i == 'default' else i for i in value ]
+        #print (tune_parameters)
+
         LOG.info('Computing best hyperparameter values')
         metric = ""
         # Select the metric according to the type of model

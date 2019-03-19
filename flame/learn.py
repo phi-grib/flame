@@ -162,7 +162,7 @@ class Learn:
                                 class_key, class_label,
                                 'result', 'objs', 
                                 'Conformal class assignment',
-                                    'main')
+                                'main')
 
         # conformal quantitataive models produce a list of tuples, indicating
         # the minumum and maximum value
@@ -204,6 +204,7 @@ class Learn:
         if toolkit == 'internal':
             LOG.info('Building model using internal toolkit : Sci-kit learn')
             self.run_internal()
+
         elif toolkit == 'custom':
             LOG.info('Building model using custom toolkit')
             self.run_custom()

@@ -458,10 +458,10 @@ RF_optimize:
       object_type: list
       writable: false
       value: 
-        - null
-        - balanced  
+        - default
+        - balanced
       options:
-        - null
+        - default
         - balanced
       description: 
     max_features:
@@ -585,10 +585,10 @@ SVM_optimize:
       object_type: list
       writable: false
       value: 
-        - null
+        - default
         - balanced
       options:
-        - null
+        - default
         - balanced
       description: 
     C:
