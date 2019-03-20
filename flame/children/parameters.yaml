@@ -17,12 +17,13 @@ input_type:
 
 modelAutoscaling:
   advanced: regular
-  object_type: boolean
+  object_type: string
   writable: false
-  value: false
+  value: StandardScaler
   options:
-    - true
-    - false
+    - StandardScaler
+    - MinMaxScaler
+    - null
   description: Whether to perform or not scaling on the data
   dependencies: null
   comments: 

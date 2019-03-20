@@ -30,9 +30,12 @@ from flame.stats.SVM import SVM
 from flame.stats.GNB import GNB
 from flame.stats.PLSR import PLSR
 from flame.stats.PLSDA import PLSDA
+from sklearn.preprocessing import MinMaxScaler 
+from sklearn.preprocessing import StandardScaler 
+
 
 from flame.stats.imbalance import *  
-
+from flame.stats import feature_selection
 from flame.util import utils, get_logger
 LOG = get_logger(__name__)
 
@@ -48,6 +51,10 @@ class Learn:
         self.X = self.conveyor.getVal('xmatrix')
         self.Y = self.conveyor.getVal('ymatrix')
 
+        # Preprocessing variables
+        self.scaler = None
+        self.variable_mask = None
+
     def run_custom(self):
         '''
         Build a model using custom code to be defined in the learn child
@@ -56,12 +63,31 @@ class Learn:
 
         self.conveyor.setError ('Not implemented')
 
+    def save_prepro(self):
+        ''' This function saves scaler and variable mask in a pickle file '''
+
+        # This dictionary contain all the objects which will be needed
+        # for prediction
+        prepro = {'scaler':self.scaler,\
+                  'variable_mask':self.variable_mask,\
+                  'version':1}
+
+        prepro_pkl_path = os.path.join(self.param.getVal('model_path'),
+                                      'preprocessing.pkl')
+        
+        with open(prepro_pkl_path, 'wb') as handle:
+            pickle.dump(prepro, handle, 
+                        protocol=pickle.HIGHEST_PROTOCOL)
+        LOG.debug('Model saved as:{}'.format(prepro_pkl_path))
+
+        return
+
     def preprocess(self):
 
         # Perform subsampling on the majority class. Consider to move.
         # Only for qualitative endpoints.
         if self.param.getVal("imbalance") is not None and \
-        not self.param.getVal("quantitative"):
+                        not self.param.getVal("quantitative"):
             try:
                 self.X, self.Y = run_imbalance(
                     self.param.getVal('imbalance'), self.X, self.Y, 46)
@@ -71,14 +97,21 @@ class Learn:
                             f'sampling method performed')
                 LOG.info(f'Number of objects after sampling: {self.X.shape[0]}')
             except Exception as e:
-                return False, f'Unable to perform sampling method with exception: {e}'
+                return False, (f'Unable to perform sampling'
+                               f' method with exception: {e}')
 
         # Run scaling.
         if self.param.getVal('modelAutoscaling'):
             try:
                 # MinMaxScaler is used between range 1-0 so 
                 # there is no negative values.
-                scaler = MinMaxScaler(copy=True, feature_range=(0,1))
+                scaler = ""
+                if self.param.getVal('modelAutoscaling') == 'StandardScaler':
+                        scaler = StandardScaler()
+                if self.param.getVal('modelAutoscaling') == 'MinMaxScaler':
+                    scaler = MinMaxScaler(copy=True, feature_range=(0,1))
+                # scaler = MinMaxScaler(copy=True, feature_range=(0,1))
+
                 # The scaler is saved so it can be used later
                 # to prediction instances.
                 self.scaler = scaler.fit(self.X)
@@ -88,11 +121,18 @@ class Learn:
             except Exception as e:
                 return False, f'Unable to perform scaling with exception: {e}'
           
-
         # Run feature selection. Move to a instance method.
         if self.param.getVal("feature_selection"):
-            self.variable_mask = run_feature_selection()
-    
+            # TODO: implement feature selection with other scalers
+            if self.param.getVal('modelAutoscaling') == 'MinMaxScaler':
+                self.variable_mask, self.scaler = \
+                                    feature_selection.run_feature_selection(
+                                                self.X, self.Y, self.scaler,
+                                                self.param)
+                self.X = self.X[:, self.variable_mask]
+            else:
+                pass
+
         # Set the new number of instances/variables
         # if sampling/feature selection performed
         self.nobj, self.nvarx = np.shape(self.X)
@@ -104,6 +144,7 @@ class Learn:
         if len(self.Y) == 0:
             self.failed = True
             return False, 'No activity values'
+        self.save_prepro()
 
         return True, 'OK'
 

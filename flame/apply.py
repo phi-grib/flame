@@ -272,9 +272,56 @@ class Apply:
                                  'single',
                                  'External validation results')
 
-    def preprocess(self):
-        return True, 'OK'
+    def load_prepro(self):
+        ''' This function loads estimator and scaler in a pickle file '''
 
+        prepro_file = os.path.join(self.param.getVal('model_path'),
+                                    'preprocessing.pkl')
+        LOG.debug(f'Loading model from pickle file, path: {prepro_file}')
+        try:
+            with open(prepro_file, "rb") as input_file:
+                dict_prepro = pickle.load(input_file)
+        except FileNotFoundError:
+            LOG.error(f'No valid preprocessing tools'
+                     f'found at: {prepro_file}')
+            raise FileNotFoundError
+
+        # Load model
+        self.version = dict_prepro['version']
+        # check if the pickle was created with a compatible version
+        # currently 1
+        if self.version is not 1:
+            raise Exception ('Incompatible preprocessing version')        
+    
+        # Load rest of info in an extensible way
+        # This allows to add new variables keeping
+        # Retro-compatibility
+        if 'scaler' in dict_prepro.keys():
+            self.scaler = dict_prepro['scaler']
+
+        if 'variable_mask' in dict_prepro.keys():
+            self.variable_mask = dict_prepro['variable_mask']
+
+        # Check consistency between parameter file and pickle info
+        if self.param.getVal('modelAutoscaling') and \
+                            self.scaler is None:
+            raise Exception('Inconsistency error. Autoscaling is True'
+                            ' in parameter file but no Scaler loaded')
+
+        if self.param.getVal('feature_selection') and \
+                            self.variable_mask is None:
+            raise Exception('Inconsistency error. Feature is True'
+                        ' in parameter file but no variable mask loaded')
+
+        return
+     
+    def preprocess(self, X):
+        self.load_prepro()
+        if self.param.getVal("feature_selection"):
+            X = X[:, self.variable_mask]
+        if self.param.getVal('modelAutoscaling'):
+            X = self.scaler.transform(X)
+        return True, X
 
     def run_internal(self): 
         ''' 
@@ -305,15 +352,19 @@ class Apply:
             LOG.error('Failed to generate MDs')
             self.conveyor.setError('Failed to generate MDs')
             return
+            
 
         # Load scaler and variable mask and preprocess the data
+        X = self.preprocess(X)[1]
+
+
         # TODO: Load scaler and variable mask and preprocess the data
 
         # preprocess
-        success, message = self.preprocess()
-        if not success:
-            self.conveyor.setError(message)
-            return
+        # success, message = self.preprocess()
+        # if not success:
+        #     self.conveyor.setError(message)
+        #     return
 
         # Load model 
 

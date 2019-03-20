@@ -801,13 +801,13 @@ class BaseEstimator:
             conveyor.setError('failed to load classifier')
             return
         # Apply variable mask to prediction vector/matrix
-        if self.param.getVal("feature_selection"):
-            Xb = Xb[:, self.variable_mask]
+        # if self.param.getVal("feature_selection"):
+        #     Xb = Xb[:, self.variable_mask]
         # Scale prediction vector/matrix
-        if self.param.getVal('modelAutoscaling'):
+        # if self.param.getVal('modelAutoscaling'):
             # Xb = Xb-self.mux
             # Xb = Xb*self.wgx
-            Xb = self.scaler.transform(Xb)
+            # Xb = self.scaler.transform(Xb)
         # Select the type of projection
         if not self.param.getVal('conformal'):
             self.regularProject(Xb, conveyor)
@@ -820,13 +820,10 @@ class BaseEstimator:
         # This dictionary contain all the objects which will be needed
         # for prediction
         dict_estimator = {'estimator' : self.estimator,\
-                            'scaler' : self.scaler,\
-                            'variable_mask' : self.variable_mask,\
                             'version' : 1}
 
         model_pkl_path = os.path.join(self.param.getVal('model_path'),
                                       'estimator.pkl')
-        
         with open(model_pkl_path, 'wb') as handle:
             pickle.dump(dict_estimator, handle, 
                         protocol=pickle.HIGHEST_PROTOCOL)
@@ -858,25 +855,5 @@ class BaseEstimator:
         if self.estimator is None:
             raise Exception('Loaded estimator is None.'
                             'Probably model building was not successful')
-        
-        # Load rest of info in an extensible way
-        # This allows to add new variables keeping
-        # Retro-compatibility
-        if 'scaler' in dict_estimator.keys():
-            self.scaler = dict_estimator['scaler']
-
-        if 'variable_mask' in dict_estimator.keys():
-            self.variable_mask = dict_estimator['variable_mask']
-
-        # Check consistency between parameter file and pickle info
-        if self.param.getVal('modelAutoscaling') and \
-            self.scaler is None:
-            raise Exception('Inconsistency error. Autoscaling is True'
-            ' in parameter file but no Scaler loaded')
-
-        if self.param.getVal('feature_selection') and \
-            self.variable_mask is None:
-            raise Exception('Inconsistency error. Feature is True'
-            ' in parameter file but no variable mask loaded')
-
+    
         return
