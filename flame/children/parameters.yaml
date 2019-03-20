@@ -182,7 +182,7 @@ MD_settings:
         - false
       description: Whether to use or not feature-based invariants.
     morgan_radius:
-      object_type: integer
+      object_type: int
       writable: true
       value: 2
       options:
@@ -362,7 +362,7 @@ ModelValidationCV:
 
 ModelValidationN:
   advanced: regular
-  object_type: integer
+  object_type: int
   writable: true
   value: 2
   options: null
@@ -455,13 +455,13 @@ RF_optimize:
   options: null
   value:
     class_weight:
-      object_type: string
+      object_type: list
       writable: false
       value: 
-        - null
+        - default
         - balanced
       options:
-        - null
+        - default
         - balanced
       description: 
     max_features:
@@ -560,6 +560,7 @@ SVM_parameters:
       options:
         - true
         - false
+      description:
     shrinking: 
       object_type: boolean
       writable: false
@@ -581,13 +582,13 @@ SVM_optimize:
   options: null
   value:
     class_weight:
-      object_type: string
+      object_type: list
       writable: false
       value: 
-        - null
+        - default
         - balanced
       options:
-        - null
+        - default
         - balanced
       description: 
     C:
@@ -657,6 +658,7 @@ SVM_optimize:
       options:
         - true
         - false
+      description:
     shrinking: 
       object_type: boolean
       writable: false
@@ -815,10 +817,9 @@ PLSDA_optimize:
     tol:
       object_type: float
       writable: true
-      value: 
-        - 0.000006
+      value: 0.000006
       options:
-        - null
+        - 0.000006
       description: 
     n_components:
       object_type: int

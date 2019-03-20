@@ -45,14 +45,14 @@ class Build:
         if param_file is not None:
             # use the param_file to update existing parameters at the model
             # directory and save changes to make them persistent
-            success = self.param.delta(model, 0, param_file)
+            success, message = self.param.delta(model, 0, param_file)
         else:
             # load parameter file at the model directory
-            success = self.param.loadYaml(model, 0)
+            success, message = self.param.loadYaml(model, 0)
 
         # being unable to load parameters is a critical error
         if not success:
-            LOG.critical('Unable to load model parameters. Aborting...')
+            LOG.critical(f'Unable to load model parameters. "{message}" Aborting...')
             sys.exit(1)
 
         # add additional output formats included in the constructor 

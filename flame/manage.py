@@ -315,7 +315,7 @@ def action_refactoring(file):
     return True, 'OK'
 
 
-def action_info(model, version, output='JSON'):
+def action_info(model, version, output='text'):
     '''
     Returns a text or JSON with results info for a given model and version
     '''
@@ -428,18 +428,23 @@ def action_parameters (model, version=None, oformat='text'):
         #'md5', 
         'version']
 
+        order += ['RF_parameters','RF_optimize',
+        'SVM_parameters','SVM_optimize',
+        'PLSDA_parameters','PLSDA_optimize',
+        'PLSR_parameters','PLSR_optimize',
+        'GNB_parameters']
 
-        if param.extended:
-            if 'RF' in param.p['model']['value']:
-                order+=['RF_parameters','RF_optimize']
-            elif 'SVM' in param.p['model']['value']:
-                order+=['SVM_parameters','SVM_optimize']
-            elif 'PLSDA' in param.p['model']['value']:
-                order+=['PLSDA_parameters','PLSDA_optimize']
-            elif 'PLSR' in param.p['model']['value']:
-                order+=['PLSR_parameters','PLSR_optimize']
-            elif 'GNB' in param.p['model']['value']:
-                order+='GNB_parameters'
+        # if param.extended:
+        #     if 'RF' in param.p['model']['value']:
+        #         order+=['RF_parameters','RF_optimize']
+        #     elif 'SVM' in param.p['model']['value']:
+        #         order+=['SVM_parameters','SVM_optimize']
+        #     elif 'PLSDA' in param.p['model']['value']:
+        #         order+=['PLSDA_parameters','PLSDA_optimize']
+        #     elif 'PLSR' in param.p['model']['value']:
+        #         order+=['PLSR_parameters','PLSR_optimize']
+        #     elif 'GNB' in param.p['model']['value']:
+        #         order+='GNB_parameters'
 
         for ik in order:
             if ik in param.p:
@@ -449,18 +454,35 @@ def action_parameters (model, version=None, oformat='text'):
                 ivalue = ''
                 idescr = ''
 
+                ## newest parameter formats are extended and contain
+                ## rich metainformation for each entry
                 if param.extended:
                     if 'value' in v:
                         if not isinstance(v['value'] ,dict):
                             ivalue = v['value']
                         else:
                             # print header of dictionaty
-                            print (f'{k:30} >>>')
+                            #print (f'{k:30} :')
+                            print (f'{k} :')
 
                             # iterate keys assuming existence of value and description
                             for intk in v['value']:
                                 intv = v['value'][intk]
-                                print (f'   {intk:27} : {str(intv["value"]):30} # {intv["description"]}')
+
+                                iivalue = ''
+                                if "value" in intv:                                
+                                    iivalue = intv["value"]
+
+                                iidescr = ''
+                                if "description" in intv:
+                                    iidescr = intv["description"]
+
+                                if isinstance (iivalue, float):
+                                    iivalue =  f'{iivalue:f}'
+                                elif iivalue is None:
+                                    iivalue = ''
+
+                                print (f'   {intk:27} : {str(iivalue):30} # {iidescr}')
                             continue
 
                     if 'description' in v:
@@ -473,6 +495,11 @@ def action_parameters (model, version=None, oformat='text'):
                     else:
                         ivalue = '*dictionary*'
                 ### end compatibility
+
+                if isinstance (ivalue, float):
+                    ivalue =  f'{ivalue:f}'
+                elif ivalue is None:
+                    ivalue = ''
 
                 print (f'{k:30} : {str(ivalue):30} # {idescr}')
 

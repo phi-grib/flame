@@ -150,134 +150,136 @@ class BaseEstimator:
         self.scaler = None
         self.variable_mask = None
 
-        if X is not None:
-            self.X_original = X
-            self.Y_original = Y
-            self.variable_mask = []
-            self.X = X
-            self.Y = Y
-            self.nobj, self.nvarx = np.shape(X)
+        if X is None:
+            return
 
-            # Get cross-validator
-            # Consider to include a Random Seed for cross-validator
-            if self.param.getVal('ModelValidationCV'):
-                try:
-                    self.cv = getCrossVal(
-                                    self.param.getVal('ModelValidationCV'),
-                                    46,
-                                    self.param.getVal('ModelValidationN'),
-                                    self.param.getVal('ModelValidationP'))
-                    LOG.debug('Cross-validator retrieved')
-                    LOG.info(f'cv is: {self.cv}')
-                except Exception as e:
-                    LOG.error(f'Error retrieving cross-validator with'
-                            f'exception: {e}')
-                    raise e
+        self.X_original = X
+        self.Y_original = Y
+        self.variable_mask = []
+        self.X = X
+        self.Y = Y
+        self.nobj, self.nvarx = np.shape(X)
 
-            # Perform subsampling on the majority class. Consider to move.
-            # Only for qualitative endpoints.
-            if self.param.getVal("imbalance") is not None and \
-            not self.param.getVal("quantitative"):
-                try:
-                    self.X, self.Y = run_imbalance(
-                        self.param.getVal('imbalance'), self.X, self.Y, 46)
-                    # This is necessary to avoid inconsistences in methods
-                    # using self.nobj
-                    LOG.info(f'{self.param.getVal("imbalance")}'
-                                f'sampling method performed')
-                    LOG.info(f'Number of objects after sampling: {self.X.shape[0]}')
-                except Exception as e:
-                    LOG.error(f'Unable to perform sampling '
-                                f'method with exception: {e}')
-                    raise e
+        # Get cross-validator
+        # Consider to include a Random Seed for cross-validator
+        if self.param.getVal('ModelValidationCV'):
+            try:
+                self.cv = getCrossVal(
+                                self.param.getVal('ModelValidationCV'),
+                                46,
+                                self.param.getVal('ModelValidationN'),
+                                self.param.getVal('ModelValidationP'))
+                LOG.debug('Cross-validator retrieved')
+                LOG.info(f'cv is: {self.cv}')
+            except Exception as e:
+                LOG.error(f'Error retrieving cross-validator with'
+                        f'exception: {e}')
+                raise e
 
-            # Run scaling.
-            if self.param.getVal('modelAutoscaling'):
-                try:
-                    # self.X, self.mux = center(self.X)
-                    # self.X, self.wgx = scale(self.X, 
-                    #                     self.param.getVal('modelAutoscaling'))
-                    # MinMaxScaler is used between range 1-0 so 
-                    # there is no negative values.
-                    scaler = MinMaxScaler(copy=True, feature_range=(0,1))
-                    # The scaler is saved so it can be used later
-                    # to prediction instances.
-                    self.scaler = scaler.fit(self.X)
-                    # Scale the data.
-                    self.X = scaler.transform(self.X)
-                    LOG.info('Data scaling performed')
-                except Exception as e:
-                    LOG.error(f'Unable to perform scaling'
-                    ' with exception : {e}')
-                    raise e
+        # # Perform subsampling on the majority class. Consider to move.
+        # # Only for qualitative endpoints.
+        # if self.param.getVal("imbalance") is not None and \
+        # not self.param.getVal("quantitative"):
+        #     try:
+        #         self.X, self.Y = run_imbalance(
+        #             self.param.getVal('imbalance'), self.X, self.Y, 46)
+        #         # This is necessary to avoid inconsistences in methods
+        #         # using self.nobj
+        #         LOG.info(f'{self.param.getVal("imbalance")}'
+        #                     f'sampling method performed')
+        #         LOG.info(f'Number of objects after sampling: {self.X.shape[0]}')
+        #     except Exception as e:
+        #         LOG.error(f'Unable to perform sampling '
+        #                     f'method with exception: {e}')
+        #         raise e
 
-            #### Alternative way to make all values positives (sum the minimum 
-            #### of each column to the column)
-                # list_min = np.min(self.X, axis=0)
-                # newX = copy.copy(self.X)
-                # for i in range(len(self.X[0])):
-                #     newX[:, i] = np.array(self.X[:, i] -list_min[i])
+        # # Run scaling.
+        # if self.param.getVal('modelAutoscaling'):
+        #     try:
+        #         # self.X, self.mux = center(self.X)
+        #         # self.X, self.wgx = scale(self.X, 
+        #         #                     self.param.getVal('modelAutoscaling'))
+        #         # MinMaxScaler is used between range 1-0 so 
+        #         # there is no negative values.
+        #         scaler = MinMaxScaler(copy=True, feature_range=(0,1))
+        #         # The scaler is saved so it can be used later
+        #         # to prediction instances.
+        #         self.scaler = scaler.fit(self.X)
+        #         # Scale the data.
+        #         self.X = scaler.transform(self.X)
+        #         LOG.info('Data scaling performed')
+        #     except Exception as e:
+        #         LOG.error(f'Unable to perform scaling'
+        #         ' with exception : {e}')
+        #         raise e
 
-            # Run feature selection. Move to a instance method.
-            if self.param.getVal("feature_selection"):
-                self.run_feature_selection()
-        
-            # Set the new number of instances/variables
-            # if sampling/feature selection performed
-            self.nobj, self.nvarx = np.shape(X)
+        # #### Alternative way to make all values positives (sum the minimum 
+        # #### of each column to the column)
+        #     # list_min = np.min(self.X, axis=0)
+        #     # newX = copy.copy(self.X)
+        #     # for i in range(len(self.X[0])):
+        #     #     newX[:, i] = np.array(self.X[:, i] -list_min[i])
 
-            # Check X and Y integrity.
-            if (self.nobj == 0) or (self.nvarx == 0):
-                LOG.error('No objects/variables in the matrix')
-                raise Exception('No objects/variables in the matrix')
-            if len(Y) == 0:
-                self.failed = True
-                LOG.error('No activity values')
-                raise ValueError("No activity values (Y)")
+        # # Run feature selection. Move to a instance method.
+        # if self.param.getVal("feature_selection"):
+        #     self.run_feature_selection()
+    
+        # # Set the new number of instances/variables
+        # # if sampling/feature selection performed
+        # self.nobj, self.nvarx = np.shape(X)
 
-    def run_feature_selection(self):
-        """Compute the number of variables to be retained.
-        """
-        # When auto, the 10% top informative variables are retained.
-        if self.param.getVal("feature_number") == "auto":
-            # Use 10% of the total number of objects:
-            # The number of variables is greater than the 10% of the objects
-            # And the number of objects is greater than 100
-            if self.nvarx > (self.nobj * 0.1) and not self.nobj < 100:
-                self.n_features = int(self.nobj * 0.1)
-            # If number of objects is smaller than 100 then n_features
-            # is set to 10
-            elif self.nobj < 100:
-                self.n_features = 10
-            # In any other circunstance set number of variables to 10 
-            else:
-                self.n_features = self.nvarx
-        # Manual selection of number of variables
-        else:
-            self.n_features = int(self.param.getVal("feature_number"))
+        # # Check X and Y integrity.
+        # if (self.nobj == 0) or (self.nvarx == 0):
+        #     LOG.error('No objects/variables in the matrix')
+        #     raise Exception('No objects/variables in the matrix')
+        # if len(Y) == 0:
+        #     self.failed = True
+        #     LOG.error('No activity values')
+        #     raise ValueError("No activity values (Y)")
 
-        # Apply variable selection.
-        try:
-            # Apply the variable selection algorithm obtaining
-            # the variable mask.
-            self.variable_mask = selectkBest(self.X, self.Y, 
-                                self.n_features, 
-                                self.param.getVal('quantitative'))
+    # def run_feature_selection(self):
+    #     """Compute the number of variables to be retained.
+    #     """
+    #     # When auto, the 10% top informative variables are retained.
+    #     if self.param.getVal("feature_number") == "auto":
+    #         # Use 10% of the total number of objects:
+    #         # The number of variables is greater than the 10% of the objects
+    #         # And the number of objects is greater than 100
+    #         if self.nvarx > (self.nobj * 0.1) and not self.nobj < 100:
+    #             self.n_features = int(self.nobj * 0.1)
+    #         # If number of objects is smaller than 100 then n_features
+    #         # is set to 10
+    #         elif self.nobj < 100:
+    #             self.n_features = 10
+    #         # In any other circunstance set number of variables to 10 
+    #         else:
+    #             self.n_features = self.nvarx
+    #     # Manual selection of number of variables
+    #     else:
+    #         self.n_features = int(self.param.getVal("feature_number"))
+
+    #     # Apply variable selection.
+    #     try:
+    #         # Apply the variable selection algorithm obtaining
+    #         # the variable mask.
+    #         self.variable_mask = selectkBest(self.X, self.Y, 
+    #                             self.n_features, 
+    #                             self.param.getVal('quantitative'))
             
-            # The scaler has to be fitted to the reduced matrix
-            # in order to be applied in prediction.
-            self.X = self.scaler.inverse_transform(self.X)
-            self.X = self.X[:, self.variable_mask]
-            self.scaler = self.scaler.fit(self.X)
-            self.X = self.scaler.transform(self.X)
-            # self.mux = self.mux.reshape(1, -1)[:, self.variable_mask]
-            # self.wgx = self.wgx.reshape(1, -1)[:, self.variable_mask]
-            LOG.info(f'Variable selection applied, number of final variables:'
-                        f'{self.n_features}')
-        except Exception as e:
-            LOG.error(f'Error performing feature selection'
-                        f' with exception: {e}')
-            raise e 
+    #         # The scaler has to be fitted to the reduced matrix
+    #         # in order to be applied in prediction.
+    #         self.X = self.scaler.inverse_transform(self.X)
+    #         self.X = self.X[:, self.variable_mask]
+    #         self.scaler = self.scaler.fit(self.X)
+    #         self.X = self.scaler.transform(self.X)
+    #         # self.mux = self.mux.reshape(1, -1)[:, self.variable_mask]
+    #         # self.wgx = self.wgx.reshape(1, -1)[:, self.variable_mask]
+    #         LOG.info(f'Variable selection applied, number of final variables:'
+    #                     f'{self.n_features}')
+    #     except Exception as e:
+    #         LOG.error(f'Error performing feature selection'
+    #                     f' with exception: {e}')
+    #         raise e 
 
     # Validation methods section
     def CF_quantitative_validation(self):
@@ -376,8 +378,7 @@ class BaseEstimator:
 
         info = []
 
-        kf = KFold(self.param.getVal('ModelValidationN'),
-                   shuffle=True, random_state=46)
+        kf = KFold(n_splits=5, shuffle=True, random_state=46)
         # Copy Y vector to use it as template to assign predictions
         Y_pred = copy.copy(Y).tolist()
         try:
@@ -431,17 +432,29 @@ class BaseEstimator:
         info.append(('FP', 'False positives in cross-validation', self.FP))
         info.append(('FN', 'False negatives in cross-validation', self.FN))
         
-        # Compute sensitivity and specificity
+        # Compute sensitivity, specificity and MCC
         try:
             self.sensitivity = (self.TP / (self.TP + self.FN))
+        except Exception as e:
+            LOG.error(f'Failed to compute sensibility with'
+                        f'exception {e}')
+            self.sensitivity = '-'
+        try:
             self.specificity = (self.TN / (self.TN + self.FP))
         except Exception as e:
-            LOG.error(f'Failed to compute sens/spe with'
+            LOG.error(f'Failed to compute specificity with'
                         f'exception {e}')
-        # Compute Matthews Correlation Coefficient
-        self.mcc = (((self.TP * self.TN) - (self.FP * self.FN)) /
-                    np.sqrt((self.TP + self.FP) * (self.TP + self.FN) *
-                            (self.TN + self.FP) * (self.TN + self.FN)))
+            self.specificity = '-'
+        try:
+            # Compute Matthews Correlation Coefficient
+            self.mcc = (((self.TP * self.TN) - (self.FP * self.FN)) /
+                        np.sqrt((self.TP + self.FP) * (self.TP + self.FN) *
+                         (self.TN + self.FP) * (self.TN + self.FN)))
+        except Exception as e:
+            LOG.error(f'Failed to compute Mathews Correlation Coefficient'
+                        f'exception {e}')
+            self.mcc = '-'
+
         info.append(
             ('Sensitivity', 'Sensitivity in cross-validation', 
                 self.sensitivity))
@@ -451,16 +464,27 @@ class BaseEstimator:
         info.append(
             ('MCC', 'Matthews Correlation Coefficient in cross-validation',
                  self.mcc))
-
-        # Compute coverage (% of compounds inside the applicability domain)
-        self.conformal_coverage = (self.TN + self.FP + self.TP +
-                                    self.FN) / ((self.TN + self.FP +
-                                     self.TP + self.FN) +
-                                      not_predicted_all)
-        # Compute accuracy (% of correct predictions)
-        self.conformal_accuracy = float(
-            self.TN + self.TP) / float(self.FP + self.FN + self.TN + self.TP)
-
+        try:
+            # Compute coverage (% of compounds inside the applicability domain)
+            self.conformal_coverage = (self.TN + self.FP + self.TP +
+                                        self.FN) / ((self.TN + self.FP +
+                                        self.TP + self.FN) +
+                                        not_predicted_all)
+        except Exception as e:
+            LOG.error(f'Failed to compute conformal coverage with'
+                        f'exception {e}')
+            self.conformal_coverage = '-'
+        
+        try:
+            # Compute accuracy (% of correct predictions)
+            self.conformal_accuracy = (float(self.TN + self.TP) /
+                                        float(self.FP + self.FN + 
+                                            self.TN + self.TP))
+        except Exception as e:
+            LOG.error(f'Failed to compute conformal accuracy with'
+                        f'exception {e}')
+            self.conformal_accuracy = '-'
+                                                    
         info.append(
             ('Conformal_coverage', 'Conformal coverage',
                  self.conformal_coverage))
@@ -591,45 +615,69 @@ class BaseEstimator:
         try:
             y_pred = cross_val_predict(self.estimator, X, Y,
                     cv=self.cv,
-                             n_jobs=1)
-
-            # Get confusion matrix
+                             n_jobs=-1)
+        except Exception as e:
+            LOG.error(f'Cross-validation failed with exception' 
+                        f'exception {e}')
+            raise e
+        # Get confusion matrix
+        try:
             self.TN, self.FP, self.FN, self.TP = confusion_matrix(
                 Y, y_pred, labels=[0, 1]).ravel()
-            self.sensitivity = (self.TP / (self.TP + self.FN))
-            self.specificity = (self.TN / (self.TN + self.FP))
-            self.mcc = mcc(Y, y_pred)
-
-            info.append(('TP', 'True positives in cross-validation',
-             self.TP))
-            info.append(('TN', 'True negatives in cross-validation',
-             self.TN))
-            info.append(('FP', 'False positives in cross-validation',
-             self.FP))
-            info.append(('FN', 'False negatives in cross-validation',
-             self.FN))
-
-            info.append(
-                ('Sensitivity', 'Sensitivity in cross-validation',
-                 self.sensitivity))
-            info.append(
-                ('Specificity', 'Specificity in cross-validation',
-                 self.specificity))
-            info.append(
-                ('MCC', 'Matthews Correlation Coefficient in cross-validation',
-                 self.mcc))
-            info.append (
-                ('Y_adj', 'Adjusted Y values', Y) ) 
-            info.append (
-                ('Y_adj', 'Adjusted Y values', Yp) )          
-            info.append (
-                ('Y_pred', 'Predicted Y values after cross-validation',
-                 y_pred))
-            LOG.debug(f'Qualitative crossvalidation performed')
         except Exception as e:
-            LOG.error(f'Error computing crossvalidated Y'
-                f' with exception {e}')
+            LOG.error(f'Failed to compute confusion matrix with'
+                        f'exception {e}')
             raise e
+        try:
+            self.sensitivity = (self.TP / (self.TP + self.FN))
+        except Exception as e:
+            LOG.error(f'Failed to compute sensibility with'
+                        f'exception {e}')
+            self.sensitivity = '-'
+        try:
+            self.specificity = (self.TN / (self.TN + self.FP))
+        except Exception as e:
+            LOG.error(f'Failed to compute specificity with'
+                        f'exception {e}')
+            self.specificity = '-'
+        try:
+            # Compute Matthews Correlation Coefficient
+            self.mcc = (((self.TP * self.TN) - (self.FP * self.FN)) /
+                        np.sqrt((self.TP + self.FP) * (self.TP + self.FN) *
+                         (self.TN + self.FP) * (self.TN + self.FN)))
+        except Exception as e:
+            LOG.error(f'Failed to compute Mathews Correlation Coefficient'
+                        f'exception {e}')
+            self.mcc = '-'
+
+
+        info.append(('TP', 'True positives in cross-validation',
+            self.TP))
+        info.append(('TN', 'True negatives in cross-validation',
+            self.TN))
+        info.append(('FP', 'False positives in cross-validation',
+            self.FP))
+        info.append(('FN', 'False negatives in cross-validation',
+            self.FN))
+
+        info.append(
+            ('Sensitivity', 'Sensitivity in cross-validation',
+                self.sensitivity))
+        info.append(
+            ('Specificity', 'Specificity in cross-validation',
+                self.specificity))
+        info.append(
+            ('MCC', 'Matthews Correlation Coefficient in cross-validation',
+                self.mcc))
+        info.append (
+            ('Y_adj', 'Adjusted Y values', Y) ) 
+        info.append (
+            ('Y_adj', 'Adjusted Y values', Yp) )          
+        info.append (
+            ('Y_pred', 'Predicted Y values after cross-validation',
+                y_pred))
+        LOG.debug(f'Qualitative crossvalidation performed')
+
 
         results = {}
         results ['quality'] = info
@@ -660,7 +708,14 @@ class BaseEstimator:
     def optimize(self, X, Y, estimator, tune_parameters):
         ''' optimizes a model using a grid search over a 
         range of values for diverse parameters'''
-        
+
+        # the default value is represented as 'default' in the YAML parameter file to
+        # avoid problems with empty values and must be replaced by None here        
+        for key, value in tune_parameters.items():
+            if 'default' in value:
+                tune_parameters[key] = [None if i == 'default' else i for i in value ]
+        #print (tune_parameters)
+
         LOG.info('Computing best hyperparameter values')
         metric = ""
         # Select the metric according to the type of model

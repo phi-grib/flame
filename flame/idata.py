@@ -986,7 +986,7 @@ class Idata:
         activity_param = self.param.getVal('TSV_activity')
         LOG.debug('creating ymatrix from column {}'.format(activity_param))
         if activity_param in var_nam:
-            col = var_nam.index(activity_param)
+            col = var_nam.index(activity_param)  # Something is failing here: + 1 needed
             ymatrix = xmatrix[:, col]
             xmatrix = np.delete(xmatrix, col, 1)
             self.conveyor.addVal( ymatrix, 'ymatrix', 'Activity', 'decoration',
