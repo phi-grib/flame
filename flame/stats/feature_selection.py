@@ -93,4 +93,4 @@ def run_feature_selection(X, Y, scaler, param):
                     f' with exception: {e}')
         raise e 
 
-    return variable_mask
+    return variable_mask, scaler

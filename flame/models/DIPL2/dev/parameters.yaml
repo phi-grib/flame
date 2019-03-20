@@ -45,7 +45,7 @@ TSV_varnames: true                    # true if the variable names are in the fi
 
 modelingToolkit: internal             # internal | R | KNIME
 model: RF                          # RF | SVM | GNB | PLSR | PLSDA
-modelAutoscaling: true                # true | false
+modelAutoscaling: MinMaxScaler                # true | false
 quantitative: false
 tune: true
 imbalance: simple_subsampling                       # simple_subsampling

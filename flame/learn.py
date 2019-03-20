@@ -30,6 +30,9 @@ from flame.stats.SVM import SVM
 from flame.stats.GNB import GNB
 from flame.stats.PLSR import PLSR
 from flame.stats.PLSDA import PLSDA
+from sklearn.preprocessing import MinMaxScaler 
+from sklearn.preprocessing import StandardScaler 
+
 
 from flame.stats.imbalance import *  
 from flame.stats import feature_selection
@@ -102,7 +105,13 @@ class Learn:
             try:
                 # MinMaxScaler is used between range 1-0 so 
                 # there is no negative values.
-                scaler = MinMaxScaler(copy=True, feature_range=(0,1))
+                scaler = ""
+                if self.param.getVal('modelAutoscaling') == 'StandardScaler':
+                        scaler = StandardScaler()
+                if self.param.getVal('modelAutoscaling') == 'MinMaxScaler':
+                    scaler = MinMaxScaler(copy=True, feature_range=(0,1))
+                # scaler = MinMaxScaler(copy=True, feature_range=(0,1))
+
                 # The scaler is saved so it can be used later
                 # to prediction instances.
                 self.scaler = scaler.fit(self.X)
@@ -114,10 +123,16 @@ class Learn:
           
         # Run feature selection. Move to a instance method.
         if self.param.getVal("feature_selection"):
-            self.variable_mask = feature_selection.run_feature_selection(
-                                    self.X, self.Y, self.scaler,
-                                    self.param)
-    
+            # TODO: implement feature selection with other scalers
+            if self.param.getVal('modelAutoscaling') == 'MinMaxScaler':
+                self.variable_mask, self.scaler = \
+                                    feature_selection.run_feature_selection(
+                                                self.X, self.Y, self.scaler,
+                                                self.param)
+                self.X = self.X[:, self.variable_mask]
+            else:
+                pass
+
         # Set the new number of instances/variables
         # if sampling/feature selection performed
         self.nobj, self.nvarx = np.shape(self.X)

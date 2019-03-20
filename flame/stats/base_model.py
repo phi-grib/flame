@@ -801,13 +801,13 @@ class BaseEstimator:
             conveyor.setError('failed to load classifier')
             return
         # Apply variable mask to prediction vector/matrix
-        if self.param.getVal("feature_selection"):
-            Xb = Xb[:, self.variable_mask]
+        # if self.param.getVal("feature_selection"):
+        #     Xb = Xb[:, self.variable_mask]
         # Scale prediction vector/matrix
-        if self.param.getVal('modelAutoscaling'):
+        # if self.param.getVal('modelAutoscaling'):
             # Xb = Xb-self.mux
             # Xb = Xb*self.wgx
-            Xb = self.scaler.transform(Xb)
+            # Xb = self.scaler.transform(Xb)
         # Select the type of projection
         if not self.param.getVal('conformal'):
             self.regularProject(Xb, conveyor)

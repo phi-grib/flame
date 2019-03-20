@@ -317,7 +317,11 @@ class Apply:
      
     def preprocess(self, X):
         self.load_prepro()
-        return True, 'OK'
+        if self.param.getVal("feature_selection"):
+            X = X[:, self.variable_mask]
+        if self.param.getVal('modelAutoscaling'):
+            X = self.scaler.transform(X)
+        return True, X
 
     def run_internal(self): 
         ''' 
@@ -351,16 +355,16 @@ class Apply:
             
 
         # Load scaler and variable mask and preprocess the data
-        X = self.preprocess(X)
+        X = self.preprocess(X)[1]
 
 
         # TODO: Load scaler and variable mask and preprocess the data
 
         # preprocess
-        success, message = self.preprocess()
-        if not success:
-            self.conveyor.setError(message)
-            return
+        # success, message = self.preprocess()
+        # if not success:
+        #     self.conveyor.setError(message)
+        #     return
 
         # Load model 
 
