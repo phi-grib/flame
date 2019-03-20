@@ -72,7 +72,7 @@ class Parameters:
 
         try:
             with open(parameters_file_name, 'r') as pfile:
-                self.p = yaml.load(pfile)
+                self.p = yaml.safe_load(pfile)
         except Exception as e:
             return False, e
 
@@ -112,7 +112,7 @@ class Parameters:
         try:
             with open(param_file, 'r') as pfile:
                 if iformat == 'YAML':
-                    newp = yaml.load(pfile)
+                    newp = yaml.safe_load(pfile)
                 elif iformat == 'JSON':
                     newp = json.load(pfile)
         except Exception as e:
