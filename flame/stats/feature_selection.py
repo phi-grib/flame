@@ -46,7 +46,7 @@ def selectkBest(X, Y, n, quantitative):
     return mask
 
 
-def run_feature_selection(X, Y, scaler, param, n_features):
+def run_feature_selection(X, Y, scaler, param):
     """Compute the number of variables to be retained.
     """
 
@@ -75,8 +75,8 @@ def run_feature_selection(X, Y, scaler, param, n_features):
     try:
         # Apply the variable selection algorithm obtaining
         # the variable mask.
-        variable_mask = selectkBest(X, Y,n_features, 
-                            param.getVal('quantitative'))
+        variable_mask = selectkBest(X, Y, n_features, 
+                                    param.getVal('quantitative'))
         
         # The scaler has to be fitted to the reduced matrix
         # in order to be applied in prediction.
