@@ -491,7 +491,9 @@ def action_parameters (model, version=None, oformat='text'):
                                 elif iivalue is None:
                                     iivalue = ''
 
-                                print (f'   {intk:27} : {str(iivalue):30} #{iioptio} {iidescr}')
+                                #print (f'   {intk:27} : {str(iivalue):30} #{iioptio} {iidescr}')
+                                print (f'   {intk:27} : {str(iivalue):30} ')
+
                             continue
 
                     if 'description' in v:
@@ -516,7 +518,8 @@ def action_parameters (model, version=None, oformat='text'):
                 elif ivalue is None:
                     ivalue = ''
 
-                print (f'{k:30} : {str(ivalue):30} #{ioptio} {idescr}')
+                #print (f'{k:30} : {str(ivalue):30} #{ioptio} {idescr}')
+                print (f'{k:30} : {str(ivalue):30}')
 
         return True, 'parameters listed'
 
