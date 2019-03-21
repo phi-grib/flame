@@ -112,12 +112,13 @@ class SVM(BaseEstimator):
             try:
                 # Check type of model
                 if self.param.getVal('quantitative'):
-                    self.optimize(X, Y, svm.SVR(), self.tune_parameters)
+                    self.optimize(X, Y, svm.SVR(**self.estimator_parameters),
+                                 self.tune_parameters)
                     results.append(
                         ('model', 'model type', 'SVM quantitative (optimized)'))
 
                 else:
-                    self.optimize(X, Y, svm.SVC(probability=True),
+                    self.optimize(X, Y, svm.SVC(**self.estimator_parameters),
                                   self.tune_parameters)
                     results.append(
                         ('model', 'model type', 'SVM qualitative (optimized)'))
