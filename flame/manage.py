@@ -453,6 +453,7 @@ def action_parameters (model, version=None, oformat='text'):
 
                 ivalue = ''
                 idescr = ''
+                ioptio = ''
 
                 ## newest parameter formats are extended and contain
                 ## rich metainformation for each entry
@@ -474,19 +475,33 @@ def action_parameters (model, version=None, oformat='text'):
                                     iivalue = intv["value"]
 
                                 iidescr = ''
-                                if "description" in intv:
+                                if "description" in intv and intv["description"] is not None:
                                     iidescr = intv["description"]
+
+                                iioptio = ''
+                                if 'options' in intv:
+                                    toptio = intv['options']
+
+                                    if isinstance(toptio, list):
+                                        if toptio != [None]:
+                                            iioptio = f' {toptio}'
 
                                 if isinstance (iivalue, float):
                                     iivalue =  f'{iivalue:f}'
                                 elif iivalue is None:
                                     iivalue = ''
 
-                                print (f'   {intk:27} : {str(iivalue):30} # {iidescr}')
+                                print (f'   {intk:27} : {str(iivalue):30} #{iioptio} {iidescr}')
                             continue
 
                     if 'description' in v:
                         idescr = v['description'] 
+
+                    if 'options' in v:
+                        toptio = v['options']
+
+                        if isinstance(toptio, list):
+                            ioptio = f' {toptio}'
 
                 ### compatibility: old stile parameters
                 else:
@@ -501,7 +516,7 @@ def action_parameters (model, version=None, oformat='text'):
                 elif ivalue is None:
                     ivalue = ''
 
-                print (f'{k:30} : {str(ivalue):30} # {idescr}')
+                print (f'{k:30} : {str(ivalue):30} #{ioptio} {idescr}')
 
         return True, 'parameters listed'
 
