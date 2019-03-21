@@ -94,7 +94,7 @@ SDFile_activity:
   description: Name of the activity field in the SDF file
   dependencies: 
     input_type: molecule
-  comments: This data is provided my the user input file at the web interface
+  comments: 
   group: data
 
 SDFile_name:
@@ -108,7 +108,7 @@ SDFile_name:
   description: Name of the identifier field in the SDF file
   dependencies: 
     input_type: molecule
-  comments: This data is provided my the user input file at the web interface
+  comments: 
   group: data
 
 TSV_activity:
@@ -120,7 +120,7 @@ TSV_activity:
   description: Name of the activity field in the TSV file
   dependencies: 
     input_type: data
-  comments: This data is provided my the user input file at the web interface
+  comments: 
   group: data 
 
 TSV_objnames:
@@ -153,7 +153,7 @@ TSV_varnames:
 
 computeMD_method:
   advanced: regular
-  object_type: list(string)
+  object_type: list
   writable: false
   value: 
     - RDKit_properties
@@ -195,7 +195,7 @@ MD_settings:
   dependencies: 
     - ext_input: false
     - input_type: molecule
-  comments: ""
+  comments: 
   group: data 
 
 ext_input:
@@ -232,7 +232,7 @@ SDFile_experimental:
   description: Experimental measure field in the SDF file
   dependencies: 
     input_type: molecule
-  comments: Values are obtained from SDFile
+  comments: 
   group: data    
 
 modelingToolkit:
@@ -546,7 +546,7 @@ SVM_parameters:
         - null
       description: 
     kernel:
-      object_type: str
+      object_type: string
       writable: false
       value: rbf
       options:
@@ -642,7 +642,7 @@ SVM_optimize:
         - auto
       description: 
     kernel:
-      object_type: str
+      object_type: string
       writable: false
       value: 
         - rbf
