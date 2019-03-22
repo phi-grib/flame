@@ -83,6 +83,37 @@ class Idata:
             self.ifile = input_source
             self.dest_path = os.path.dirname(self.ifile)
 
+
+    def captureStdError (self, status):
+
+        if self.param.getVal('verbose_error'):
+            return
+
+        if status:
+            # When running from a ipython notebooks fileno() breaks
+            # Handle the exception notifying the issue.
+            LOG.disabled = True
+            try:
+                self.stderr_fileno = sys.stderr.fileno()  # saves current syserr
+                self.stderr_save = os.dup(self.stderr_fileno)
+
+                # open a specific RDKit log file
+                with open('errorRDKit.log', 'w') as self.stderr_fd:
+                    os.dup2(self.stderr_fd.fileno(), self.stderr_fileno)
+            except:
+                pass
+        else:                
+            # Handle the exception due to undefined variable when
+            # previous catch fails to define syserr
+            LOG.disabled = False
+            try:
+                # close the RDKit log
+                self.stderr_fd.close()  
+                # restore old syserr                   
+                os.dup2(self.stderr_save, self.stderr_fileno)   
+            except:
+                pass
+
     def extractInformation(self, ifile):
         '''
         Extracts molecule names, biological anotations and experimental values
@@ -275,7 +306,7 @@ class Idata:
                         continue
 
                 else:
-                    LOG.info(f'Skipping normalization.')
+                    #LOG.info(f'Skipping normalization.')
                     parent = Chem.MolToMolBlock(m)
 
                 # in any case, write parent plus internal ID (flameID)
@@ -1119,39 +1150,14 @@ class Idata:
 
                 return 
 
-
         # processing for molecular input (for now an SDFile)
         if input_type == 'molecule':
-                # trick to avoid RDKit dumping warnings to the console
-                if not self.param.getVal('verbose_error'):
-                    # When running from a ipython notebooks fileno() breaks
-                     # Handle the exception notifying the issue.
-                    try:
-                        stderr_fileno = sys.stderr.fileno()  # saves current syserr
-                        stderr_save = os.dup(stderr_fileno)
-                        # open a specific RDKit log file
-                        stderr_fd = open('errorRDKit.log', 'w')
-                        os.dup2(stderr_fd.fileno(), stderr_fileno)
-                    except:
-                        LOG.warning('Unable to log syserror, this'
-                        ' probably means flame is called from an ipython'
-                        ' interactive terminal. Otherwise, please'
-                        ' notify the developers')
 
-                self._run_molecule()
+            self.captureStdError(True)
+            self._run_molecule()
+            self.captureStdError(False)
                 
-                # Handle the exception due to undefined variable when
-                # previous catch fails to define syserr
-                try:
-                    if not self.param.getVal('verbose_error'):
-                        # close the RDKit log
-                        stderr_fd.close()  
-                        # restore old syserr                   
-                        os.dup2(stderr_save, stderr_fileno)   
-                except:
-                    pass
-
-        # processing for non-molecular input (not implemented)
+        # processing for non-molecular input
         elif input_type == 'data':
             self._run_data()
 
