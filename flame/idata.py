@@ -85,6 +85,12 @@ class Idata:
 
 
     def captureStdError (self, status):
+        '''
+        This function captures errors sent by RDKit to stderror and adds them
+        to a file called errorRDKit.log
+
+        It is not active unless the parameter 'verbose error' is set to False
+        '''
 
         if self.param.getVal('verbose_error'):
             return

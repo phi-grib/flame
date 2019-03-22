@@ -365,7 +365,8 @@ def _RDKit_descriptors(ifile, **kwargs) -> (bool, (np.ndarray, list, list)):
         return False, 'Unable to compute RDKit MD'
 
     LOG.info('Computing RDKit descriptors...')
-    # what is this??
+
+    # colecciona lista de descriptores moleculares
     nms = [x[0] for x in Descriptors._descList]
 
     md = MoleculeDescriptors.MolecularDescriptorCalculator(nms)
@@ -467,22 +468,17 @@ def _RDKit_properties(ifile, **kwargs) -> (bool, (np.ndarray, list, list)):
                 success_list.append(False)
                 continue
 
-            # xmatrix [num_obj] = properties.ComputeProperties(mol)
+            descriptors = properties.ComputeProperties(mol)
+
+            if np.isnan(descriptors).any():
+                success_list.append(False)
+                continue
+            
             if num_obj == 0:
-                descriptors = properties.ComputeProperties(mol)
-                # what is going on here??
-                if np.isnan(xmatrix).any():
-                    success_list.append(False)
-                    continue
-                else:
-                    xmatrix = descriptors
+                xmatrix = descriptors
+                LOG.debug(f'first descriptor vector computed')
             else:
-                descriptors = properties.ComputeProperties(mol)
-                if np.isnan(descriptors).any():
-                    success_list.append(False)
-                    continue
-                xmatrix = np.vstack(
-                    (xmatrix, descriptors))
+                xmatrix = np.vstack((xmatrix, descriptors))
 
             success_list.append(True)
             num_obj += 1
