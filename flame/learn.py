@@ -63,26 +63,12 @@ class Learn:
 
         self.conveyor.setError ('Not implemented')
 
-    def save_prepro(self):
-        ''' This function saves scaler and variable mask in a pickle file '''
-
-        # This dictionary contain all the objects which will be needed
-        # for prediction
-        prepro = {'scaler':self.scaler,\
-                  'variable_mask':self.variable_mask,\
-                  'version':1}
-
-        prepro_pkl_path = os.path.join(self.param.getVal('model_path'),
-                                      'preprocessing.pkl')
-        
-        with open(prepro_pkl_path, 'wb') as handle:
-            pickle.dump(prepro, handle, 
-                        protocol=pickle.HIGHEST_PROTOCOL)
-        LOG.debug('Model saved as:{}'.format(prepro_pkl_path))
-
-        return
 
     def preprocess(self):
+        ''' 
+        This function scales the X matrix and selects features 
+        The scaler and the variable mask are saved in a pickl file 
+        '''
 
         # Perform subsampling on the majority class. Consider to move.
         # Only for qualitative endpoints.
@@ -107,17 +93,19 @@ class Learn:
                 # there is no negative values.
                 scaler = ""
                 if self.param.getVal('modelAutoscaling') == 'StandardScaler':
-                        scaler = StandardScaler()
-                if self.param.getVal('modelAutoscaling') == 'MinMaxScaler':
+                    scaler = StandardScaler()
+                    LOG.info('Data scaled using StandarScaler')
+
+                elif self.param.getVal('modelAutoscaling') == 'MinMaxScaler':
                     scaler = MinMaxScaler(copy=True, feature_range=(0,1))
-                # scaler = MinMaxScaler(copy=True, feature_range=(0,1))
+                    LOG.info('Data scaled using MinMaxScaler')
 
                 # The scaler is saved so it can be used later
                 # to prediction instances.
                 self.scaler = scaler.fit(self.X)
+
                 # Scale the data.
                 self.X = scaler.transform(self.X)
-                LOG.info('Data scaling performed')
             except Exception as e:
                 return False, f'Unable to perform scaling with exception: {e}'
           
@@ -144,7 +132,21 @@ class Learn:
         if len(self.Y) == 0:
             self.failed = True
             return False, 'No activity values'
-        self.save_prepro()
+
+        # This dictionary contain all the objects which will be needed
+        # for prediction
+        prepro = {'scaler':self.scaler,\
+                  'variable_mask':self.variable_mask,\
+                  'version':1}
+
+        prepro_pkl_path = os.path.join(self.param.getVal('model_path'),
+                                      'preprocessing.pkl')
+        
+        with open(prepro_pkl_path, 'wb') as handle:
+            pickle.dump(prepro, handle, 
+                        protocol=pickle.HIGHEST_PROTOCOL)
+
+        LOG.debug('Model saved as:{}'.format(prepro_pkl_path))
 
         return True, 'OK'
 

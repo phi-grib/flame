@@ -274,7 +274,6 @@ class Apply:
                                  'External validation results')
 
     def preprocess(self, X):
-
         ''' This function loads the scaler and variable mask from a pickle file 
         and apply them to the X matrix passed as an argument'''
 
