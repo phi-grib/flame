@@ -23,10 +23,6 @@
 # along with Flame.  If not, see <http://www.gnu.org/licenses/>.
 
 from flame.stats.base_model import BaseEstimator
-from flame.stats.base_model import getCrossVal
-from flame.stats.scale import scale, center
-from flame.stats.model_validation import CF_QuanVal
-
 from sklearn import svm
 from copy import copy
 

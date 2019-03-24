@@ -19,10 +19,11 @@ modelAutoscaling:
   advanced: regular
   object_type: string
   writable: false
-  value: StandardScaler
+  value: MinMaxScaler
   options:
     - StandardScaler
     - MinMaxScaler
+    - RobustScaler
     - null
   description: Scaling method. Null means that raw, unscaled data, will be used 
   dependencies: null

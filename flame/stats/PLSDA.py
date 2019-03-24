@@ -27,10 +27,6 @@
 # Study more in deep
 
 from flame.stats.base_model import BaseEstimator
-from flame.stats.base_model import getCrossVal
-from flame.stats.scale import scale, center
-from flame.stats.model_validation import CF_QuanVal
-
 import copy
 
 from sklearn.cross_decomposition import PLSCanonical,\
