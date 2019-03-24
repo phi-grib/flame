@@ -1077,7 +1077,7 @@ class Idata:
         activity_param = self.param.getVal('TSV_activity')
         LOG.debug('creating ymatrix from column {}'.format(activity_param))
         if activity_param in var_nam:
-            col = var_nam.index(activity_param)
+            col = var_nam.index(activity_param) +1
             ymatrix = xmatrix[:, col]
             xmatrix = np.delete(xmatrix, col, 1)
             utils.add_result(self.results, ymatrix, 'ymatrix', 'Activity', 'decoration',
@@ -1102,6 +1102,8 @@ class Idata:
         if len(smiles) > 0:
             utils.add_result(self.results, smiles, 'SMILES', 'SMILES',
                              'smiles', 'objs', 'Structure of the molecule in SMILES format')
+        y = self.results['ymatrix']
+
         return
 
     def _run_ext_data(self):

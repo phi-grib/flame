@@ -108,13 +108,13 @@ class RF(BaseEstimator):
                 try:
                     # Check type of model
                     if self.param.getVal('quantitative'):
-                        self.optimize(X, Y, RandomForestRegressor(),
+                        self.optimize(X, Y, RandomForestRegressor(random_state=46),
                                     self.tune_parameters)
                         results.append(
                             ('model', 'model type', 
                             'RF quantitative (optimized)'))
                     else:
-                        self.optimize(X, Y, RandomForestClassifier(),
+                        self.optimize(X, Y, RandomForestClassifier(random_state=46),
                                       self.tune_parameters)
                         results.append(
                             ('model', 'model type', 
