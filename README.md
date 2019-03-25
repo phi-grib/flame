@@ -141,7 +141,7 @@ flame -c manage -a export -e MyModel
 ```	
 This creates a very compact file with the extension .tgz in the local directory. It can be sent by e-mail or uploaded to a repository in the cloud from where the company can download it. In order to use it, the company can easily install the new model using the command
 ```sh
-flame -c manage -a import -e MyModel
+flame -c manage -a import -f MyModel.tgz
 ```	
 And then the model is immediately operative and able to produce exactly the same predictions we obtain in the development environment  
 
