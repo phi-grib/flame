@@ -2,5 +2,5 @@ admin_email: manuel.pastor@upf.edu
 admin_name: Manuel Pastor
 config_status: true
 homepage: http://phi.upf.edu
-model_repository_path: /home/testmodels
+model_repository_path: /home/jcgomez/projects/internals/flame/flame/flame/models
 provider: UPF (Pompeu Fabra University)

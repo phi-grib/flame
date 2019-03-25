@@ -575,7 +575,7 @@ modelAutoscaling:
   group: data
   object_type: string
   options: [StandardScaler, MinMaxScaler, null]
-  value: StandardScaler
+  value: MinMaxScaler
   writable: false
 model_path: {value: 'C:\Users\mpastor\Documents\soft\flame\flame\models\CACO2\dev'}
 model_set:
