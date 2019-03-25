@@ -282,7 +282,15 @@ class Parameters:
         ## ---------------------------------------
 
         if "value" in self.p[key]:
-            self.p[key]['value'].append(value)
+            vt = self.p[key]['value']
+
+            # if the key is already a list, append the new value at the end
+            if isinstance (vt, list):
+                self.p[key]['value'].append(value)
+            # ... otherwyse, create a list with the previous content and the
+            # new value
+            else:
+                self.p[key]['value']=[vt, value]
 
     def getModelSet (self):
         ''' Returns a Boolean indicating if the model uses external input
