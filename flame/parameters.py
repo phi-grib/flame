@@ -133,6 +133,10 @@ class Parameters:
                 if isinstance(val ,dict):
                     for inner_key in val:
                         inner_val = val[inner_key]
+
+                        if inner_val == 'None':
+                            inner_val = None
+
                         self.setInnerVal(key, inner_key, inner_val)
                         #print ('@delta: adding',key, inner_key, inner_val)
                 else:
