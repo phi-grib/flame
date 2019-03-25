@@ -70,7 +70,7 @@ pip install -e .
 After installation is completed, run the configuration command to configure the directory where flame will place the models.
 
 ```bash
-flame -c conf
+flame -c config
 ```
 
 will use a default directory structure following the XDG specification in GNU/Linux, %APPDATA% in windows and `~/Library/Application Support/flame_models` in Mac OS X.
