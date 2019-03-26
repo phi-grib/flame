@@ -820,8 +820,6 @@ class BaseEstimator:
         # This dictionary contain all the objects which will be needed
         # for prediction
         dict_estimator = {'estimator' : self.estimator,\
-                            'scaler' : self.scaler,\
-                            'variable_mask' : self.variable_mask,\
                             'version' : 1}
 
         model_pkl_path = os.path.join(self.param.getVal('model_path'),
