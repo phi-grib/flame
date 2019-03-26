@@ -19,7 +19,7 @@ modelAutoscaling:
   advanced: regular
   object_type: string
   writable: false
-  value: StandardScaler
+  value: MinMaxScaler
   options:
     - StandardScaler
     - MinMaxScaler
