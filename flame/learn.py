@@ -49,6 +49,9 @@ class Learn:
 
         self.X = self.conveyor.getVal('xmatrix')
         self.Y = self.conveyor.getVal('ymatrix')
+        # Preprocessing variables
+        self.scaler = None
+        self.variable_mask = None
 
     def run_custom(self):
         '''
@@ -106,7 +109,21 @@ class Learn:
         if len(self.Y) == 0:
             self.failed = True
             return False, 'No activity values'
+            
+        # This dictionary contain all the objects which will be needed
+        # for prediction
+        prepro = {'scaler':self.scaler,\
+                  'variable_mask':self.variable_mask,\
+                  'version':1}
 
+        prepro_pkl_path = os.path.join(self.param.getVal('model_path'),
+                                      'preprocessing.pkl')
+        
+        with open(prepro_pkl_path, 'wb') as handle:
+            pickle.dump(prepro, handle, 
+                        protocol=pickle.HIGHEST_PROTOCOL)
+
+        LOG.debug('Model saved as:{}'.format(prepro_pkl_path))
         return True, 'OK'
 
 
