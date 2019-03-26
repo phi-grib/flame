@@ -33,6 +33,7 @@ from flame.stats.PLSDA import PLSDA
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.preprocessing import StandardScaler
 from flame.stats.imbalance import *  
+from flame.stats import feature_selection
 
 from flame.util import utils, get_logger
 LOG = get_logger(__name__)
