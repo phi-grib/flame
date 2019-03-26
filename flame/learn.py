@@ -77,7 +77,7 @@ class Learn:
                 # This is necessary to avoid inconsistences in methods
                 # using self.nobj
                 LOG.info(f'{self.param.getVal("imbalance")}'
-                            f'sampling method performed')
+                            f' performed')
                 LOG.info(f'Number of objects after sampling: {self.X.shape[0]}')
             except Exception as e:
                 return False, (f'Unable to perform sampling'
@@ -86,8 +86,6 @@ class Learn:
         # Run scaling.
         if self.param.getVal('modelAutoscaling'):
             try:
-                # MinMaxScaler is used between range 1-0 so 
-                # there is no negative values.
                 scaler = ""
                 if self.param.getVal('modelAutoscaling') == 'StandardScaler':
                     scaler = StandardScaler()
@@ -96,6 +94,11 @@ class Learn:
                 elif self.param.getVal('modelAutoscaling') == 'MinMaxScaler':
                     scaler = MinMaxScaler(copy=True, feature_range=(0,1))
                     LOG.info('Data scaled using MinMaxScaler')
+                elif self.param.getVal('modelAutoscaling') == 'RobustScaler':
+                    scaler = RobustScaler()
+                    LOG.info('Data scaled using RobustScaler')
+                else:
+                    return False, 'Scaler not recognized'
 
                 # The scaler is saved so it can be used later
                 # to prediction instances.
@@ -109,14 +112,11 @@ class Learn:
         # Run feature selection. Move to a instance method.
         if self.param.getVal("feature_selection"):
             # TODO: implement feature selection with other scalers
-            if self.param.getVal('modelAutoscaling') == 'MinMaxScaler':
-                self.variable_mask, self.scaler = \
-                                    feature_selection.run_feature_selection(
-                                                self.X, self.Y, self.scaler,
-                                                self.param)
-                self.X = self.X[:, self.variable_mask]
-            else:
-                pass
+            self.variable_mask, self.scaler = \
+                                feature_selection.run_feature_selection(
+                                            self.X, self.Y, self.scaler,
+                                            self.param)
+            self.X = self.X[:, self.variable_mask]
 
         # Set the new number of instances/variables
         # if sampling/feature selection performed
@@ -144,8 +144,8 @@ class Learn:
                         protocol=pickle.HIGHEST_PROTOCOL)
 
         LOG.debug('Model saved as:{}'.format(prepro_pkl_path))
-
         return True, 'OK'
+
 
 
 
