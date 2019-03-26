@@ -30,7 +30,8 @@ from flame.stats.SVM import SVM
 from flame.stats.GNB import GNB
 from flame.stats.PLSR import PLSR
 from flame.stats.PLSDA import PLSDA
-
+from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import StandardScaler
 from flame.stats.imbalance import *  
 
 from flame.util import utils, get_logger

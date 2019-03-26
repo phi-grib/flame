@@ -355,7 +355,7 @@ class Apply:
         # preprocess
         success, result = self.preprocess(X)
         if not success:
-            self.conveyor.setError(message)
+            self.conveyor.setError(result)
             return
         X = result
         # Load model 
