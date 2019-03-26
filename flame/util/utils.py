@@ -65,8 +65,11 @@ def _read_configuration() -> dict:
     dict
     '''
     #LOG.info('reading configuration')
-    with open(get_conf_yml_path(), 'r') as config_file:
-        conf = yaml.safe_load(config_file)
+    try:
+        with open(get_conf_yml_path(), 'r') as config_file:
+            conf = yaml.safe_load(config_file)
+    except:
+        return False
 
     model_path = pathlib.Path(conf['model_repository_path'])
 
