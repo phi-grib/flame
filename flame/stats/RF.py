@@ -32,9 +32,6 @@ from sklearn.neighbors import KNeighborsRegressor
 from nonconformist.nc import AbsErrorErrFunc, RegressorNormalizer
 from copy import copy
 from flame.stats.base_model import BaseEstimator
-from flame.stats.model_validation import getCrossVal
-from flame.stats.scale import scale, center
-from flame.stats.model_validation import CF_QuanVal
 from flame.util import get_logger
 #from flame.parameters import Parameters
 

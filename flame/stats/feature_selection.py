@@ -24,7 +24,7 @@
 """ This file contains implemented methods to perform
     feature selection"""
 
-
+from sklearn.preprocessing import MinMaxScaler 
 from sklearn.feature_selection import  SelectKBest
 from sklearn.feature_selection import chi2
 from sklearn.feature_selection import f_regression
@@ -39,6 +39,8 @@ def selectkBest(X, Y, n, quantitative):
     if quantitative:
         function = f_regression
     else:
+        scaler = MinMaxScaler(copy=True, feature_range=(0,1))
+        X = scaler.fit_transform(X)
         function = chi2
     kbest = SelectKBest(function, n)
     kbest.fit(X,Y)
@@ -52,6 +54,7 @@ def run_feature_selection(X, Y, scaler, param):
 
     nobj, nvarx = np.shape(X)
     variable_mask = ''
+
 
     # When auto, the 10% top informative variables are retained.
     if param.getVal("feature_number") == "auto":
@@ -75,7 +78,8 @@ def run_feature_selection(X, Y, scaler, param):
     try:
         # Apply the variable selection algorithm obtaining
         # the variable mask.
-        variable_mask = selectkBest(X, Y, n_features, 
+        X_copy = X.copy()
+        variable_mask = selectkBest(X_copy, Y, n_features, 
                                     param.getVal('quantitative'))
         
         # The scaler has to be fitted to the reduced matrix
@@ -84,8 +88,6 @@ def run_feature_selection(X, Y, scaler, param):
         X = X[:, variable_mask]
         scaler = scaler.fit(X)
         X = scaler.transform(X)
-        # self.mux = self.mux.reshape(1, -1)[:, self.variable_mask]
-        # self.wgx = self.wgx.reshape(1, -1)[:, self.variable_mask]
         LOG.info(f'Variable selection applied, number of final variables:'
                     f'{n_features}')
     except Exception as e:
