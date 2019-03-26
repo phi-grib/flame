@@ -30,12 +30,13 @@ from flame.stats.SVM import SVM
 from flame.stats.GNB import GNB
 from flame.stats.PLSR import PLSR
 from flame.stats.PLSDA import PLSDA
-from sklearn.preprocessing import MinMaxScaler
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import MinMaxScaler 
+from sklearn.preprocessing import StandardScaler 
 from sklearn.preprocessing import RobustScaler
+
+
 from flame.stats.imbalance import *  
 from flame.stats import feature_selection
-
 from flame.util import utils, get_logger
 LOG = get_logger(__name__)
 
@@ -50,6 +51,7 @@ class Learn:
 
         self.X = self.conveyor.getVal('xmatrix')
         self.Y = self.conveyor.getVal('ymatrix')
+
         # Preprocessing variables
         self.scaler = None
         self.variable_mask = None
@@ -61,6 +63,7 @@ class Learn:
         '''
 
         self.conveyor.setError ('Not implemented')
+
 
     def preprocess(self):
         ''' 
@@ -146,8 +149,6 @@ class Learn:
 
         LOG.debug('Model saved as:{}'.format(prepro_pkl_path))
         return True, 'OK'
-
-
 
 
     def run_internal(self):

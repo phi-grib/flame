@@ -263,9 +263,6 @@ def _RDKit_morganFPS(ifile, **kwargs) -> (bool, (np.ndarray, list, list)):
     return True, results
 
 
-    raise NotImplementedError
-
-
 def _padel_descriptors(ifile):
     ''' 
     computes Padel molecular descriptors calling an external web service for
@@ -471,22 +468,17 @@ def _RDKit_properties(ifile, **kwargs) -> (bool, (np.ndarray, list, list)):
                 success_list.append(False)
                 continue
 
-            # xmatrix [num_obj] = properties.ComputeProperties(mol)
+            descriptors = properties.ComputeProperties(mol)
+
+            if np.isnan(descriptors).any():
+                success_list.append(False)
+                continue
+            
             if num_obj == 0:
-                descriptors = properties.ComputeProperties(mol)
-                # what is going on here??
-                if np.isnan(xmatrix).any():
-                    success_list.append(False)
-                    continue
-                else:
-                    xmatrix = descriptors
+                xmatrix = descriptors
+                LOG.debug(f'first descriptor vector computed')
             else:
-                descriptors = properties.ComputeProperties(mol)
-                if np.isnan(descriptors).any():
-                    success_list.append(False)
-                    continue
-                xmatrix = np.vstack(
-                    (xmatrix, descriptors))
+                xmatrix = np.vstack((xmatrix, descriptors))
 
             success_list.append(True)
             num_obj += 1
