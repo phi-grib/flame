@@ -862,21 +862,21 @@ class BaseEstimator:
         # Load rest of info in an extensible way
         # This allows to add new variables keeping
         # Retro-compatibility
-        if 'scaler' in dict_estimator.keys():
-            self.scaler = dict_estimator['scaler']
+        # if 'scaler' in dict_estimator.keys():
+        #     self.scaler = dict_estimator['scaler']
 
-        if 'variable_mask' in dict_estimator.keys():
-            self.variable_mask = dict_estimator['variable_mask']
+        # if 'variable_mask' in dict_estimator.keys():
+        #     self.variable_mask = dict_estimator['variable_mask']
 
-        # Check consistency between parameter file and pickle info
-        if self.param.getVal('modelAutoscaling') and \
-            self.scaler is None:
-            raise Exception('Inconsistency error. Autoscaling is True'
-            ' in parameter file but no Scaler loaded')
+        # # Check consistency between parameter file and pickle info
+        # if self.param.getVal('modelAutoscaling') and \
+        #     self.scaler is None:
+        #     raise Exception('Inconsistency error. Autoscaling is True'
+        #     ' in parameter file but no Scaler loaded')
 
-        if self.param.getVal('feature_selection') and \
-            self.variable_mask is None:
-            raise Exception('Inconsistency error. Feature is True'
-            ' in parameter file but no variable mask loaded')
+        # if self.param.getVal('feature_selection') and \
+        #     self.variable_mask is None:
+        #     raise Exception('Inconsistency error. Feature is True'
+        #     ' in parameter file but no variable mask loaded')
 
         return
