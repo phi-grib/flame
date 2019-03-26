@@ -32,9 +32,6 @@ from sklearn.neighbors import KNeighborsRegressor
 from nonconformist.nc import AbsErrorErrFunc, RegressorNormalizer
 from copy import copy
 from flame.stats.base_model import BaseEstimator
-from flame.stats.model_validation import getCrossVal
-from flame.stats.scale import scale, center
-from flame.stats.model_validation import CF_QuanVal
 from flame.util import get_logger
 #from flame.parameters import Parameters
 
@@ -108,14 +105,16 @@ class RF(BaseEstimator):
                 try:
                     # Check type of model
                     if self.param.getVal('quantitative'):
-                        self.optimize(X, Y, RandomForestRegressor(),
-                                    self.tune_parameters)
+                        self.optimize(X, Y, RandomForestRegressor(
+                            **self.estimator_parameters),
+                            self.tune_parameters)
                         results.append(
                             ('model', 'model type', 
                             'RF quantitative (optimized)'))
                     else:
-                        self.optimize(X, Y, RandomForestClassifier(),
-                                      self.tune_parameters)
+                        self.optimize(X, Y, RandomForestClassifier(
+                                **self.estimator_parameters),
+                                self.tune_parameters)
                         results.append(
                             ('model', 'model type', 
                              'RF qualitative (optimized)'))
