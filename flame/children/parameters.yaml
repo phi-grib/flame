@@ -19,7 +19,7 @@ modelAutoscaling:
   advanced: regular
   object_type: boolean
   writable: false
-  value: true
+  value: null
   options:
     - true
     - false
