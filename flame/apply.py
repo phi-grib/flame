@@ -353,7 +353,7 @@ class Apply:
         # TODO: Load scaler and variable mask and preprocess the data
 
         # preprocess
-        success, message = self.preprocess()
+        success, message = self.preprocess(X)
         if not success:
             self.conveyor.setError(message)
             return
