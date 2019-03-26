@@ -1,176 +1,683 @@
-# system settings
-verbose_error: true
-numCPUs: 1
-mol_batch: series                    # series | objects | auto (not implemented!)
-
-# input settings
-input_type: molecule                  # molecule | data | ext_data
-normalize_method:                     # null | standardize       
-- standardize
-
-ionize_method: null                   # null | moka
-convert3D_method: null                # null | ETKDG
-computeMD_method:                     # RDKit_properties | RDKit_md | padel | custom
-- RDKit_properties
-
-ext_input: false                      # external input source TRUE
-model_set:                            # list of models used for producing input
-- endpoint: MAGENTA                   # - model name
-  version: 1                          # - model version
-- endpoint: MAGENTA
-  version: 2
-
-# Output 
-output_format:                        # JSON | TSV  (dump results to output.tsv and errors to error.tsv)
-- JSON 
-- TSV     
-         
-output_md: true                      # if true dump the MD generated to 'output_md.tsv'
-
-# SDFile settings
-SDFile_activity: activity            # str
-SDFile_experimental: IC50             # str
-SDFile_name:                          # str
-- GENERIC_NAME                        
-- name
-
-# TSV settings
-TSV_activity: activity                # str
-TSV_objnames: true                    # true if the object names are in the first column
-TSV_varnames: true                    # true if the variable names are in the first row
-
-# modeling settings
-modelingToolkit: internal             # internal | R | KNIME | custom
-model: RF                             # RF | SVM | GNB | PLSR | PLSDA
-modelAutoscaling: true               # true | false
-quantitative: true
-tune: true
-imbalance: simple_subsapling          # simple_subsampling
-feature_selection: Kbest               # Kbest | null
-feature_number: auto                  # auto: Sets max features to 10% of entries | Number
-
-
-ModelValidationCV: loo
-ModelValidationLC: false
-ModelValidationN: 2
-ModelValidationP: 1
-
-# SVM settings
-SVM_parameters:
-  C: 1.0
-  class_weight: balanced
-  coef0: 0.0
-  decision_function_shape: ovr
-  degree: 3
-  epsilon: 0.1
-  gamma: auto
-  kernel: rbf
-  probability: false
-  random_state: 46
-  shrinking: true
-  tol: 0.001
-
-SVM_optimize:
-  C:
-  - 1
-  - 10
-  - 100
-  class_weight:
-  - null
-  - balanced
-  coef0:
-  - 0.0
-  - 0.8
-  - 100.0
-  degree:
-  - 1
-  - 3
-  - 5
-  gamma:
-  - auto
-  kernel:
-  - rbf
-  random_state:
-  - 46
-
-# RF settings
-RF_parameters:
-  class_weight: balanced
-  max_depth: null
-  max_features: sqrt
-  n_estimators: 200
-  n_jobs: 1
-  oob_score: true
-  random_state: 46
-
-RF_optimize:
-  class_weight:
-  - null
-  - balanced
-  max_features:
-  - sqrt
-  - log2
-  n_estimators:
-  - 25
-  - 50
-  - 75
-  oob_score:
-  - true
-  random_state:
-  - 46
-
-#GNB settings
 GNB_parameters:
-  priors: null
-
-#PLSR settings
-PLSR_parameters:
-  scale: false
-  tol: 0.000006
-  n_components: 3
-  # Manual optimization returns the MCC for the diffent
-  # number of latent variables considered in 
-  # n_components (below) with the best threshold for
-  # optimum MCC. auto uses sk-learn gridsearch
-  # with the same paramters.
-  optimize: manual   # manual | auto  
-
-PLSR_optimize:
-  n_components:
-  - 1
-  - 2
-  - 3
-  - 4
-  - 5
-  - 6
-  - 7
-
-#PLSDA settings
-PLSDA_parameters:
-  scale: false
-  tol: 0.000006
-  n_components: 2
-  threshold: null
-  # Manual optimization returns the MCC for the diffent
-  # number of latent variables considered in 
-  # n_components (below) with the best threshold for
-  # optimum MCC. auto uses sk-learn gridsearch
-  # with the same paramters.
-  optimize: manual   # manual | auto  
-
+  advanced: advanced
+  comments: null
+  dependencies: {model: GNB, quantitative: false}
+  description: GNB Parameters
+  group: modeling
+  object_type: dictionary
+  options: null
+  value:
+    priors:
+      description: null
+      object_type: list
+      options: [null]
+      value: null
+      writable: false
+  writable: false
+MD_settings:
+  advanced: regular
+  comments: null
+  dependencies:
+  - {ext_input: false}
+  - {input_type: molecule}
+  description: Settings for molecular descriptors (when needed)
+  group: data
+  object_type: dictionary
+  options: null
+  value:
+    morgan_features:
+      description: Whether to use or not feature-based invariants.
+      object_type: boolean
+      options: [true, false]
+      value: true
+      writable: false
+    morgan_radius:
+      description: Morgan fingerprint radius
+      object_type: int
+      options: [null]
+      value: 2
+      writable: true
+  writable: false
+ModelValidationCV:
+  advanced: regular
+  comments: null
+  dependencies: null
+  description: Selection of cross-validation method
+  group: modeling
+  object_type: string
+  options: [loo, kfold, lpo]
+  value: loo
+  writable: false
+ModelValidationN:
+  advanced: regular
+  comments: null
+  dependencies: {ModelValidationCV: kfold}
+  description: Number of folds
+  group: modeling
+  object_type: int
+  options: null
+  value: 2
+  writable: true
+ModelValidationP:
+  advanced: regular
+  comments: null
+  dependencies: {ModelValidationCV: lpo}
+  description: Size of the test set
+  group: modeling
+  object_type: int
+  options: null
+  value: 1
+  writable: true
 PLSDA_optimize:
-  n_components:
-  - 1
-  - 2
-  - 3
-  - 4
-  - 5
-  - 6
-  threshold:
-  - 0.6
-  - 0.4
-  - 0.5
-
-# conformal predictor settings
-conformal: true
-conformalSignificance: 0.5
+  advanced: advanced
+  comments: null
+  dependencies: {model: PLSDA, quantitative: false}
+  description: PLSDA optimize parameters
+  group: modeling
+  object_type: dictionary
+  options: null
+  value:
+    n_components:
+      description: null
+      object_type: int
+      options: [1, 2, 3, 4, 5, 6]
+      value: [1, 2, 3, 4, 5, 6]
+      writable: true
+    scale:
+      description: null
+      object_type: boolean
+      options: [true, false]
+      value: [true, false]
+      writable: false
+    threshold:
+      description: null
+      object_type: float
+      options: [0.4, 0.5, 0.6]
+      value: [0.4, 0.5, 0.6]
+      writable: true
+    tol:
+      description: null
+      object_type: float
+      options: [6.0e-06]
+      value: 6.0e-06
+      writable: true
+  writable: false
+PLSDA_parameters:
+  advanced: advanced
+  comments: null
+  dependencies: {model: PLSDA, quantitative: false}
+  description: PLSDA Parameters
+  group: modeling
+  object_type: dictionary
+  options: null
+  value:
+    n_components:
+      description: null
+      object_type: int
+      options: [null]
+      value: 2
+      writable: true
+    optimize:
+      description: null
+      object_type: string
+      options: [manual, auto]
+      value: manual
+      writable: true
+    scale:
+      description: null
+      object_type: boolean
+      options: [true, false]
+      value: false
+      writable: false
+    threshold:
+      description: null
+      object_type: float
+      options: [0.5]
+      value: 0.5
+      writable: true
+    tol:
+      description: null
+      object_type: float
+      options: [null]
+      value: 6.0e-06
+      writable: true
+  writable: false
+PLSR_optimize:
+  advanced: advanced
+  comments: null
+  dependencies: {model: PLSR, quantitative: true}
+  description: PLSR optimize parameters
+  group: modeling
+  object_type: dictionary
+  options: null
+  value:
+    n_components:
+      description: null
+      object_type: list
+      options: [1, 2, 3, 4, 5, 6]
+      value: [1, 2, 3, 4, 5, 6]
+      writable: true
+  writable: false
+PLSR_parameters:
+  advanced: advanced
+  comments: null
+  dependencies: {model: PLSR, quantitative: true}
+  description: PLSR Parameters
+  group: modeling
+  object_type: dictionary
+  options: null
+  value:
+    n_components:
+      description: null
+      object_type: int
+      options: [null]
+      value: 2
+      writable: true
+    optimize:
+      description: null
+      object_type: string
+      options: [manual, auto]
+      value: manual
+      writable: true
+    scale:
+      description: null
+      object_type: boolean
+      options: [true, false]
+      value: false
+      writable: false
+    tol:
+      description: null
+      object_type: float
+      options: [null]
+      value: 6.0e-06
+      writable: true
+  writable: false
+RF_optimize:
+  advanced: advanced
+  comments: null
+  dependencies: {model: RF, tune: true}
+  description: Random Forest Optimize parameters
+  group: modeling
+  object_type: dictionary
+  options: null
+  value:
+    class_weight:
+      description: null
+      object_type: list
+      options: [default, balanced]
+      value: [default, balanced]
+      writable: false
+    max_features:
+      description: null
+      object_type: string
+      options: [auto, sqrt, log2, null]
+      value: [sqrt, log2]
+      writable: true
+    n_estimators:
+      description: null
+      max: 500
+      min: 0
+      object_type: int
+      options: null
+      value: [50, 100]
+      writable: true
+  writable: false
+RF_parameters:
+  advanced: advanced
+  comments: null
+  dependencies: {model: RF}
+  description: Random Forest Parameters
+  group: modeling
+  object_type: dictionary
+  options: null
+  value:
+    class_weight:
+      description: null
+      object_type: string
+      options: [null, balanced]
+      value: balanced
+      writable: false
+    max_depth:
+      description: null
+      object_type: string
+      options: [null]
+      value: null
+      writable: true
+    max_features:
+      description: null
+      object_type: string
+      options: [auto, sqrt, log2, null]
+      value: sqrt
+      writable: true
+    n_estimators:
+      description: null
+      max: 500
+      min: 1
+      object_type: int
+      options: [50, 100, 150]
+      value: 200
+      writable: true
+    oob_score:
+      description: null
+      object_type: boolean
+      options: [true, false]
+      value: true
+      writable: false
+    random_state:
+      description: null
+      object_type: int
+      options: [46, null]
+      value: 46
+      writable: true
+  writable: false
+SDFile_activity:
+  advanced: regular
+  comments: null
+  dependencies: {input_type: molecule}
+  description: Name of the activity field in the SDF file
+  group: data
+  object_type: string
+  options: null
+  value: activity
+  writable: true
+SDFile_experimental:
+  advanced: advanced
+  comments: null
+  dependencies: {input_type: molecule}
+  description: Experimental measure field in the SDF file
+  group: data
+  object_type: string
+  options: null
+  value: null
+  writable: true
+SDFile_name:
+  advanced: regular
+  comments: null
+  dependencies: {input_type: molecule}
+  description: Name of the identifier field in the SDF file
+  group: data
+  object_type: list
+  options: null
+  value: [GENERIC_NAME, name]
+  writable: true
+SVM_optimize:
+  advanced: advanced
+  comments: null
+  dependencies: {model: SVM}
+  description: SVM optimize parameters
+  group: modeling
+  object_type: dictionary
+  options: null
+  value:
+    C:
+      description: null
+      object_type: float
+      options: [null, 1, 3, 5]
+      value: [1, 10, 100]
+      writable: true
+    class_weight:
+      description: null
+      object_type: list
+      options: [default, balanced]
+      value: [default, balanced]
+      writable: false
+    coef0:
+      description: null
+      object_type: float
+      options: [null, 0, 0.8, 100]
+      value: [0, 0.8, 100]
+      writable: true
+    degree:
+      description: null
+      object_type: int
+      options: [null, 1, 3, 5]
+      value: [1, 3, 5]
+      writable: true
+    gamma:
+      description: null
+      object_type: float
+      options: [null, auto]
+      value: [auto]
+      writable: true
+    kernel:
+      description: null
+      object_type: string
+      options: [null, rfb, linear, poly]
+      value: [rbf]
+      writable: false
+    probability:
+      description: null
+      object_type: boolean
+      options: [true, false]
+      value: [true]
+      writable: false
+    shrinking:
+      description: null
+      object_type: boolean
+      options: [true, false]
+      value: [true]
+      writable: false
+  writable: false
+SVM_parameters:
+  advanced: advanced
+  comments: null
+  dependencies: {model: SVM}
+  description: SVM Parameters
+  group: modeling
+  object_type: dictionary
+  options: null
+  value:
+    C:
+      description: null
+      object_type: float
+      options: [null]
+      value: 1
+      writable: true
+    class_weight:
+      description: null
+      object_type: string
+      options: [null, balanced]
+      value: null
+      writable: false
+    coef0:
+      description: null
+      object_type: float
+      options: [null]
+      value: 0
+      writable: true
+    degree:
+      description: null
+      object_type: int
+      options: [null]
+      value: 3
+      writable: true
+    gamma:
+      description: null
+      object_type: float
+      options: [null]
+      value: auto
+      writable: true
+    kernel:
+      description: null
+      object_type: string
+      options: [null, rbf, linear, poly]
+      value: rbf
+      writable: false
+    probability:
+      description: null
+      object_type: boolean
+      options: [true, false]
+      value: true
+      writable: false
+    random_state:
+      description: null
+      object_type: int
+      options: [46, null]
+      value: 46
+      writable: true
+    shrinking:
+      description: null
+      object_type: boolean
+      options: [true, false]
+      value: true
+      writable: false
+  writable: false
+TSV_activity:
+  advanced: regular
+  comments: null
+  dependencies: {input_type: data}
+  description: Name of the activity field in the TSV file
+  group: data
+  object_type: string
+  options: null
+  value: activity
+  writable: true
+TSV_objnames:
+  advanced: regular
+  comments: null
+  dependencies: {input_type: data}
+  description: True if object names in first column of data matrix
+  group: data
+  object_type: boolean
+  options: [true, false]
+  value: true
+  writable: false
+TSV_varnames:
+  advanced: regular
+  comments: null
+  dependencies: {input_type: data}
+  description: True if variable names in first row of data matrix
+  group: data
+  object_type: boolean
+  options: [true, false]
+  value: true
+  writable: false
+computeMD_method:
+  advanced: regular
+  comments: ''
+  dependencies: ['ext_input:false', 'input_type:molecule']
+  description: Selection of molecular descriptors to be used in model generation
+  group: data
+  object_type: list
+  options: [RDKit_properties, RDKit_md, morganFP, padel, custom]
+  value: [RDKit_properties]
+  writable: false
+conformal:
+  advanced: regular
+  comments: So far it can not be applied to PLSDA
+  dependencies: {model: RF}
+  description: If true, use the conformal variant of the selected modeling method,
+    when available
+  group: modeling
+  object_type: boolean
+  options: [true, false]
+  value: true
+  writable: false
+conformalSignificance:
+  advanced: regular
+  comments: So far it can not be applied to PLSDA
+  dependencies: {conformal: true}
+  description: Conformal estimator significance (from 0 to 1)
+  group: modeling
+  max: 1
+  min: 0
+  object_type: float
+  options: null
+  value: 0.2
+  writable: true
+convert3D_method:
+  advanced: regular
+  comments: null
+  dependencies: {input_type: molecule}
+  description: Selection of a 3D conversion method
+  group: data
+  object_type: string
+  options: [ETKDG, null]
+  value: null
+  writable: false
+endpoint: {value: CACO2}
+ext_input:
+  advanced: advanced
+  comments: null
+  dependencies: null
+  description: Whether to use or not external input source (from other models)
+  group: data
+  object_type: boolean
+  options: [true, false]
+  value: false
+  writable: false
+feature_number:
+  advanced: regular
+  comments: null
+  dependencies: {feature_selection: Kbest}
+  description: Number of features to keep
+  group: modeling
+  object_type: string
+  options: [auto]
+  value: auto
+  writable: true
+feature_selection:
+  advanced: regular
+  comments: null
+  dependencies: null
+  description: Whether to perform or not feature selection
+  group: modeling
+  object_type: string
+  options: [null, Kbest]
+  value: null
+  writable: false
+imbalance:
+  advanced: regular
+  comments: null
+  dependencies: null
+  description: Whether to perform or not sub/over sampling strategies
+  group: modeling
+  object_type: string
+  options: [null, simple_subsampling]
+  value: null
+  writable: false
+input_type:
+  advanced: regular
+  comments: null
+  dependencies: null
+  description: Type of input data.
+  group: data
+  object_type: string
+  options: [molecule, data, ext_data]
+  value: molecule
+  writable: false
+ionize_method:
+  advanced: regular
+  comments: null
+  dependencies: {input_type: molecule}
+  description: Selection of a ionization method
+  group: data
+  object_type: string
+  options: [null, moka]
+  value: null
+  writable: false
+md5: {value: fba6cadc3ecdd59c902ca5fe08142945}
+model:
+  advanced: regular
+  comments: null
+  dependencies: {input_type: molecule}
+  description: List of available algorithms
+  group: modeling
+  object_type: string
+  options: [RF, SVM, PLSR, PLSDA, GNB]
+  value: RF
+  writable: false
+modelAutoscaling:
+  advanced: regular
+  comments: null
+  dependencies: null
+  description: Scaling method. Null means that raw, unscaled data, will be used
+  group: data
+  object_type: string
+  options: [StandardScaler, MinMaxScaler, null]
+  value: StandardScaler
+  writable: false
+model_path: {value: 'C:\Users\mpastor\Documents\soft\flame\flame\models\CACO2\dev'}
+model_set:
+  advanced: advanced
+  comments: Values are obtained from available models
+  dependencies: {ext_input: true}
+  description: Selection of available models to get the input from
+  group: data
+  object_type: list
+  options: null
+  value: null
+  writable: true
+modelingToolkit:
+  advanced: regular
+  comments: null
+  dependencies: {input_type: molecule}
+  description: List of toolkits usable to build models
+  group: modeling
+  object_type: string
+  options: [internal, R, KNIME, custom]
+  value: internal
+  writable: false
+mol_batch:
+  advanced: regular
+  comments: null
+  dependencies: null
+  description: How molecules are going to be processed
+  group: preferences
+  object_type: string
+  options: [series, objects]
+  value: series
+  writable: false
+normalize_method:
+  advanced: regular
+  comments: null
+  dependencies: {input_type: molecule}
+  description: Selection of a standardization method
+  group: data
+  object_type: string
+  options: [null, standardize]
+  value: standardize
+  writable: false
+numCPUs:
+  advanced: advanced
+  comments: null
+  dependencies: null
+  description: Number of independent threads used to compute MD
+  group: preferences
+  object_type: int
+  options: [null]
+  value: 1
+  writable: true
+output_format:
+  advanced: regular
+  comments: null
+  dependencies: null
+  description: Output data format
+  group: preferences
+  object_type: list
+  options: [JSON, TSV]
+  value: JSON
+  writable: false
+output_md:
+  advanced: advanced
+  comments: null
+  dependencies: null
+  description: Dump descriptors to a TSV file
+  group: preferences
+  object_type: boolean
+  options: [true, false]
+  value: false
+  writable: false
+param_format: {value: 2.0}
+quantitative:
+  advanced: regular
+  comments: null
+  dependencies: {input_type: molecule}
+  description: Should be true for quantitative endpoints andf false for qualitative
+    endpoints
+  group: data
+  object_type: boolean
+  options: [true, false]
+  value: true
+  writable: false
+tune:
+  advanced: regular
+  comments: It might last long
+  dependencies: null
+  description: Whether to perform or not algorithm hyperparameter optimization
+  group: modeling
+  object_type: boolean
+  options: [true, false]
+  value: false
+  writable: false
+verbose_error:
+  advanced: advanced
+  comments: null
+  dependencies: null
+  description: When false, RDKit errors are captured and not shown
+  group: preferences
+  object_type: boolean
+  options: [true, false]
+  value: true
+  writable: false
+version: {value: 0}
