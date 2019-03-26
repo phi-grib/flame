@@ -62,11 +62,15 @@ class Learn:
         self.conveyor.setError ('Not implemented')
 
     def preprocess(self):
+        ''' 
+        This function scales the X matrix and selects features 
+        The scaler and the variable mask are saved in a pickl file 
+        '''
 
         # Perform subsampling on the majority class. Consider to move.
         # Only for qualitative endpoints.
         if self.param.getVal("imbalance") is not None and \
-        not self.param.getVal("quantitative"):
+                        not self.param.getVal("quantitative"):
             try:
                 self.X, self.Y = run_imbalance(
                     self.param.getVal('imbalance'), self.X, self.Y, 46)
@@ -76,28 +80,44 @@ class Learn:
                             f'sampling method performed')
                 LOG.info(f'Number of objects after sampling: {self.X.shape[0]}')
             except Exception as e:
-                return False, f'Unable to perform sampling method with exception: {e}'
+                return False, (f'Unable to perform sampling'
+                               f' method with exception: {e}')
 
         # Run scaling.
         if self.param.getVal('modelAutoscaling'):
             try:
                 # MinMaxScaler is used between range 1-0 so 
                 # there is no negative values.
-                scaler = MinMaxScaler(copy=True, feature_range=(0,1))
+                scaler = ""
+                if self.param.getVal('modelAutoscaling') == 'StandardScaler':
+                    scaler = StandardScaler()
+                    LOG.info('Data scaled using StandarScaler')
+
+                elif self.param.getVal('modelAutoscaling') == 'MinMaxScaler':
+                    scaler = MinMaxScaler(copy=True, feature_range=(0,1))
+                    LOG.info('Data scaled using MinMaxScaler')
+
                 # The scaler is saved so it can be used later
                 # to prediction instances.
                 self.scaler = scaler.fit(self.X)
+
                 # Scale the data.
                 self.X = scaler.transform(self.X)
-                LOG.info('Data scaling performed')
             except Exception as e:
                 return False, f'Unable to perform scaling with exception: {e}'
           
-
         # Run feature selection. Move to a instance method.
         if self.param.getVal("feature_selection"):
-            self.variable_mask = run_feature_selection()
-    
+            # TODO: implement feature selection with other scalers
+            if self.param.getVal('modelAutoscaling') == 'MinMaxScaler':
+                self.variable_mask, self.scaler = \
+                                    feature_selection.run_feature_selection(
+                                                self.X, self.Y, self.scaler,
+                                                self.param)
+                self.X = self.X[:, self.variable_mask]
+            else:
+                pass
+
         # Set the new number of instances/variables
         # if sampling/feature selection performed
         self.nobj, self.nvarx = np.shape(self.X)
@@ -124,7 +144,9 @@ class Learn:
                         protocol=pickle.HIGHEST_PROTOCOL)
 
         LOG.debug('Model saved as:{}'.format(prepro_pkl_path))
+
         return True, 'OK'
+
 
 
     def run_internal(self):
