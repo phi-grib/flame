@@ -32,6 +32,7 @@ from flame.stats.PLSR import PLSR
 from flame.stats.PLSDA import PLSDA
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import RobustScaler
 from flame.stats.imbalance import *  
 from flame.stats import feature_selection
 

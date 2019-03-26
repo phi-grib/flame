@@ -113,8 +113,6 @@ class BaseEstimator:
         build(X)
             Instance the estimator optimizing it
             if tune=true.
-        run_feature_selection()
-            Performs feature selection
         CF_quantitative_validation(self)
             Performs conformal quantitative validation
         CF_qualitative_validation(self)
@@ -141,21 +139,13 @@ class BaseEstimator:
         Actions
         -------
             - Attribute assignment
-            - Scaling
-            - Sampling
-            - Feature selection
         """
 
         self.param = parameters
-        self.scaler = None
-        self.variable_mask = None
 
         if X is None:
             return
 
-        self.X_original = X
-        self.Y_original = Y
-        self.variable_mask = []
         self.X = X
         self.Y = Y
         self.nobj, self.nvarx = np.shape(X)
@@ -176,110 +166,7 @@ class BaseEstimator:
                         f'exception: {e}')
                 raise e
 
-        # # Perform subsampling on the majority class. Consider to move.
-        # # Only for qualitative endpoints.
-        # if self.param.getVal("imbalance") is not None and \
-        # not self.param.getVal("quantitative"):
-        #     try:
-        #         self.X, self.Y = run_imbalance(
-        #             self.param.getVal('imbalance'), self.X, self.Y, 46)
-        #         # This is necessary to avoid inconsistences in methods
-        #         # using self.nobj
-        #         LOG.info(f'{self.param.getVal("imbalance")}'
-        #                     f'sampling method performed')
-        #         LOG.info(f'Number of objects after sampling: {self.X.shape[0]}')
-        #     except Exception as e:
-        #         LOG.error(f'Unable to perform sampling '
-        #                     f'method with exception: {e}')
-        #         raise e
 
-        # # Run scaling.
-        # if self.param.getVal('modelAutoscaling'):
-        #     try:
-        #         # self.X, self.mux = center(self.X)
-        #         # self.X, self.wgx = scale(self.X, 
-        #         #                     self.param.getVal('modelAutoscaling'))
-        #         # MinMaxScaler is used between range 1-0 so 
-        #         # there is no negative values.
-        #         scaler = MinMaxScaler(copy=True, feature_range=(0,1))
-        #         # The scaler is saved so it can be used later
-        #         # to prediction instances.
-        #         self.scaler = scaler.fit(self.X)
-        #         # Scale the data.
-        #         self.X = scaler.transform(self.X)
-        #         LOG.info('Data scaling performed')
-        #     except Exception as e:
-        #         LOG.error(f'Unable to perform scaling'
-        #         ' with exception : {e}')
-        #         raise e
-
-        # #### Alternative way to make all values positives (sum the minimum 
-        # #### of each column to the column)
-        #     # list_min = np.min(self.X, axis=0)
-        #     # newX = copy.copy(self.X)
-        #     # for i in range(len(self.X[0])):
-        #     #     newX[:, i] = np.array(self.X[:, i] -list_min[i])
-
-        # # Run feature selection. Move to a instance method.
-        # if self.param.getVal("feature_selection"):
-        #     self.run_feature_selection()
-    
-        # # Set the new number of instances/variables
-        # # if sampling/feature selection performed
-        # self.nobj, self.nvarx = np.shape(X)
-
-        # # Check X and Y integrity.
-        # if (self.nobj == 0) or (self.nvarx == 0):
-        #     LOG.error('No objects/variables in the matrix')
-        #     raise Exception('No objects/variables in the matrix')
-        # if len(Y) == 0:
-        #     self.failed = True
-        #     LOG.error('No activity values')
-        #     raise ValueError("No activity values (Y)")
-
-    # def run_feature_selection(self):
-    #     """Compute the number of variables to be retained.
-    #     """
-    #     # When auto, the 10% top informative variables are retained.
-    #     if self.param.getVal("feature_number") == "auto":
-    #         # Use 10% of the total number of objects:
-    #         # The number of variables is greater than the 10% of the objects
-    #         # And the number of objects is greater than 100
-    #         if self.nvarx > (self.nobj * 0.1) and not self.nobj < 100:
-    #             self.n_features = int(self.nobj * 0.1)
-    #         # If number of objects is smaller than 100 then n_features
-    #         # is set to 10
-    #         elif self.nobj < 100:
-    #             self.n_features = 10
-    #         # In any other circunstance set number of variables to 10 
-    #         else:
-    #             self.n_features = self.nvarx
-    #     # Manual selection of number of variables
-    #     else:
-    #         self.n_features = int(self.param.getVal("feature_number"))
-
-    #     # Apply variable selection.
-    #     try:
-    #         # Apply the variable selection algorithm obtaining
-    #         # the variable mask.
-    #         self.variable_mask = selectkBest(self.X, self.Y, 
-    #                             self.n_features, 
-    #                             self.param.getVal('quantitative'))
-            
-    #         # The scaler has to be fitted to the reduced matrix
-    #         # in order to be applied in prediction.
-    #         self.X = self.scaler.inverse_transform(self.X)
-    #         self.X = self.X[:, self.variable_mask]
-    #         self.scaler = self.scaler.fit(self.X)
-    #         self.X = self.scaler.transform(self.X)
-    #         # self.mux = self.mux.reshape(1, -1)[:, self.variable_mask]
-    #         # self.wgx = self.wgx.reshape(1, -1)[:, self.variable_mask]
-    #         LOG.info(f'Variable selection applied, number of final variables:'
-    #                     f'{self.n_features}')
-    #     except Exception as e:
-    #         LOG.error(f'Error performing feature selection'
-    #                     f' with exception: {e}')
-    #         raise e 
 
     # Validation methods section
     def CF_quantitative_validation(self):
@@ -802,7 +689,7 @@ class BaseEstimator:
             return
         # Apply variable mask to prediction vector/matrix
         # if self.param.getVal("feature_selection"):
-            # Xb = Xb[:, self.variable_mask]
+        #     Xb = Xb[:, self.variable_mask]
         # Scale prediction vector/matrix
         # if self.param.getVal('modelAutoscaling'):
             # Xb = Xb-self.mux
@@ -824,7 +711,6 @@ class BaseEstimator:
 
         model_pkl_path = os.path.join(self.param.getVal('model_path'),
                                       'estimator.pkl')
-        
         with open(model_pkl_path, 'wb') as handle:
             pickle.dump(dict_estimator, handle, 
                         protocol=pickle.HIGHEST_PROTOCOL)
@@ -856,25 +742,5 @@ class BaseEstimator:
         if self.estimator is None:
             raise Exception('Loaded estimator is None.'
                             'Probably model building was not successful')
-        
-        # Load rest of info in an extensible way
-        # This allows to add new variables keeping
-        # Retro-compatibility
-        # if 'scaler' in dict_estimator.keys():
-        #     self.scaler = dict_estimator['scaler']
-
-        # if 'variable_mask' in dict_estimator.keys():
-        #     self.variable_mask = dict_estimator['variable_mask']
-
-        # # Check consistency between parameter file and pickle info
-        # if self.param.getVal('modelAutoscaling') and \
-        #     self.scaler is None:
-        #     raise Exception('Inconsistency error. Autoscaling is True'
-        #     ' in parameter file but no Scaler loaded')
-
-        # if self.param.getVal('feature_selection') and \
-        #     self.variable_mask is None:
-        #     raise Exception('Inconsistency error. Feature is True'
-        #     ' in parameter file but no variable mask loaded')
-
+    
         return
