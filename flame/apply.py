@@ -353,11 +353,11 @@ class Apply:
         # TODO: Load scaler and variable mask and preprocess the data
 
         # preprocess
-        success, message = self.preprocess(X)
+        success, result = self.preprocess(X)
         if not success:
             self.conveyor.setError(message)
             return
-
+        X = result
         # Load model 
 
         # expand with new methods here:
