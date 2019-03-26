@@ -250,14 +250,14 @@ class Learn:
         LOG.info('Model finished successfully')
 
         # save model
-        try:
-            model.save_model()
+        # try:
+        #     model.save_model()
 
-            # TODO: save scaled and variable_mask
+        #     # TODO: save scaled and variable_mask
 
-        except Exception as e:
-            LOG.error(f'Error saving model with exception {e}')
-            return False, 'An error ocurred saving the model'
+        # except Exception as e:
+        #     LOG.error(f'Error saving model with exception {e}')
+        #     return False, 'An error ocurred saving the model'
 
         return
 

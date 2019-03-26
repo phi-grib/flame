@@ -272,9 +272,52 @@ class Apply:
                                  'single',
                                  'External validation results')
 
-    def preprocess(self):
-        return True, 'OK'
+    def preprocess(self, X):
+        ''' This function loads the scaler and variable mask from a pickle file 
+        and apply them to the X matrix passed as an argument'''
 
+        prepro_file = os.path.join(self.param.getVal('model_path'),
+                                    'preprocessing.pkl')
+        LOG.debug(f'Loading model from pickle file, path: {prepro_file}')
+        try:
+            with open(prepro_file, "rb") as input_file:
+                dict_prepro = pickle.load(input_file)
+        except FileNotFoundError:
+            return False, f'No valid preprocessing tools found at: {prepro_file}'
+
+        # Load version
+        self.version = dict_prepro['version']
+
+        # check if the pickle was created with a compatible version
+        # currently 1
+        if self.version is not 1:
+            return False, 'Incompatible preprocessing version'   
+    
+        # Load rest of info in an extensible way
+        # This allows to add new variables keeping
+        # Retro-compatibility
+        if 'scaler' in dict_prepro.keys():
+            self.scaler = dict_prepro['scaler']
+
+        if 'variable_mask' in dict_prepro.keys():
+            self.variable_mask = dict_prepro['variable_mask']
+
+        # Check consistency between parameter file and pickle info
+        if self.param.getVal('modelAutoscaling') and self.scaler is None:
+            return False, 'Inconsistency error. Autoscaling is True in parameter file but no Scaler loaded'
+
+        if self.param.getVal('feature_selection') and self.variable_mask is None:
+            return False, 'Inconsistency error. Feature is True in parameter file but no variable mask loaded'
+
+        # apply variable_mask
+        if self.param.getVal("feature_selection"):
+            X = X[:, self.variable_mask]
+
+        # apply scale
+        if self.param.getVal('modelAutoscaling'):
+            X = self.scaler.transform(X)
+
+        return True, X 
 
     def run_internal(self): 
         ''' 
