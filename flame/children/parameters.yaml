@@ -17,15 +17,13 @@ input_type:
 
 modelAutoscaling:
   advanced: regular
-  object_type: string
+  object_type: boolean
   writable: false
-  value: MinMaxScaler
+  value: false
   options:
-    - StandardScaler
-    - MinMaxScaler
-    - RobustScaler
-    - null
-  description: Scaling method. Null means that raw, unscaled data, will be used 
+    - true
+    - false
+  description: Whether to perform or not scaling on the data
   dependencies: null
   comments: 
   group: data
@@ -47,7 +45,6 @@ normalize_method:
 ionize_method:
   advanced: regular
   object_type: string
-  writable: false
   value: null
   options:
     - null
@@ -66,7 +63,7 @@ quantitative:
   options:
     - true
     - false
-  description: Should be true for quantitative endpoints andf false for qualitative endpoints
+  description: Selection of a standardization method
   dependencies: 
     input_type: molecule
   comments: 
@@ -89,19 +86,19 @@ convert3D_method:
 SDFile_activity:
   advanced: regular
   object_type: string
-  writable: true
+  writable: false
   value: activity
   options: null
   description: Name of the activity field in the SDF file
   dependencies: 
     input_type: molecule
-  comments: 
+  comments: This data is provided my the user input file at the web interface
   group: data
 
 SDFile_name:
   advanced: regular
   object_type: list
-  writable: true
+  writable: false
   value: 
     - GENERIC_NAME
     - name
@@ -109,19 +106,19 @@ SDFile_name:
   description: Name of the identifier field in the SDF file
   dependencies: 
     input_type: molecule
-  comments: 
+  comments: This data is provided my the user input file at the web interface
   group: data
 
 TSV_activity:
   advanced: regular
   object_type: string
-  writable: true
+  writable: false
   value: activity
   options: null
   description: Name of the activity field in the TSV file
   dependencies: 
     input_type: data
-  comments: 
+  comments: This data is provided my the user input file at the web interface
   group: data 
 
 TSV_objnames:
@@ -154,7 +151,7 @@ TSV_varnames:
 
 computeMD_method:
   advanced: regular
-  object_type: list
+  object_type: list(string)
   writable: false
   value: 
     - RDKit_properties
@@ -196,7 +193,7 @@ MD_settings:
   dependencies: 
     - ext_input: false
     - input_type: molecule
-  comments: 
+  comments: ""
   group: data 
 
 ext_input:
@@ -215,7 +212,7 @@ ext_input:
 model_set:
   advanced: advanced
   object_type: list
-  writable: true
+  writable: false
   value: null
   options: null
   description: Selection of available models to get the input from
@@ -227,13 +224,13 @@ model_set:
 SDFile_experimental:
   advanced: advanced
   object_type: string
-  writable: true
+  writable: false
   value: null
   options: null
   description: Experimental measure field in the SDF file
   dependencies: 
     input_type: molecule
-  comments: 
+  comments: Values are obtained from SDFile
   group: data    
 
 modelingToolkit:
@@ -277,7 +274,7 @@ conformal:
   options: 
     - true
     - false
-  description: If true, use the conformal variant of the selected modeling method, when available
+  description: 
   dependencies: 
     model: RF
   comments: So far it can not be applied to PLSDA
@@ -377,7 +374,7 @@ ModelValidationN:
 
 ModelValidationP:
   advanced: regular
-  object_type: int
+  object_type: integer
   writable: true
   value: 1
   options: null
@@ -547,7 +544,7 @@ SVM_parameters:
         - null
       description: 
     kernel:
-      object_type: string
+      object_type: str
       writable: false
       value: rbf
       options:
@@ -643,7 +640,7 @@ SVM_optimize:
         - auto
       description: 
     kernel:
-      object_type: string
+      object_type: str
       writable: false
       value: 
         - rbf
