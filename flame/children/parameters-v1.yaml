@@ -196,7 +196,7 @@ modelAutoscaling:
   advanced: regular
   object_type: boolean
   writable: false
-  value: false
+  value: MinMaxScaler
   options:
     - true
     - false
