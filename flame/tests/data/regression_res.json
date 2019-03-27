@@ -49,29 +49,44 @@
             "relevance": null
         },
         {
-            "key": "values",
-            "label": "Prediction",
-            "type": "result",
-            "dimension": "objs",
-            "description": "Results of the prediction",
-            "relevance": "main"
-        },
-        {
-            "key": "external-validation",
-            "label": "external validation",
+            "key": "model_build_info",
+            "label": "model buidling information",
             "type": "method",
             "dimension": "single",
-            "description": "External validation results",
+            "description": "Information about the model",
+            "relevance": null
+        },
+        {
+            "key": "model_valid_info",
+            "label": "model validation information",
+            "type": "method",
+            "dimension": "single",
+            "description": "Information about the model validation",
+            "relevance": null
+        },
+        {
+            "key": "Y_adj",
+            "label": "Y fitted",
+            "type": "result",
+            "dimension": "objs",
+            "description": "Y values of the training series fitted by the model",
+            "relevance": null
+        },
+        {
+            "key": "Y_pred",
+            "label": "Y predicted",
+            "type": "result",
+            "dimension": "objs",
+            "description": "Y values of the training series predicted by the model",
             "relevance": null
         }
     ],
     "meta": {
-        "main": [
-            "values"
-        ],
-        "endpoint": "CACO2",
+        "main": [],
+        "endpoint": "MINCA",
         "version": 0
     },
+    "obj_num": 10,
     "obj_nam": [
         "furosemide",
         "guanabenz",
@@ -108,7 +123,96 @@
         -5.64,
         -4.35
     ],
-    "values": [
+    "var_nam": [
+        "exactmw",
+        "lipinskiHBA",
+        "lipinskiHBD",
+        "NumRotatableBonds",
+        "NumHBD",
+        "NumHBA",
+        "NumHeteroatoms",
+        "NumAmideBonds",
+        "FractionCSP3",
+        "NumRings",
+        "NumAromaticRings",
+        "NumAliphaticRings",
+        "NumSaturatedRings",
+        "NumHeterocycles",
+        "NumAromaticHeterocycles",
+        "NumSaturatedHeterocycles",
+        "NumAliphaticHeterocycles",
+        "NumSpiroAtoms",
+        "NumBridgeheadAtoms",
+        "NumAtomStereoCenters",
+        "NumUnspecifiedAtomStereoCenters",
+        "labuteASA",
+        "tpsa",
+        "CrippenClogP",
+        "CrippenMR"
+    ],
+    "origin": "learn",
+    "model_build_info": [
+        [
+            "nobj",
+            "number of objects",
+            10
+        ],
+        [
+            "nvarx",
+            "number of predictor variables",
+            25
+        ],
+        [
+            "model",
+            "model type",
+            "RF quantitative"
+        ]
+    ],
+    "model_valid_info": [
+        [
+            "scoringR",
+            "Scoring P",
+            0.04752178150000118
+        ],
+        [
+            "R2",
+            "Determination coefficient",
+            0.9186105019687211
+        ],
+        [
+            "SDEC",
+            "Standard Deviation Error of the Calculations",
+            0.21799491163786638
+        ],
+        [
+            "scoringP",
+            "Scoring P",
+            0.45858136825000306
+        ],
+        [
+            "Q2",
+            "Determination coefficient in cross-validation",
+            0.21459789195058054
+        ],
+        [
+            "SDEP",
+            "Standard Deviation Error of the Predictions",
+            0.677186361535732
+        ]
+    ],
+    "Y_adj": [
+        -5.978649999999999,
+        -4.622250000000005,
+        -4.940599999999984,
+        -4.9246500000000015,
+        -4.70420000000001,
+        -4.736750000000009,
+        -6.019899999999992,
+        -4.402500000000007,
+        -5.438149999999997,
+        -4.479750000000012
+    ],
+    "Y_pred": [
         -5.9848,
         -4.6292,
         -4.9437,
@@ -119,23 +223,5 @@
         -4.4025,
         -5.4381,
         -4.4803
-    ],
-    "obj_num": 10,
-    "external-validation": [
-        [
-            "scoringP_ex",
-            "Scoring P",
-            0.04763400025000118
-        ],
-        [
-            "Q2_ex",
-            "Determination coefficient in cross-validation",
-            0.9184183074119535
-        ],
-        [
-            "SDEP_ex",
-            "Standard Deviation Error of the Predictions",
-            0.21825214832848996
-        ]
     ]
 }
