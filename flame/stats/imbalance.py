@@ -53,7 +53,7 @@ def simple_subsampling(X, Y, random_seed):
     else:
         LOG.info('Subsampling of positive instances')
         pos_sub = positives.sample(frac=(float(len(negatives))
-                                /len(positives)), random_state=46)
+                                / len(positives)), random_state=46)
         new = pd.concat([negatives, pos_sub], axis=0)
         Y_s = (new["act"].values)
         new = new.drop(["act"], axis=1)

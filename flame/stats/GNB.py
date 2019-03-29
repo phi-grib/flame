@@ -25,9 +25,6 @@
 
 from sklearn.naive_bayes import GaussianNB
 from flame.stats.base_model import BaseEstimator
-from flame.stats.base_model import getCrossVal
-from flame.stats.scale import scale, center
-from flame.stats.model_validation import CF_QuanVal
 
 from nonconformist.base import ClassifierAdapter, RegressorAdapter
 from nonconformist.acp import AggregatedCp
@@ -35,7 +32,7 @@ from nonconformist.acp import BootstrapSampler
 from nonconformist.icp import IcpClassifier, IcpRegressor
 from nonconformist.nc import ClassifierNc, MarginErrFunc, RegressorNc
 from flame.util import get_logger
-
+from copy import copy
 LOG = get_logger(__name__)
 
 
@@ -94,14 +91,17 @@ class GNB(BaseEstimator):
         self.estimator = GaussianNB(**self.estimator_parameters)
         results.append(('model', 'model type', 'GNB qualitative'))
         # If conformal, then create aggregated conformal classifier
+        self.estimator.fit(X, Y)
+        self.estimator_temp = copy(self.estimator)
         if self.param.getVal('conformal'):
-            self.conformal_pred = AggregatedCp(
-                IcpClassifier(ClassifierNc(ClassifierAdapter(
-                self.estimator), MarginErrFunc())), BootstrapSampler())
+            self.estimator = AggregatedCp(
+                IcpClassifier(ClassifierNc(
+                    ClassifierAdapter(
+                        self.estimator_temp),
+                    MarginErrFunc())),
+                BootstrapSampler())
             # Fit estimator to the data
-            self.conformal_pred.fit(X, Y)
+            self.estimator.fit(X, Y)
             results.append(
                 ('model', 'model type', 'conformal GNB qualitative'))
-
-        self.estimator.fit(X, Y)
         return True, results

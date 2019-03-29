@@ -27,10 +27,6 @@
 # Study more in deep
 
 from flame.stats.base_model import BaseEstimator
-from flame.stats.base_model import getCrossVal
-from flame.stats.scale import scale, center
-from flame.stats.model_validation import CF_QuanVal
-
 import copy
 
 from sklearn.cross_decomposition import PLSCanonical,\
@@ -76,8 +72,8 @@ class PLS_da(PLSRegression):
         -------
 
         predict(X)
-            Overwrites parent class predict by replacing the continuous 
-            value of PLSR regression by a class (0 or 1) according 
+            Overwrites parent class predict by replacing the continuous
+            value of PLSR regression by a class (0 or 1) according
             to the established threshold
         
     """
@@ -92,7 +88,7 @@ class PLS_da(PLSRegression):
             LOG.debug(f'Initializing PLSRegression parent class')
         except Exception as e:
             LOG.error(f'Error initializing PLSRegression parent'
-                f'class with exception: {e}')
+                      f'class with exception: {e}')
             raise e
         # Cut-off for class assignation
         self.threshold = threshold
@@ -186,8 +182,8 @@ class PLSDA(BaseEstimator):
                     LOG.debug('Optimizing PLSDA through SK-LearnGridSearch')
                 except Exception as e:
                     LOG.error(f'Error performing sk-learn GridSearch'
-                            f' on  PLSDA estimator with exception'
-                            f' {e}')
+                              f' on  PLSDA estimator with exception'
+                              f' {e}')
                     raise e
             # Optimize using flame implementation (recommended)
             elif self.estimator_parameters['optimize'] == 'manual':
@@ -213,7 +209,7 @@ class PLSDA(BaseEstimator):
                 self.estimator = PLS_da(**self.estimator_parameters)
             except Exception as e:
                 LOG.error(f'Error at PLS_da instantiation with '
-                f'exception {e}')
+                          f'exception {e}')
                 raise e
             results.append(('model', 'model type', 'PLSDA qualitative'))
 

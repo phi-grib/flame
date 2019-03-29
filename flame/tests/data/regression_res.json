@@ -1,0 +1,227 @@
+{
+    "manifest": [
+        {
+            "key": "obj_num",
+            "label": "Num mol",
+            "type": "method",
+            "dimension": "single",
+            "description": "Number of molecules present in the input file",
+            "relevance": null
+        },
+        {
+            "key": "obj_nam",
+            "label": "Mol name",
+            "type": "label",
+            "dimension": "objs",
+            "description": "Name of the molecule, as present in the input file",
+            "relevance": null
+        },
+        {
+            "key": "SMILES",
+            "label": "SMILES",
+            "type": "smiles",
+            "dimension": "objs",
+            "description": "Structure of the molecule in SMILES format",
+            "relevance": null
+        },
+        {
+            "key": "ymatrix",
+            "label": "Activity",
+            "type": "decoration",
+            "dimension": "objs",
+            "description": "Biological anotation to be predicted by the model",
+            "relevance": null
+        },
+        {
+            "key": "xmatrix",
+            "label": "X matrix",
+            "type": "method",
+            "dimension": "vars",
+            "description": "Molecular descriptors",
+            "relevance": null
+        },
+        {
+            "key": "var_nam",
+            "label": "Var names",
+            "type": "method",
+            "dimension": "vars",
+            "description": "Names of the X variables",
+            "relevance": null
+        },
+        {
+            "key": "model_build_info",
+            "label": "model buidling information",
+            "type": "method",
+            "dimension": "single",
+            "description": "Information about the model",
+            "relevance": null
+        },
+        {
+            "key": "model_valid_info",
+            "label": "model validation information",
+            "type": "method",
+            "dimension": "single",
+            "description": "Information about the model validation",
+            "relevance": null
+        },
+        {
+            "key": "Y_adj",
+            "label": "Y fitted",
+            "type": "result",
+            "dimension": "objs",
+            "description": "Y values of the training series fitted by the model",
+            "relevance": null
+        },
+        {
+            "key": "Y_pred",
+            "label": "Y predicted",
+            "type": "result",
+            "dimension": "objs",
+            "description": "Y values of the training series predicted by the model",
+            "relevance": null
+        }
+    ],
+    "meta": {
+        "main": [],
+        "endpoint": "MINCA",
+        "version": 0
+    },
+    "obj_num": 10,
+    "obj_nam": [
+        "furosemide",
+        "guanabenz",
+        "fleroxacin",
+        "mibefradil",
+        "verapamil",
+        "guanoxan",
+        "saquinavir",
+        "lidocaine",
+        "enalapril",
+        "theophylline"
+    ],
+    "SMILES": [
+        "NS(=O)(=O)c1cc(C(=O)O)c(NCc2ccco2)cc1Cl",
+        "N=C(N)NN=Cc1c(Cl)cccc1Cl",
+        "CN1CCN(c2c(F)cc3c(=O)c(C(=O)O)cn(CCF)c3c2F)CC1",
+        "COCC(=O)OC1(CCN(C)CCCc2nc3ccccc3[nH]2)CCc2cc(F)ccc2C1C(C)C",
+        "COc1ccc(CCN(C)CCCC(C#N)(c2ccc(OC)c(OC)c2)C(C)C)cc1OC",
+        "N=C(N)NCC1COc2ccccc2O1",
+        "CC(C)(C)NC(=O)C1CC2CCCCC2CN1CC(O)C(Cc1ccccc1)NC(=O)C(CC(N)=O)NC(=O)c1ccc2ccccc2n1",
+        "CCN(CC)CC(=O)Nc1c(C)cccc1C",
+        "CCOC(=O)C(CCc1ccccc1)NC(C)C(=O)N1CCCC1C(=O)O",
+        "Cn1c(=O)c2nc[nH]c2n(C)c1=O"
+    ],
+    "ymatrix": [
+        -6.5,
+        -4.5,
+        -4.81,
+        -4.87,
+        -4.58,
+        -4.71,
+        -6.26,
+        -4.21,
+        -5.64,
+        -4.35
+    ],
+    "var_nam": [
+        "exactmw",
+        "lipinskiHBA",
+        "lipinskiHBD",
+        "NumRotatableBonds",
+        "NumHBD",
+        "NumHBA",
+        "NumHeteroatoms",
+        "NumAmideBonds",
+        "FractionCSP3",
+        "NumRings",
+        "NumAromaticRings",
+        "NumAliphaticRings",
+        "NumSaturatedRings",
+        "NumHeterocycles",
+        "NumAromaticHeterocycles",
+        "NumSaturatedHeterocycles",
+        "NumAliphaticHeterocycles",
+        "NumSpiroAtoms",
+        "NumBridgeheadAtoms",
+        "NumAtomStereoCenters",
+        "NumUnspecifiedAtomStereoCenters",
+        "labuteASA",
+        "tpsa",
+        "CrippenClogP",
+        "CrippenMR"
+    ],
+    "origin": "learn",
+    "model_build_info": [
+        [
+            "nobj",
+            "number of objects",
+            10
+        ],
+        [
+            "nvarx",
+            "number of predictor variables",
+            25
+        ],
+        [
+            "model",
+            "model type",
+            "RF quantitative"
+        ]
+    ],
+    "model_valid_info": [
+        [
+            "scoringR",
+            "Scoring P",
+            0.04752178150000118
+        ],
+        [
+            "R2",
+            "Determination coefficient",
+            0.9186105019687211
+        ],
+        [
+            "SDEC",
+            "Standard Deviation Error of the Calculations",
+            0.21799491163786638
+        ],
+        [
+            "scoringP",
+            "Scoring P",
+            0.45858136825000306
+        ],
+        [
+            "Q2",
+            "Determination coefficient in cross-validation",
+            0.21459789195058054
+        ],
+        [
+            "SDEP",
+            "Standard Deviation Error of the Predictions",
+            0.677186361535732
+        ]
+    ],
+    "Y_adj": [
+        -5.978649999999999,
+        -4.622250000000005,
+        -4.940599999999984,
+        -4.9246500000000015,
+        -4.70420000000001,
+        -4.736750000000009,
+        -6.019899999999992,
+        -4.402500000000007,
+        -5.438149999999997,
+        -4.479750000000012
+    ],
+    "Y_pred": [
+        -5.9848,
+        -4.6292,
+        -4.9437,
+        -4.9341,
+        -4.7042,
+        -4.7391,
+        -6.0199,
+        -4.4025,
+        -5.4381,
+        -4.4803
+    ]
+}

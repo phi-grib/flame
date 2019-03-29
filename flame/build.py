@@ -1,22 +1,22 @@
 #! -*- coding: utf-8 -*-
 
 # Description    Flame Build class
-##
+#
 # Authors:       Manuel Pastor (manuel.pastor@upf.edu)
-##
+#
 # Copyright 2018 Manuel Pastor
-##
+#
 # This file is part of Flame
-##
+#
 # Flame is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation version 3.
-##
+#
 # Flame is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-##
+#
 # You should have received a copy of the GNU General Public License
 # along with Flame. If not, see <http://www.gnu.org/licenses/>.
 
@@ -26,6 +26,10 @@ import importlib
 
 from flame.util import utils, get_logger
 from flame.parameters import Parameters
+from flame.conveyor import Conveyor
+from flame.idata import Idata
+from flame.learn import Learn
+from flame.odata import Odata
 
 LOG = get_logger(__name__)
 
@@ -35,19 +39,20 @@ class Build:
         LOG.debug('Starting build...')
         self.model = model
         self.param = Parameters()
-        
+        self.conveyor = Conveyor()
+
         # load parameters
         if param_file is not None:
             # use the param_file to update existing parameters at the model
             # directory and save changes to make them persistent
-            success = self.param.delta(model, 0, param_file)
+            success, message = self.param.delta(model, 0, param_file)
         else:
             # load parameter file at the model directory
-            success = self.param.loadYaml(model, 0)
+            success, message = self.param.loadYaml(model, 0)
 
         # being unable to load parameters is a critical error
         if not success:
-            LOG.critical('Unable to load model parameters. Aborting...')
+            LOG.critical(f'Unable to load model parameters. "{message}" Aborting...')
             sys.exit(1)
 
         # add additional output formats included in the constructor 
@@ -57,7 +62,6 @@ class Build:
             if output_format not in self.param.getVal('output_format'):
                 self.param.appVal('output_format',output_format)
  
-        return
 
     def get_model_set(self):
         ''' Returns a Boolean indicating if the model uses external input
@@ -72,15 +76,14 @@ class Build:
     def run(self, input_source):
         ''' Executes a default predicton workflow '''
 
-        results = {}
-
         # path to endpoint
         epd = utils.model_path(self.model, 0)
         if not os.path.isdir(epd):
-            LOG.error(f'Unable to find model {self.model}')
-            results['error'] = 'unable to find model: '+self.model
+            self.conveyor.setError(f'Unable to find model {self.model}')
+            #LOG.error(f'Unable to find model {self.model}')
 
-        if 'error' not in results:
+        # import ichild classes
+        if not self.conveyor.getError():
             # uses the child classes within the 'model' folder,
             # to allow customization of  the processing applied to each model
             modpath = utils.module_path(self.model, 0)
@@ -89,34 +92,43 @@ class Build:
             learn_child = importlib.import_module(modpath+".learn_child")
             odata_child = importlib.import_module(modpath+".odata_child")
 
-            LOG.debug('child modules imported: '
-                      f' {idata_child.__name__},'
-                      f' {learn_child.__name__},'
-                      f' {odata_child.__name__}')
+            # run idata object, in charge of generate model data from input
+            try:
+                idata = idata_child.IdataChild(self.param, self.conveyor, input_source)
+            except:
+                LOG.warning ('Idata child architecture mismatch, defaulting to Idata parent')
+                idata = Idata(self.param, self.conveyor, input_source)
+            idata.run() 
+            LOG.debug(f'idata child {type(idata).__name__} completed `run()`')
 
-            # run idata object, in charge of generate model
-            idata = idata_child.IdataChild(self.param, input_source)
-            results = idata.run() 
-            LOG.debug(f'idata child {idata_child.__name__} completed `run()`')
+        if not self.conveyor.getError():
+            # check there is a suitable X and Y
+            if not self.conveyor.isKey ('xmatrix'):
+                self.conveyor.setError(f'Failed to compute MDs')
 
-        if 'error' not in results:
-            if 'xmatrix' not in results:
-                LOG.error(f'Failed to compute MDs')
-                results['error'] = 'Failed to compute MDs'
+            if not self.conveyor.isKey ('ymatrix'):
+                self.conveyor.setError(f'No activity data (Y) found in training series')
 
-            if 'ymatrix' not in results:
-                LOG.error(f'No activity data (Y) found in training series')
-                results['error'] = 'No activity data (Y) found in training series'
-        
-        if 'error' not in results:
-            # run learn object, in charge of generate a prediction from idata
-            learn = learn_child.LearnChild(self.param, results)
-            results = learn.run()
-            LOG.debug(f'learn child {learn_child.__name__} completed `run()`')
+        if not self.conveyor.getError():
+            # instantiate learn (build a model from idata) and run it
+            learn = learn_child.LearnChild(self.param, self.conveyor)
+            learn.run()
+
+            try:
+                learn = learn_child.LearnChild(self.param, self.conveyor)
+            except:
+                LOG.warning ('Learn child architecture mismatch, defaulting to Learn parent')
+                learn = Learn(self.param, self.conveyor)
+
+            LOG.debug(f'learn child {type(learn).__name__} completed `run()`')
 
         # run odata object, in charge of formatting the prediction results
         # note that if any of the above steps failed, an error has been inserted in the
-        # results and odata will take case of showing an error message
-        odata = odata_child.OdataChild(self.param, results)
-        LOG.info('Building completed')
+        # conveyor and odata will take case of showing an error message
+        try:
+            odata = odata_child.OdataChild(self.param, self.conveyor)
+        except:
+            LOG.warning ('Odata child architecture mismatch, defaulting to Odata parent')
+            odata = Odata(self.param, self.conveyor)
+
         return odata.run()

@@ -1,46 +1,47 @@
 #! -*- coding: utf-8 -*-
 
 # Description    Flame command
-##
+#
 # Authors:       Manuel Pastor (manuel.pastor@upf.edu)
-##
+#
 # Copyright 2018 Manuel Pastor
-##
+#
 # This file is part of Flame
-##
+#
 # Flame is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation version 3.
-##
+#
 # Flame is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-##
+#
 # You should have received a copy of the GNU General Public License
 # along with Flame. If not, see <http://www.gnu.org/licenses/>.
 
 import argparse
 import pathlib
 import sys
+import os
 
 from flame.util import utils, get_logger
 from flame.util import config, change_config_status
 import flame.context as context
-import logging
+#import logging
 
 LOG = get_logger(__name__)
 
-# TEMP: only to allow EBI model to run
-def sensitivity(y_true, y_pred):
-    tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
-    return(tp / (tp+fn))
+# # TEMP: only to allow EBI model to run
+# def sensitivity(y_true, y_pred):
+#     tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
+#     return(tp / (tp+fn))
 
 
-# TEMP: only to allow EBI model to run
-def specificity(y_true, y_pred):
-    tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
-    return(tn / (tn+fp))
+# # TEMP: only to allow EBI model to run
+# def specificity(y_true, y_pred):
+#     tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
+#     return(tn / (tn+fp))
 
 
 def configuration_warning() -> None:
@@ -49,16 +50,17 @@ def configuration_warning() -> None:
     """
     config = utils._read_configuration()
 
-    if not isinstance(config['config_status'], bool):
-        raise ValueError('Wrong type found in config status.')
+    if config != False:
+        if isinstance(config['config_status'], bool):
+            if config['config_status']:
+                if os.path.isdir(config['model_repository_path']):
+                    return
 
-    if config['config_status']:
-        return
-    elif not config['config_status']:
-        print("Flame hasn't been configured yet. "
-              "Model repository may be wrong. "
-              "Please use 'flame -c config' before using flame")
-        sys.exit()  # force exit
+    print("Flame hasn't been configured yet. "
+        "Model repository may be wrong. "
+        "Please use 'flame -c config' before using flame")
+
+    sys.exit()  # force exit
 
 def main():
 

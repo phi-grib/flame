@@ -1,22 +1,22 @@
 #! -*- coding: utf-8 -*-
 
 # Description    Flame Manage class
-##
+#
 # Authors:       Manuel Pastor (manuel.pastor@upf.edu)
-##
+#
 # Copyright 2018 Manuel Pastor
-##
+#
 # This file is part of Flame
-##
+#
 # Flame is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation version 3.
-##
+#
 # Flame is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-##
+#
 # You should have received a copy of the GNU General Public License
 # along with Flame. If not, see <http://www.gnu.org/licenses/>.
 
@@ -29,11 +29,11 @@ import pickle
 import pathlib
 import numpy as np
 
-from flame.util import utils, get_logger
-from flame.parameters import Parameters
+from flame.util import utils, get_logger 
+# from flame.parameters import Parameters
+# from flame.conveyor import Conveyor
 
 LOG = get_logger(__name__)
-
 
 def set_model_repository(path=None):
     """
@@ -201,10 +201,16 @@ def action_list(model):
         num_models = 0
         LOG.info('Models found in repository:')
         for x in os.listdir(rdir):
+            xpath = os.path.join(rdir,x) 
+            # discard if the item is not a directory
+            if not os.path.isdir(xpath):
+                continue
+            # discard if the directory does not contain a 'dev' directory inside
+            if not os.path.isdir(os.path.join(xpath,'dev')):
+                continue
             num_models += 1
             LOG.info('\t'+x)
         LOG.debug(f'Retrieved list of models from {rdir}')
-        return True, ''
         return True, f'{num_models} models found'
 
 
@@ -337,18 +343,14 @@ def action_info(model, version, output='text'):
         if not os.path.isfile(os.path.join(rdir, 'results.pkl')):
             return False, 'Info file not found'
 
+        from flame.conveyor import Conveyor
+
+        conveyor = Conveyor()
         with open(os.path.join(rdir, 'results.pkl'), 'rb') as handle:
-            results = pickle.load(handle)
+            conveyor.load(handle)
         
-        info = None
-        if 'model_build_info' in results:
-            info =  results['model_build_info']
-
-        if info == None:
-            return False, 'Info not found'
-
-        if 'model_valid_info' in results:
-            info += results['model_valid_info']
+        info =  conveyor.getVal('model_build_info')
+        info += conveyor.getVal('model_valid_info')
         
         if info == None:
             return False, 'Info not found'
@@ -368,42 +370,14 @@ def action_info(model, version, output='text'):
 
     # this is only reached when this funcion is called from a web service
     # asking for a JSON
-    # 
+    
     # this code serializes the results in a list and then converts it 
     # to a JSON  
     json_results = []
     for i in info:
-        # results must be checked to avoid numpy elements not JSON serializable
-        if 'numpy.int64' in str(type(i[2])):
-            try:
-                v = int(i[2])
-            except Exception as e:
-                LOG.error(e)
-                v = None
-            json_results.append((i[0], i[1], v))
+        json_results.append(conveyor.modelInfoJSON(i))
 
-        elif 'numpy.float64' in str(type(i[2])):
-            try:
-                v = float(i[2])
-            except Exception as e:
-                LOG.error(e)
-                v = None
-            json_results.append((i[0], i[1], v))
-
-        elif isinstance(i[2], np.ndarray):
-            if 'bool_' in str(type(i[2][0])):
-                temp_results = [
-                    'True' if x else 'False' for x in i[2]]
-            else:
-                # This removes NaN and and creates
-                # a plain list of formatted floats from ndarrays
-                temp_results = [float("{0:.4f}".format(x)) if not np.isnan(x) else None for x in i[2]]
-
-            json_results.append((i[0], i[1], temp_results ))
-
-        else:
-            json_results.append(i)
-
+    #print (json.dumps(json_results))
     return True, json.dumps(json_results)
 
 
@@ -417,68 +391,13 @@ def action_results(model, version=None, ouput_variables=False):
     if not os.path.isfile(os.path.join(rdir, 'results.pkl')):
         return False, 'results not found'
 
-    # retrieve a pickle file containing the keys 'model_build' 
-    # and 'model_validate' of results
+    from flame.conveyor import Conveyor
+
+    conveyor = Conveyor()
     with open(os.path.join(rdir, 'results.pkl'), 'rb') as handle:
-        results = pickle.load(handle)
+        conveyor.load(handle)
 
-    # this code serializes the results in a list and then converts it 
-    # to a JSON  
-
-    json_results = {}
-
-    # creates a list with the keys which should NOT be included
-    black_list = []
-    for k in results['manifest']:
-
-        ###
-        # By default do not include 'var' arrays, only 'obj' arrays
-        # to avoid including the X matrix and save space
-        # 
-        # this black list can be easily tuned to include everything
-        # or to remove other keys
-        ###
-        if not ouput_variables:
-            if (k['dimension'] in ['vars']):
-                black_list.append(k['key'])
-
-    # iterate keys and for those not in the black list
-    # format the information to JSON
-    for key in results:
-
-        if key in black_list:
-            continue
-
-        value = results[key]
-
-        # np.arrays cannot be serialized to JSON and must be transformed
-        if isinstance(value, np.ndarray):
-
-            # do not process bi-dimensional arrays
-            if len (np.shape(value)) > 1 :
-                continue
-
-            # boolean must be transformed to 'True' or 'False' strings
-            if 'bool_' in str(type(value[0])):
-                json_results[key] = [
-                    'True' if x else 'False' for x in value]
-
-            # we assume that np.array must contain np.floats
-            else:
-                # This removes NaN and and creates
-                # a plain list from ndarrays
-                json_results[key] = [x if not np.isnan(
-                    x) else None for x in value]
-
-        else:
-            json_results[key] = value
-        
-        try:
-            output = json.dumps(json_results)
-        except:
-            return False, 'Unable to serialize to JSON the model results'
-
-    return True, output
+    return True, conveyor.getJSON()
 
 
 def action_parameters (model, version=None, oformat='text'):
@@ -486,6 +405,8 @@ def action_parameters (model, version=None, oformat='text'):
 
     if model is None:
         return False, 'Empty model label'
+
+    from flame.parameters import Parameters
 
     param = Parameters()
     param.loadYaml(model, version)
@@ -503,12 +424,16 @@ def action_parameters (model, version=None, oformat='text'):
         'TSV_activity', 'TSV_objnames', 'TSV_varnames', 'imbalance', 
         'feature_selection', 'feature_number', 'mol_batch', 'ext_input', 
         'model_set', 'numCPUs', 'verbose_error', 'modelingToolkit', 
-        # 'SVM_parameters','SVM_optimize','RF_parameters', 'RF_optimize', 
-        # 'GNB_parameters','PLSR_parameters', 'PLSR_optimize', 
-        # 'PLSDA_parameters', 'PLSDA_optimize',
         'endpoint', 'model_path', 
         #'md5', 
         'version']
+
+        order += ['MD_settings', 'RF_parameters','RF_optimize',
+        'SVM_parameters','SVM_optimize',
+        'PLSDA_parameters','PLSDA_optimize',
+        'PLSR_parameters','PLSR_optimize',
+        'GNB_parameters']
+
 
         for ik in order:
             if ik in param.p:
@@ -517,23 +442,70 @@ def action_parameters (model, version=None, oformat='text'):
 
                 ivalue = ''
                 idescr = ''
+                ioptio = ''
 
+                ## newest parameter formats are extended and contain
+                ## rich metainformation for each entry
                 if param.extended:
                     if 'value' in v:
                         if not isinstance(v['value'] ,dict):
                             ivalue = v['value']
                         else:
-                            ivalue = '*dictionary*'
+                            # print header of dictionaty
+                            print (f'{k} :')
+
+                            # iterate keys assuming existence of value and description
+                            for intk in v['value']:
+                                intv = v['value'][intk]
+
+                                iivalue = ''
+                                if "value" in intv:                                
+                                    iivalue = intv["value"]
+
+                                iidescr = ''
+                                if "description" in intv and intv["description"] is not None:
+                                    iidescr = intv["description"]
+
+                                iioptio = ''
+                                if 'options' in intv:
+                                    toptio = intv['options']
+
+                                    if isinstance(toptio, list):
+                                        if toptio != [None]:
+                                            iioptio = f' {toptio}'
+
+                                if isinstance (iivalue, float):
+                                    iivalue =  f'{iivalue:f}'
+                                elif iivalue is None:
+                                    iivalue = ''
+
+                                print (f'   {intk:27} : {str(iivalue):30} #{iioptio} {iidescr}')
+
+                            continue
 
                     if 'description' in v:
                         idescr = v['description'] 
+
+                    if 'options' in v:
+                        toptio = v['options']
+
+                        if isinstance(toptio, list):
+                            ioptio = f' {toptio}'
+
+                ### compatibility: old stile parameters
                 else:
                     if not isinstance(v ,dict):
                         ivalue = v
                     else:
                         ivalue = '*dictionary*'
+                ### end compatibility
 
-                print (f'{k:30} : {str(ivalue):30} # {idescr}')
+                if isinstance (ivalue, float):
+                    ivalue =  f'{ivalue:f}'
+                elif ivalue is None:
+                    ivalue = ''
+
+                print (f'{k:30} : {str(ivalue):30} #{ioptio} {idescr}')
 
         return True, 'parameters listed'
 
@@ -582,23 +554,40 @@ def action_report():
     # get directories in model repo path
     dirs = [x for x in models_path.iterdir() if x.is_dir()]
 
-    # if dir contains dev/ -> is model (NAIVE APPROACH)
-    # get last dir name [-1]: model name
-    model_dirs = [d.parts[-1] for d in dirs if list(d.glob('dev'))]
+    # # if dir contains dev/ -> is model (NAIVE APPROACH)
+    # # get last dir name [-1]: model name
+    # model_dirs = [d.parts[-1] for d in dirs if list(d.glob('dev'))]
 
     results = []
-    
-    # iterate for models
-    for imodel in model_dirs:
 
-        isuccess, ijson = action_info(imodel, 0, output='JSON')
-
-        if not isuccess:
+    # iterate models
+    for d in dirs:
+        imodel_name = d.parts[-1]
+        imodel_vers = [x.parts[-1] for x in d.iterdir() if x.is_dir()]
+        
+        # make sure the model contains 'dev' to recognize models
+        if 'dev' not in imodel_vers:
             continue
+        
+        imodel_vers_info = []
+        for ivtag in imodel_vers:
 
-        iresults = {}
-        iresults ['model'] = imodel
-        iresults ['results'] = json.loads(ijson)
-        results.append(iresults)
+            iver = utils.modeldir2ver(ivtag)
 
+            # now we have the model name and version, try to get the ijson text
+            try:
+                isuccess, ijson = action_info(imodel_name, iver, output='JSON')
+            except:
+                continue
+
+            if not isuccess:
+                continue
+            
+            # build a tuple (version, JSON) for each version and append 
+            imodel_vers_info.append((iver, json.loads(ijson) ))
+
+        # build a tuple (model_name, [version_info]) for each model and append
+        results.append((imodel_name, imodel_vers_info))
+        
+    print (json.dumps(results))
     return True, json.dumps(results)
