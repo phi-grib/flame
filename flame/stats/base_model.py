@@ -649,6 +649,10 @@ class BaseEstimator:
         ''' projects a collection of query objects in a conformal model,
          for obtaining predictions '''
 
+        if not 'nonconformist' in str(type(self.estimator)):
+            conveyor.setError('Inconsistence error: non-conformal classifier found. Rebuild the model')
+            return
+
         prediction = self.estimator.predict(
             Xb, significance=self.param.getVal('conformalSignificance'))
 
