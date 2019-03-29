@@ -63,6 +63,9 @@ class Documentation:
 
         self.model = model
         self.version = version
+        self.fields = None
+        self.parameters = None
+        self.results = None
 
         # obtain the path and the default name of the model documents
         documentation_file_path = utils.model_path(self.model, self.version)
@@ -80,11 +83,7 @@ class Documentation:
             LOG.error(f'Error loading documentation file with exception: {e}')
             raise e
 
-        # MD5 hash, not necessary yet.
-        # self.fields['md5'] = utils.md5sum(documentation_file_name)
-        #self.fields['md5']
-
-    def load_results(self):
+    def load_parameters(self):
         '''This function takes info from results and
         param file and assigns it to corresponding fields
         in documentation dictionary'''
@@ -98,15 +97,16 @@ class Documentation:
             raise Exception('Parameter file not found')
         try:
             with open(parameters_file_name, 'r') as parameter_file:
-                self.fields = yaml.load(parameter_file)
+                self.parameters = yaml.load(parameter_file)
         except Exception as e:
             LOG.error(f'Error loading parameter file with exception: {e}')
             raise e
 
+    def load_results(self):
         # obtain the path and the default name of the results file
         results_file_path = utils.model_path(self.model, self.version)
         results_file_name = os.path.join(results_file_path,
-                                         'parameters.yaml')
+                                         'results.pkl')
 
         # load the main class dictionary (p) from this yaml file
         if not os.path.isfile(results_file_name):
@@ -114,7 +114,35 @@ class Documentation:
 
         try:
             with open(results_file_name, "rb") as input_file:
-                results = pickle.load(input_file)
+                self.results = pickle.load(input_file)
         except Exception as e:
             LOG.error(f'No valid results pickle found at: {results_file_name}')
             raise e
+
+    def assign_parameters(self):
+        # Fill documentation values corresponding to model parameter values
+        if not self.parameters:
+            raise ('Parameters were not loaded')
+
+        self.fields['Algorithm']['subfields']['algorithm']['value'] = \
+            self.parameters['model']['value']
+        self.fields['Algorithm']['subfields']['descriptors']['value'] = \
+            self.parameters['computeMD_method']['value']
+        if self.parameters['conformal']:
+            self.fields['AD_method']['subfields']['name']['value'] = \
+                'conformal prediction'
+        if self.parameters['conformal']:
+            self.fields['AD_parameters']['value'] = \
+                (f'Conformal Significance: '
+                    '{self.parameters["conformalSignificance"]["value"]}')
+        
+    def assign_results(self):
+        
+
+        
+
+
+
+        
+                                
+        
