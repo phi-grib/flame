@@ -224,9 +224,15 @@ Goodness_of_fit_statistics:
 Internal_validation_1: 
   level: 2
   QMRF_field: '6.8'
-  description: 'Internal validation settings and statistics for leave-one-out cross-validation'
+  description: 'Internal validation method 1 settings'
   value: null
-  subfields: null
+  subfields:
+    method:
+      value: null
+      description: 'Name of the cross-validation 1 method'
+    statistics: 
+      value: null
+      description: 'statistics'
 
 Internal_validation_2: 
   level: 2
@@ -246,6 +252,7 @@ Comments:
   level: 2
   QMRF_field: '9.1'
   description: 'Additional commnents on model building'
+  value: null
 
 Other_related_models:
   level: 3
