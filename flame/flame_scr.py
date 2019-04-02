@@ -159,8 +159,9 @@ def main():
             LOG.error(results)
 
     elif args.command == 'config':
-        config(args.directory)
-        change_config_status()
+        success = config(args.directory)
+        if success :
+            change_config_status()
 
 # import multiprocessing
 

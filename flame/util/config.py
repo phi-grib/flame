@@ -38,7 +38,7 @@ def change_config_status() -> None:
     utils.write_config(config)
 
 
-def config(path: str=None) -> None:
+def config(path: str=None) -> bool:
     """Configures model repository.
 
     Loads config.yaml and writes a correct model repository path
@@ -59,7 +59,7 @@ def config(path: str=None) -> None:
 
         if userinput.lower() not in ['yes', 'no', 'y', 'n']:
             print('Please write "yes", "no", "y" or "n"')
-            return
+            return False
 
         elif userinput.lower() in ['yes', 'y']:
             if default_models_path.exists():
@@ -70,14 +70,14 @@ def config(path: str=None) -> None:
 
                 if userinput.lower() not in ['yes', 'no', 'y', 'n']:
                     print('Please write "yes", "no", "y" or "n"')
-                    return
+                    return False
 
                 elif userinput.lower() in ['yes', 'y']:
                     utils.set_model_repository(default_models_path)
 
                 else:
                     print('aborting...')
-                    return
+                    return False
 
             else:  # models_path doesn't exists
                 default_models_path.mkdir(parents=True)
@@ -87,7 +87,7 @@ def config(path: str=None) -> None:
 
         elif userinput.lower() in ['no', 'n']:
             print('aborting...')
-            return
+            return False
 
     else:  # path input by user
         in_path = Path(path).expanduser()
@@ -95,7 +95,7 @@ def config(path: str=None) -> None:
 
         if in_path == current_models_path:
             print(f'{in_path} already is model repository path')
-            return
+            return False
 
         elif not in_path.exists():
             print(f"{in_path} doesn't exists. Would you like to create it?(y/n)")
@@ -104,7 +104,7 @@ def config(path: str=None) -> None:
 
             if userinput.lower() not in ['yes', 'no', 'y', 'n']:
                 print('Please write "yes", "no", "y" or "n"')
-                return
+                return False
 
             elif userinput.lower() in ['yes', 'y']:
                 in_path.mkdir(parents=True)
@@ -112,9 +112,10 @@ def config(path: str=None) -> None:
 
             else:
                 print('aborting...')
-                return
+                return False
 
         else:  # in_path exists
             utils.set_model_repository(in_path)
 
         print(f'model repository set to {in_path}')
+        return True
