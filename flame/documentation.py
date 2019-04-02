@@ -25,9 +25,11 @@ import yaml
 import json
 import pickle
 import pandas as pd
+import numpy as np
 
 from flame.util import utils
 from flame.conveyor import Conveyor
+from rdkit.Chem import AllChem
 
 
 class Documentation:
@@ -48,17 +50,25 @@ class Documentation:
         Methods
         -------
 
-        load_results(results_dictionary)
-            Accesses to build results and param class to retrieve all
+        load_parameters()
+            Accesses to param file to retrieve all
             information needed to document the model.
-        save_document()
-            Updates YAML file with assigned values.
-        create_template()
-            creates a excel template with the available information
-        create_QMRF(Creates a QMRF document filled with available information)
-    '''
+        load_results()
+            Accesses to build results to retrieve all
+            information needed to document the model.
+        assign_parameters()
+            Fill documentation values corresponding to
+             model parameter values
+        assign_results()
+            Assign result values to documentation fields
+        get_upf_template()
+            creates a spreedsheet QMRF-like
+        get_prediction_template()
+            Creates a reporting document for predictions
+    
+        '''
 
-    def __init__(self, model, version=0):
+    def __init__(self, model, version=0, context='model'):
         ''' Load the fields from the documentation file'''
 
         self.model = model
@@ -82,10 +92,12 @@ class Documentation:
         except Exception as e:
             # LOG.error(f'Error loading documentation file with exception: {e}')
             raise e
+
         self.load_parameters()
-        self.load_results()
-        self.assign_parameters()
-        self.assign_results()
+        if context == 'model':
+            self.load_results()
+            self.assign_parameters()
+            self.assign_results()
 
     def load_parameters(self):
         '''This function takes info from results and
@@ -123,7 +135,8 @@ class Documentation:
             with open(results_file_name, "rb") as input_file:
                 self.conveyor.load(input_file)
         except Exception as e:
-            # LOG.error(f'No valid results pickle found at: {results_file_name}')
+            # LOG.error(f'No valid results pickle found at: 
+            # {results_file_name}')
             raise e
 
     def assign_parameters(self):
@@ -232,3 +245,125 @@ class Documentation:
                         'Internal_validation_1']['value']]
         template.to_csv('QMRF_template.tsv', sep='\t')
 
+    def get_prediction_template(self):
+        '''
+            This function creates a tabular model template based
+            on the QMRF document type
+        '''
+        # obtain the path and the default name of the results file
+        results_file_path = utils.model_path(self.model, self.version)
+        results_file_name = os.path.join(results_file_path,
+                                         'prediction-results.pkl')
+        conveyor = Conveyor()
+        # load the main class dictionary (p) from this yaml file
+        if not os.path.isfile(results_file_name):
+            raise Exception('Results file not found')
+        try:
+            with open(results_file_name, "rb") as input_file:
+                conveyor.load(input_file)
+        except Exception as e:
+            # LOG.error(f'No valid results pickle found at: {results_file_name}')
+            raise e        
+
+        # First get Name, Inchi and InChIkey
+
+        names = conveyor.getVal('obj_nam')
+        smiles = conveyor.getVal('SMILES')
+        inchi = [AllChem.MolToInchi(
+                      AllChem.MolFromSmiles(m)) for m in smiles]
+        inchikeys = [AllChem.InchiToInchiKey(
+                     AllChem.MolToInchi(
+                      AllChem.MolFromSmiles(m))) for m in smiles]
+        predictions = []
+        applicability = []
+        if self.parameters['quantitative']['value']:
+            raise('Prediction template for quantitative endpoints'
+                  ' not implemented yet')
+        if not self.parameters['conformal']['value']:
+            predictions = conveyor.getVal('values')
+        else:
+            c0 = np.asarray(conveyor.getVal('c0'))
+            c1 = np.asarray(conveyor.getVal('c1'))
+
+            predictions = []
+            for i, j in zip(c0, c1):
+                prediction = ''
+                if i == j:
+                    prediction = 'out of AD'
+                    applicability.append('out')
+                if i != j:
+                    if i == True:
+                        prediction = 'Inactive'
+                    else:
+                        prediction = 'Active'
+                    applicability.append('in')
+
+                predictions.append(prediction)
+
+        # Now create the spreedsheats for prediction
+
+        # First write summary
+        summary = ("Study name\n" +
+                "Endpoint\n" +
+                "QMRF-ID\n" +
+                "(Target)Compounds\n" +
+                "Compounds[compounds]\tName\tInChiKey\n")
+        
+        for name, inch in zip(names, inchikeys):
+            summary += f'\t{name}\t{inch}\n'
+
+        summary += ("\nFile\n" + 
+                    "Author name\n" +
+                    "E-mail\n" +
+                    "Role\n" +
+                    "Affiliation\n" +
+                    "Date\n")
+                
+        with open('summary_document.tsv', 'w') as out:
+            out.write(summary)
+
+        # Now prediction details
+        # Pandas is used to ease the table creation.
+
+        reporting = pd.DataFrame()
+
+        reporting['InChI'] = inchi
+        reporting['CAS-RN'] = '-'
+        reporting['SMILES'] = smiles
+        reporting['prediction'] = predictions
+        reporting['Applicability_domain'] = applicability
+        reporting['reliability'] = '-'
+        reporting['Structural_analogue_1_CAS'] = '-'
+        reporting['Structural_analogue_1_smiles'] = '-'
+        reporting['Structural_analogue_1_source'] = '-'
+        reporting['Structural_analogue_1_experimental_value'] = '-'
+        reporting['Structural_analogue_2_CAS'] = '-'
+        reporting['Structural_analogue_2_smiles'] = '-'
+        reporting['Structural_analogue_2_source'] = '-'
+        reporting['Structural_analogue_2_experimental_value'] = '-'
+        reporting['Structural_analogue_3_CAS'] = '-'
+        reporting['Structural_analogue_3_smiles'] = '-'
+        reporting['Structural_analogue_3_source'] = '-'
+        reporting['Structural_analogue_3_experimental_value'] = '-'
+
+        reporting.to_csv('prediction_report.tsv', sep='\t',index=False)
+
+        
+
+
+
+        
+
+
+        
+        
+
+        
+        
+
+            
+
+
+
+
+        

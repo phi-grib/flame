@@ -213,6 +213,8 @@ def manage_cmd(args):
         success, results = manage.action_report()
     elif args.action == 'model_template':
         success, results = manage.action_model_template(args.endpoint, version)
+    elif args.action == 'prediction_template':
+        success, results = manage.action_prediction_template(args.endpoint, version)
     else: 
         success = False
         results = "Specified manage action is not defined"

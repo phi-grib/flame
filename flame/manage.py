@@ -617,7 +617,23 @@ def action_model_template(model, version=None):
         if not os.path.isfile(os.path.join(rdir, 'results.pkl')):
             return False, 'Info file not found'
 
-    documentation = Documentation(model, version)
+    documentation = Documentation(model, version, context='model')
     documentation.get_upf_template()
 
     return True, 'Model documentation template created'
+
+
+def action_prediction_template(model, version=None):
+    '''
+    Returns a TSV model reporting template
+    '''
+
+    from flame.documentation import Documentation
+
+    if not model:
+        return False, 'Empty model label'
+
+    documentation = Documentation(model, version, context='prediction')
+    documentation.get_prediction_template()
+
+    return True, 'Prediction template created'
