@@ -26,6 +26,7 @@ import json
 
 from flame.util import utils
 
+
 class Parameters:
     ''' Class storing a large set of parameters defining how a model is built
 
@@ -53,7 +54,7 @@ class Parameters:
     #     self.p = d    
     #     return
 
-    def loadYaml (self, model, version):       
+    def loadYaml(self, model, version):       
         ''' load a set of parameters from the configuration file present 
             at the model directory
 
@@ -92,7 +93,7 @@ class Parameters:
 
         return True, 'OK'
 
-    def delta (self, model, version, param_file, iformat='YAML'):
+    def delta(self, model, version, param_file, iformat='YAML'):
         ''' load a set of parameters from the configuration file present 
             at the model directory
 
@@ -167,6 +168,24 @@ class Parameters:
         except Exception as e:
             return False
 
+        return True
+
+    def update_file(self, model, version=0):
+        '''Function to save current parameter values modified
+        at the object level (i.e: From a interactive python shell)
+        '''
+        p = self.p
+        if not p:
+            return False, 'No loaded parameters'
+
+        parameters_file_path = utils.model_path(model, version)
+        parameters_file_name = os.path.join (parameters_file_path,
+                                            'parameters.yaml')
+        try:
+            with open(parameters_file_name, 'w') as pfile:
+                yaml.dump (p, pfile)
+        except Exception as e:
+            return False, e
         return True
 
     def getVal(self, key):
