@@ -263,9 +263,6 @@ def _RDKit_morganFPS(ifile, **kwargs) -> (bool, (np.ndarray, list, list)):
     return True, results
 
 
-    raise NotImplementedError
-
-
 def _padel_descriptors(ifile):
     ''' 
     computes Padel molecular descriptors calling an external web service for
@@ -368,7 +365,8 @@ def _RDKit_descriptors(ifile, **kwargs) -> (bool, (np.ndarray, list, list)):
         return False, 'Unable to compute RDKit MD'
 
     LOG.info('Computing RDKit descriptors...')
-    # what is this??
+
+    # colecciona lista de descriptores moleculares
     nms = [x[0] for x in Descriptors._descList]
 
     md = MoleculeDescriptors.MolecularDescriptorCalculator(nms)
@@ -384,23 +382,38 @@ def _RDKit_descriptors(ifile, **kwargs) -> (bool, (np.ndarray, list, list)):
                 success_list.append(False)
                 continue
 
+            mdi = md.CalcDescriptors(mol)
+
+            if np.isnan(mdi).any():
+                success_list.append(False)
+                continue
+            
             if num_obj == 0:
-                xmatrix = md.CalcDescriptors(mol)
-                LOG.debug(
-                    f'first descriptor vector computet with shape {np.shape(xmatrix)}')
-                if np.isnan(xmatrix).any():
-                    # what is the deal if there is any NaN?
-                    success_list.append(False)
-                    continue
+                xmatrix = mdi
+                LOG.debug(f'first descriptor vector computed')
             else:
-                descriptors = md.CalcDescriptors(mol)
-                if np.isnan(descriptors).any():
-                    success_list.append(False)
-                    continue
-                xmatrix = np.vstack((xmatrix, descriptors))
+                xmatrix = np.vstack((xmatrix, mdi))
 
             success_list.append(True)
             num_obj += 1
+
+            # if num_obj == 0:
+            #     xmatrix = md.CalcDescriptors(mol)
+            #     LOG.debug(
+            #         f'first descriptor vector computet with shape {np.shape(xmatrix)}')
+
+            #     if np.isnan(xmatrix).any():
+            #         # what is the deal if there is any NaN?
+            #         success_list.append(False)
+            #         continue
+            # else:
+            #     descriptors = md.CalcDescriptors(mol)
+
+            #     if np.isnan(descriptors).any():
+            #         success_list.append(False)
+            #         continue
+            #     xmatrix = np.vstack((xmatrix, descriptors))
+
 
     except:  # if any mol fails the whole try except will break
         return False, 'Failed computing RDKit descriptors for molecule' + str(num_obj+1) + 'in file ' + ifile
@@ -408,6 +421,12 @@ def _RDKit_descriptors(ifile, **kwargs) -> (bool, (np.ndarray, list, list)):
     LOG.debug(f'computed RDKit descriptors matrix with shape {np.shape(xmatrix)}')
     if num_obj == 0:
         return False, 'Unable to compute RDKit properties for molecule '+ifile
+    
+    # np.savetxt ('testx.csv', xmatrix)
+
+    # hash = hashlib.md5()
+    # hash.update(xmatrix)
+    # print (hash.hexdigest)
     
     results = {
         'matrix': xmatrix,
@@ -449,22 +468,17 @@ def _RDKit_properties(ifile, **kwargs) -> (bool, (np.ndarray, list, list)):
                 success_list.append(False)
                 continue
 
-            # xmatrix [num_obj] = properties.ComputeProperties(mol)
+            descriptors = properties.ComputeProperties(mol)
+
+            if np.isnan(descriptors).any():
+                success_list.append(False)
+                continue
+            
             if num_obj == 0:
-                descriptors = properties.ComputeProperties(mol)
-                # what is going on here??
-                if np.isnan(xmatrix).any():
-                    success_list.append(False)
-                    continue
-                else:
-                    xmatrix = descriptors
+                xmatrix = descriptors
+                LOG.debug(f'first descriptor vector computed')
             else:
-                descriptors = properties.ComputeProperties(mol)
-                if np.isnan(descriptors).any():
-                    success_list.append(False)
-                    continue
-                xmatrix = np.vstack(
-                    (xmatrix, descriptors))
+                xmatrix = np.vstack((xmatrix, descriptors))
 
             success_list.append(True)
             num_obj += 1

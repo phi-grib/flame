@@ -23,6 +23,7 @@
 import numpy as np
 import pickle
 import os
+import hashlib
 
 from flame.stats.RF import RF
 from flame.stats.SVM import SVM
@@ -272,6 +273,53 @@ class Apply:
                                  'single',
                                  'External validation results')
 
+    def preprocess(self, X):
+        ''' This function loads the scaler and variable mask from a pickle file 
+        and apply them to the X matrix passed as an argument'''
+
+        prepro_file = os.path.join(self.param.getVal('model_path'),
+                                    'preprocessing.pkl')
+        LOG.debug(f'Loading model from pickle file, path: {prepro_file}')
+        try:
+            with open(prepro_file, "rb") as input_file:
+                dict_prepro = pickle.load(input_file)
+        except FileNotFoundError:
+            return False, f'No valid preprocessing tools found at: {prepro_file}'
+
+        # Load version
+        self.version = dict_prepro['version']
+
+        # check if the pickle was created with a compatible version
+        # currently 1
+        if self.version is not 1:
+            return False, 'Incompatible preprocessing version'   
+    
+        # Load rest of info in an extensible way
+        # This allows to add new variables keeping
+        # Retro-compatibility
+        if 'scaler' in dict_prepro.keys():
+            self.scaler = dict_prepro['scaler']
+
+        if 'variable_mask' in dict_prepro.keys():
+            self.variable_mask = dict_prepro['variable_mask']
+
+        # Check consistency between parameter file and pickle info
+        if self.param.getVal('modelAutoscaling') and self.scaler is None:
+            return False, 'Inconsistency error. Autoscaling is True in parameter file but no Scaler loaded'
+
+        if self.param.getVal('feature_selection') and self.variable_mask is None:
+            return False, 'Inconsistency error. Feature is True in parameter file but no variable mask loaded'
+
+        # apply variable_mask
+        if self.param.getVal("feature_selection"):
+            X = X[:, self.variable_mask]
+
+        # apply scale
+        if self.param.getVal('modelAutoscaling'):
+            X = self.scaler.transform(X)
+
+        return True, X 
+
     def run_internal(self): 
         ''' 
 
@@ -301,6 +349,20 @@ class Apply:
             LOG.error('Failed to generate MDs')
             self.conveyor.setError('Failed to generate MDs')
             return
+            
+
+        # Load scaler and variable mask and preprocess the data
+
+        success, result = self.preprocess(X)
+        if not success:
+            self.conveyor.setError(result)
+            return
+        X = result
+
+        ## uncomment this code to control the reproducibility of X
+        # hash = hashlib.md5()
+        # hash.update(X.tostring())
+        # print (hash.hexdigest())
 
         # Load model 
 
@@ -334,7 +396,27 @@ class Apply:
             return False, f'Exception ocurred when loading model: {e}'
 
         # project the X matrix into the model and save predictions in self.conveyor
+
+
         model.project(X, self.conveyor)
+        
+        # The following code us used to check the reproducibility of the results
+
+        # uncomment this for conformal methods
+        # Yp0 = np.asarray(self.conveyor.getVal("c0"))
+        # Yp1 = np.asarray(self.conveyor.getVal("c1"))
+
+        # hash = hashlib.md5()
+        # hash.update(Yp0.tostring())
+        # hash.update(Yp1.tostring())
+        # print (hash.hexdigest())
+
+        # uncomment this for non-conformal methods
+        # Yp = np.asarray(self.conveyor.getVal("values"))
+
+        # hash = hashlib.md5()
+        # hash.update(Yp.tostring())
+        # print (hash.hexdigest())
 
         # if the input file contains activity values use them to run external validation 
         if self.conveyor.isKey('ymatrix'):

@@ -30,6 +30,13 @@ from flame.stats.SVM import SVM
 from flame.stats.GNB import GNB
 from flame.stats.PLSR import PLSR
 from flame.stats.PLSDA import PLSDA
+from sklearn.preprocessing import MinMaxScaler 
+from sklearn.preprocessing import StandardScaler 
+from sklearn.preprocessing import RobustScaler
+
+
+from flame.stats.imbalance import *  
+from flame.stats import feature_selection
 from flame.util import utils, get_logger
 LOG = get_logger(__name__)
 
@@ -45,6 +52,10 @@ class Learn:
         self.X = self.conveyor.getVal('xmatrix')
         self.Y = self.conveyor.getVal('ymatrix')
 
+        # Preprocessing variables
+        self.scaler = None
+        self.variable_mask = None
+
     def run_custom(self):
         '''
         Build a model using custom code to be defined in the learn child
@@ -52,6 +63,93 @@ class Learn:
         '''
 
         self.conveyor.setError ('Not implemented')
+
+
+    def preprocess(self):
+        ''' 
+        This function scales the X matrix and selects features 
+        The scaler and the variable mask are saved in a pickl file 
+        '''
+
+        # Perform subsampling on the majority class. Consider to move.
+        # Only for qualitative endpoints.
+        if self.param.getVal("imbalance") is not None and \
+                        not self.param.getVal("quantitative"):
+            try:
+                self.X, self.Y = run_imbalance(
+                    self.param.getVal('imbalance'), self.X, self.Y, 46)
+                # This is necessary to avoid inconsistences in methods
+                # using self.nobj
+                LOG.info(f'{self.param.getVal("imbalance")}'
+                            f' performed')
+                LOG.info(f'Number of objects after sampling: {self.X.shape[0]}')
+            except Exception as e:
+                return False, (f'Unable to perform sampling'
+                               f' method with exception: {e}')
+
+        # Run scaling.
+        if self.param.getVal('modelAutoscaling'):
+            try:
+                scaler = ""
+                if self.param.getVal('modelAutoscaling') == 'StandardScaler':
+                    scaler = StandardScaler()
+                    LOG.info('Data scaled using StandarScaler')
+
+                elif self.param.getVal('modelAutoscaling') == 'MinMaxScaler':
+                    scaler = MinMaxScaler(copy=True, feature_range=(0,1))
+                    LOG.info('Data scaled using MinMaxScaler')
+                elif self.param.getVal('modelAutoscaling') == 'RobustScaler':
+                    scaler = RobustScaler()
+                    LOG.info('Data scaled using RobustScaler')
+                else:
+                    return False, 'Scaler not recognized'
+
+                # The scaler is saved so it can be used later
+                # to prediction instances.
+                self.scaler = scaler.fit(self.X)
+
+                # Scale the data.
+                self.X = scaler.transform(self.X)
+            except Exception as e:
+                return False, f'Unable to perform scaling with exception: {e}'
+          
+        # Run feature selection. Move to a instance method.
+        if self.param.getVal("feature_selection"):
+            # TODO: implement feature selection with other scalers
+            self.variable_mask, self.scaler = \
+                                feature_selection.run_feature_selection(
+                                            self.X, self.Y, self.scaler,
+                                            self.param)
+            self.X = self.X[:, self.variable_mask]
+
+        # Set the new number of instances/variables
+        # if sampling/feature selection performed
+        self.nobj, self.nvarx = np.shape(self.X)
+
+        # Check X and Y integrity.
+        if (self.nobj == 0) or (self.nvarx == 0):
+            return False, 'No objects/variables in the matrix'
+
+        if len(self.Y) == 0:
+            self.failed = True
+            return False, 'No activity values'
+
+        # This dictionary contain all the objects which will be needed
+        # for prediction
+        prepro = {'scaler':self.scaler,\
+                  'variable_mask':self.variable_mask,\
+                  'version':1}
+
+        prepro_pkl_path = os.path.join(self.param.getVal('model_path'),
+                                      'preprocessing.pkl')
+        
+        with open(prepro_pkl_path, 'wb') as handle:
+            pickle.dump(prepro, handle, 
+                        protocol=pickle.HIGHEST_PROTOCOL)
+
+        LOG.debug('Model saved as:{}'.format(prepro_pkl_path))
+        return True, 'OK'
+
 
     def run_internal(self):
         '''
@@ -71,9 +169,17 @@ class Learn:
         if not self.param.getVal('quantitative') :
             success, yresult  = utils.qualitative_Y(self.Y)
             if not success:
-
                 self.conveyor.setError(yresult)
                 return
+
+        # pre-process data
+        success, message = self.preprocess()
+        if not success:
+            self.conveyor.setError(message)
+            return
+
+        # TODO: preprocess has created scaler and variable mask. If these are not null, they must be saved from here and loaded from here
+        # and not within base_model as 
 
         # expand with new methods here:
         registered_methods = [('RF', RF),
@@ -97,6 +203,7 @@ class Learn:
             LOG.error(f'Modeling method {self.param.getVal("model")}'
                        'not recognized')
             return
+
 
         # build model
         LOG.info('Starting model building')
@@ -162,7 +269,7 @@ class Learn:
                                 class_key, class_label,
                                 'result', 'objs', 
                                 'Conformal class assignment',
-                                    'main')
+                                'main')
 
         # conformal quantitataive models produce a list of tuples, indicating
         # the minumum and maximum value
@@ -188,6 +295,9 @@ class Learn:
         # save model
         try:
             model.save_model()
+
+            # TODO: save scaled and variable_mask
+
         except Exception as e:
             LOG.error(f'Error saving model with exception {e}')
             return False, 'An error ocurred saving the model'
@@ -204,6 +314,7 @@ class Learn:
         if toolkit == 'internal':
             LOG.info('Building model using internal toolkit : Sci-kit learn')
             self.run_internal()
+
         elif toolkit == 'custom':
             LOG.info('Building model using custom toolkit')
             self.run_custom()

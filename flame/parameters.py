@@ -71,13 +71,13 @@ class Parameters:
 
         # load the main class dictionary (p) from this yaml file
         if not os.path.isfile(parameters_file_name):
-            return False
+            return False, 'file not found'
 
         try:
             with open(parameters_file_name, 'r') as pfile:
-                self.p = yaml.load(pfile)
+                self.p = yaml.safe_load(pfile)
         except Exception as e:
-            return False
+            return False, e
 
         # check version of the parameter file
         # no 'version' key mans version < 2.0
@@ -93,7 +93,7 @@ class Parameters:
         self.setVal('model_path',parameters_file_path)
         self.setVal('md5',utils.md5sum(parameters_file_name))
 
-        return True
+        return True, 'OK'
 
     def delta(self, model, version, param_file, iformat='YAML'):
         ''' load a set of parameters from the configuration file present 
@@ -107,19 +107,19 @@ class Parameters:
             hash of the configuration file 
         '''
         if not self.loadYaml (model, version):
-            return False
+            return False, 'file not found'
         
         # parse parameter file assuning it will be in
         # a YAML-compatible format
+
         try:
             with open(param_file, 'r') as pfile:
                 if iformat == 'YAML':
-                    newp = yaml.load(pfile)
+                    newp = yaml.safe_load(pfile)
                 elif iformat == 'JSON':
                     newp = json.load(pfile)
-        except:
-            #print ('parsing of delta failed')
-            return False
+        except Exception as e:
+            return False, e
         
         # update interna dict with keys in the input file (delta)
         black_list = ['param_format','version','model_path','endpoint','md5']
@@ -133,9 +133,18 @@ class Parameters:
                 if val == 'None':
                     val = None
 
-                #print ('@delta: adding',key,val,type(val))
+                if isinstance(val ,dict):
+                    for inner_key in val:
+                        inner_val = val[inner_key]
 
-                self.setVal(key,val)
+                        if inner_val == 'None':
+                            inner_val = None
+
+                        self.setInnerVal(key, inner_key, inner_val)
+                        #print ('@delta: adding',key, inner_key, inner_val)
+                else:
+                    self.setVal(key,val)
+                    #print ('@delta: adding',key,val,type(val))
 
         # dump internal dict to the parameters file
         parameters_file_path = utils.model_path(model, version)
@@ -145,9 +154,9 @@ class Parameters:
             with open(parameters_file_name, 'w') as pfile:
                 yaml.dump (self.p, pfile)
         except Exception as e:
-            return False
+            return False, 'unable to write parameters'
 
-        return True
+        return True, 'OK'
 
     @staticmethod
     def saveJSON(self, model, version, input_JSON):
@@ -252,6 +261,35 @@ class Parameters:
         else:
             self.p[key] = {'value': value}
 
+    def setInnerVal(self, okey, ikey, value):
+        ''' Sets a parameter within an internal dictionary. The entry is defined
+            by a key of the outer dictionary (okey) and a second key in the inner
+            dicctionary (ikey). The paramenter will be set to the given value
+
+            This function test the existence of all the keys and dictionaries to 
+            prevent crashes and returns without setting the value if any error is 
+            found
+        '''
+
+        if not okey in self.p:
+            return
+
+        if not "value" in self.p[okey]:
+            return
+
+        odict = self.p[okey]['value']
+
+        if not isinstance(odict, dict):
+            return
+        
+        if not ikey in odict:
+            return
+
+        if "value" in odict[ikey]:
+            odict[ikey]["value"] = value
+        else:
+            odict[ikey] = {'value': value}
+
 
     def appVal(self, key, value):
         ''' Appends value to the end of existing key list 
@@ -267,7 +305,15 @@ class Parameters:
         ## ---------------------------------------
 
         if "value" in self.p[key]:
-            self.p[key]['value'].append(value)
+            vt = self.p[key]['value']
+
+            # if the key is already a list, append the new value at the end
+            if isinstance (vt, list):
+                self.p[key]['value'].append(value)
+            # ... otherwyse, create a list with the previous content and the
+            # new value
+            else:
+                self.p[key]['value']=[vt, value]
 
     def getModelSet (self):
         ''' Returns a Boolean indicating if the model uses external input

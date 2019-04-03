@@ -23,6 +23,7 @@
 import argparse
 import pathlib
 import sys
+import os
 
 from flame.util import utils, get_logger
 from flame.util import config, change_config_status
@@ -49,16 +50,17 @@ def configuration_warning() -> None:
     """
     config = utils._read_configuration()
 
-    if not isinstance(config['config_status'], bool):
-        raise ValueError('Wrong type found in config status.')
+    if config != False:
+        if isinstance(config['config_status'], bool):
+            if config['config_status']:
+                if os.path.isdir(config['model_repository_path']):
+                    return
 
-    if config['config_status']:
-        return
-    elif not config['config_status']:
-        print("Flame hasn't been configured yet. "
-              "Model repository may be wrong. "
-              "Please use 'flame -c config' before using flame")
-        sys.exit()  # force exit
+    print("Flame hasn't been configured yet. "
+        "Model repository may be wrong. "
+        "Please use 'flame -c config' before using flame")
+
+    sys.exit()  # force exit
 
 def main():
 

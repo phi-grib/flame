@@ -39,7 +39,7 @@ def fixed_results():
 
     with open(FIXED_RESULTS) as f:
         results = json.load(f)
-    return np.array(results["Y_adj"])
+    return np.array(results["Y_pred"])
 
 
 def test_regression(make_model, build_model, fixed_results):

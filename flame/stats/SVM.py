@@ -23,10 +23,6 @@
 # along with Flame.  If not, see <http://www.gnu.org/licenses/>.
 
 from flame.stats.base_model import BaseEstimator
-from flame.stats.base_model import getCrossVal
-from flame.stats.scale import scale, center
-from flame.stats.model_validation import CF_QuanVal
-
 from sklearn import svm
 from copy import copy
 
@@ -112,12 +108,13 @@ class SVM(BaseEstimator):
             try:
                 # Check type of model
                 if self.param.getVal('quantitative'):
-                    self.optimize(X, Y, svm.SVR(), self.tune_parameters)
+                    self.optimize(X, Y, svm.SVR(**self.estimator_parameters),
+                                 self.tune_parameters)
                     results.append(
                         ('model', 'model type', 'SVM quantitative (optimized)'))
 
                 else:
-                    self.optimize(X, Y, svm.SVC(probability=True),
+                    self.optimize(X, Y, svm.SVC(**self.estimator_parameters),
                                   self.tune_parameters)
                     results.append(
                         ('model', 'model type', 'SVM qualitative (optimized)'))
