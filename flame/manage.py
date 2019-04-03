@@ -28,7 +28,6 @@ import json
 import pickle
 import pathlib
 import numpy as np
-
 from flame.util import utils, get_logger 
 # from flame.parameters import Parameters
 # from flame.conveyor import Conveyor
@@ -97,6 +96,11 @@ def action_new(model):
     # copy parameter yml file
     params_path = wkd / 'children/parameters.yaml'
     shutil.copy(params_path, ndir)
+
+    # copy documentation yml file
+    documentation_path = wkd / 'children/documentation.yaml'
+    shutil.copy(documentation_path, ndir)
+  
 
     LOG.info(f'New endpoint {model} created')
     #print(f'New endpoint {model} created')
@@ -400,7 +404,7 @@ def action_results(model, version=None, ouput_variables=False):
     return True, conveyor.getJSON()
 
 
-def action_parameters (model, version=None, oformat='text'):
+def action_parameters(model, version=None, oformat='text'):
     ''' Returns a JSON with whole results info for a given model and version '''
 
     if model is None:
@@ -591,3 +595,45 @@ def action_report():
         
     print (json.dumps(results))
     return True, json.dumps(results)
+
+def action_model_template(model, version=None):
+    '''
+    Returns a TSV model reporting template
+    '''
+
+    from flame.documentation import Documentation
+
+    if not model:
+        return False, 'Empty model label'
+    # get de model repo path
+    rdir = utils.model_path(model, version)
+    if not os.path.isfile(os.path.join(rdir, 'results.pkl')):
+        # compatibity method. use info.pkl
+        if not os.path.isfile(os.path.join(rdir, 'info.pkl')):
+            return False, 'Info file not found'
+
+    else:
+        # new method, use results.pkl
+        if not os.path.isfile(os.path.join(rdir, 'results.pkl')):
+            return False, 'Info file not found'
+
+    documentation = Documentation(model, version, context='model')
+    documentation.get_upf_template()
+
+    return True, 'Model documentation template created'
+
+
+def action_prediction_template(model, version=None):
+    '''
+    Returns a TSV model reporting template
+    '''
+
+    from flame.documentation import Documentation
+
+    if not model:
+        return False, 'Empty model label'
+
+    documentation = Documentation(model, version, context='prediction')
+    documentation.get_prediction_template()
+
+    return True, 'Prediction template created'

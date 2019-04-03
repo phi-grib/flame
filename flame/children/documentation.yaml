@@ -1,0 +1,319 @@
+documentation_version: 
+  value: 0.1
+
+ID:
+  level: 1
+  QMRF_field: '1.1'
+  description: 'Model identifier'
+  value: null
+  subfields: null
+
+Version:
+  level: 1
+  QMRF_field: ''
+  description: 'Version of the model'
+  value: null
+  subfields: null
+
+Contact:
+  level: 1
+  QMRF_field: '2.5'
+  description: 'Model identifier'
+  value: null
+  subfields: null
+
+Institution:
+  level: 1
+  QMRF_field: '2.5'
+  description: 'Affiliation details'
+  subfields: null
+
+Date:
+  level: 1
+  QMRF_field: '2.1'
+  description: 'Date of model development'
+  value: null
+  subfields: null
+
+Endpoint:
+  level: 1
+  QMRF_field: '3.2'
+  description: 'Endpoint modeled'
+  value: null
+  subfields: null
+
+Endpoint_units:
+  level: 1
+  QMRF_field: '3.4'
+  description: 'Response units to model'
+  value: null
+  subfields: null
+
+Dependent_variable:
+  level: 1
+  QMRF_field: '3.5'
+  description: 'Response variable used to model'
+  value: null
+  subfields: null
+
+Species:
+  level: 1
+  QMRF_field: '3.1'
+  description: 'Modeled endpoint species'
+  value: null
+  subfields: null
+
+Limits_applicability:
+  level: 1
+  QMRF_field: '5.4'
+  description: 'Applicability limits of the model'
+  value: null
+  subfields: null
+
+Experimental_protocol:
+  level: 1
+  QMRF_field: '3.6'
+  description: 'Description of the followed experimental protocol'
+  value: null
+  subfields: null
+
+Data_info:
+  level: 1
+  QMRF_field: '6.1, 6.2, 6.5, 6.6, 7.1, 7.2, 7.5, 9.3'
+  description: 'Model data resources'
+  value: null
+  subfields: 
+     format:
+      value: null
+      description: 'Format used (SDF, SMILES, table..)'
+     raw_data_url: 
+      value: null
+      description: 'URL of the original data'
+     training_set_size:
+      value: null
+      description: 'Size of the training set'
+     test_set_size:
+      value: null
+      description: 'Size of the test set'
+     training_set_url: 
+      value: null
+      description: 'Training set URL'
+     test_set_url: 
+      value: null
+      description: 'Test set URL'
+     pre-procesing: 
+      value: null
+      description: 'Details on data processing'
+
+Model_availability:
+  level: 1
+  QMRF_field: '2.8'
+  description: 'Information about model availability'
+  value: null
+  subfields:
+    location:
+      value: null
+      description: 'Model URL/place'
+    license:
+      value: null
+      description: 'Model license specifications'
+    description:
+      value: null
+      description: 'Additional information'
+
+Algorithm:
+  level: 2
+  QMRF_field: '4.1'
+  description: 'Description of the algorithm'
+  value: null
+  subfields: 
+    type:
+      value: null
+      description: 'Type of model (QSAR, etc?)'
+    algorithm:
+      value: null
+      description: 'Type of algorithm (Random Forest, SVM, etc)'
+    descriptors:
+      value: null
+      description: 'Name of descriptor package/s used'
+
+Software:
+  level: 2
+  QMRF_field: '1.3, 4.6, 5.3'
+  description: 'Description of the used software'
+  value: null
+  subfields: 
+    model:
+      value: null
+      description: 'Main modelling program, version, description and license.'
+    descriptors:
+      value: null
+      description: 'Software used to generate descriptors, version, description and license'
+    applicability_domain:
+      value: null
+      description: 'Applicability domain software, version, description and license.'
+
+Descriptors:
+  level: 2
+  QMRF_field: '4.3, 4.4, 4.5, 4.7'
+  description: 'Information on descriptors used for the model'
+  value: null
+  subfields:
+    descriptors:
+      value: null
+      description: 'Descriptors used, list'
+    initial_number: 
+      value: null
+      description: 'Initial number of descriptors'
+    selection_method:
+      value: null
+      description: 'Feature selection technique'
+    selection: 
+      value: null
+      description: 'Final list of descriptors used'
+    final_number:
+      value: null
+      description: 'Final number of descriptors after feature selection'
+    ratio: 
+      value: null
+      description: 'Ratio samples/descriptors'
+
+Algorithm_settings:
+  level: 2
+  QMRF_field: '4.2'
+  description: 'Algorithm building information'
+  value: null
+  subfields:
+    name:
+      value: null
+      description: 'Name of the algorithm (RF, GNB, etc)'
+    parameters: 
+      value: null
+      description: 'Model hyperparameter settings used to build the model'
+    description: 
+      value: null
+      description: 'Addtional information about the algorithm'
+    
+AD_method:
+  level: 2
+  QMRF_field: '5.1'
+  description: 'Applicability domain technique details'
+  value: null
+  subfields:
+    name:
+      value: null
+      description: 'Name of the applicability domain technique'
+    description: 
+      value: null
+      description: 'Description of the applicability domain technique'
+
+AD_parameters:
+  level: 2
+  QMRF_field: '5.2'
+  description: 'Parameters of the applicability domain technique'
+  value: null
+  subfields: null
+
+Goodness_of_fit_statistics: 
+  level: 2
+  QMRF_field: '6.7'
+  description: 'Goodness of the fit statistics'
+  value: null
+  subfields: null
+
+Internal_validation_1: 
+  level: 2
+  QMRF_field: '6.8'
+  description: 'Internal validation method 1 settings'
+  value: null
+  subfields:
+    method:
+      value: null
+      description: 'Name of the cross-validation 1 method'
+    statistics: 
+      value: null
+      description: 'statistics'
+
+Internal_validation_2: 
+  level: 2
+  QMRF_field: '6.9'
+  description: 'Internal validation settings and statistics for leave-many-out cross-validation'
+  value: null
+  subfields: null
+
+External_validation: 
+  level: 2
+  QMRF_field: '7.7'
+  description: 'External validation statistics'
+  value: null
+  subfields: null
+
+Comments:
+  level: 2
+  QMRF_field: '9.1'
+  description: 'Additional commnents on model building'
+  value: null
+
+Other_related_models:
+  level: 3
+  QMRF_field: '1.2'
+  description: 'Related models'
+  value: null
+  subfields: null
+
+Date_of_QMRF:
+  level: 3
+  QMRF_field: '2.1'
+  description: 'Date of QMRF, usually is the same as the model creation'
+  value: null
+  subfields: null
+
+Date_of_QMRF_updates:
+  level: 3
+  QMRF_field: '2.3'
+  description: 'Dates of document updates'
+  value: null
+  subfields: null
+
+QMRF_updates:
+  level: 3
+  QMRF_field: '2.4'
+  description: 'Update of the QMRF'
+  value: null
+  subfields: null
+
+References:
+  level: 3
+  QMRF_field: '2.7'
+  description: '2.7. Reference(s) to main scientific papers and/or software package'
+  value: null
+  subfields: null
+
+QMRF_same_models:
+  level: 3
+  QMRF_field: '2.9'
+  description: '2.9. Availability of another QMRF for exactly the same model' 
+  value: null
+  subfields: null
+
+Comment_on_the_endpoint:
+  level: 3
+  QMRF_field: '3.3'
+  description: 'Additional comments on the modeled endpoint'
+  value: null
+  subfields: null
+
+Endpoint_data_quality_and_variability:
+  level: 3
+  QMRF_field: '3.7'
+  description: 'Text field containing all the information for adequately
+               judge the quality of the experimental data.'
+  value: null
+  subfields: null
+
+Descriptor_selection:
+  level: 3
+  QMRF_field: '4.4'
+  description: 'Detailed information about descriptor selection process'
+  value: null
+  subfields: null

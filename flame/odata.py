@@ -297,6 +297,15 @@ class Odata():
         if 'JSON' in self.format:
             output = self.conveyor.getJSON()
 
+        # Save conveyor from prediction just if confidential is False
+
+        if not self.param.getVal('confidential'):
+            results_pkl_path = os.path.join(self.param.getVal('model_path'),
+                                            'prediction-results.pkl')
+            LOG.debug('saving model results to:{}'.format(results_pkl_path))
+            with open(results_pkl_path, 'wb') as handle:
+                self.conveyor.save(handle)
+
         return True, output
 
     def run_error(self):
