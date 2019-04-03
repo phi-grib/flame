@@ -25,8 +25,6 @@ import yaml
 import json
 
 from flame.util import utils
-from flame.util import utils, get_logger, supress_log
-LOG = get_logger(__name__)
 
 
 class Parameters:
@@ -176,12 +174,10 @@ class Parameters:
         '''Function to save current parameter values modified
         at the object level (i.e: From a interactive python shell)
         '''
-        try:
-            p = self.p
-        except Exception as e :
-            LOG.error('Parameter file was not loaded into the class...')
-            raise e
-        
+        p = self.p
+        if not p:
+            return False, 'No loaded parameters'
+
         parameters_file_path = utils.model_path(model, version)
         parameters_file_name = os.path.join (parameters_file_path,
                                             'parameters.yaml')
@@ -189,7 +185,7 @@ class Parameters:
             with open(parameters_file_name, 'w') as pfile:
                 yaml.dump (p, pfile)
         except Exception as e:
-            return False
+            return False, e
         return True
 
     def getVal(self, key):
