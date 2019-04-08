@@ -1077,7 +1077,7 @@ class Idata:
         activity_param = self.param.getVal('TSV_activity')
         LOG.debug('creating ymatrix from column {}'.format(activity_param))
         if activity_param in var_nam:
-            col = var_nam.index(activity_param) +1
+            col = var_nam.index(activity_param)
             ymatrix = xmatrix[:, col]
             xmatrix = np.delete(xmatrix, col, 1)
             utils.add_result(self.results, ymatrix, 'ymatrix', 'Activity', 'decoration',

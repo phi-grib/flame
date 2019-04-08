@@ -430,6 +430,9 @@ class BaseEstimator:
         info.append(('FN', 'False negatives in cross-validation', self.FN))
         
         # Compute sensitivity and specificity
+        self.sensitivity = 0
+        self.specificity = 0
+        self.mcc = 0
         try:
             self.sensitivity = (self.TP / (self.TP + self.FN))
             self.specificity = (self.TN / (self.TN + self.FP))
@@ -456,8 +459,13 @@ class BaseEstimator:
                                      self.TP + self.FN) +
                                       not_predicted_all)
         # Compute accuracy (% of correct predictions)
-        self.conformal_accuracy = float(
-            self.TN + self.TP) / float(self.FP + self.FN + self.TN + self.TP)
+        self.conformal_accuracy = 0
+        try:
+            self.conformal_accuracy = float(
+                self.TN + self.TP) / float(self.FP + self.FN + self.TN + self.TP)
+        except Exception as e:
+            LOG.error(f'Failed to compute accuracy with'
+                        f'exception {e}')
 
         info.append(
             ('Conformal_coverage', 'Conformal coverage',

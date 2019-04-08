@@ -116,7 +116,7 @@ class Learn:
 
         # model_validation_results is a dictionary which contains model_validation_info and 
         # (optionally) Y_adj and Y_pred, depending on the model type    
-        
+
         utils.add_result(self.results,
             model_validation_results['quality'],
             'model_valid_info',

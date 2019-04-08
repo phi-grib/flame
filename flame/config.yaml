@@ -2,5 +2,5 @@ admin_email: manuel.pastor@upf.edu
 admin_name: Manuel Pastor
 config_status: true
 homepage: http://phi.upf.edu
-model_repository_path: C:\Users\phi
+model_repository_path: /data/jcgomez/jcbackup/LMC/Arnau/SNP_s_Arnau/models
 provider: UPF

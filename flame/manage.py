@@ -476,7 +476,8 @@ def action_results(model, version=None, ouput_variables=False):
         try:
             output = json.dumps(json_results)
         except:
-            return False, 'Unable to serialize to JSON the model results'
+            raise
+            #return False, 'Unable to serialize to JSON the model results'
 
     return True, output
 
