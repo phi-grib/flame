@@ -303,17 +303,19 @@ class Documentation:
         # Now create the spreedsheats for prediction
 
         # First write summary
-        summary = ("Study name\n" +
-                "Endpoint\n" +
-                "QMRF-ID\n" +
-                "(Target)Compounds\n" +
-                "Compounds[compounds]\tName\tInChiKey\n")
+        summary = ("Study \n" +
+                    "Title\n"
+                    "Endpoint\n" +
+                    "QMRF-ID\n" +
+                    "(Target)Compounds\n" +
+                    "File\n\n" +
+                    "Compounds[compounds]\tName\tInChiKey\tprediction\n")
         
-        for name, inch in zip(names, inchikeys):
-            summary += f'\t{name}\t{inch}\n'
+        for name, inch, pre in zip(names, inchikeys, predictions):
+            summary += f'\t{name}\t{inch}\t{pre}\n'
 
-        summary += ("\nFile\n" + 
-                    "Author name\n" +
+        summary += (
+                    "\nAuthor name\n" +
                     "E-mail\n" +
                     "Role\n" +
                     "Affiliation\n" +
@@ -346,7 +348,11 @@ class Documentation:
         reporting['Structural_analogue_3_source'] = '-'
         reporting['Structural_analogue_3_experimental_value'] = '-'
 
-        reporting.to_csv('prediction_report.tsv', sep='\t',index=False)
+        reporting.to_csv('prediction_report.tsv', sep='\t', index=False)
+
+        
+
+        
 
         
 
