@@ -131,7 +131,7 @@ def build_cmd(arguments, output_format=None):
         LOG.error('Endpoint name not found in model repository.')
         return False, 'Endpoint name not found in model repository.'
 
-    build = Build(arguments['endpoint'], arguments['parameters'], output_format)
+    build = Build(arguments['endpoint'], param_file=arguments['parameters'], output_format=output_format)
 
     ext_input, model_set = build.get_model_set()
 

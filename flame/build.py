@@ -35,7 +35,7 @@ LOG = get_logger(__name__)
 
 class Build:
 
-    def __init__(self, model, param_file=None, output_format=None):
+    def __init__(self, model, param_file=None, param_string=None, output_format=None):
         LOG.debug('Starting build...')
         self.model = model
         self.param = Parameters()
@@ -45,7 +45,11 @@ class Build:
         if param_file is not None:
             # use the param_file to update existing parameters at the model
             # directory and save changes to make them persistent
-            success, message = self.param.delta(model, 0, param_file)
+            success, message = self.param.delta(model, 0, param_file, iformat='YAML')
+
+        elif param_string is not None:
+            success, message = self.param.delta(model, 0, param_string, iformat='JSONS')
+
         else:
             # load parameter file at the model directory
             success, message = self.param.loadYaml(model, 0)

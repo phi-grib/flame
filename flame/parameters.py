@@ -93,7 +93,7 @@ class Parameters:
 
         return True, 'OK'
 
-    def delta(self, model, version, param_file, iformat='YAML'):
+    def delta(self, model, version, param, iformat='YAML'):
         ''' load a set of parameters from the configuration file present 
             at the model directory
 
@@ -110,14 +110,20 @@ class Parameters:
         # parse parameter file assuning it will be in
         # a YAML-compatible format
 
-        try:
-            with open(param_file, 'r') as pfile:
-                if iformat == 'YAML':
-                    newp = yaml.safe_load(pfile)
-                elif iformat == 'JSON':
-                    newp = json.load(pfile)
-        except Exception as e:
-            return False, e
+        if iformat == 'JSONS':
+            try:
+                newp = json.loads(param)
+            except Exception as e:
+                return False, e
+        else:
+            try:
+                with open(param, 'r') as pfile:
+                    if iformat == 'YAML':
+                        newp = yaml.safe_load(pfile)
+                    elif iformat == 'JSON':
+                        newp = json.load(pfile)
+            except Exception as e:
+                return False, e
         
         # update interna dict with keys in the input file (delta)
         black_list = ['param_format','version','model_path','endpoint','md5']
