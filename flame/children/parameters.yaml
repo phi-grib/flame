@@ -509,35 +509,35 @@ SVM_parameters:
       options:
         - null
         - balanced
-      description: 
+      description: Set the parameter C of class i to class_weight[i]*C for SVC. If not given, all classes are supposed to have weight one. 
     C:
       object_type: float
       writable: true
-      value: 1
+      value: 1.0
       options:
         - null
-      description: 
+      description: Penalty parameter C of the error term.
     coef0:
       object_type: float
       writable: true
-      value: 0
+      value: 0.0
       options: 
         - null
-      description: 
+      description: Independent term in kernel function. It is only significant in ‘poly’ and ‘sigmoid’.
     degree:
       object_type: int
       writable: true
       value: 3
       options: 
         - null
-      description: 
+      description: Degree of the polynomial kernel function (‘poly’). Ignored by all other kernels.
     gamma:
       object_type: float
       writable: true
       value: auto 
       options: 
         - null
-      description: 
+      description: Kernel coefficient for ‘rbf’, ‘poly’ and ‘sigmoid’.
     random_state:
       object_type: int
       writable: true
@@ -545,7 +545,7 @@ SVM_parameters:
       options:
         - 46
         - null
-      description: 
+      description: Random seed
     kernel:
       object_type: string
       writable: false
@@ -555,7 +555,7 @@ SVM_parameters:
         - rbf
         - linear
         - poly
-      description: 
+      description: Specifies the kernel type to be used in the algorithm. 
     probability:
       object_type: boolean 
       writable: false
@@ -563,7 +563,7 @@ SVM_parameters:
       options:
         - true
         - false
-      description:
+      description: Whether to enable probability estimates. This must be enabled prior to calling fit, and will slow down that method.
     shrinking: 
       object_type: boolean
       writable: false
@@ -571,7 +571,7 @@ SVM_parameters:
       options:
         - true
         - false
-      description: 
+      description: Whether to use the shrinking heuristic.
   description: SVM Parameters
   dependencies: 
     model: SVM
