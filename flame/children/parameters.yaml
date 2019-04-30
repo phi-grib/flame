@@ -523,21 +523,21 @@ SVM_parameters:
       value: 0.0
       options: 
         - null
-      description: Independent term in kernel function. It is only significant in ‘poly’ and ‘sigmoid’.
+      description: Independent term in kernel function. It is only significant in poly and sigmoid.
     degree:
       object_type: int
       writable: true
       value: 3
       options: 
         - null
-      description: Degree of the polynomial kernel function (‘poly’). Ignored by all other kernels.
+      description: Degree of the polynomial kernel function (poly). Ignored by all other kernels.
     gamma:
       object_type: float
       writable: true
       value: auto 
       options: 
         - null
-      description: Kernel coefficient for ‘rbf’, ‘poly’ and ‘sigmoid’.
+      description: Kernel coefficient for rbf, poly and sigmoid.
     random_state:
       object_type: int
       writable: true
@@ -563,7 +563,7 @@ SVM_parameters:
       options:
         - true
         - false
-      description: Whether to enable probability estimates. This must be enabled prior to calling fit, and will slow down that method.
+      description: Whether to enable probability estimates.
     shrinking: 
       object_type: boolean
       writable: false
