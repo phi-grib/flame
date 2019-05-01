@@ -400,24 +400,24 @@ RF_parameters:
       options:
         - null
         - balanced
-      description: 
+      description: Weights associated with classes. If not given, all classes are supposed to have weight one
     max_depth:
       object_type: string
       writable: true
       value: null
       options:
         - null
-      description: 
+      description: The maximum depth of the tree. If None, then nodes are expanded until all leaves are pure or until all leaves contain less than min_samples_split samples
     max_features:
       object_type: string
-      writable: true
+      writable: false
       value: sqrt
       options: 
         - auto
         - sqrt
         - log2
         - null
-      description: 
+      description: The maximum depth of the tree. If auto, then max_features=sqrt(n_features). If sqrt, idem as auto. If log2, then max_features=log2(n_features). If None, then max_features=n_features.
     n_estimators:
       object_type: int
       writable: true
@@ -428,7 +428,7 @@ RF_parameters:
         - 150
       max: 500
       min: 1
-      description: 
+      description: The number of trees in the forest 
     oob_score:
       object_type: boolean
       writable: false
@@ -436,7 +436,7 @@ RF_parameters:
       options: 
         - true
         - false
-      description: 
+      description: Whether to use out-of-bag samples to estimate the generalization accuracy
     random_state:
       object_type: int
       writable: true
@@ -444,8 +444,8 @@ RF_parameters:
       options:
         - 46
         - null
-      description: 
-  description: Random Forest Parameters
+      description: Random seed
+  description: Random Forest Parameters See https://scikit-learn.org/ for further reference
   dependencies: 
     model: RF
   comments: 
@@ -469,7 +469,7 @@ RF_optimize:
       description: 
     max_features:
       object_type: string
-      writable: true
+      writable: false
       value: 
         - sqrt
         - log2
@@ -572,7 +572,7 @@ SVM_parameters:
         - true
         - false
       description: Whether to use the shrinking heuristic.
-  description: SVM Parameters
+  description: SVM Parameters. See https://scikit-learn.org/ for further reference
   dependencies: 
     model: SVM
   comments: 
@@ -690,21 +690,21 @@ PLSR_parameters:
       options:
         - true
         - false
-      description: 
+      description: Wether X variables should be scaled to unit variance 
     tol:
       object_type: float
       writable: true
       value: 0.000006
       options:
         - null
-      description: 
-    n_components:
+      description: Tolerance used in the iterative algorithm default 1e-06
+    n_components: 
       object_type: int
       writable: true
       value: 2
       options: 
         - null
-      description: 
+      description: Number of latent variables to extract
     optimize:
       object_type: string
       writable: true
@@ -713,7 +713,7 @@ PLSR_parameters:
         - manual
         - auto
       description: 
-  description: PLSR Parameters
+  description: PLSR Parameters. See https://scikit-learn.org/ for further reference
   dependencies: 
     model: PLSR
     quantitative: true
@@ -764,21 +764,21 @@ PLSDA_parameters:
       options:
         - true
         - false
-      description: 
+      description: Wether X variables should be scaled to unit variance
     tol:
       object_type: float
       writable: true
       value: 0.000006
       options:
         - null
-      description: 
+      description: Tolerance used in the iterative algorithm default 1e-06
     n_components:
       object_type: int
       writable: true
       value: 2
       options: 
         - null
-      description: 
+      description: Number of latent variables to extract
     optimize:
       object_type: string
       writable: true
@@ -869,13 +869,13 @@ GNB_parameters:
   value:
     priors:
       object_type: list
-      writable: false
+      writable: true
       value: null
       options:
         - null
       description: 
 
-  description: GNB Parameters
+  description: GNB Parameters. See https://scikit-learn.org/ for further reference
   dependencies: 
     model: GNB
     quantitative: false
