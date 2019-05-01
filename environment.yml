@@ -17,5 +17,9 @@ dependencies:
   - requests
   - pytest
   - pip:
+     - psycopg2
+     - django
+     - djangorestframework
+     - django-cors-headers
      - "https://github.com/phi-grib/standardiser/archive/master.zip"
      - "https://github.com/josecarlosgomezt/nonconformist/archive/master.zip"
