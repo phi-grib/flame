@@ -66,6 +66,7 @@ class Parameters:
         parameters_file_path = utils.model_path(model, version)
         parameters_file_name = os.path.join (parameters_file_path,
                                             'parameters.yaml')
+        print(parameters_file_name)
 
         # load the main class dictionary (p) from this yaml file
         if not os.path.isfile(parameters_file_name):
