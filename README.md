@@ -194,11 +194,11 @@ Management commands deserve further description:
 | import | *flame -c manage -a import -f NEWMODEL.tgz* | Imports file *NEWMODEL.tgz*, typically generated using command *-c manage -a export* creating model NEWMODEL in the local model repository |
 
 
-## Flame web-app
+## Flame GUI
 
-You can install Flame_ws (https://github.com/phi-grib/flame_ws) to access the model management and prediction functionalities using a simple web application.
+You can install Flame_API (https://github.com/phi-grib/flame_API) to access most of the functionalities using a simple web application.
 
-Please refer to the manual page of Flame_ws for further information
+Please refer to the manual page of Flame_API for further information
 
 
 ## Technical details
@@ -207,19 +207,17 @@ Please refer to the manual page of Flame_ws for further information
 ### Using Flame
 
 Flame was designed to be used in different ways, using diverse interfaces. For example:
-- Using the web-GUI, starting the `flame-ws.py` web-service
+- Using a web GUI
 - Using the `flame.py` command described above
 - As a Python package, making direct calls to the high-level objects *predict*, *build* or *manage*
 - As a Python package, making calls to the lower level objects *idata*, *apply*, *learn*, *odata*
-
-The two main modeling tasks that must be supported by Flame are the *model development* and the use of the models for *prediction*. These are typically carried out by people with different expertise and in different environments. Flame was designed around this concept and allows to decouple both tasks completelly. Somebody can develop a model in a research environment which can be easily exported to be installed in a production environment to serve prediction services. Flame implements interfaces designed specifically for each task, even if they share exactly the same code, to guarantee compatibility and consistency. 
 
 
 ### Developing models
 
 Typically, Flame models are developed by modeling engineers. This task requires importing an appropriate training series and defininig the model building workflow. 
 
-Model building can be easily customized by editing the parameters defined in a command file (called *parameters.yaml*), either with a text editor or with the Flame modeling GUI (**in development**). Then, the model can be built using the `flame.py` build command, and its quality can be assessed in an iterative process which is repeated until optimum results are obtained. This task can also be carried out making calls to the objects mentioned above from an interactive Python environment, like a Jupyter notebook. A full documentation of the library can be obtained running Doxygen on the root directory.
+Model building can be easily customized with the Flame modeling GUI or by modifying the parameters defined in a command file (called *parameters.yaml*) by passing a file with the new parameter values at building time (using parameter -p/--parameters, as descrive above). Then, the model can be built using the `flame.py` build command, and its quality can be assessed in an iterative process which is repeated until optimum results are obtained. This task can also be carried out making calls to the objects mentioned above from an interactive Python environment, like a Jupyter notebook. A full documentation of the library can be obtained running Doxygen on the root directory.
 
 Advanced users can customize the models by editting the objects *idata_child*, *appl_child*, *learn_child* and *odata_child* present at the *model/dev* folder. These empty objects are childs of the corresponding objects called by flame, and it is possible to override any of the parents' methods simply by copying and editing these whitin the childs' code files.
 
@@ -234,7 +232,7 @@ flame -c predict -e MyModel -v 1 -f query.sdf
 ```
 This allows to integate the prediction in scripts, or workflow tools like KNIME and Pipeline Pilot.
 
-Also, the models can run as prediction web-services, using the provided flame-ws interface. These services can be consumed by the stand-alone web GUI provided and described above or connected to a more complex platform, like the one currently in development in the eTRANSAFE project.
+Also, the models can run as prediction web-services. These services can be consumed by the stand-alone web GUI provided and described above or connected to a more complex platform, like the one currently in development in the eTRANSAFE project.
 
 
 ## Licensing
