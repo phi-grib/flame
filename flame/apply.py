@@ -100,25 +100,25 @@ class Apply:
                 else:
                     specificity = 0.0
 
-                ext_val_results.append(('TP_ex',
+                ext_val_results.append(('TP',
                                         'True positives in external-validation',
                                         float(TP)))
-                ext_val_results.append(('TN_ex',
+                ext_val_results.append(('TN',
                                         'True negatives in external-validation',
                                         float(TN)))
-                ext_val_results.append(('FP_ex',
+                ext_val_results.append(('FP',
                                         'False positives in external-validation',
                                         float(FP)))
-                ext_val_results.append(('FN_ex',
+                ext_val_results.append(('FN',
                                         'False negatives in external-validation',
                                         float(FN)))
-                ext_val_results.append(('Sensitivity_ex',
+                ext_val_results.append(('Sensitivity',
                                         'Sensitivity in external-validation',
                                         float(sensitivity)))
-                ext_val_results.append(('Specificity_ex',
+                ext_val_results.append(('Specificity',
                                         'Specificity in external-validation',
                                         float(specificity)))
-                ext_val_results.append(('MCC_ex',
+                ext_val_results.append(('MCC',
                                         'Mattews Correlation Coefficient in external-validation',
                                         float(MCC)))
 
@@ -142,11 +142,11 @@ class Apply:
                 Q2 = 1.00 - (SSY_out / SSY0_out)
 
                 ext_val_results.append(
-                    ('scoringP_ex', 'Scoring P', scoringP))
+                    ('scoringP', 'Scoring P', scoringP))
                 ext_val_results.append(
-                    ('Q2_ex', 'Determination coefficient in cross-validation', Q2))
+                    ('Q2', 'Determination coefficient in cross-validation', Q2))
                 ext_val_results.append(
-                    ('SDEP_ex', 'Standard Deviation Error of the Predictions', SDEP))
+                    ('SDEP', 'Standard Deviation Error of the Predictions', SDEP))
 
             self.conveyor.addVal(
                              ext_val_results,
