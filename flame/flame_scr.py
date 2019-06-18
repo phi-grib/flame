@@ -76,6 +76,10 @@ def main():
                         help='Endpoint model name.',
                         required=False)
 
+    parser.add_argument('-s', '--space',
+                        help='Chemical space name.',
+                        required=False)
+
     parser.add_argument('-v', '--version',
                         help='Endpoint model version.',
                         required=False)
@@ -85,13 +89,13 @@ def main():
                         required=False)
 
     parser.add_argument('-p', '--parameters',
-                        help='File with model building parameters.',
+                        help='File with parameters for the current action.',
                         required=False)
 
     parser.add_argument('-c', '--command',
                         action='store',
-                        choices=['predict', 'build', 'manage', 'config'],
-                        help='Action type: \'predict\' or \'build\' or \'manage\'',
+                        choices=['predict', 'search', 'build', 'sbuild', 'manage', 'config'],
+                        help='Action type: \'predict\' or \'search\' or \'build\' \'sbuild\' or \'manage\' or \'config\'',
                         required=True)
 
     # parser.add_argument('-log', '--loglevel',
@@ -148,6 +152,22 @@ def main():
                  f' with file {args.infile} and parameters {args.parameters}')
 
         success, results = context.build_cmd(command_build)
+
+        if not success:
+            print(results)
+
+    elif args.command == 'sbuild':
+
+        if (args.space is None):
+            print('flame sbuild : space argument is compulsory')
+            return
+
+        command_build = {'space': args.space, 'infile': args.infile, 'parameters': args.parameters}
+
+        LOG.info(f'Starting building model {args.space}'
+                 f' with file {args.infile} and parameters {args.parameters}')
+
+        success, results = context.sbuild_cmd(command_build)
 
         if not success:
             print(results)

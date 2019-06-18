@@ -165,7 +165,6 @@ def set_model_repository(path=None):
 
     write_config(configuration)
 
-
 def model_repository_path():
     '''
     Returns the path to the root of the model repository,
@@ -174,14 +173,12 @@ def model_repository_path():
     configuration = _read_configuration()
     return configuration['model_repository_path']
 
-
 def model_tree_path(model):
     '''
     Returns the path to the model given as argumen, containg all versions
     '''
 
     return os.path.join(model_repository_path(), model)
-
 
 def model_path(model, version):
     '''
@@ -197,6 +194,34 @@ def model_path(model, version):
 
     return modpath
 
+def space_repository_path():
+    '''
+    Returns the path to the root of the spaces repository,
+    containing all models and versions
+    '''
+    configuration = _read_configuration()
+    return configuration['space_repository_path']
+
+def space_tree_path(space):
+    '''
+    Returns the path to the space given as argumen, containg all versions
+    '''
+
+    return os.path.join(space_repository_path(), space)
+
+def space_path(space, version):
+    '''
+    Returns the path to the model and version given as arguments
+    '''
+
+    spacepath = space_tree_path(space)
+
+    if version == 0:
+        spacepath = os.path.join(spacepath, 'dev')
+    else:
+        spacepath = os.path.join(spacepath, 'ver%0.6d' % (version))
+
+    return spacepath
 
 def module_path(model, version):
     '''
@@ -215,6 +240,31 @@ def module_path(model, version):
 
     # modpath = 'models'+'.'+model
     modpath = model
+
+    if version == 0:
+        modpath += '.dev'
+    else:
+        modpath += '.ver%0.6d' % (version)
+
+    return modpath
+
+def smodule_path(space, version):
+    '''
+    Returns the path to the space and version given as arguments,
+    in Python synthax (separated by ".").
+
+    Also adds the space repository path to the Python path, so the relative
+    module path can be understood and the module imported.
+    '''
+
+    modreppath = space_repository_path()
+    if modreppath not in sys.path:
+        sys.path.insert(0, modreppath)
+
+    # print (sys.path)
+
+    # modpath = 'models'+'.'+model
+    modpath = space
 
     if version == 0:
         modpath += '.dev'
