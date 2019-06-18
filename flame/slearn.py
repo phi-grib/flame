@@ -24,6 +24,7 @@
 import os
 import pickle
 import numpy as np
+from flame.stats.space import Space
 
 from flame.util import utils, get_logger
 LOG = get_logger(__name__)
@@ -46,6 +47,7 @@ class Slearn:
 
         '''
 
+        space = Space(self.X, self.param)
 
         LOG.info('Starting space building')
         success, space_building_results = space.build()

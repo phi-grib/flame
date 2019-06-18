@@ -80,7 +80,7 @@ def action_new(space):
 
     # Copy classes skeletons to ndir
     wkd = pathlib.Path(os.path.dirname(os.path.abspath(__file__)))
-    children_names = ['search', 'idata', 'odata', 'slearn']
+    children_names = ['sapply', 'idata', 'odata', 'slearn']
 
     for cname in children_names:
         filename = cname + '_child.py'

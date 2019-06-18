@@ -28,7 +28,7 @@ from flame.util import utils, get_logger
 from flame.parameters import Parameters
 from flame.conveyor import Conveyor
 from flame.idata import Idata
-# from flame.learn import Learn
+from flame.slearn import Slearn
 from flame.odata import Odata
 
 LOG = get_logger(__name__)
@@ -107,11 +107,11 @@ class Sbuild:
 
         if not self.conveyor.getError():
             # instantiate learn (build a space from idata) and run it
-            slearn = slearn_child.LearnChild(self.param, self.conveyor)
+            slearn = slearn_child.SlearnChild(self.param, self.conveyor)
             slearn.run()
 
             try:
-                slearn = slearn_child.LearnChild(self.param, self.conveyor)
+                slearn = slearn_child.SlearnChild(self.param, self.conveyor)
             except:
                 LOG.warning ('Slearn child architecture mismatch, defaulting to Learn parent')
                 slearn = Slearn(self.param, self.conveyor)
@@ -126,5 +126,5 @@ class Sbuild:
         except:
             LOG.warning ('Odata child architecture mismatch, defaulting to Odata parent')
             odata = Odata(self.param, self.conveyor)
-        print ('hito2')
+    
         return odata.run()
