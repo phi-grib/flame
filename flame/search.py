@@ -28,22 +28,22 @@ from flame.util import utils, get_logger
 from flame.parameters import Parameters
 from flame.conveyor import Conveyor
 from flame.idata import Idata
-from flame.apply import Apply
+from flame.sapply import Sapply
 from flame.odata import Odata
 
 LOG = get_logger(__name__)
 
-class Predict:
+class Search:
 
-    def __init__(self, model, version, output_format=None):
+    def __init__(self, space, version, output_format=None):
         LOG.debug('Starting predict...')
-        self.model = model
+        self.space = space
         self.version = version
         self.param = Parameters()
         self.conveyor = Conveyor()
 
-        if not self.param.loadYaml(model, version):
-            LOG.critical('Unable to load model parameters. Aborting...')
+        if not self.param.loadSYaml(space, version):
+            LOG.critical('Unable to load space parameters. Aborting...')
             sys.exit()
 
         # add additional output formats included in the constructor 
@@ -55,11 +55,6 @@ class Predict:
  
         return
 
-    def get_model_set(self):
-        ''' Returns a Boolean indicating if the model uses external input
-            sources and a list with these sources '''
-        return self.param.getModelSet()
-
     def set_single_CPU(self) -> None:
         ''' Forces the use of a single CPU '''
         LOG.debug('parameter "numCPUs" forced to be 1')
@@ -69,24 +64,22 @@ class Predict:
         ''' Executes a default predicton workflow '''
 
         # path to endpoint
-        # path to endpoint
-        endpoint = utils.model_path(self.model, self.version)
-        if not os.path.isdir(endpoint):
-            self.conveyor.setError(f'Unable to find model {self.model}, version {self.version}')
-            #LOG.error(f'Unable to find model {self.model}')
-
+        epd = utils.space_path(self.space, self.version)
+        if not os.path.isdir(epd):
+            self.conveyor.setError(f'Unable to find space {self.space}, version {self.version}')
+            #LOG.error(f'Unable to find space {self.space}')
 
         if not self.conveyor.getError():
-            # uses the child classes within the 'model' folder,
+            # uses the child classes within the 'space' folder,
             # to allow customization of
-            # the processing applied to each model
-            modpath = utils.module_path(self.model, self.version)
+            # the processing applied to each space
+            modpath = utils.smodule_path(self.space, self.version)
 
             idata_child = importlib.import_module(modpath+".idata_child")
-            apply_child = importlib.import_module(modpath+".apply_child")
+            sapply_child = importlib.import_module(modpath+".sapply_child")
             odata_child = importlib.import_module(modpath+".odata_child")
 
-            # run idata object, in charge of generate model data from input
+            # run idata object, in charge of generate space data from input
             try:
                 idata = idata_child.IdataChild(self.param, self.conveyor, input_source)
             except:
@@ -105,13 +98,13 @@ class Predict:
         if not self.conveyor.getError():
             # run apply object, in charge of generate a prediction from idata
             try:
-                apply = apply_child.ApplyChild(self.param, self.conveyor)
+                sapply = sapply_child.SapplyChild(self.param, self.conveyor)
             except:
-                LOG.warning ('Apply child architecture mismatch, defaulting to Apply parent')
-                apply = Apply(self.param, self.conveyor)
+                LOG.warning ('Sapply child architecture mismatch, defaulting to Sapply parent')
+                sapply = Sapply(self.param, self.conveyor)
 
-            apply.run()
-            LOG.debug(f'apply child {type(apply).__name__} completed `run()`')
+            sapply.run()
+            LOG.debug(f'sapply child {type(sapply).__name__} completed `run()`')
 
         # run odata object, in charge of formatting the prediction results
         # note that if any of the above steps failed, an error has been inserted in the

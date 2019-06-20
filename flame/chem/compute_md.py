@@ -29,6 +29,7 @@ from rdkit import Chem
 from rdkit.Chem import AllChem
 from rdkit.Chem import rdMolDescriptors
 from rdkit.Chem import Descriptors
+from rdkit.Chem import DataStructs
 from rdkit.ML.Descriptors import MoleculeDescriptors
 
 from flame.util import get_logger
@@ -232,7 +233,9 @@ def _RDKit_morganFPS(ifile, **kwargs) -> (bool, (np.ndarray, list, list)):
                     success_list.append(False)
                     continue
                 else:
-                    xmatrix = fp
+                    xvector = np.empty((1, 2048), dtype=np.int8)
+                    DataStructs.ConvertToNumpyArray(fp,xvector)
+                    xmatrix.append(xvector)
             else:
                 fp = AllChem.GetMorganFingerprintAsBitVect(mol,
 			                    morgan_radius,  
@@ -240,9 +243,10 @@ def _RDKit_morganFPS(ifile, **kwargs) -> (bool, (np.ndarray, list, list)):
                 if np.isnan(fp).any():
                     success_list.append(False)
                     continue
-                xmatrix = np.vstack(
-                    (xmatrix, fp))
-
+                
+                xvector = np.empty((1, 2048), dtype=np.int8)
+                DataStructs.ConvertToNumpyArray(fp,xvector)
+                xmatrix.append(xvector)
             success_list.append(True)
             num_obj += 1
 

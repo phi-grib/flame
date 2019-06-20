@@ -219,7 +219,20 @@ def sbuild_cmd(arguments, output_format=None):
 
     return success, results
 
+def search_cmd(model, output_format=None):
+    '''
+    Instantiates a Serach object to run a search using the given input
+    file and space.
 
+    '''
+    from flame.search import Search
+
+    search = Search(model['space'], model['version'], output_format)
+    success, results = search.run(model['infile'])
+
+    LOG.info('Search completed...')
+
+    return success, results
 
 def manage_cmd(args):
     '''

@@ -47,10 +47,12 @@ class Slearn:
 
         '''
 
-        space = Space(self.X, self.param)
+        # instances space object
+        space = Space(self.param)
 
+        # builds space from idata results
         LOG.info('Starting space building')
-        success, space_building_results = space.build()
+        success, space_building_results = space.build(self.X, self.conveyor.getVal('obj_nam'), self.conveyor.getVal('SMILES'))
         if not success:
             self.conveyor.setError(space_building_results)
             return
@@ -63,18 +65,14 @@ class Slearn:
                     'single',
                     'Information about the space')
 
-     
-        LOG.info('Space finished successfully')
-
         # save model
         try:
             space.save_space()
-
-            # TODO: save scaled and variable_mask
-
         except Exception as e:
             LOG.error(f'Error saving space with exception {e}')
             return False, 'An error ocurred saving the space'
+
+        LOG.info('Space building finished successfully')
 
         return
 
