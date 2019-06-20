@@ -48,12 +48,16 @@ class Sapply:
 
         '''
 
+        # these must be passed as paramters
+        cutoff = 0.6
+        numsel = 3
+
          # instances space object
         space = Space(self.param)
 
         # builds space from idata results
         LOG.info('Starting space searching')
-        success, search_results = space.search (self.X)
+        success, search_results = space.search (self.X, cutoff, numsel)
         if not success:
             self.conveyor.setError(search_results)
             return
@@ -69,4 +73,3 @@ class Sapply:
         LOG.info('Space search finished successfully')
 
         return
-

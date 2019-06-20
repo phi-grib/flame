@@ -63,10 +63,19 @@ class Space:
 
         return True, 'success'
 
-    def search (self, X):
+    def search (self, X, cutoff, numsel):
 
         # load pickle with reference space
         self.load_space()
+
+        if cutoff is None:
+            cutoff = 0.0
+
+        selected_i = []
+        selected_d = []
+        maxd = 0.0
+        maxi = 0
+
 
         if self.param.getVal('computeMD_method') == ['morganFP']:
             for i, inpvector in enumerate(X):
@@ -75,11 +84,32 @@ class Space:
 
                 for j, jvector in enumerate(self.X):
                     d = DataStructs.FingerprintSimilarity(ivector,jvector, metric=DataStructs.TanimotoSimilarity)
-                    if d > 0.6 :
-                        print (d, self.names[j], self.SMILES[j])
+                    
+                    if d <= cutoff:
+                        continue
+
+                    if len(selected_i) < numsel:
+                        selected_i.append(j)
+                        selected_d.append(d)
+                        if d > maxd:
+                            maxd = d
+                            maxi = j
+                    else:
+                        if d <= maxd:
+                            continue
+                        selected_i[maxi]=j
+                        selected_d[maxi]=d
+                        maxd = d
+                        maxi = j
+
+
+            for i in range(len(selected_i)):
+                print (selected_d[i], self.names[selected_i[i]], self.SMILES[selected_i[i]])
         else:
 
             print ("euclidean distance not implemented")
+
+        
         # for i in X
         # for j in self.nobj
         # compute the similarity i,j
