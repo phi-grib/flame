@@ -25,6 +25,7 @@ import pickle
 import numpy as np
 from scipy.spatial import distance 
 import os
+
 from rdkit import Chem
 from rdkit.Chem import AllChem
 from rdkit.Chem import DataStructs
@@ -58,12 +59,13 @@ class Space:
         else:
             self.X = X
 
-        print (self.nobj, self.nvarx)
-        print (self.names[0], self.SMILES[0], self.X[0])
+        # print (self.nobj, self.nvarx)
+        # print (self.names[0], self.SMILES[0], self.X[0])
 
+        # TODO: return the number of molecules in the chemical space
         return True, 'success'
 
-    def search (self, X, cutoff, numsel):
+    def search (self, X, cutoff, numsel, metric):
 
         # load pickle with reference space
         self.load_space()
@@ -73,6 +75,13 @@ class Space:
         
         if numsel is None:
             numsel = len(self.X)
+
+        if metric == 'Tanimoto':
+            #TODO: check that parameters are fingerprints
+            
+            rdkmetric = DataStructs.TanimotoSimilarity
+        else:
+            return False, 'metric not recognized'
 
         if self.param.getVal('computeMD_method') == ['morganFP']:
             
@@ -85,7 +94,7 @@ class Space:
                 selected_i = []
                 selected_d = []
                 for j, jvector in enumerate(self.X):
-                    d = DataStructs.FingerprintSimilarity(ivector,jvector, metric=DataStructs.TanimotoSimilarity)
+                    d = DataStructs.FingerprintSimilarity(ivector,jvector, metric=rdkmetric)
                     
                     if d <= cutoff:
                         continue

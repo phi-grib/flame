@@ -23,6 +23,7 @@
 import numpy as np
 import pickle
 import os
+import yaml
 import hashlib
 from flame.stats.space import Space
 from flame.util import utils, get_logger
@@ -39,7 +40,7 @@ class Sapply:
         self.X = self.conveyor.getVal('xmatrix')
 
 
-    def run (self): 
+    def run (self, runtime_param): 
         ''' 
 
         Runs prediction tasks using internally defined methods
@@ -48,18 +49,29 @@ class Sapply:
 
         '''
 
-        # TODO: these must be passed as paramters
-        cutoff = None
-        numsel = 4
+        try:
+            with open(runtime_param, 'r') as pfile:
+                rtparam = yaml.safe_load(pfile)
+        except:
+            LOG.error('runtime similarity parameter file not found')
+            self.conveyor.setError('runtime similarity parameter file not found')
+            return
 
-        # TODO: pass also metrics (Tanimoto, euclidean, etc.)
+        try:
+            cutoff = rtparam['similarity_cutoff_distance']
+            numsel = rtparam['similarity_cutoff_num']
+            metric = rtparam['similarity_metric']
+        except:
+            LOG.error('wrong format in the runtime similarity parameters')
+            self.conveyor.setError('wrong format in the runtime similarity parameters')
+            return 
 
-         # instances space object
+        # instances space object
         space = Space(self.param)
 
         # builds space from idata results
         LOG.info('Starting space searching')
-        success, search_results = space.search (self.X, cutoff, numsel)
+        success, search_results = space.search (self.X, cutoff, numsel, metric)
         if not success:
             self.conveyor.setError(search_results)
             return

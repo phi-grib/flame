@@ -31,172 +31,172 @@ from rdkit.Chem import rdMolDescriptors
 from rdkit.Chem import Descriptors
 from rdkit.Chem import DataStructs
 from rdkit.ML.Descriptors import MoleculeDescriptors
-
 from flame.util import get_logger
 
 LOG = get_logger(__name__)
 
 
-def _calc_descriptors(md_function, ifile: str,  descrip_names: list) -> (np.ndarray, np.ndarray):
-    """Helper function for handling all the safety measures of computing
-    RDKit descriptors.
+# def _calc_descriptors(md_function, ifile: str,  descrip_names: list) -> (np.ndarray, np.ndarray):
+#     """Helper function for handling all the safety measures of computing
+#     RDKit descriptors.
 
-    Parameters
-    ----------
+#     Parameters
+#     ----------
 
-    md_function: callable
-        descriptor method
+#     md_function: callable
+#         descriptor method
 
-    ifile: str
-        SDF input file
+#     ifile: str
+#         SDF input file
 
-    descrip_names: list
-        list of descriptor names
+#     descrip_names: list
+#         list of descriptor names
 
-    Returns
-    -------
+#     Returns
+#     -------
 
-    descriptors_matrix: ndarray
-        matrix with the descriptors
+#     descriptors_matrix: ndarray
+#         matrix with the descriptors
 
-    success_arr: ndarray
-        array with bool values indicating if mol
-        had any issues during supplier (None) or in the descreiptor
-        array (presence of NaNs)
-    """
-    try:
-        suppl = Chem.SDMolSupplier(ifile)
-    except Exception as err:
-        LOG.error(f'Unable to create supplier with exception {err}')
-        raise err
+#     success_arr: ndarray
+#         array with bool values indicating if mol
+#         had any issues during supplier (None) or in the descreiptor
+#         array (presence of NaNs)
+#     """
+#     try:
+#         suppl = Chem.SDMolSupplier(ifile)
+#     except Exception as err:
+#         LOG.error(f'Unable to create supplier with exception {err}')
+#         raise err
 
-    n_cols = len(descrip_names)
-    matrix_shape = (len(suppl), n_cols)
-    descrip_matrix = np.zeros(matrix_shape)
+#     n_cols = len(descrip_names)
+#     matrix_shape = (len(suppl), n_cols)
+#     descrip_matrix = np.zeros(matrix_shape)
 
-    success_list = []
-    for i, mol in enumerate(suppl):
-        # check mol
-        if mol is None:
-            LOG.warning(f'Supplier failed to read molecule #{i+1} in {ifile}')
-            success_list.append(False)
-            continue
+#     success_list = []
+#     for i, mol in enumerate(suppl):
+#         # check mol
+#         if mol is None:
+#             LOG.warning(f'Supplier failed to read molecule #{i+1} in {ifile}')
+#             success_list.append(False)
+#             continue
 
-        # fill in matrix with descriptor array
-        try:
-            descrip_matrix[i, :] = md_function(mol)
-        except Exception as e:
-            LOG.error(f'Failed to compute RDKit properties for mol {i+1}'
-                      f' in {ifile} with exception {e}')
-            success_list.append(False)
+#         # fill in matrix with descriptor array
+#         try:
+#             descrip_matrix[i, :] = md_function(mol)
+#         except Exception as e:
+#             LOG.error(f'Failed to compute RDKit properties for mol {i+1}'
+#                       f' in {ifile} with exception {e}')
+#             success_list.append(False)
 
-        success_list.append(True)
+#         success_list.append(True)
 
-    # check if any descriptor has NaNs
-    # returns False when row has NaN
-    mols_wthout_nan = ~ np.isnan(descrip_matrix).any(axis=1)
-    # num of mols that have NaNs in descriptors
-    n_mols_wth_nan = sum(~mols_wthout_nan)
+#     # check if any descriptor has NaNs
+#     # returns False when row has NaN
+#     mols_wthout_nan = ~ np.isnan(descrip_matrix).any(axis=1)
+#     # num of mols that have NaNs in descriptors
+#     n_mols_wth_nan = sum(~mols_wthout_nan)
 
-    if n_mols_wth_nan != 0:
-        LOG.debug(f'{n_mols_wth_nan} molecules have `NaN` in'
-                  ' the descriptors and will be descarted')
+#     if n_mols_wth_nan != 0:
+#         LOG.debug(f'{n_mols_wth_nan} molecules have `NaN` in'
+#                   ' the descriptors and will be descarted')
 
-    # add False to succes list in mol idx where properties results has NaNs
-    success_arr = np.array(success_list) & mols_wthout_nan
+#     # add False to succes list in mol idx where properties results has NaNs
+#     success_arr = np.array(success_list) & mols_wthout_nan
 
-    results_dict = {
-        'matrix': descrip_matrix,
-        'names': descrip_names,
-        'success_arr': success_arr
-    }
+#     results_dict = {
+#         'matrix': descrip_matrix,
+#         'names': descrip_names,
+#         'success_arr': success_arr
+#     }
 
-    return results_dict
+#     return results_dict
+
+
+
+# def _RDKit_descriptors_FUTURE(ifile: str) -> dict:
+#     """ Computes RDKit descriptors for the SDF provided as argument
+
+#     Parameters:
+#     -----------
+
+#     ifile: str
+#         SDF input file
+
+#     Returns:
+#     --------
+
+#     results_dict: dict, with the following keys
+
+#         'matrix': ndarray, descriptors matrix. Full form with non processed
+#                 and failed molecules.
+#         'names': list, matrix column names. descriptors names.
+#         'success_arr': ndarray, array with bool values indicating if mol
+#                     had any issues during supplier (None) or in the 
+#                     descriptor array (presence of NaNs).
+
+#     """
+
+#     descrip_names = [n[0] for n in Descriptors._descList]
+#     md_calculator = MoleculeDescriptors.MolecularDescriptorCalculator(
+#         descrip_names)
+
+#     LOG.info('Computing {} RDKit descriptors per molecule...'
+#              .format(len(descrip_names)))
+
+#     results_dict = _calc_descriptors(
+#         md_calculator.CalcDescriptors,
+#         ifile,
+#         descrip_names,
+#     )
+
+#     return results_dict
+
+
+# def _RDKit_properties_FUTURE(ifile) -> (dict):
+#     '''Computes RDKit properties for the SDF provided as argument
+
+#     Parameters
+#     ----------
+
+#     ifile: str
+#         SDF input file
+
+#     Returns
+#     -------
+
+#     results_dict: dict, with the following keys
+
+#         'matrix': ndarray, properties matrix. Full form with non processed
+#                 and failed molecules.
+#         'names': list, matrix column names. Properties names.
+#         'success_arr': ndarray, array with bool values indicating if mol
+#                     had any issues during supplier (None) or in the 
+#                     descriptor array (presence of NaNs).
+
+#     '''
+#     properties = rdMolDescriptors.Properties()
+
+#     props_names = [propname for propname in properties.GetPropertyNames()]
+#     n_props = len(props_names)
+
+#     n_cols = n_props
+
+#     LOG.info('computing {} RDKit properties per molecule...'.format(n_cols))
+
+#     results_dict = _calc_descriptors(
+#         properties.ComputeProperties,
+#         ifile,
+#         props_names
+#     )
+
+#     return results_dict
 
 def clean_extra_xrows (xmatrix, num_obj, est_obj):
     for i in range (num_obj, est_obj):
         xmatrix = np.delete(xmatrix,num_obj,axis=0)
 
     return xmatrix
-
-def _RDKit_descriptors_FUTURE(ifile: str) -> dict:
-    """ Computes RDKit descriptors for the SDF provided as argument
-
-    Parameters:
-    -----------
-
-    ifile: str
-        SDF input file
-
-    Returns:
-    --------
-
-    results_dict: dict, with the following keys
-
-        'matrix': ndarray, descriptors matrix. Full form with non processed
-                and failed molecules.
-        'names': list, matrix column names. descriptors names.
-        'success_arr': ndarray, array with bool values indicating if mol
-                    had any issues during supplier (None) or in the 
-                    descriptor array (presence of NaNs).
-
-    """
-
-    descrip_names = [n[0] for n in Descriptors._descList]
-    md_calculator = MoleculeDescriptors.MolecularDescriptorCalculator(
-        descrip_names)
-
-    LOG.info('Computing {} RDKit descriptors per molecule...'
-             .format(len(descrip_names)))
-
-    results_dict = _calc_descriptors(
-        md_calculator.CalcDescriptors,
-        ifile,
-        descrip_names,
-    )
-
-    return results_dict
-
-
-def _RDKit_properties_FUTURE(ifile) -> (dict):
-    '''Computes RDKit properties for the SDF provided as argument
-
-    Parameters
-    ----------
-
-    ifile: str
-        SDF input file
-
-    Returns
-    -------
-
-    results_dict: dict, with the following keys
-
-        'matrix': ndarray, properties matrix. Full form with non processed
-                and failed molecules.
-        'names': list, matrix column names. Properties names.
-        'success_arr': ndarray, array with bool values indicating if mol
-                    had any issues during supplier (None) or in the 
-                    descriptor array (presence of NaNs).
-
-    '''
-    properties = rdMolDescriptors.Properties()
-
-    props_names = [propname for propname in properties.GetPropertyNames()]
-    n_props = len(props_names)
-
-    n_cols = n_props
-
-    LOG.info('computing {} RDKit properties per molecule...'.format(n_cols))
-
-    results_dict = _calc_descriptors(
-        properties.ComputeProperties,
-        ifile,
-        props_names
-    )
-
-    return results_dict
-
 
 def _RDKit_morganFPS(ifile, **kwargs) -> (bool, (np.ndarray, list, list)):
     ''' 

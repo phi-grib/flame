@@ -142,20 +142,21 @@ def main():
 
     elif args.command == 'search':
 
-        if (args.space is None) or (args.infile is None):
-            print('flame search : space and input file arguments are compulsory')
+        if (args.space is None) or (args.infile is None) or (args.parameters is None):
+            print('flame search : space, parameters and input file arguments are compulsory')
             return
 
         version = utils.intver(args.version)
 
-        command_predict = {'space': args.space,
+        command_search = {'space': args.space,
                  'version': version,
-                 'infile': args.infile}
+                 'infile': args.infile,
+                 'runtime_param': args.parameters}
 
         LOG.info(f'Starting search on space {args.space}'
                  f' version {version} for file {args.infile}')
 
-        success, results = context.search_cmd(command_predict)
+        success, results = context.search_cmd(command_search)
         # print('flame predict : ', success, results)
 
     elif args.command == 'build':

@@ -60,7 +60,7 @@ class Search:
         LOG.debug('parameter "numCPUs" forced to be 1')
         self.param.setVal('numCPUs',1)
 
-    def run(self, input_source):
+    def run(self, input_source, runtime_param):
         ''' Executes a default predicton workflow '''
 
         # path to endpoint
@@ -103,7 +103,7 @@ class Search:
                 LOG.warning ('Sapply child architecture mismatch, defaulting to Sapply parent')
                 sapply = Sapply(self.param, self.conveyor)
 
-            sapply.run()
+            sapply.run(runtime_param)
             LOG.debug(f'sapply child {type(sapply).__name__} completed `run()`')
 
         # run odata object, in charge of formatting the prediction results

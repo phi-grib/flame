@@ -228,7 +228,7 @@ def search_cmd(model, output_format=None):
     from flame.search import Search
 
     search = Search(model['space'], model['version'], output_format)
-    success, results = search.run(model['infile'])
+    success, results = search.run(model['infile'], model['runtime_param'])
 
     LOG.info('Search completed...')
 
