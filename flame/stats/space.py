@@ -70,90 +70,51 @@ class Space:
 
         if cutoff is None:
             cutoff = 0.0
-
-        selected_i = []
-        selected_d = []
-        maxd = 0.0
-        maxi = 0
-
+        
+        if numsel is None:
+            numsel = len(self.X)
 
         if self.param.getVal('computeMD_method') == ['morganFP']:
+            
+            # for each compound in the search set 
             for i, inpvector in enumerate(X):
                 bitestring="".join(inpvector.astype(str))
                 ivector = DataStructs.cDataStructs.CreateFromBitString(bitestring)
 
+                # for each compound in the space
+                selected_i = []
+                selected_d = []
                 for j, jvector in enumerate(self.X):
                     d = DataStructs.FingerprintSimilarity(ivector,jvector, metric=DataStructs.TanimotoSimilarity)
                     
                     if d <= cutoff:
                         continue
 
+                    # if results set is not completed add
                     if len(selected_i) < numsel:
                         selected_i.append(j)
                         selected_d.append(d)
-                        if d > maxd:
-                            maxd = d
-                            maxi = j
+                        z = sorted (zip(selected_d,selected_i),reverse=True)
+                        selected_d = [x for x,_ in z]
+                        selected_i = [x for _,x in z]
+
+                    # otherwyse, compare the new d with the min d
                     else:
-                        if d <= maxd:
-                            continue
-                        selected_i[maxi]=j
-                        selected_d[maxi]=d
-                        maxd = d
-                        maxi = j
+                        if d > selected_d[-1]:   # better than worse compound                           
+                            #add at the beggining 
+                            selected_i[-1]=j
+                            selected_d[-1]=d
+                            z = sorted (zip(selected_d,selected_i),reverse=True)
+                            selected_d = [x for x,_ in z]
+                            selected_i = [x for _,x in z]
 
-
-            for i in range(len(selected_i)):
-                print (selected_d[i], self.names[selected_i[i]], self.SMILES[selected_i[i]])
+                for sd,si in zip(selected_d, selected_i):
+                    print (i, sd, self.names[si], self.SMILES[si])
         else:
-
             print ("euclidean distance not implemented")
 
         
-        # for i in X
-        # for j in self.nobj
-        # compute the similarity i,j
-        # if d < self.param.getVal('similarity_cutoff) store j
-        # alternativelly...
-        # if len(results) < self.param.getVal ('similarity_num_results') store j
-        # alternativelly ...
-        # check if the new result is better than the workse selected, then keep, remove the worse and sort results
-        
-        # def computePredictionOther (self, md, charge,molSmi):
-        #         # empty method to be overriden
-        #     if self.model != 'fp-maccs-tanimoto':
-        #             return (False, 'not implemented')
-
-        #     nrNeighbours = self.nrMaxNeighbours 
-        #     threshold =    self.tanimotoThreshold
-        #     dist = []
-        #     ids  = []
-        #     smis  = []
-        #     names = []
-        #     # get internal ID and calculate distance to FP
-        #         for i in self.tdata:
-        #         d = DataStructs.FingerprintSimilarity(md,i[2], metric=DataStructs.TanimotoSimilarity)
-        #         if( d > threshold ):
-        #                 dist.append( d )
-        #             ids.append(i[6])
-        #             smis.append(i[7])
-        #             names.append(i[8])
-
-        #     sortDist = np.sort( np.array(zip(ids,dist,smis,names),dtype=[('ids', 'S10'), ('dist', float),('smis', 'S1000' ),('names', 'S100' )]), order="dist")
-            
-        #     js = []
-        #     js.append( { "STRUCTURE": molSmi })
-            
-        #     for j in range( 0, min( nrNeighbours , len(sortDist) )):
-        #         m = sortDist[len(sortDist)-j-1]
-        #         js.append( {  "STRUCTURE": m[2]})
-        #         js.append( {"names": m[3] ,"ID" : m[0] , "DIST" : str(m[1]), 
-        #                             })
-
-        #         result = json.JSONEncoder().encode(js)
-                    
-        #         return result
-        return True, 'success'
+        return True, "ok"
 
     def save_space(self):
         ''' This function saves space in a pickle file '''

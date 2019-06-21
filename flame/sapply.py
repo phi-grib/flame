@@ -49,8 +49,8 @@ class Sapply:
         '''
 
         # these must be passed as paramters
-        cutoff = 0.6
-        numsel = 3
+        cutoff = None
+        numsel = 4
 
          # instances space object
         space = Space(self.param)
