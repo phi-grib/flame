@@ -111,9 +111,16 @@ class Space:
                 for sd,si in zip(selected_d, selected_i):
                     print (i, sd, self.names[si], self.SMILES[si])
         else:
+            # TODO: implement euclidean
             print ("euclidean distance not implemented")
 
-        
+        # TODO: return results
+        # results = {
+        #     'matrix': xmatrix,
+        #     'names': md_name,
+        #     'success_arr': success_list
+        # }
+
         return True, "ok"
 
     def save_space(self):

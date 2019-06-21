@@ -48,9 +48,11 @@ class Sapply:
 
         '''
 
-        # these must be passed as paramters
+        # TODO: these must be passed as paramters
         cutoff = None
         numsel = 4
+
+        # TODO: pass also metrics (Tanimoto, euclidean, etc.)
 
          # instances space object
         space = Space(self.param)

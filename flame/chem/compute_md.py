@@ -113,6 +113,11 @@ def _calc_descriptors(md_function, ifile: str,  descrip_names: list) -> (np.ndar
 
     return results_dict
 
+def clean_extra_xrows (xmatrix, num_obj, est_obj):
+    for i in range (num_obj, est_obj):
+        xmatrix = np.delete(xmatrix,num_obj,axis=0)
+
+    return xmatrix
 
 def _RDKit_descriptors_FUTURE(ifile: str) -> dict:
     """ Computes RDKit descriptors for the SDF provided as argument
@@ -212,7 +217,8 @@ def _RDKit_morganFPS(ifile, **kwargs) -> (bool, (np.ndarray, list, list)):
     # get from here num of properties
 
     success_list = []
-    xmatrix = []
+    est_obj = len(suppl)
+    xmatrix = np.zeros((est_obj, 2048), dtype=np.int8)
 
     try:
         num_obj = 0
@@ -223,41 +229,32 @@ def _RDKit_morganFPS(ifile, **kwargs) -> (bool, (np.ndarray, list, list)):
                 success_list.append(False)
                 continue
 
-            # xmatrix [num_obj] = properties.ComputeProperties(mol)
-            if num_obj == 0:
-                fp = AllChem.GetMorganFingerprintAsBitVect(mol,
-			                    morgan_radius,  
-                                useFeatures=morgan_features)
-                # what is going on here??
-                if np.isnan(xmatrix).any():
-                    success_list.append(False)
-                    continue
-                else:
-                    xvector = np.empty((1, 2048), dtype=np.int8)
-                    DataStructs.ConvertToNumpyArray(fp,xvector)
-                    xmatrix.append(xvector)
-            else:
-                fp = AllChem.GetMorganFingerprintAsBitVect(mol,
-			                    morgan_radius,  
-                                useFeatures=morgan_features)
-                if np.isnan(fp).any():
-                    success_list.append(False)
-                    continue
-                
-                xvector = np.empty((1, 2048), dtype=np.int8)
-                DataStructs.ConvertToNumpyArray(fp,xvector)
-                xmatrix.append(xvector)
+            fp = AllChem.GetMorganFingerprintAsBitVect(mol,
+                            morgan_radius,  
+                            useFeatures=morgan_features)
+
+            #xvector = np.empty((1, 2048), dtype=np.int8)
+            DataStructs.ConvertToNumpyArray(fp,xmatrix[num_obj])
+
+            # if np.isnan(xvector).any():
+            #     success_list.append(False)
+            #     continue
+
+            # xmatrix.append(xvector)
             success_list.append(True)
             num_obj += 1
 
     except Exception as e:
-        LOG.error(f'Failed computing RDKit properties for molecule #{num_obj+1} in {ifile}'
+        LOG.error(f'Failed computing RDKit Morgan Fingerprints for molecule #{num_obj+1} in {ifile}'
                   f' with exception: {e}')
-        return False, 'Failed computing RDKit properties for molecule' + str(num_obj+1) + 'in file ' + ifile
+        return False, 'Failed computing RDKit Morgan Fingerprints for molecule' + str(num_obj+1) + 'in file ' + ifile
 
-    LOG.debug(f'computed RDKit properties matrix with shape {np.shape(xmatrix)}')
+    if num_obj < est_obj:
+        clean_extra_xrows(xmatrix, num_obj, est_obj)
+
+    LOG.debug(f'computed RDKit Morgan Fingerprints matrix with shape {np.shape(xmatrix)}')
     if num_obj == 0:
-        return False, 'Unable to compute RDKit properties for molecule '+ifile
+        return False, 'Unable to compute RDKit Morgan Fingerprints for molecule '+ifile
 
     results = {
         'matrix': xmatrix,
@@ -375,7 +372,12 @@ def _RDKit_descriptors(ifile, **kwargs) -> (bool, (np.ndarray, list, list)):
 
     md = MoleculeDescriptors.MolecularDescriptorCalculator(nms)
     success_list = []
-    xmatrix = []
+    
+    # allocate a np.matrix for storing the X matrix
+    # the number of rows is an estimation and will be checked
+    # and corrected at the end
+    est_obj = len(suppl)
+    xmatrix = np.zeros((est_obj,len(nms)))
 
     try:
         num_obj = 0
@@ -390,47 +392,29 @@ def _RDKit_descriptors(ifile, **kwargs) -> (bool, (np.ndarray, list, list)):
 
             if np.isnan(mdi).any():
                 success_list.append(False)
-                continue
-            
-            if num_obj == 0:
-                xmatrix = mdi
-                LOG.debug(f'first descriptor vector computed')
-            else:
-                xmatrix = np.vstack((xmatrix, mdi))
+                continue               
 
+            xmatrix[num_obj]=mdi
             success_list.append(True)
             num_obj += 1
-
-            # if num_obj == 0:
-            #     xmatrix = md.CalcDescriptors(mol)
-            #     LOG.debug(
-            #         f'first descriptor vector computet with shape {np.shape(xmatrix)}')
-
-            #     if np.isnan(xmatrix).any():
-            #         # what is the deal if there is any NaN?
-            #         success_list.append(False)
-            #         continue
-            # else:
-            #     descriptors = md.CalcDescriptors(mol)
-
-            #     if np.isnan(descriptors).any():
-            #         success_list.append(False)
-            #         continue
-            #     xmatrix = np.vstack((xmatrix, descriptors))
-
 
     except:  # if any mol fails the whole try except will break
         return False, 'Failed computing RDKit descriptors for molecule' + str(num_obj+1) + 'in file ' + ifile
 
+    if num_obj < est_obj:
+        clean_extra_xrows(xmatrix, num_obj, est_obj)
+
+        # # if some molecules failed to compute we will clean xmatrix by 
+        # # removing extra rows
+        # # for this we will call the first extra row (xmatrix[num_obj])
+        # # est_obj-num_obj times
+        # for i in range (num_obj,est_obj):
+        #     xmatrix = np.delete(xmatrix,num_obj,axis=0)
+        #     print ('deleted ', i, np.shape(xmatrix))
+
     LOG.debug(f'computed RDKit descriptors matrix with shape {np.shape(xmatrix)}')
     if num_obj == 0:
-        return False, 'Unable to compute RDKit properties for molecule '+ifile
-    
-    # np.savetxt ('testx.csv', xmatrix)
-
-    # hash = hashlib.md5()
-    # hash.update(xmatrix)
-    # print (hash.hexdigest)
+        return False, 'Unable to compute RDKit descriptors for molecule '+ifile
     
     results = {
         'matrix': xmatrix,
@@ -461,7 +445,8 @@ def _RDKit_properties(ifile, **kwargs) -> (bool, (np.ndarray, list, list)):
     md_name = [prop_name for prop_name in properties.GetPropertyNames()]
 
     success_list = []
-    xmatrix = []
+    est_obj = len(suppl)
+    xmatrix = np.zeros((est_obj,len(md_name)))
 
     try:
         num_obj = 0
@@ -478,11 +463,14 @@ def _RDKit_properties(ifile, **kwargs) -> (bool, (np.ndarray, list, list)):
                 success_list.append(False)
                 continue
             
-            if num_obj == 0:
-                xmatrix = descriptors
-                LOG.debug(f'first descriptor vector computed')
-            else:
-                xmatrix = np.vstack((xmatrix, descriptors))
+            xmatrix [num_obj] = descriptors
+            
+            # xmatrix.append(descriptors)
+            # if num_obj == 0:
+            #     xmatrix = descriptors
+            #     LOG.debug(f'first descriptor vector computed')
+            # else:
+            #     xmatrix = np.vstack((xmatrix, descriptors))
 
             success_list.append(True)
             num_obj += 1
@@ -491,6 +479,9 @@ def _RDKit_properties(ifile, **kwargs) -> (bool, (np.ndarray, list, list)):
         LOG.error(f'Failed computing RDKit properties for molecule #{num_obj+1} in {ifile}'
                   f' with exception: {e}')
         return False, 'Failed computing RDKit properties for molecule' + str(num_obj+1) + 'in file ' + ifile
+
+    if num_obj < est_obj:
+        clean_extra_xrows(xmatrix, num_obj, est_obj)
 
     LOG.debug(f'computed RDKit properties matrix with shape {np.shape(xmatrix)}')
     if num_obj == 0:
