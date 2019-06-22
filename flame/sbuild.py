@@ -66,14 +66,13 @@ class Sbuild:
             if output_format not in self.param.getVal('output_format'):
                 self.param.appVal('output_format',output_format)
  
-
     def set_single_CPU(self) -> None:
         ''' Forces the use of a single CPU '''
         LOG.debug('parameter "numCPUs" forced to be 1')
         self.param.setVal('numCPUs',1)
 
     def run(self, input_source):
-        ''' Executes a default predicton workflow '''
+        ''' Executes a default chemical space building workflow '''
 
         # path to endpoint
         epd = utils.space_path(self.space, 0)

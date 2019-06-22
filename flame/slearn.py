@@ -21,14 +21,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Flame.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
-import pickle
-import numpy as np
 from flame.stats.space import Space
-
 from flame.util import utils, get_logger
-LOG = get_logger(__name__)
 
+LOG = get_logger(__name__)
 
 class Slearn:
 
@@ -43,7 +39,7 @@ class Slearn:
 
     def run (self):
         '''
-        Builds a space ****
+        Builds a chemical space 
 
         '''
 

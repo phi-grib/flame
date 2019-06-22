@@ -36,13 +36,14 @@ LOG = get_logger(__name__)
 
 class Space:
     def __init__(self, param):
-        """Initializes the chemical space
-
-        """
+        '''Initializes the chemical space'''
         self.param = param
 
+
     def build(self, X, names, SMILES):
-        ''' This function saves estimator and scaler in a pickle file '''
+        ''' This function pre-process the X matrix, optimizing it for searching in the case
+            of fingerprints 
+        '''
 
         self.names = names
         self.SMILES = SMILES
@@ -67,6 +68,12 @@ class Space:
 
 
     def search (self, X, cutoff, numsel, metric):
+        ''' This function searches for compounds in the chemical space similar to the compounds of input file
+            already characterized by the X matrix
+
+            the metric and the cutoff used for the search (distance cutoff and number to extract) are
+            defined as parameters
+        '''
 
         # load pickle with reference space
         self.load_space()
@@ -122,6 +129,7 @@ class Space:
                 results_distances = []
                 results_names = []
                 results_smiles = []
+
                 for sd,si in zip(selected_d, selected_i):
                     results_distances.append(sd)
                     results_names.append(self.names[si])
@@ -137,19 +145,11 @@ class Space:
             # TODO: implement euclidean
             print ("euclidean distance not implemented")
 
-        # TODO: return results
-        # results = {
-        #     'matrix': xmatrix,
-        #     'names': md_name,
-        #     'success_arr': success_list
-        # }
-
         return True, results
 
-    def save_space(self):
-        ''' This function saves space in a pickle file '''
 
-        # create a pickle with the names, SMILES and pre-processed reference space
+    def save_space(self):
+        ''' This function saves the chemical space in a pickle file '''
 
         space_pkl = os.path.join(self.param.getVal('model_path'),
                                       'space.pkl')
@@ -160,8 +160,9 @@ class Space:
             pickle.dump(self.SMILES, fo)
         return
 
+
     def load_space(self):
-        ''' This function loads spacer from a pickle file '''
+        ''' This function loads the chemical space from a pickle file '''
     
         space_pkl = os.path.join(self.param.getVal('model_path'),
                                       'space.pkl')
