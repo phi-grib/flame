@@ -38,7 +38,7 @@ class Space:
     def __init__(self, param):
         '''Initializes the chemical space'''
         self.param = param
-
+        self.Dmax = 1000.0 # an arbitrary value
 
     def build(self, X, names, SMILES):
         ''' This function pre-process the X matrix, optimizing it for searching in the case
@@ -59,6 +59,9 @@ class Space:
             for i in X:
                 self.X.append(DataStructs.cDataStructs.CreateFromBitString("".join(i.astype(str))))
         else:
+            ydist = distance.pdist(X, metric='euclidean')
+            print ('min:', np.min(ydist), 'max:', np.max(ydist))
+            self.Dmax = np.max(ydist)
             self.X = X
 
         results = []
@@ -88,11 +91,14 @@ class Space:
             #TODO: check that parameters are fingerprints
             
             rdkmetric = DataStructs.TanimotoSimilarity
+        elif metric == 'Euclidean':
+            print ('euclidean')
         else:
             return False, 'metric not recognized'
 
         results = []
         
+        # for fingerprint MD
         if self.param.getVal('computeMD_method') == ['morganFP']:
             # for each compound in the search set 
             for i, inpvector in enumerate(X):
@@ -141,9 +147,55 @@ class Space:
                                 'names':results_names,
                                 'SMILES':results_smiles
                 })
+
         else:
-            # TODO: implement euclidean
-            print ("euclidean distance not implemented")
+            #TODO: implement alternative distances
+            # use un if/else here to define the function to use
+             
+            # for each compound in the search set 
+            for i, ivector in enumerate(X):
+
+                # for each compound in the space
+                selected_i = []
+                selected_d = []
+                for j, jvector in enumerate(self.X):
+                    d = 1.000-(distance.euclidean(ivector,jvector)/self.Dmax)
+                    if d <= cutoff:
+                        continue
+
+                    # if results set is not completed add
+                    if len(selected_i) < numsel:
+                        selected_i.append(j)
+                        selected_d.append(d)
+                        z = sorted (zip(selected_d,selected_i),reverse=True)
+                        selected_d = [x for x,_ in z]
+                        selected_i = [x for _,x in z]
+
+                    # otherwyse, compare the new d with the min d
+                    else:
+                        if d > selected_d[-1]:   # better than worse compound                           
+                            #add at the beggining 
+                            selected_i[-1]=j
+                            selected_d[-1]=d
+                            z = sorted (zip(selected_d,selected_i),reverse=True)
+                            selected_d = [x for x,_ in z]
+                            selected_i = [x for _,x in z]
+
+                results_distances = []
+                results_names = []
+                results_smiles = []
+
+                for sd,si in zip(selected_d, selected_i):
+                    results_distances.append(sd)
+                    results_names.append(self.names[si])
+                    results_smiles.append(self.SMILES[si])
+                    
+                    #print (i, sd, self.names[si], self.SMILES[si])
+
+                results.append({'distances':results_distances,
+                                'names':results_names,
+                                'SMILES':results_smiles
+                })
 
         return True, results
 
@@ -158,6 +210,7 @@ class Space:
             pickle.dump(self.X, fo)
             pickle.dump(self.names, fo)
             pickle.dump(self.SMILES, fo)
+            pickle.dump(self.Dmax, fo)
         return
 
 
@@ -172,4 +225,6 @@ class Space:
             self.X = pickle.load(fo)
             self.names = pickle.load(fo)
             self.SMILES = pickle.load(fo)
+            self.Dmax = pickle.load(fo)
+
         return
