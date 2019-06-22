@@ -48,22 +48,23 @@ class Space:
         self.SMILES = SMILES
         self.nobj, self.nvarx = np.shape(X)
 
+        if len (self.param.getVal('computeMD_method')) > 1:
+            return False, 'Only a single type of MD can be used to compute similarity'
+
         # if X contains fingerprints as numpy, convert to RDKit BitVector to speed-up
         # future similarity searches
-
-        if self.param.getVal('computeMD_method') == ['morganFP']:
+        if self.param.getVal('computeMD_method')[0] in ['morganFP']: # include any RDKit fingerprint here
             self.X = []
             for i in X:
-                bitestring="".join(i.astype(str))
-                self.X.append(DataStructs.cDataStructs.CreateFromBitString(bitestring))
+                self.X.append(DataStructs.cDataStructs.CreateFromBitString("".join(i.astype(str))))
         else:
             self.X = X
 
-        # print (self.nobj, self.nvarx)
-        # print (self.names[0], self.SMILES[0], self.X[0])
+        results = []
+        results.append(('nobj', 'number of objects', self.nobj))
 
-        # TODO: return the number of molecules in the chemical space
-        return True, 'success'
+        return True, results
+
 
     def search (self, X, cutoff, numsel, metric):
 
@@ -83,8 +84,9 @@ class Space:
         else:
             return False, 'metric not recognized'
 
+        results = []
+        
         if self.param.getVal('computeMD_method') == ['morganFP']:
-            
             # for each compound in the search set 
             for i, inpvector in enumerate(X):
                 bitestring="".join(inpvector.astype(str))
@@ -117,8 +119,20 @@ class Space:
                             selected_d = [x for x,_ in z]
                             selected_i = [x for _,x in z]
 
+                results_distances = []
+                results_names = []
+                results_smiles = []
                 for sd,si in zip(selected_d, selected_i):
-                    print (i, sd, self.names[si], self.SMILES[si])
+                    results_distances.append(sd)
+                    results_names.append(self.names[si])
+                    results_smiles.append(self.SMILES[si])
+                    
+                    #print (i, sd, self.names[si], self.SMILES[si])
+
+                results.append({'distances':results_distances,
+                                'names':results_names,
+                                'SMILES':results_smiles
+                })
         else:
             # TODO: implement euclidean
             print ("euclidean distance not implemented")
@@ -130,7 +144,7 @@ class Space:
         #     'success_arr': success_list
         # }
 
-        return True, "ok"
+        return True, results
 
     def save_space(self):
         ''' This function saves space in a pickle file '''

@@ -317,8 +317,6 @@ class Odata():
         # 
         # 1. results.pkl
         # 2. console output
-        # 3. molecular descriptors file in TSV format [optional]
-        # 4. results file in TSV format [optional]
         # 
         # (note) no JSON file is produced because this was already
         # implemented in manage.py. Call action_info (model, version, output='JSON')
@@ -326,29 +324,18 @@ class Odata():
         ####
         # 1. results.pkl
         ####
-        # info_pkl_path = os.path.join(self.param.getVal('model_path'), 'info.pkl')
-        # LOG.debug('saving model information to:{}'.format(info_pkl_path))
-        # with open(info_pkl_path, 'wb') as handle:
-        #     pickle.dump(self.results['model_build_info'], handle)
-        #     pickle.dump(self.results['model_valid_info'], handle)
-
         results_pkl_path = os.path.join(self.param.getVal('model_path'), 'results.pkl')
         LOG.debug('saving space results to:{}'.format(results_pkl_path))
         with open(results_pkl_path, 'wb') as handle:
             self.conveyor.save(handle)
-            #pickle.dump(self.conveyor, handle)
+            pickle.dump(self.conveyor, handle)
 
         ####
         # 2. console output
         ####
-
-        # if self.conveyor.isKey('model_build_info'):
-        #     for val in self.conveyor.getVal('model_build_info'):
-        #         self.print_result (val)
-
-        # if self.conveyor.isKey('model_valid_info'):
-        #     for val in self.conveyor.getVal('model_valid_info'):
-        #         self.print_result (val)
+        if self.conveyor.isKey('space_build_info'):
+            for val in self.conveyor.getVal('space_build_info'):
+                self.print_result (val)  
 
         return True, 'space creation OK'
 
@@ -385,13 +372,18 @@ class Odata():
         # 2. console output
         ####
 
-        # if self.conveyor.isKey('model_build_info'):
-        #     for val in self.conveyor.getVal('model_build_info'):
-        #         self.print_result (val)
+        if self.conveyor.isKey('search_results'):
+            results = self.conveyor.getVal('search_results')
+            names = self.conveyor.getVal('obj_nam')
+            smiles = self.conveyor.getVal('SMILES')
+            if len (results) != len (names):
+                return False, 'results length does not match names'
 
-        # if self.conveyor.isKey('model_valid_info'):
-        #     for val in self.conveyor.getVal('model_valid_info'):
-        #         self.print_result (val)
+            for i in range (len(results)):
+                print ('similars to ',names[i], smiles[i])
+                iresult = results[i]
+                for j in range (len(iresult['distances'])):
+                    print ('\t',iresult['distances'][j], iresult['names'][j],iresult['SMILES'][j])
 
         return True, 'search OK'
 

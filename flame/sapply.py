@@ -78,11 +78,11 @@ class Sapply:
 
         self.conveyor.addVal(
                     search_results,
-                    'space_search_info',
-                    'space search information',
-                    'method',
-                    'single',
-                    'Information about the space')
+                    'search_results',
+                    'Search results',
+                    'result',
+                    'objs',
+                    'Collection of similar compounds','main')
 
         LOG.info('Space search finished successfully')
 

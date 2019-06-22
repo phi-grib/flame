@@ -54,23 +54,25 @@ class Slearn:
         LOG.info('Starting space building')
         success, space_building_results = space.build(self.X, self.conveyor.getVal('obj_nam'), self.conveyor.getVal('SMILES'))
         if not success:
+            LOG.error('space_building_results')
             self.conveyor.setError(space_building_results)
             return
 
         self.conveyor.addVal(
                     space_building_results,
                     'space_build_info',
-                    'space building information',
+                    'space build info',
                     'method',
                     'single',
-                    'Information about the space')
+                    'Information about the building of the chemical space')
 
         # save model
         try:
             space.save_space()
         except Exception as e:
             LOG.error(f'Error saving space with exception {e}')
-            return False, 'An error ocurred saving the space'
+            self.conveyor.setError(f'Error saving space with exception {e}')
+            return
 
         LOG.info('Space building finished successfully')
 

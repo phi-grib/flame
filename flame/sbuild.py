@@ -86,7 +86,6 @@ class Sbuild:
             # uses the child classes within the 'space' folder,
             # to allow customization of  the processing applied to each space
             modpath = utils.smodule_path(self.space, 0)
-            print (modpath)
 
             idata_child = importlib.import_module(modpath+".idata_child")
             slearn_child = importlib.import_module(modpath+".slearn_child")
