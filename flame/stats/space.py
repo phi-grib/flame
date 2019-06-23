@@ -58,14 +58,17 @@ class Space:
             self.X = []
             for i in X:
                 self.X.append(DataStructs.cDataStructs.CreateFromBitString("".join(i.astype(str))))
+            self.Dmax = 1.0
         else:
             ydist = distance.pdist(X, metric='euclidean')
-            print ('min:', np.min(ydist), 'max:', np.max(ydist))
-            self.Dmax = np.max(ydist)
+            #print ('min:', np.min(ydist), 'max:', np.max(ydist))
+            self.Dmax = np.percentile(ydist,95)
             self.X = X
 
         results = []
         results.append(('nobj', 'number of objects', self.nobj))
+        if self.Dmax is not 1.0:
+            results.append(('dmax', 'perecentil 95 of internal distances', self.Dmax))
 
         return True, results
 
@@ -87,116 +90,66 @@ class Space:
         if numsel is None:
             numsel = len(self.X)
 
-        if metric == 'Tanimoto':
-            #TODO: check that parameters are fingerprints
-            
-            rdkmetric = DataStructs.TanimotoSimilarity
-        elif metric == 'Euclidean':
-            print ('euclidean')
-        else:
-            return False, 'metric not recognized'
-
         results = []
         
         # for fingerprint MD
-        if self.param.getVal('computeMD_method') == ['morganFP']:
-            # for each compound in the search set 
-            for i, inpvector in enumerate(X):
-                bitestring="".join(inpvector.astype(str))
-                ivector = DataStructs.cDataStructs.CreateFromBitString(bitestring)
+        isFingerprint = (self.param.getVal('computeMD_method') == ['morganFP'])
 
-                # for each compound in the space
-                selected_i = []
-                selected_d = []
-                for j, jvector in enumerate(self.X):
-                    d = DataStructs.FingerprintSimilarity(ivector,jvector, metric=rdkmetric)
-                    
-                    if d <= cutoff:
-                        continue
+        # for each compound in the search set 
+        for i, ivector in enumerate(X):
 
-                    # if results set is not completed add
-                    if len(selected_i) < numsel:
-                        selected_i.append(j)
-                        selected_d.append(d)
-                        z = sorted (zip(selected_d,selected_i),reverse=True)
-                        selected_d = [x for x,_ in z]
-                        selected_i = [x for _,x in z]
+            if isFingerprint:
+                bitestring="".join(ivector.astype(str))
+                ifp = DataStructs.cDataStructs.CreateFromBitString(bitestring)
 
-                    # otherwyse, compare the new d with the min d
-                    else:
-                        if d > selected_d[-1]:   # better than worse compound                           
-                            #add at the beggining 
-                            selected_i[-1]=j
-                            selected_d[-1]=d
-                            z = sorted (zip(selected_d,selected_i),reverse=True)
-                            selected_d = [x for x,_ in z]
-                            selected_i = [x for _,x in z]
+            # for each compound in the space
+            selected_i = []
+            selected_d = []
+            for j, jvector in enumerate(self.X):
 
-                results_distances = []
-                results_names = []
-                results_smiles = []
-
-                for sd,si in zip(selected_d, selected_i):
-                    results_distances.append(sd)
-                    results_names.append(self.names[si])
-                    results_smiles.append(self.SMILES[si])
-                    
-                    #print (i, sd, self.names[si], self.SMILES[si])
-
-                results.append({'distances':results_distances,
-                                'names':results_names,
-                                'SMILES':results_smiles
-                })
-
-        else:
-            #TODO: implement alternative distances
-            # use un if/else here to define the function to use
-             
-            # for each compound in the search set 
-            for i, ivector in enumerate(X):
-
-                # for each compound in the space
-                selected_i = []
-                selected_d = []
-                for j, jvector in enumerate(self.X):
+                if metric == 'Tanimoto':
+                    d = DataStructs.FingerprintSimilarity(ifp,jvector, metric=DataStructs.TanimotoSimilarity)
+                elif metric == 'Euclidean':
                     d = 1.000-(distance.euclidean(ivector,jvector)/self.Dmax)
-                    if d <= cutoff:
-                        continue
 
-                    # if results set is not completed add
-                    if len(selected_i) < numsel:
-                        selected_i.append(j)
-                        selected_d.append(d)
+                if d <= cutoff:
+                    continue
+
+                # if results set is not completed add
+                if len(selected_i) < numsel:
+                    selected_i.append(j)
+                    selected_d.append(d)
+                    z = sorted (zip(selected_d,selected_i),reverse=True)
+                    selected_d = [x for x,_ in z]
+                    selected_i = [x for _,x in z]
+
+                # otherwyse, compare the new d with the min d
+                else:
+                    if d > selected_d[-1]:   # better than worse compound                           
+                        #add at the beggining 
+                        selected_i[-1]=j
+                        selected_d[-1]=d
                         z = sorted (zip(selected_d,selected_i),reverse=True)
                         selected_d = [x for x,_ in z]
                         selected_i = [x for _,x in z]
 
-                    # otherwyse, compare the new d with the min d
-                    else:
-                        if d > selected_d[-1]:   # better than worse compound                           
-                            #add at the beggining 
-                            selected_i[-1]=j
-                            selected_d[-1]=d
-                            z = sorted (zip(selected_d,selected_i),reverse=True)
-                            selected_d = [x for x,_ in z]
-                            selected_i = [x for _,x in z]
+            results_distances = []
+            results_names = []
+            results_smiles = []
 
-                results_distances = []
-                results_names = []
-                results_smiles = []
+            for sd,si in zip(selected_d, selected_i):
+                results_distances.append(sd)
+                results_names.append(self.names[si])
+                results_smiles.append(self.SMILES[si])
+                
+                #print (i, sd, self.names[si], self.SMILES[si])
 
-                for sd,si in zip(selected_d, selected_i):
-                    results_distances.append(sd)
-                    results_names.append(self.names[si])
-                    results_smiles.append(self.SMILES[si])
-                    
-                    #print (i, sd, self.names[si], self.SMILES[si])
+            results.append({'distances':results_distances,
+                            'names':results_names,
+                            'SMILES':results_smiles
+            })
 
-                results.append({'distances':results_distances,
-                                'names':results_names,
-                                'SMILES':results_smiles
-                })
-
+    
         return True, results
 
 
