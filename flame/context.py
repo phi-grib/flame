@@ -221,7 +221,7 @@ def sbuild_cmd(arguments, output_format=None):
 
 def search_cmd(model, output_format=None):
     '''
-    Instantiates a Serach object to run a search using the given input
+    Instantiates a Search object to run a search using the given input
     file and space.
 
     '''
@@ -284,6 +284,8 @@ def manage_cmd(args):
             success, results = smanage.action_remove(args.space, version)
         elif args.action == 'publish':
             success, results = smanage.action_publish(args.space)
+        elif args.action == 'list':
+            success, results = smanage.action_list(args.space)
 
     # manage actions for models, not requiring an endpoint name
     elif args.action == 'import':
@@ -292,6 +294,8 @@ def manage_cmd(args):
         success, results = manage.action_dir()
     elif args.action == 'report':
         success, results = manage.action_report()
+    elif args.action == 'list':
+            success, results = manage.action_list(args.endpoint)
 
     else: 
         success = False

@@ -107,67 +107,6 @@ def action_new(model):
     return True, 'new endpoint '+model+' created'
 
 
-def action_snew(space):
-    '''
-    Create a new space tree, using the given name.
-    This creates the development version "dev",
-    copying inside default child classes
-    '''
-
-    if not space:
-        return False, 'empty space label'
-
-    # importlib does not allow using 'test' and issues a misterious error when we
-    # try to use this name. This is a simple workaround to prevent creating models 
-    # with this name 
-    if space == 'test':
-        #LOG.warning(f'the name "test" is disallowed, please use any other name')
-        return False, 'the name "test" is disallowed, please use any other name'
-
-    # Model directory with /dev (default) level
-    ndir = pathlib.Path(utils.space_tree_path(space)) / 'dev'
-
-    # check if there is already a tree for this endpoint
-    if ndir.exists():
-        #LOG.warning(f'Endpoint {space} already exists')
-        return False, f'Endpoint {space_tree_path} already exists'
-
-    try:
-        ndir.mkdir(parents=True)
-        LOG.debug(f'{ndir} created')
-    except:
-        return False, f'Unable to create path for {space} endpoint'
-
-    # Copy classes skeletons to ndir
-    wkd = pathlib.Path(os.path.dirname(os.path.abspath(__file__)))
-    # children_names = ['search', 'idata', 'odata', 'slearn']
-    children_names = ['idata', 'odata']
-
-    for cname in children_names:
-        filename = cname + '_child.py'
-        src_path = wkd / 'children' / filename
-        dst_path = ndir / filename
-        try:
-            shutil.copy(src_path, dst_path)
-        except:
-            return False, f'Unable to copy {cname} file'
-
-    LOG.debug(f'copied class skeletons from {src_path} to {dst_path}')
-    
-    # copy parameter yml file
-    params_path = wkd / 'children/parameters.yaml'
-    shutil.copy(params_path, ndir)
-
-    # copy documentation yml file
-    documentation_path = wkd / 'children/documentation.yaml'
-    shutil.copy(documentation_path, ndir)
-  
-
-    LOG.info(f'New space {space} created')
-    #print(f'New endpoint {model} created')
-    return True, 'New space '+space+' created'
-
-
 def action_kill(model):
     '''
     removes the model tree described by the argument

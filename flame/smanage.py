@@ -101,7 +101,6 @@ def action_new(space):
     documentation_path = wkd / 'children/documentation.yaml'
     shutil.copy(documentation_path, ndir)
   
-
     LOG.info(f'New space {space} created')
     #print(f'New endpoint {space} created')
     return True, 'New space '+space+' created'
@@ -191,3 +190,18 @@ def action_remove(space, version):
     LOG.info(f'Version {version} of space {space} has been removed')
     return True, f'Version {version} of space {space} has been removed'
 
+def action_list(space):
+    '''
+    Lists all versions for the space provided as argument
+    '''
+
+    # if a space name is provided, list versions
+    base_path = utils.space_tree_path(space)
+
+    num_versions = 0
+    for x in os.listdir(base_path):
+        if x.startswith("ver"):
+            num_versions += 1
+            LOG.info(f'\t{space} : {x}')
+
+    return True, f'space {space} has {num_versions} published versions'
