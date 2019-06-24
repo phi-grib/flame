@@ -236,19 +236,34 @@ def search_cmd(model, output_format=None):
 
 def manage_cmd(args):
     '''
-    Calls diverse model maintenance commands
+    Calls diverse model or space maintenance commands
     '''
-
-    import flame.manage as manage
-    import flame.smanage as smanage
 
     version = utils.intver(args.version)
 
-    # manage actions for models
-    if args.endpoint is not None:
+    if args.space is not None:
+    
+        import flame.smanage as smanage
+    
+        if args.action == 'new':
+            success, results = smanage.action_new(args.space)
+        elif args.action == 'kill':
+            success, results = smanage.action_kill(args.space)
+        elif args.action == 'remove':
+            success, results = smanage.action_remove(args.space, version)
+        elif args.action == 'publish':
+            success, results = smanage.action_publish(args.space)
+        elif args.action == 'list':
+            success, results = smanage.action_list(args.space)
+        else: 
+            success = False
+            results = "Specified manage action is not defined"
+    else: 
+
+        import flame.manage as manage
 
         if args.action == 'new':
-            utils.check_repository_path()
+            #utils.check_repository_path()
             success, results = manage.action_new(args.endpoint)
         elif args.action == 'kill':
             success, results = manage.action_kill(args.endpoint)
@@ -272,33 +287,16 @@ def manage_cmd(args):
             success, results = manage.action_model_template(args.endpoint, version)
         elif args.action == 'prediction_template':
             success, results = manage.action_prediction_template(args.endpoint, version)
-
-    # manage actions for spaces
-    elif args.space is not None:
-
-        if args.action == 'new':
-            success, results = smanage.action_new(args.space)
-        elif args.action == 'kill':
-            success, results = smanage.action_kill(args.space)
-        elif args.action == 'remove':
-            success, results = smanage.action_remove(args.space, version)
-        elif args.action == 'publish':
-            success, results = smanage.action_publish(args.space)
+        elif args.action == 'import':
+            success, results = manage.action_import(args.infile)
+        elif args.action == 'dir':
+            success, results = manage.action_dir()
+        elif args.action == 'report':
+            success, results = manage.action_report()
         elif args.action == 'list':
-            success, results = smanage.action_list(args.space)
-
-    # manage actions for models, not requiring an endpoint name
-    elif args.action == 'import':
-        success, results = manage.action_import(args.infile)
-    elif args.action == 'dir':
-        success, results = manage.action_dir()
-    elif args.action == 'report':
-        success, results = manage.action_report()
-    elif args.action == 'list':
             success, results = manage.action_list(args.endpoint)
-
-    else: 
-        success = False
-        results = "Specified manage action is not defined"
+        else: 
+            success = False
+            results = "Specified manage action is not defined"
 
     return success, results
