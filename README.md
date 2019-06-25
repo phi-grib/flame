@@ -1,7 +1,7 @@
 [![Build Status](https://travis-ci.org/phi-grib/flame.svg?branch=master)](https://travis-ci.org/phi-grib/flame)
 # Flame
 
-Flame is a flexible framework supporting predictive modeling within the eTRANSAFE (http://etransafe.eu) project. 
+Flame is a flexible framework supporting predictive modeling and similarity search within the eTRANSAFE (http://etransafe.eu) project. 
 
 
 Flame allows to:
@@ -67,7 +67,7 @@ pip install -e .
 
 ## Configuration
 
-After installation is completed, run the configuration command to configure the directory where flame will place the models.
+After installation is completed, run the configuration command to configure the directory where flame will place the models and chemical spaces.
 
 ```bash
 flame -c config
@@ -75,20 +75,23 @@ flame -c config
 
 will use a default directory structure following the XDG specification in GNU/Linux, %APPDATA% in windows and `~/Library/Application Support/flame_models` in Mac OS X.
 
-To specify a custom path use the `-d` parameter:
+To specify a custom path use the `-d` parameter to enter the root folder where the models and chemical spaces will be placed:
 
 ```bash
 flame -c config -d /my/custom/path
 ```
 
+will set up the model repository to `/my/custom/path/models` and the chemical spaces repository to `/my/custom/path/spaces`
+
 ## Main features
 
-- Native support of most common machine-learning algorithms, including rich configuration options and facilitating the model optimization. 
+- Native support of most common machine-learning algorithms, including rich configuration options and facilitating the model optimization.
+- Easy creation of chemical spaces for similarity search, using fingerprints or molecular descriptors.
 - Support for any standard formatted input: from a tsv table to a collection of compounds in SMILES or SDFile format. 
 - Multiple interfaces adapted to the needs of different users: as a web service, for end-user prediction, as a full featured GUI for model development, as command line, integration in Jupyter notebooks, etc.
 - Support for parallel processing.
 - Integration of models developed using other tools (e.g. R, KNIME).
-- Support for inter-model communication: the output of a model can be used as input for other models.
+- Support for multilevel models: the output of a model can be used as input for other models.
 - Integrated model version management.
 
 
@@ -163,16 +166,38 @@ flame -c manage -a import -f MyModel.tgz
 ```	
 And then the model is immediately operative and able to produce exactly the same predictions we obtain in the development environment  
 
+To test the similarity search capabilities of Flame create a new chemical space:
+
+```sh
+flame -c manage -a new -s MySpace
+```
+
+This creates a new entry in the spaces repository and the development version of the chemical space, populating these entries with default options.
+
+Now provide the collection of compounds and conforming the chemical space as a SDFile and set up the parameters (e.g. the molecular descriptors used to characterize it)
+
+```sh
+flame -c sbuild -s MySpace -f series.sdf -p delta.txt
+```
+
+Once it was built, this chemical space can be used to search compounds similar to a given query compounds in an efficient way.
+
+```sh
+flame -c search -e MySpace -v 0 -f query.sdf -p similarity.yaml
+```
+The file query.sdf can contain the chemical structure of one or many compounds. The file similarity.yaml must define the metric used for the search, the distance cutoff and the maximum number of similars to extract per query compound. The last two fields can be left empty to avoid applying these limits. 
+
 ## Flame commands
 
 | Command | Description |
 | --- | --- |
-| -c/ --command | Action to be performed. Acceptable values are *build*, *predict* and *manage* |
+| -c/ --command | Action to be performed. Acceptable values are *build*, *predict*, *sbuild*, *search* and *manage* |
 | -e/ --endpoint | Name of the model which will be used by the command. This name is defined when the model is created for the fist time with the command *-c manage -a new* |
+| -s/ --space | Name of the chemical space which will be used by the command. This name is defined when the chemical space is created for the fist time with the command *-c manage -a new* |
 | -v/ --version | Version of the model, typically an integer. Version 0 refers to the model development "sandbox" which is created automatically upon model creation |
 | -a/ --action | Management action to be carried out. Acceptable values are *list*, *new*, *kill*, *publish*, *remove*, *export* and *import*. The meaning of these actions and examples of use are provided below   |
 | -f/ --infile | Name of the input file used by the command. This file can correspond to the training data (*build*) or the query compounds (*predict*) |
-| -p/ --parameters | Name of an input file used to pass a set of parameters used to training a model (*build*) |
+| -p/ --parameters | Name of an input file used to pass a set of parameters used to train a model (*build*) or to performa a similarity search (*search*) |
 | -h/ --help | Shows a help message on the screen |
 
 Management commands deserve further description:

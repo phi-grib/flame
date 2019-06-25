@@ -22,13 +22,8 @@
 
 import argparse
 import pathlib
-import sys
-import os
-
-from flame.util import utils, get_logger
-from flame.util import config, change_config_status
+from flame.util import utils, get_logger, config
 import flame.context as context
-#import logging
 
 LOG = get_logger(__name__)
 
@@ -42,25 +37,6 @@ LOG = get_logger(__name__)
 # def specificity(y_true, y_pred):
 #     tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
 #     return(tn / (tn+fp))
-
-
-def configuration_warning() -> None:
-    """ Checks if flame has been configured
-     reading the config.yml and checking the config_status flag
-    """
-    config = utils._read_configuration()
-
-    if config != False:
-        if isinstance(config['config_status'], bool):
-            if config['config_status']:
-                if os.path.isdir(config['model_repository_path']):
-                    return
-
-    print("Flame hasn't been configured yet. "
-        "Model repository may be wrong. "
-        "Please use 'flame -c config' before using flame")
-
-    sys.exit()  # force exit
 
 def main():
 
@@ -76,6 +52,10 @@ def main():
                         help='Endpoint model name.',
                         required=False)
 
+    parser.add_argument('-s', '--space',
+                        help='Chemical space name.',
+                        required=False)
+
     parser.add_argument('-v', '--version',
                         help='Endpoint model version.',
                         required=False)
@@ -85,20 +65,20 @@ def main():
                         required=False)
 
     parser.add_argument('-p', '--parameters',
-                        help='File with model building parameters.',
+                        help='File with parameters for the current action.',
                         required=False)
 
     parser.add_argument('-c', '--command',
                         action='store',
-                        choices=['predict', 'build', 'manage', 'config'],
-                        help='Action type: \'predict\' or \'build\' or \'manage\'',
+                        choices=['predict', 'search', 'build', 'sbuild', 'manage', 'config'],
+                        help='Action type: \'predict\' or \'search\' or \'build\' \'sbuild\' or \'manage\' or \'config\'',
                         required=True)
 
     # parser.add_argument('-log', '--loglevel',
     #                     help='Logger level of verbosity',)
 
     parser.add_argument('-d', '--directory',
-                        help='Defines the directory for the models repository.',
+                        help='Defines the root directory for the models and spaces repositories.',
                         required=False)
 
     args = parser.parse_args()
@@ -116,7 +96,7 @@ def main():
     # make sure flame has been configured before running any command, unless this command if used to 
     # configure flame
     if args.command != 'config':
-        configuration_warning()
+        utils.config_test()
 
     if args.command == 'predict':
 
@@ -134,7 +114,28 @@ def main():
                  f' version {version} for file {args.infile}')
 
         success, results = context.predict_cmd(command_predict)
-        # print('flame predict : ', success, results)
+        if not success:
+            LOG.error(results)
+
+    elif args.command == 'search':
+
+        if (args.space is None) or (args.infile is None) or (args.parameters is None):
+            print('flame search : space, parameters and input file arguments are compulsory')
+            return
+
+        version = utils.intver(args.version)
+
+        command_search = {'space': args.space,
+                 'version': version,
+                 'infile': args.infile,
+                 'runtime_param': args.parameters}
+
+        LOG.info(f'Starting search on space {args.space}'
+                 f' version {version} for file {args.infile}')
+
+        success, results = context.search_cmd(command_search)
+        if not success:
+            LOG.error(results)
 
     elif args.command == 'build':
 
@@ -150,7 +151,23 @@ def main():
         success, results = context.build_cmd(command_build)
 
         if not success:
-            print(results)
+            LOG.error(results)
+
+    elif args.command == 'sbuild':
+
+        if (args.space is None):
+            print('flame sbuild : space argument is compulsory')
+            return
+
+        command_build = {'space': args.space, 'infile': args.infile, 'parameters': args.parameters}
+
+        LOG.info(f'Starting building model {args.space}'
+                 f' with file {args.infile} and parameters {args.parameters}')
+
+        success, results = context.sbuild_cmd(command_build)
+
+        if not success:
+            LOG.error(results)
 
     elif args.command == 'manage':
         success, results = context.manage_cmd(args)
@@ -160,8 +177,9 @@ def main():
 
     elif args.command == 'config':
         success = config(args.directory)
-        if success :
-            change_config_status()
+        if not success:
+            LOG.error('configuration unchanged')
+        
 
 # import multiprocessing
 

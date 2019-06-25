@@ -174,49 +174,129 @@ def build_cmd(arguments, output_format=None):
 
     return success, results
 
+def sbuild_cmd(arguments, output_format=None):
+    '''
+    Instantiates a Sbuild object to build a chemical space using the given
+    input file and model. 
+
+    '''
+    
+    from flame.sbuild import Sbuild
+
+    # safety check if model exists
+    repo_path = pathlib.Path(utils.space_repository_path())
+    space_list = os.listdir(repo_path)
+
+    if arguments['space'] not in space_list:
+        LOG.error('Endpoint name not found in space repository.')
+        return False, 'Endpoint name not found in space repository.'
+
+    sbuild = Sbuild(arguments['space'], param_file=arguments['parameters'], output_format=output_format)
+
+    ifile = arguments['infile']
+    epd = utils.space_path(arguments['space'], 0)
+    lfile = os.path.join(epd, 'training_series')
+
+    # when a new training series is provided in the command line
+    # try to copy it to the model directory
+    if ifile is not None:
+        if not os.path.isfile(ifile):
+            LOG.error(f'Wrong compound database file {ifile}')
+            return False, f'Wrong compound database file {ifile}'
+        try:
+            shutil.copy(ifile, lfile)
+        except:
+            LOG.error(f'Unable to copy input file to space directory')
+            return False, 'Unable to copy input file to space directory'
+
+    # check that the local copy of the input file exists
+    if not os.path.isfile(lfile):
+        LOG.error(f'No compound database found')
+        return False, 'No compound database found'
+
+    # run the space building with the input file
+    success, results = sbuild.run(lfile)
+
+    return success, results
+
+def search_cmd(model, output_format=None):
+    '''
+    Instantiates a Search object to run a search using the given input
+    file and space.
+
+    '''
+    from flame.search import Search
+
+    search = Search(model['space'], model['version'], output_format)
+    success, results = search.run(model['infile'], model['runtime_param'])
+
+    LOG.info('Search completed...')
+
+    return success, results
+
 def manage_cmd(args):
     '''
-    Calls diverse model maintenance commands
+    Calls diverse model or space maintenance commands
     '''
-
-    import flame.manage as manage
 
     version = utils.intver(args.version)
 
-    if args.action == 'new':
-        # check if config model repo path is correct
-        utils.check_repository_path()
-        success, results = manage.action_new(args.endpoint)
-    elif args.action == 'kill':
-        success, results = manage.action_kill(args.endpoint)
-    elif args.action == 'remove':
-        success, results = manage.action_remove(args.endpoint, version)
-    elif args.action == 'publish':
-        success, results = manage.action_publish(args.endpoint)
-    elif args.action == 'list':
-        success, results = manage.action_list(args.endpoint)
-    elif args.action == 'import':
-        success, results = manage.action_import(args.infile)
-    elif args.action == 'export':
-        success, results = manage.action_export(args.endpoint)
-    elif args.action == 'refactoring':
-        success, results = manage.action_refactoring(args.file)
-    elif args.action == 'info':
-        success, results = manage.action_info(args.endpoint, version)
-    elif args.action == 'results':
-        success, results = manage.action_results(args.endpoint, version)
-    elif args.action == 'parameters':
-        success, results = manage.action_parameters(args.endpoint, version)
-    elif args.action == 'dir':
-        success, results = manage.action_dir()
-    elif args.action == 'report':
-        success, results = manage.action_report()
-    elif args.action == 'model_template':
-        success, results = manage.action_model_template(args.endpoint, version)
-    elif args.action == 'prediction_template':
-        success, results = manage.action_prediction_template(args.endpoint, version)
+    if args.space is not None:
+    
+        import flame.smanage as smanage
+    
+        if args.action == 'new':
+            success, results = smanage.action_new(args.space)
+        elif args.action == 'kill':
+            success, results = smanage.action_kill(args.space)
+        elif args.action == 'remove':
+            success, results = smanage.action_remove(args.space, version)
+        elif args.action == 'publish':
+            success, results = smanage.action_publish(args.space)
+        elif args.action == 'list':
+            success, results = smanage.action_list(args.space)
+        else: 
+            success = False
+            results = "Specified manage action is not defined"
     else: 
-        success = False
-        results = "Specified manage action is not defined"
+
+        import flame.manage as manage
+
+        if args.action == 'new':
+            #utils.check_repository_path()
+            success, results = manage.action_new(args.endpoint)
+        elif args.action == 'kill':
+            success, results = manage.action_kill(args.endpoint)
+        elif args.action == 'remove':
+            success, results = manage.action_remove(args.endpoint, version)
+        elif args.action == 'publish':
+            success, results = manage.action_publish(args.endpoint)
+        elif args.action == 'list':
+            success, results = manage.action_list(args.endpoint)
+        elif args.action == 'export':
+            success, results = manage.action_export(args.endpoint)
+        elif args.action == 'refactoring':
+            success, results = manage.action_refactoring(args.file)
+        elif args.action == 'info':
+            success, results = manage.action_info(args.endpoint, version)
+        elif args.action == 'results':
+            success, results = manage.action_results(args.endpoint, version)
+        elif args.action == 'parameters':
+            success, results = manage.action_parameters(args.endpoint, version)
+        elif args.action == 'model_template':
+            success, results = manage.action_model_template(args.endpoint, version)
+        elif args.action == 'prediction_template':
+            success, results = manage.action_prediction_template(args.endpoint, version)
+        elif args.action == 'import':
+            success, results = manage.action_import(args.infile)
+        elif args.action == 'dir':
+            success, results = manage.action_dir()
+        elif args.action == 'report':
+            success, results = manage.action_report()
+        elif args.action == 'list':
+            success, results = manage.action_list(args.endpoint)
+        else: 
+            success = False
+            results = "Specified manage action is not defined"
 
     return success, results
