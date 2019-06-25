@@ -50,7 +50,7 @@ def get_conf_yml_path() -> str:
     return os.path.join(source_dir, 'config.yaml')
 
 
-def _read_configuration() -> dict:
+def read_config() -> dict:
     '''
     Reads configuration file "config.yaml" and checks
     sanity of model repository path.
@@ -77,6 +77,23 @@ def _read_configuration() -> dict:
     # LOG.info('Configuration loaded')
     return conf
 
+def config_test() -> None:
+    """ Checks if flame has been configured
+     reading the config.yml and checking the config_status flag
+    """
+    config = read_config()
+
+    if config != False:
+        if isinstance(config['config_status'], bool):
+            if config['config_status']:
+                if os.path.isdir(config['model_repository_path']):
+                    return
+
+    print("Flame hasn't been configured yet. "
+        "Model repository may be wrong. "
+        "Please use 'flame -c config' before using flame")
+
+    sys.exit()  # force exit
 
 # def check_repository_path() -> None:
 #     '''
@@ -121,6 +138,7 @@ def _read_configuration() -> dict:
 
 def write_config(config: dict) -> None:
     """Writes the configuration to disk"""
+    config['config_status'] = True
     with open(get_conf_yml_path(), 'w') as f:
         yaml.dump(config, f, default_flow_style=False)
 
@@ -150,6 +168,25 @@ def set_model_repository(path=None):
 
     write_config(configuration)
 
+def set_repositories(model_path, space_path):
+    """
+    Set the model repository path.
+    This is the dir where flame is going to create and load models.
+    Returns:
+    --------
+    None
+    """
+    with open(get_conf_yml_path(), 'r') as f:
+        configuration = yaml.safe_load(f)
+
+    new_model_path = pathlib.Path(model_path)
+    new_space_path = pathlib.Path(space_path)
+
+    configuration['model_repository_path'] = str(new_model_path.resolve())
+    configuration['space_repository_path'] = str(new_space_path.resolve())
+
+    write_config(configuration)
+
 def path_expand (path, version):
     ''' 
     Expands the path as required for the version provided as argument 
@@ -164,7 +201,7 @@ def model_repository_path():
     Returns the path to the root of the model repository,
     containing all models and versions
     '''
-    configuration = _read_configuration()
+    configuration = read_config()
     return configuration['model_repository_path']
 
 def model_tree_path(model):
@@ -184,7 +221,7 @@ def space_repository_path():
     Returns the path to the root of the spaces repository,
     containing all models and versions
     '''
-    configuration = _read_configuration()
+    configuration = read_config()
     return configuration['space_repository_path']
 
 def space_tree_path(space):

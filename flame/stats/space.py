@@ -67,6 +67,7 @@ class Space:
 
         results = []
         results.append(('nobj', 'number of objects', self.nobj))
+
         if self.Dmax is not 1.0:
             results.append(('dmax', 'perecentil 95 of internal distances', self.Dmax))
 
@@ -179,5 +180,4 @@ class Space:
             self.names = pickle.load(fo)
             self.SMILES = pickle.load(fo)
             self.Dmax = pickle.load(fo)
-
         return
