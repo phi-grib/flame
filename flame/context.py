@@ -255,6 +255,8 @@ def manage_cmd(args):
             success, results = smanage.action_publish(args.space)
         elif args.action == 'list':
             success, results = smanage.action_list(args.space)
+        elif args.action == 'parameters':
+            success, results = smanage.action_parameters(args.space, version)
         else: 
             success = False
             results = "Specified manage action is not defined"

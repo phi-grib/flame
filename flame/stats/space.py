@@ -82,8 +82,10 @@ class Space:
             defined as parameters
         '''
 
+        print ('start')
         # load pickle with reference space
         self.load_space()
+        print ('pickle loaded')
 
         if cutoff is None:
             cutoff = 0.0
@@ -106,8 +108,13 @@ class Space:
             # for each compound in the space
             selected_i = []
             selected_d = []
+            print ('searching compound:', i)
+            
+            d_worst = 0.000
+
             for j, jvector in enumerate(self.X):
 
+                
                 if metric == 'Tanimoto':
                     d = DataStructs.FingerprintSimilarity(ifp,jvector, metric=DataStructs.TanimotoSimilarity)
                 elif metric == 'Euclidean':
@@ -124,16 +131,30 @@ class Space:
                     selected_d = [x for x,_ in z]
                     selected_i = [x for _,x in z]
 
+                    d_worst = selected_d[-1]
+
+                    # if the worst compound is identical, we cannot improve the search 
+                    if d_worst == 1.000:
+                        break
+
                 # otherwyse, compare the new d with the min d
                 else:
-                    if d > selected_d[-1]:   # better than worse compound                           
-                        #add at the beggining 
+                    if d > d_worst:   # better than worse compound                           
+                        #replace worst
                         selected_i[-1]=j
                         selected_d[-1]=d
                         z = sorted (zip(selected_d,selected_i),reverse=True)
                         selected_d = [x for x,_ in z]
                         selected_i = [x for _,x in z]
+    
+                        d_worst = selected_d[-1]
 
+                        # if the worst compound is identical, we cannot improve the search 
+                        if d_worst == 1.000:
+                            break
+
+
+            print ('completed')
             results_distances = []
             results_names = []
             results_smiles = []
