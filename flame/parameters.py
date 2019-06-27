@@ -54,7 +54,7 @@ class Parameters:
     #     self.p = d    
     #     return
 
-    def loadYaml(self, model, version):       
+    def loadYaml(self, model, version, isSpace=False):       
         ''' load a set of parameters from the configuration file present 
             at the model directory
 
@@ -63,7 +63,11 @@ class Parameters:
         '''
 
         # obtain the path and the default name of the model parameters
-        parameters_file_path = utils.model_path(model, version)
+        if isSpace:
+            parameters_file_path = utils.space_path(model, version)
+        else:
+            parameters_file_path = utils.model_path(model, version)
+        
         parameters_file_name = os.path.join (parameters_file_path,
                                             'parameters.yaml')
 
@@ -93,47 +97,7 @@ class Parameters:
 
         return True, 'OK'
 
-    def loadSYaml(self, space, version):       
-        ''' load a set of parameters from the configuration file present 
-            at the model directory
-
-            adds some parameters identifying the model and the 
-            hash of the configuration file 
-        '''
-
-        # obtain the path and the default name of the space parameters
-        parameters_file_path = utils.space_path(space, version)
-        parameters_file_name = os.path.join (parameters_file_path,
-                                            'parameters.yaml')
-
-        # load the main class dictionary (p) from this yaml file
-        if not os.path.isfile(parameters_file_name):
-            return False, 'file not found'
-
-        try:
-            with open(parameters_file_name, 'r') as pfile:
-                self.p = yaml.safe_load(pfile)
-        except Exception as e:
-            return False, e
-
-        # check version of the parameter file
-        # no 'version' key mans version < 2.0
-        if 'param_format' in self.p:
-            self.extended = True
-        else:
-            self.extended = False
-            self.param_format = 1.0
-
-        # add keys for the model and a MD5 hash
-        self.setVal('endpoint',space)
-        self.setVal('version',version)
-        self.setVal('model_path',parameters_file_path)
-        self.setVal('md5',utils.md5sum(parameters_file_name))
-
-        return True, 'OK'
-
-
-    def delta(self, model, version, param, iformat='YAML'):
+    def delta(self, model, version, param, iformat='YAML', isSpace=False):
         ''' load a set of parameters from the configuration file present 
             at the model directory
 
@@ -144,7 +108,8 @@ class Parameters:
             adds some parameters identifying the model and the 
             hash of the configuration file 
         '''
-        if not self.loadYaml (model, version):
+
+        if not self.loadYaml (model, version, isSpace):
             return False, 'file not found'
         
         # parse parameter file assuning it will be in
@@ -191,7 +156,11 @@ class Parameters:
                     #print ('@delta: adding',key,val,type(val))
 
         # dump internal dict to the parameters file
-        parameters_file_path = utils.model_path(model, version)
+        if isSpace:
+            parameters_file_path = utils.space_path(model, version)
+        else: 
+            parameters_file_path = utils.model_path(model, version)
+
         parameters_file_name = os.path.join (parameters_file_path,
                                             'parameters.yaml')
         try:

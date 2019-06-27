@@ -42,7 +42,7 @@ class Search:
         self.param = Parameters()
         self.conveyor = Conveyor()
 
-        if not self.param.loadSYaml(space, version):
+        if not self.param.loadYaml(space, version, isSpace=True):
             LOG.critical('Unable to load space parameters. Aborting...')
             sys.exit()
 

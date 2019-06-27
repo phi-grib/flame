@@ -45,14 +45,14 @@ class Sbuild:
         if param_file is not None:
             # use the param_file to update existing parameters at the space
             # directory and save changes to make them persistent
-            success, message = self.param.delta(space, 0, param_file, iformat='YAML')
+            success, message = self.param.delta(space, 0, param_file, iformat='YAML', isSpace=True)
 
         elif param_string is not None:
-            success, message = self.param.delta(space, 0, param_string, iformat='JSONS')
+            success, message = self.param.delta(space, 0, param_string, iformat='JSONS', isSpace=True)
 
         else:
             # load parameter file at the space directory
-            success, message = self.param.loadSYaml(space, 0)
+            success, message = self.param.loadYaml(space, 0, isSpace=True)
 
         # being unable to load parameters is a critical error
         if not success:

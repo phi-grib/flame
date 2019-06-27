@@ -388,22 +388,20 @@ class Odata():
                 header+='\tdistance\tname\tSMILES'
                 fo.write(header+'\n')
 
-                for i in range (len(results)):
-
-                    if self.conveyor.isKey('SMILES'):
-                        line = f'{names[i]}\t[{smiles[i]}]\t'
-                    else:
-                        line = f'{names[i]}\t'
-                    
+                for i in range (len(results)):                    
                     iresult = results[i]
                     for j in range (len(iresult['distances'])):
+
+                        if self.conveyor.isKey('SMILES'):
+                            line = f'{names[i]}\t[{smiles[i]}]\t'
+                        else:
+                            line = f'{names[i]}\t'
+  
                         dist = iresult['distances'][j]
                         name = iresult['names'][j]
                         smil = iresult['SMILES'][j]
                         line += f'{dist:.3f}\t{name}\t[{smil}]'
                         fo.write(line+'\n')
-
-                    fo.write(line+'\n')
 
         # the function returns "True, output". output can be empty or a JSON
         output = ''
