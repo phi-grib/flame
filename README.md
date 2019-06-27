@@ -174,7 +174,7 @@ flame -c manage -a new -s MySpace
 
 This creates a new entry in the spaces repository and the development version of the chemical space, populating these entries with default options.
 
-Now provide the collection of compounds and conforming the chemical space as a SDFile and set up the parameters (e.g. the molecular descriptors used to characterize it)
+Now provide the collection of compounds to include in the chemical space as a SDFile and set up the parameters (e.g. the molecular descriptors used to characterize it) using a delta file, as described above for the models.
 
 ```sh
 flame -c sbuild -s MySpace -f series.sdf -p delta.txt
@@ -183,9 +183,9 @@ flame -c sbuild -s MySpace -f series.sdf -p delta.txt
 Once it was built, this chemical space can be used to search compounds similar to a given query compounds in an efficient way.
 
 ```sh
-flame -c search -e MySpace -v 0 -f query.sdf -p similarity.yaml
+flame -c search -s MySpace -v 0 -f query.sdf -p similarity.yaml
 ```
-The file query.sdf can contain the chemical structure of one or many compounds. The file similarity.yaml must define the metric used for the search, the distance cutoff and the maximum number of similars to extract per query compound. The last two fields can be left empty to avoid applying these limits. 
+The file query.sdf can contain the chemical structure of one or many compounds. The file `similarity.yaml` must define the metric used for the search, the distance cutoff and the maximum number of similars to extract per query compound. The last two fields can be left empty to avoid applying these limits. 
 
 ## Flame commands
 
