@@ -215,7 +215,7 @@ def action_parameters(space, version=None, oformat='text'):
     from flame.parameters import Parameters
 
     param = Parameters()
-    param.loadSYaml(space, version)
+    param.loadYaml(space, version, isSpace=True)
 
     if oformat == 'JSON':
         return True, param.dumpJSON()

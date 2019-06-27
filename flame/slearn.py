@@ -23,6 +23,11 @@
 
 from flame.stats.space import Space
 from flame.util import utils, get_logger
+from sklearn.preprocessing import MinMaxScaler 
+from sklearn.preprocessing import StandardScaler 
+from sklearn.preprocessing import RobustScaler
+import pickle
+import os
 
 LOG = get_logger(__name__)
 
@@ -37,11 +42,65 @@ class Slearn:
         self.X = self.conveyor.getVal('xmatrix')
 
 
+    def preprocess(self):
+        ''' 
+        This function scales the X matrix and selects features 
+        The scaler and the variable mask are saved in a pickl file 
+        '''
+ 
+        # Run scaling.
+        if self.param.getVal('modelAutoscaling'):
+            try:
+                scaler = ""
+                if self.param.getVal('modelAutoscaling') == 'StandardScaler':
+                    scaler = StandardScaler()
+                    LOG.info('Data scaled using StandarScaler')
+
+                elif self.param.getVal('modelAutoscaling') == 'MinMaxScaler':
+                    scaler = MinMaxScaler(copy=True, feature_range=(0,1))
+                    LOG.info('Data scaled using MinMaxScaler')
+                elif self.param.getVal('modelAutoscaling') == 'RobustScaler':
+                    scaler = RobustScaler()
+                    LOG.info('Data scaled using RobustScaler')
+                else:
+                    return False, 'Scaler not recognized'
+
+                # The scaler is saved so it can be used later
+                # to prediction instances.
+                self.scaler = scaler.fit(self.X)
+
+                # Scale the data.
+                self.X = scaler.transform(self.X)
+            except Exception as e:
+                return False, f'Unable to perform scaling with exception: {e}'
+          
+
+        # This dictionary contain all the objects which will be needed
+        # for prediction
+        prepro = {'scaler':self.scaler,\
+                  'version':1}
+
+        prepro_pkl_path = os.path.join(self.param.getVal('model_path'),
+                                      'preprocessing.pkl')
+        
+        with open(prepro_pkl_path, 'wb') as handle:
+            pickle.dump(prepro, handle, 
+                        protocol=pickle.HIGHEST_PROTOCOL)
+
+        return True, 'OK'
+
+
     def run (self):
         '''
         Builds a chemical space 
 
         '''
+
+        # pre-process data
+        success, message = self.preprocess()
+        if not success:
+            self.conveyor.setError(message)
+            return
 
         # instances space object
         space = Space(self.param)

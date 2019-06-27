@@ -20,6 +20,8 @@
 # You should have received a copy of the GNU General Public License
 # along with Flame.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
+import pickle
 import yaml
 from flame.stats.space import Space
 from flame.util import utils, get_logger
@@ -34,6 +36,44 @@ class Sapply:
         self.conveyor = conveyor
         self.conveyor.setOrigin('sapply')
         self.X = self.conveyor.getVal('xmatrix')
+
+
+    def preprocess(self, X):
+        ''' This function loads the scaler and variable mask from a pickle file 
+        and apply them to the X matrix passed as an argument'''
+
+        prepro_file = os.path.join(self.param.getVal('model_path'),
+                                    'preprocessing.pkl')
+        LOG.debug(f'Loading model from pickle file, path: {prepro_file}')
+        try:
+            with open(prepro_file, "rb") as input_file:
+                dict_prepro = pickle.load(input_file)
+        except FileNotFoundError:
+            return False, f'No valid preprocessing tools found at: {prepro_file}'
+
+        # Load version
+        self.version = dict_prepro['version']
+
+        # check if the pickle was created with a compatible version
+        # currently 1
+        if self.version is not 1:
+            return False, 'Incompatible preprocessing version'   
+    
+        # Load rest of info in an extensible way
+        # This allows to add new variables keeping
+        # Retro-compatibility
+        if 'scaler' in dict_prepro.keys():
+            self.scaler = dict_prepro['scaler']
+
+        # Check consistency between parameter file and pickle info
+        if self.param.getVal('modelAutoscaling') and self.scaler is None:
+            return False, 'Inconsistency error. Autoscaling is True in parameter file but no Scaler loaded'
+
+        # apply scale
+        if self.param.getVal('modelAutoscaling'):
+            X = self.scaler.transform(X)
+
+        return True, X 
 
 
     def run (self, runtime_param): 
@@ -61,6 +101,14 @@ class Sapply:
             LOG.error('wrong format in the runtime similarity parameters')
             self.conveyor.setError('wrong format in the runtime similarity parameters')
             return 
+
+
+        # Load scaler and variable mask and preprocess the data
+        success, result = self.preprocess(self.X)
+        if not success:
+            self.conveyor.setError(result)
+            return
+        self.X = result
 
         # instances space object
         space = Space(self.param)
