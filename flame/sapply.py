@@ -70,8 +70,9 @@ class Sapply:
             return False, 'Inconsistency error. Autoscaling is True in parameter file but no Scaler loaded'
 
         # apply scale
-        if self.param.getVal('modelAutoscaling'):
-            X = self.scaler.transform(X)
+        if self.scaler is not None:
+            if self.param.getVal('modelAutoscaling'):
+                X = self.scaler.transform(X)
 
         return True, X 
 
