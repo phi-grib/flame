@@ -82,10 +82,10 @@ class Space:
             defined as parameters
         '''
 
-        print ('start')
+        #print ('start')
         # load pickle with reference space
         self.load_space()
-        print ('pickle loaded')
+        #print ('pickle loaded')
 
         if cutoff is None:
             cutoff = 0.0
@@ -108,7 +108,7 @@ class Space:
             # for each compound in the space
             selected_i = []
             selected_d = []
-            print ('searching compound:', i)
+            #print ('searching compound:', i)
             
             d_worst = 0.000
 
@@ -154,7 +154,7 @@ class Space:
                             break
 
 
-            print ('completed')
+            #print ('completed')
             results_distances = []
             results_names = []
             results_smiles = []

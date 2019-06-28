@@ -50,9 +50,11 @@ class Slearn:
  
         self.scaler = None
         
-        # Run scaling.
-        if self.param.getVal('modelAutoscaling'):
-            print ()
+        # update if other fingerprints are added
+        isFingerprint = (self.param.getVal('computeMD_method') == ['morganFP'])
+
+        # Run scaling for MD but never for fingerprints
+        if self.param.getVal('modelAutoscaling') and not isFingerprint:
             try:
                 scaler = None
                 if self.param.getVal('modelAutoscaling') == 'StandardScaler':

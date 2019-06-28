@@ -297,15 +297,9 @@ class Apply:
         # Load rest of info in an extensible way
         # This allows to add new variables keeping
         # Retro-compatibility
-        if 'scaler' in dict_prepro.keys():
-            self.scaler = dict_prepro['scaler']
 
         if 'variable_mask' in dict_prepro.keys():
             self.variable_mask = dict_prepro['variable_mask']
-
-        # Check consistency between parameter file and pickle info
-        if self.param.getVal('modelAutoscaling') and self.scaler is None:
-            return False, 'Inconsistency error. Autoscaling is True in parameter file but no Scaler loaded'
 
         if self.param.getVal('feature_selection') and self.variable_mask is None:
             return False, 'Inconsistency error. Feature is True in parameter file but no variable mask loaded'
@@ -314,11 +308,18 @@ class Apply:
         if self.param.getVal("feature_selection"):
             X = X[:, self.variable_mask]
 
-        # apply scale
-        if self.param.getVal('modelAutoscaling'):
-            X = self.scaler.transform(X)
+        if self.param.getVal('modelAutoscaling') is None:
+            return True, X
 
-        return True, X 
+        self.scaler = None
+        if 'scaler' in dict_prepro.keys():
+            self.scaler = dict_prepro['scaler']
+
+        # Check consistency between parameter file and pickle info
+        if self.scaler is None:
+            return False, 'Inconsistency error. Scaling method defined but no Scaler loaded'
+        
+        return True, self.scaler.transform(X)
 
     def run_internal(self): 
         ''' 

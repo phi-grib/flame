@@ -88,9 +88,15 @@ class Learn:
                                f' method with exception: {e}')
 
         # Run scaling.
-        if self.param.getVal('modelAutoscaling'):
+        self.scaler = None
+
+        # update if other fingerprints are added
+        isFingerprint = (self.param.getVal('computeMD_method') == ['morganFP'])
+
+        if self.param.getVal('modelAutoscaling') and \
+                        not isFingerprint:
             try:
-                scaler = ""
+                scaler = None
                 if self.param.getVal('modelAutoscaling') == 'StandardScaler':
                     scaler = StandardScaler()
                     LOG.info('Data scaled using StandarScaler')
@@ -98,18 +104,22 @@ class Learn:
                 elif self.param.getVal('modelAutoscaling') == 'MinMaxScaler':
                     scaler = MinMaxScaler(copy=True, feature_range=(0,1))
                     LOG.info('Data scaled using MinMaxScaler')
+
                 elif self.param.getVal('modelAutoscaling') == 'RobustScaler':
                     scaler = RobustScaler()
                     LOG.info('Data scaled using RobustScaler')
+
                 else:
                     return False, 'Scaler not recognized'
 
-                # The scaler is saved so it can be used later
-                # to prediction instances.
-                self.scaler = scaler.fit(self.X)
+                if scaler is not None:
+                    # The scaler is saved so it can be used later
+                    # to prediction instances.
+                    self.scaler = scaler.fit(self.X)
 
-                # Scale the data.
-                self.X = scaler.transform(self.X)
+                    # Scale the data.
+                    self.X = scaler.transform(self.X)
+
             except Exception as e:
                 return False, f'Unable to perform scaling with exception: {e}'
           

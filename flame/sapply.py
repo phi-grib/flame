@@ -42,6 +42,15 @@ class Sapply:
         ''' This function loads the scaler and variable mask from a pickle file 
         and apply them to the X matrix passed as an argument'''
 
+        # update if other fingerprints are added
+        if self.param.getVal('computeMD_method') == ['morganFP']:
+            return True, X
+
+        # Run scaling for MD but never for fingerprints
+        if self.param.getVal('modelAutoscaling') is None:
+            return True, X
+
+        # Load preprocessing
         prepro_file = os.path.join(self.param.getVal('model_path'),
                                     'preprocessing.pkl')
         LOG.debug(f'Loading model from pickle file, path: {prepro_file}')
@@ -66,15 +75,10 @@ class Sapply:
             self.scaler = dict_prepro['scaler']
 
         # Check consistency between parameter file and pickle info
-        if self.param.getVal('modelAutoscaling') and self.scaler is None:
-            return False, 'Inconsistency error. Autoscaling is True in parameter file but no Scaler loaded'
+        if self.scaler is None:
+            return False, 'Inconsistency error. Scaling method defined but no Scaler loaded'
 
-        # apply scale
-        if self.scaler is not None:
-            if self.param.getVal('modelAutoscaling'):
-                X = self.scaler.transform(X)
-
-        return True, X 
+        return True, self.scaler.transform(X)  
 
 
     def run (self, runtime_param): 
