@@ -23,6 +23,8 @@
 import os
 import yaml
 import json
+import hashlib
+import pickle
 
 from flame.util import utils
 
@@ -93,7 +95,9 @@ class Parameters:
         self.setVal('endpoint',model)
         self.setVal('version',version)
         self.setVal('model_path',parameters_file_path)
-        self.setVal('md5',utils.md5sum(parameters_file_name))
+        # self.setVal('md5',utils.md5sum(parameters_file_name))
+        self.setVal('md5',self.idataHash())
+
 
         return True, 'OK'
 
@@ -169,7 +173,8 @@ class Parameters:
         except Exception as e:
             return False, 'unable to write parameters'
 
-        self.setVal('md5',utils.md5sum(parameters_file_name))
+        # self.setVal('md5',utils.md5sum(parameters_file_name))
+        self.setVal('md5',self.idataHash())
 
         return True, 'OK'
 
@@ -346,3 +351,33 @@ class Parameters:
     def dumpJSON (self):
         return json.dumps(self.p)
 
+    def idataHash (self):
+        ''' Create a md5 hash for a number of keys describing parameters
+            relevant for idata
+
+            This hash is compared between runs, to check wether idata must
+            recompute or not the MD 
+        '''
+
+        # update with any new idata relevant parameter 
+        keylist = ['SDFile_name','SDFile_activity','SDFile_experimental',
+                   'normalize_method','ionize_method','convert3D_method',
+                   'computeMD_method','TSV_varnames','TSV_objnames',
+                   'TSV_activity','input_type']
+
+        idata_params = []
+        for i in keylist:
+            idata_params.append(self.getVal(i))
+        
+        # MD_settings is a dictionary, obtain and sort the keys+values
+        md_params = self.getDict('MD_settings')
+        md_list = []
+        for key in md_params:
+            # combine key + value in a single string
+            md_list.append(key+str(md_params[key]))
+
+        idata_params.append(md_list.sort())
+
+        # use picke as a buffered object, neccesary to generate the hexdigest
+        p = pickle.dumps(idata_params)
+        return hashlib.md5(p).hexdigest()
