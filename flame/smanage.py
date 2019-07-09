@@ -315,3 +315,35 @@ def action_parameters(space, version=None, oformat='text'):
 
         return True, 'parameters listed'
 
+## the following commands are argument-less, intended to be called from a web-service to 
+## generate JSON output only
+
+def action_dir():
+    '''
+    Returns a JSON with the list of spaces and versions
+    '''
+    # get de space repo path
+    spaces_path = pathlib.Path(utils.space_repository_path())
+
+    # get directories in space repo path
+    dirs = [x for x in spaces_path.iterdir() if x.is_dir()]
+
+    # if dir contains dev/ -> is space (NAIVE APPROACH)
+    # get last dir name [-1]: space name
+    space_dirs = [d.parts[-1] for d in dirs if list(d.glob('dev'))]
+
+    results = []
+    for ispace in space_dirs:
+
+        # versions = ['dev']
+        versions = [{'text': 'dev'}]
+
+        for iversion in os.listdir(utils.space_tree_path(ispace)):
+            if iversion.startswith('ver'):
+                # versions.append (iversion)
+                versions.append({'text': iversion})
+
+        # results.append ((ispace,versions))
+        results.append({'text': ispace, 'nodes': versions})
+
+    return True, json.dumps(results)
