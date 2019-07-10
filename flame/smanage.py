@@ -70,7 +70,7 @@ def action_new(space):
     # check if there is already a tree for this endpoint
     if ndir.exists():
         #LOG.warning(f'Endpoint {space} already exists')
-        return False, f'Endpoint {ndir} already exists'
+        return False, f'Endpoint {space} already exists'
 
     try:
         ndir.mkdir(parents=True)
