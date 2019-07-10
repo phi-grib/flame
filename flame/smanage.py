@@ -102,7 +102,7 @@ def action_new(space):
     shutil.copy(documentation_path, ndir)
   
     LOG.info(f'New space {space} created')
-    #print(f'New endpoint {space} created')
+    
     return True, 'New space '+space+' created'
 
 
