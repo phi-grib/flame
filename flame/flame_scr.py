@@ -119,8 +119,8 @@ def main():
 
     elif args.command == 'search':
 
-        if (args.space is None) or (args.infile is None) or (args.parameters is None):
-            print('flame search : space, parameters and input file arguments are compulsory')
+        if (args.space is None) or (args.infile is None) :
+            print('flame search : space and input file arguments are compulsory')
             return
 
         version = utils.intver(args.version)

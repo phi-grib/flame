@@ -82,21 +82,27 @@ class Space:
             defined as parameters
         '''
 
-        #print ('start')
         # load pickle with reference space
         self.load_space()
-        #print ('pickle loaded')
 
+        # True for fingerprint MD
+        isFingerprint = (self.param.getVal('computeMD_method') == ['morganFP'])
+
+        # set defaults
         if cutoff is None:
             cutoff = 0.0
         
         if numsel is None:
-            numsel = len(self.X)
+            #numsel = len(self.X)
+            numsel = 10
+
+        if metric is None:
+            if isFingerprint :
+                metric = 'Tanimoto'
+            else:
+                metric = 'Euclidean'
 
         results = []
-        
-        # for fingerprint MD
-        isFingerprint = (self.param.getVal('computeMD_method') == ['morganFP'])
 
         # for each compound in the search set 
         for i, ivector in enumerate(X):

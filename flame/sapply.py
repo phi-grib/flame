@@ -22,7 +22,6 @@
 
 import os
 import pickle
-import yaml
 from flame.stats.space import Space
 from flame.util import utils, get_logger
 
@@ -81,7 +80,7 @@ class Sapply:
         return True, self.scaler.transform(X)  
 
 
-    def run (self, runtime_param): 
+    def run (self, cutoff, numsel, metric): 
         ''' 
 
         Runs prediction tasks using internally defined methods
@@ -89,24 +88,6 @@ class Sapply:
         Most of these methods can be found at the stats folder
 
         '''
-
-        try:
-            with open(runtime_param, 'r') as pfile:
-                rtparam = yaml.safe_load(pfile)
-        except:
-            LOG.error('runtime similarity parameter file not found')
-            self.conveyor.setError('runtime similarity parameter file not found')
-            return
-
-        try:
-            cutoff = rtparam['similarity_cutoff_distance']
-            numsel = rtparam['similarity_cutoff_num']
-            metric = rtparam['similarity_metric']
-        except:
-            LOG.error('wrong format in the runtime similarity parameters')
-            self.conveyor.setError('wrong format in the runtime similarity parameters')
-            return 
-
 
         # Load scaler and variable mask and preprocess the data
         success, result = self.preprocess(self.X)

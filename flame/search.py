@@ -22,6 +22,7 @@
 
 import os
 import sys
+import yaml
 import importlib
 
 from flame.util import utils, get_logger
@@ -60,7 +61,7 @@ class Search:
         LOG.debug('parameter "numCPUs" forced to be 1')
         self.param.setVal('numCPUs',1)
 
-    def run(self, input_source, runtime_param):
+    def run(self, input_source, runtime_param=None, metric=None, numsel=None, cutoff=None):
         ''' Executes a default predicton workflow '''
 
         # path to endpoint
@@ -68,6 +69,22 @@ class Search:
         if not os.path.isdir(epd):
             self.conveyor.setError(f'Unable to find space {self.space}, version {self.version}')
             #LOG.error(f'Unable to find space {self.space}')
+
+        print (runtime_param)
+        if runtime_param is not None:
+            try:
+                with open(runtime_param, 'r') as pfile:
+                    rtparam = yaml.safe_load(pfile)
+                    try:
+                        cutoff = rtparam['similarity_cutoff_distance']
+                        numsel = rtparam['similarity_cutoff_num']
+                        metric = rtparam['similarity_metric']
+                    except:
+                        LOG.error('wrong format in the runtime similarity parameters')
+                        self.conveyor.setError('wrong format in the runtime similarity parameters')
+            except:
+                LOG.error('runtime similarity parameter file not found')
+                self.conveyor.setError('runtime similarity parameter file not found')
 
         if not self.conveyor.getError():
             # uses the child classes within the 'space' folder,
@@ -103,7 +120,7 @@ class Search:
                 LOG.warning ('Sapply child architecture mismatch, defaulting to Sapply parent')
                 sapply = Sapply(self.param, self.conveyor)
 
-            sapply.run(runtime_param)
+            sapply.run(cutoff, numsel, metric)
             LOG.debug(f'sapply child {type(sapply).__name__} completed `run()`')
 
         # run odata object, in charge of formatting the prediction results
