@@ -407,7 +407,6 @@ class Idata:
         if not all(m in registered_methods for m in methods):
             # find the non member methods
             no_recog_meth = [m for m in methods if m not in registered_methods]
-            return False, f'Methods {no_recog_meth} not recognized'
 
             if len(no_recog_meth) == len(methods):
                 # then no md method is correct... so error
@@ -448,11 +447,12 @@ class Idata:
                 combined_md = np.hstack((combined_md, results['matrix']))
                 combined_nm.extend(results['names'])
 
-                # combine sucess results into oine list with AND
+                # combine sucess results into one list with AND
                 # All results must be True to get True
                 # scc stands for success
                 new_sc = [scc and results['success_arr'][i]
                           for i, scc in enumerate(combined_sc)]
+                          
                 combined_sc = new_sc
 
         return True, (combined_md, combined_nm, combined_sc)

@@ -272,10 +272,12 @@ class Odata():
                     line = ''
                     for key in key_list:
 
-                        if i >= len(self.conveyor.getVal(key)):
+                        ikey = self.conveyor.getVal(key)
+
+                        if i >= len(ikey):
                             val = None
                         else:
-                            val = self.conveyor.getVal(key)[i]
+                            val = ikey[i]
 
                         if val is None:
                             line += '-'
