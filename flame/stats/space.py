@@ -139,10 +139,6 @@ class Space:
 
                     d_worst = selected_d[-1]
 
-                    # if the worst compound is identical, we cannot improve the search 
-                    if d_worst == 1.000:
-                        break
-
                 # otherwyse, compare the new d with the min d
                 else:
                     if d > d_worst:   # better than worse compound                           
