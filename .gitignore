@@ -118,7 +118,8 @@ flame/models
 .idea
 
 # other
-flame/models/CACO2/dev/data.pkl
+flame/models/
+
 *.tsv
 
 # compressed files
@@ -130,3 +131,5 @@ flame/models/CACO2/dev/data.pkl
 #config file
 flame/config.yaml
 flame/config.yml
+
+flame/spaces/
