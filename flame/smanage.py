@@ -318,6 +318,40 @@ def action_parameters(space, version=None, oformat='text'):
 ## the following commands are argument-less, intended to be called from a web-service to 
 ## generate JSON output only
 
+def action_info(space, version):
+    '''
+    Returns a text or JSON with results info for a given model and version
+    '''
+
+    if space is None:
+        return False, 'Empty space label'
+
+    rdir = utils.space_path(space, version)
+
+    if not os.path.isfile(os.path.join(rdir, 'results.pkl')):
+        return False, 'Info file not found'
+
+    from flame.conveyor import Conveyor
+
+    conveyor = Conveyor()
+    with open(os.path.join(rdir, 'results.pkl'), 'rb') as handle:
+        conveyor.load(handle)
+    
+    info =  conveyor.getVal('space_build_info')
+    
+    if info == None:
+        return False, 'Info not found'
+   
+    # this code serializes the results in a list and then converts it 
+    # to a JSON  
+    json_results = []
+    for i in info:
+        json_results.append(conveyor.modelInfoJSON(i))
+
+    #print (json.dumps(json_results))
+    return True, json.dumps(json_results)
+
+
 def action_dir():
     '''
     Returns a JSON with the list of spaces and versions
