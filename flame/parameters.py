@@ -335,16 +335,17 @@ class Parameters:
 
     def getModelSet (self):
         ''' Returns a Boolean indicating if the model uses external input
-            sources and a list with these sources 
+            sources and a list with the name of these endpoints 
         '''
         ext_input = False
         model_set = None
 
         if self.getVal('ext_input'):
+
             model_set = self.getVal('model_set')
-            if model_set is not None:
-                if len(model_set) > 1:
-                    ext_input = True
+
+            if model_set is not None and len(model_set) > 0:
+                ext_input = True
 
         return ext_input, model_set
 

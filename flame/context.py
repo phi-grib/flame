@@ -39,40 +39,47 @@ def get_external_input(task, model_set, infile):
     '''
 
     # parallel is approppriate for many external sources
-    parallel = (len(model_set) > MAX_MODELS_SINGLE_CPU)
-    if parallel:
-        task.set_single_CPU()
+    # parallel = (len(model_set) > MAX_MODELS_SINGLE_CPU)
+    # if parallel:
+    #     task.set_single_CPU()
 
     # add input molecule to the model input definition of every internal model
-    for mi in model_set:
-        mi['infile'] = infile
+
+    ############# ERROR, model set is a list of strings! not a dictionary
 
     model_suc = []
     model_res = []
 
-    # TODO: if any of the models belongs to another module, send a POST for
-    # obtaining the results
+    for imodel in model_set:
+        command =  {'endpoint': imodel,
+                    'version': 0,      # use last
+                    'infile': infile}
 
-    if parallel:
+        success, results = predict_cmd(command)
+        model_suc.append(success)
+        model_res.append(results)
 
-        import multiprocessing as mp
+    # if parallel:
+
+    #     import multiprocessing as mp
         
-        pool = mp.Pool(len(model_set))
-        model_temp = pool.map(predict_cmd, model_set)
+    #     pool = mp.Pool(len(model_set))
+    #     model_temp = pool.map(predict_cmd, model_set)
 
-        for x in model_temp:
-            model_suc.append(x[0])
-            model_res.append(x[1])
-    else:
-        for mi in model_set:
-            success, results = predict_cmd(mi)
-            model_suc.append(success)
-            model_res.append(results)
+    #     for x in model_temp:
+    #         model_suc.append(x[0])
+    #         model_res.append(x[1])
+    # else:
+    #     for mi in model_set:
+    #         success, results = predict_cmd(mi)
+    #         model_suc.append(success)
+    #         model_res.append(results)
+
 
     if False in model_suc:
         return False, 'Some external input sources failed: ', str(model_suc)
 
-    LOG.info('Building completed')
+    LOG.info('External input computed')
 
     return True, model_res
 
@@ -135,10 +142,14 @@ def build_cmd(arguments, output_format=None):
 
     ext_input, model_set = build.get_model_set()
 
+    print (ext_input, model_set)
+
     if ext_input:
 
+        print ('hito1')
         success, model_res = get_external_input(
             build, model_set, arguments['infile'])
+        print ('hito2')
 
         if not success:
             return False, model_res

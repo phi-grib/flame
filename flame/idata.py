@@ -1063,16 +1063,20 @@ class Idata:
         obj_common = ['label', 'decoration']
 
         # load object identifiers and decorators
+        #print (self.idata)
+        
         first_results = json.loads(self.idata[0])
         first_manifest = first_results['manifest']
 
         for item in first_manifest:
-            if item['type'] in obj_common:
-                item_key = item['key']
-                self.conveyor.addVal(first_results[item_key], item_key, '', item['type'])
-
-                # self.results[item_key] = first_results[item_key]
-                # self.results['manifest'].append(item)
+            if item['type'] in obj_common:  # for elements of type label or decoration
+                self.conveyor.addVal(first_results[item['key']], 
+                                     item['key'], 
+                                     item['label'], 
+                                     item['type'],
+                                     item['dimension'],
+                                     item['description']
+                                    )
 
         # extract usable data from every source and add to 'combo' np.array
         combined_md = None
@@ -1116,14 +1120,18 @@ class Idata:
                     combined_cf_names.append(
                         item_key+':'+i_meta['endpoint']+':'+str(i_meta['version']))
 
+        self.conveyor.addVal( num_obj, 'obj_num', 'Num mol', 'method',
+                         'single', 'Number of molecules present in the input file')
+
         self.conveyor.addVal( combined_md, 'xmatrix', 'X matrix',
-                         'results', 'objs', 'Combined output from external sources')
-        self.conveyor.addVal( combined_cf, 'confidence', 'Confidence',
-                         'confidence', 'objs', 'Combined confidence from external sources')
+                         'results', 'vars', 'Combined output from external sources')
         self.conveyor.addVal( combined_md_names, 'var_nam', 'Var. names',
                          'method', 'vars', 'Variable names from external sources')
-        self.conveyor.addVal( combined_cf_names, 'conf_nam', 'Conf. names',
-                         'method', 'vars', 'Confidence indexes from external sources')
+                         
+        # self.conveyor.addVal( combined_cf, 'confidence', 'Confidence',
+        #                  'confidence', 'objs', 'Combined confidence from external sources')
+        # self.conveyor.addVal( combined_cf_names, 'conf_nam', 'Conf. names',
+        #                  'method', 'vars', 'Confidence indexes from external sources')
 
         return
 
