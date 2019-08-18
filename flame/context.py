@@ -34,8 +34,7 @@ LOG = get_logger(__name__)
 
 def get_external_input(task, model_set, infile):
     '''
-    Manage obtention of input data from external
-    data sources (e.g. models or MD servers)
+    Manage obtention of input data from a list of models
     '''
 
     # parallel is approppriate for many external sources
@@ -142,14 +141,10 @@ def build_cmd(arguments, output_format=None):
 
     ext_input, model_set = build.get_model_set()
 
-    print (ext_input, model_set)
-
     if ext_input:
 
-        print ('hito1')
         success, model_res = get_external_input(
             build, model_set, arguments['infile'])
-        print ('hito2')
 
         if not success:
             return False, model_res

@@ -1061,9 +1061,6 @@ class Idata:
 
         # use first JSON to load common info like obj_nam, etc
         obj_common = ['label', 'decoration']
-
-        # load object identifiers and decorators
-        #print (self.idata)
         
         first_results = json.loads(self.idata[0])
         first_manifest = first_results['manifest']
@@ -1108,6 +1105,7 @@ class Idata:
                     combined_md_names.append(
                         item_key+':'+i_meta['endpoint']+':'+str(i_meta['version']))
 
+                #TODO: process in a more smart way
                 if item['type'] == 'confidence':
                     item_key = item['key']
                     if combined_cf is None:  # for first element just copy
@@ -1127,7 +1125,7 @@ class Idata:
                          'results', 'vars', 'Combined output from external sources')
         self.conveyor.addVal( combined_md_names, 'var_nam', 'Var. names',
                          'method', 'vars', 'Variable names from external sources')
-                         
+
         # self.conveyor.addVal( combined_cf, 'confidence', 'Confidence',
         #                  'confidence', 'objs', 'Combined confidence from external sources')
         # self.conveyor.addVal( combined_cf_names, 'conf_nam', 'Conf. names',
