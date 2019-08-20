@@ -30,6 +30,7 @@ from flame.stats.SVM import SVM
 from flame.stats.GNB import GNB
 from flame.stats.PLSR import PLSR
 from flame.stats.PLSDA import PLSDA
+from flame.stats.combo import median, mean, majority
 from sklearn.preprocessing import MinMaxScaler 
 from sklearn.preprocessing import StandardScaler 
 from sklearn.preprocessing import RobustScaler
@@ -196,7 +197,10 @@ class Learn:
                               ('SVM', SVM),
                               ('GNB', GNB),
                               ('PLSR', PLSR),
-                              ('PLSDA', PLSDA), ]
+                              ('PLSDA', PLSDA), 
+                              ('median', median),
+                              ('mean', mean),
+                              ('majority', majority)]
 
         # instantiate an appropriate child of base_model
         model = None
