@@ -28,7 +28,7 @@ import pathlib
 from flame.util import utils, get_logger
 
 # if the number of models is higher, try to run in multithread
-MAX_MODELS_SINGLE_CPU = 4
+MAX_MODELS_SINGLE_CPU = 1
 
 LOG = get_logger(__name__)
 
@@ -37,43 +37,45 @@ def get_external_input(task, model_set, infile):
     Manage obtention of input data from a list of models
     '''
 
-    # parallel is approppriate for many external sources
-    # parallel = (len(model_set) > MAX_MODELS_SINGLE_CPU)
-    # if parallel:
-    #     task.set_single_CPU()
+    # when there are multiple external sources it is more convenient parallelize the 
+    # models than to run internal task in parallel
+    parallel = (len(model_set) > MAX_MODELS_SINGLE_CPU)
+    
+    # disables internal parallelism
+    if parallel:
+        task.set_single_CPU() 
 
     # add input molecule to the model input definition of every internal model
-
-    ############# ERROR, model set is a list of strings! not a dictionary
-
     model_suc = []
     model_res = []
 
-    for imodel in model_set:
-        command =  {'endpoint': imodel,
-                    'version': 0,      # use last
-                    'infile': infile}
+    if parallel:
+        import multiprocessing as mp
 
-        success, results = predict_cmd(command)
-        model_suc.append(success)
-        model_res.append(results)
+        LOG.info(f'Runing {len(model_set)} threads in parallel')       
 
-    # if parallel:
-
-    #     import multiprocessing as mp
+        model_cmd = []
+        for imodel in model_set:
+            model_cmd.append({'endpoint': imodel,
+                              'version': 0,      # use last
+                              'infile': infile})
         
-    #     pool = mp.Pool(len(model_set))
-    #     model_temp = pool.map(predict_cmd, model_set)
+        pool = mp.Pool(len(model_cmd))
+        model_tmp = pool.map(predict_cmd, model_cmd)
 
-    #     for x in model_temp:
-    #         model_suc.append(x[0])
-    #         model_res.append(x[1])
-    # else:
-    #     for mi in model_set:
-    #         success, results = predict_cmd(mi)
-    #         model_suc.append(success)
-    #         model_res.append(results)
+        for iresult in model_tmp:
+            model_suc.append(iresult[0])
+            model_res.append(iresult[1])
 
+    else:
+        for imodel in model_set:
+            command =  {'endpoint': imodel,
+                        'version': 0,      # use last
+                        'infile': infile}
+
+            success, results = predict_cmd(command)
+            model_suc.append(success)
+            model_res.append(results)
 
     if False in model_suc:
         return False, 'Some external input sources failed: ', str(model_suc)

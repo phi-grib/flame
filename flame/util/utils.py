@@ -343,9 +343,9 @@ def qualitative_Y (Y):
     nan = 0
     ext = 0
     for y in Y:
-        if y == 0.000:
+        if np.isclose(y, 0.0):
             neg+=1
-        elif y == 1.000:
+        elif np.isclose (y, 1.0):
             pos+=1
         elif np.isnan(y):
             nan+=1 
