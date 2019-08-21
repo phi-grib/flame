@@ -228,8 +228,8 @@ def action_parameters(space, version=None, oformat='text'):
         'conformalSignificance', 'ModelValidationCV', 'ModelValidationLC', 
         'ModelValidationN', 'ModelValidationP', 'output_format', 'output_md', 
         'TSV_activity', 'TSV_objnames', 'TSV_varnames', 'imbalance', 
-        'feature_selection', 'feature_number', 'mol_batch', 'ext_input', 
-        'model_set', 'numCPUs', 'verbose_error', 'modelingToolkit', 
+        'feature_selection', 'feature_number', 'mol_batch', 
+        'ensemble_models', 'ensemble_versions', 'numCPUs', 'verbose_error', 'modelingToolkit', 
         'endpoint', 'model_path', 
         #'md5', 
         'version']

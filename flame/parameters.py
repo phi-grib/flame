@@ -333,21 +333,27 @@ class Parameters:
             else:
                 self.p[key]['value']=[vt, value]
 
-    def getModelSet (self):
+    def getEnsemble (self):
         ''' Returns a Boolean indicating if the model uses external input
             sources and a list with the name of these endpoints 
         '''
         ext_input = False
-        model_set = None
+        ensemble_names = None
+        ensemble_versions = None
 
-        if self.getVal('ext_input'):
+        ensemble_names = self.getVal('ensemble_names')
+        ensemble_versions = self.getVal('ensemble_versions')
 
-            model_set = self.getVal('model_set')
 
-            if model_set is not None and len(model_set) > 0:
+        if ensemble_names is not None: 
+            nnames = len (ensemble_names)
+            if nnames > 0:
                 ext_input = True
+        
+                if ensemble_versions == None or len(ensemble_versions)!= nnames:
+                    ensemble_versions = [0 for i in range (nnames)]
 
-        return ext_input, model_set
+        return (ext_input, ensemble_names, ensemble_versions)
 
     def dumpJSON (self):
         return json.dumps(self.p)

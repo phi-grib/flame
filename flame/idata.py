@@ -72,8 +72,8 @@ class Idata:
         self.conveyor.addMeta('endpoint',self.param.getVal('endpoint'))
         self.conveyor.addMeta('version',self.param.getVal('version'))
 
-        if self.param.getVal('ext_input'):
-            LOG.debug('"ext_input" found in parameters')
+        if self.param.getVal('input_type') == 'model_ensemble':
+            LOG.debug('model_ensemble input type')
             self.idata = input_source
             self.ifile = None
             randomName = 'flame-'+utils.id_generator()
@@ -611,7 +611,7 @@ class Idata:
         # return
         ##
 
-        if self.param.getVal('ext_input'):
+        if self.param.getVal('input_type') == 'model_ensemble':
             return
 
         md5_parameters = self.param.getVal('md5')
@@ -634,7 +634,7 @@ class Idata:
         of the control class and the input file.
         '''
 
-        if self.param.getVal('ext_input'):
+        if self.param.getVal('input_type') == 'model_ensemble':
             return False
 
         try:
@@ -1050,7 +1050,7 @@ class Idata:
                              'smiles', 'objs', 'Structure of the molecule in SMILES format')
         return
 
-    def _run_ext_data(self):
+    def _run_model_ensemble(self):
         '''
         version of Run for inter-process input
         (calling another model to obtain input)
@@ -1123,7 +1123,7 @@ class Idata:
 
         self.conveyor.addVal( combined_md, 'xmatrix', 'X matrix',
                          'results', 'vars', 'Combined output from external sources')
-                         
+
         self.conveyor.addVal( combined_md_names, 'var_nam', 'Var. names',
                          'method', 'vars', 'Variable names from external sources')
 
@@ -1149,7 +1149,7 @@ class Idata:
         input_type = self.param.getVal('input_type')
         LOG.info('Running with input type: {}'.format(input_type))
 
-        if input_type != 'ext_data':
+        if input_type != 'model_ensemble':
 
             # if the input file is not found return
             if not os.path.isfile(self.ifile):
@@ -1175,8 +1175,8 @@ class Idata:
             self._run_data()
 
         # processing for external data
-        elif input_type == 'ext_data':
-            self._run_ext_data()
+        elif input_type == 'model_ensemble':
+            self._run_model_ensemble()
 
         else:
             LOG.debug('Unknown input data format')

@@ -9,7 +9,7 @@ input_type:
   options:
     - molecule
     - data
-    - ext_data
+    - model_ensemble
   description: Type of input data.
   dependencies: null
   comments: 
@@ -197,31 +197,30 @@ MD_settings:
     - ext_input: false
     - input_type: molecule
   comments: 
-  group: data 
+  group: data  
 
-ext_input:
-  advanced: advanced
-  object_type: boolean
-  writable: false
-  value: false
-  options: 
-    - true
-    - false
-  description: Whether to use or not external input source (from other models)
-  dependencies: null
-  comments: 
-  group: data    
-
-model_set:
+ensemble_names:
   advanced: advanced
   object_type: list
   writable: true
   value: null
   options: null
-  description: Selection of available models to get the input from
+  description: Names of the ensemble models the output of which will be used as input for this model
   dependencies: 
-    ext_input: true
-  comments: Values are obtained from available models
+    input_type: model_ensemble
+  comments: Must correspond to available models
+  group: data    
+
+ensemble_versions:
+  advanced: advanced
+  object_type: list
+  writable: true
+  value: null
+  options: null
+  description: Versions of the ensemble models the output of which will be used as input for this model
+  dependencies: 
+    input_type: model_ensemble
+  comments: Must correspond to available models. None defaults to version 0
   group: data    
 
 SDFile_experimental:

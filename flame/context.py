@@ -32,14 +32,16 @@ MAX_MODELS_SINGLE_CPU = 1
 
 LOG = get_logger(__name__)
 
-def get_external_input(task, model_set, infile):
+def get_ensemble_input(task, model_names, model_versions, infile):
     '''
     Manage obtention of input data from a list of models
     '''
 
+    num_models = len (model_names)
+    
     # when there are multiple external sources it is more convenient parallelize the 
     # models than to run internal task in parallel
-    parallel = (len(model_set) > MAX_MODELS_SINGLE_CPU)
+    parallel = (num_models > MAX_MODELS_SINGLE_CPU)
     
     # disables internal parallelism
     if parallel:
@@ -49,31 +51,29 @@ def get_external_input(task, model_set, infile):
     model_suc = []
     model_res = []
 
+    model_cmd = []
+    for i in range(num_models):
+        model_cmd.append({'endpoint': model_names[i],
+                          'version': model_versions[i],
+                          'infile': infile})
+
+    # run in multithreading
     if parallel:
         import multiprocessing as mp
 
-        LOG.info(f'Runing {len(model_set)} threads in parallel')       
-
-        model_cmd = []
-        for imodel in model_set:
-            model_cmd.append({'endpoint': imodel,
-                              'version': 0,      # use last
-                              'infile': infile})
-        
+        LOG.info(f'Runing {num_models} threads in parallel')       
+       
         pool = mp.Pool(len(model_cmd))
         model_tmp = pool.map(predict_cmd, model_cmd)
 
         for iresult in model_tmp:
             model_suc.append(iresult[0])
             model_res.append(iresult[1])
-
+    
+    # run in a single thread
     else:
-        for imodel in model_set:
-            command =  {'endpoint': imodel,
-                        'version': 0,      # use last
-                        'infile': infile}
-
-            success, results = predict_cmd(command)
+        for i in range(num_models):
+            success, results = predict_cmd(model_cmd[i])
             model_suc.append(success)
             model_res.append(results)
 
@@ -97,12 +97,11 @@ def predict_cmd(model, output_format=None):
 
     predict = Predict(model['endpoint'], model['version'], output_format)
 
-    ext_input, model_set = predict.get_model_set()
+    ensemble = predict.get_ensemble()
 
-    if ext_input:
+    if ensemble[0]:
 
-        success, model_res = get_external_input(
-            predict, model_set, model['infile'])
+        success, model_res = get_ensemble_input(predict, ensemble[1], ensemble[2], model['infile'])
 
         if not success:
             return False, model_res
@@ -141,12 +140,11 @@ def build_cmd(arguments, output_format=None):
 
     build = Build(arguments['endpoint'], param_file=arguments['parameters'], output_format=output_format)
 
-    ext_input, model_set = build.get_model_set()
+    ensemble = build.get_ensemble()
 
-    if ext_input:
+    if ensemble[0]:
 
-        success, model_res = get_external_input(
-            build, model_set, arguments['infile'])
+        success, model_res = get_ensemble_input(build, ensemble[1], ensemble[2], arguments['infile'])
 
         if not success:
             return False, model_res

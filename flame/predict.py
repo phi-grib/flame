@@ -55,10 +55,10 @@ class Predict:
  
         return
 
-    def get_model_set(self):
+    def get_ensemble(self):
         ''' Returns a Boolean indicating if the model uses external input
             sources and a list with these sources '''
-        return self.param.getModelSet()
+        return self.param.getEnsemble()
 
     def set_single_CPU(self) -> None:
         ''' Forces the use of a single CPU '''
