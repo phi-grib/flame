@@ -48,8 +48,8 @@ def get_ensemble_input(task, model_names, model_versions, infile):
         task.set_single_CPU() 
 
     # add input molecule to the model input definition of every internal model
-    model_suc = []
-    model_res = []
+    model_suc = []  # True / False
+    model_res = []  # conveyor (in JSON format) for every prediction, as produced by odata.run_apply
 
     model_cmd = []
     for i in range(num_models):
