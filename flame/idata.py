@@ -1135,8 +1135,6 @@ class Idata:
         self.conveyor.addVal( combined_cf_names, 'ensemble_confidence_names', 'Ensemble Conf. names',
                          'method', 'vars', 'Confidence indexes from external sources')
 
-        print (combined_cf_names)
-        print (combined_cf)
         #print (self.conveyor.getJSON())
 
         return

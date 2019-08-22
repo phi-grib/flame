@@ -401,8 +401,6 @@ class Apply:
             return False, f'Exception ocurred when loading model: {e}'
 
         # project the X matrix into the model and save predictions in self.conveyor
-
-
         model.project(X, self.conveyor)
         
         # The following code us used to check the reproducibility of the results

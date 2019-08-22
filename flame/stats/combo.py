@@ -54,14 +54,14 @@ class Combo (BaseEstimator):
 
         return True, results
 
-    def predict(self, X):
+    def predict(self, X, conveyor):
         ''' the method used to combine the results, this is a dummy method '''
         return 0
 
     def project(self, Xb, conveyor):
         '''return the median of the input parameters'''
 
-        Yp = self.predict(Xb)
+        Yp = self.predict(Xb, conveyor)
 
         conveyor.addVal(Yp, 'values', 'Prediction',
                         'result', 'objs',
@@ -154,7 +154,7 @@ class median (Combo):
         Combo.__init__(self, X, Y, parameters)
         self.method_name = 'median'
 
-    def predict(self, X):
+    def predict(self, X, conveyor):
         return np.median (X,1)
 
 class mean (Combo):
@@ -165,8 +165,63 @@ class mean (Combo):
         Combo.__init__(self, X, Y, parameters)
         self.method_name = 'mean'
 
-    def predict(self, X):
-        return np.mean (X,1)
+    def predict(self, X, conveyor):
+
+        # obtain dimensions of X matrix
+        self.nobj, self.nvarx = np.shape(X)
+
+        CI_names = conveyor.getVal('ensemble_confidence_names')
+
+        if  CI_names is not None and len(CI_names)==(2 * self.nvarx):
+
+            # get values
+            CI_vals = conveyor.getVal('ensemble_confidence')
+
+            # assume that the CI represent 95% CI and normal distribution        
+            z = 1.96 
+    
+            # compute weighted average 
+            w = np.zeros(self.nvarx, dtype = np.float64 )
+            xmean = []
+            cilow = []
+            ciupp = []
+
+            for j in range (self.nobj):
+                for i in range (self.nvarx):
+                    r = CI_vals[j,i*2+1] - CI_vals[j,i*2]
+                    sd = r/(z*2)
+                    w[i] = 1.0/(sd*sd)
+
+                ws = np.sum(w)
+                s = 1.0/np.sqrt(ws)
+
+                xm = 0.0
+                for i in range (self.nvarx):
+                    xm += X[j,i]*w[i]
+                xmean.append(xm/ws) 
+
+                cilow.append(xm-z*s)
+                ciupp.append(xm+z*s)
+
+            conveyor.addVal(np.array(cilow), 
+                        'lower_limit', 
+                        'Lower limit', 
+                        'confidence',
+                        'objs',
+                        'Lower limit of the conformal prediction'
+                    )
+
+            conveyor.addVal(np.array(ciupp), 
+                        'upper_limit', 
+                        'Upper limit', 
+                        'confidence',
+                        'objs',
+                        'Upper limit of the conformal prediction'
+                    )
+            
+            return np.array(xmean)
+        else:
+            return np.mean (X,1)
 
 class majority (Combo):
     """
@@ -176,6 +231,6 @@ class majority (Combo):
         Combo.__init__(self, X, Y, parameters)
         self.method_name = 'majority voting'
 
-    def predict(self, X):
+    def predict(self, X, conveyor):
         return np.round(np.mean (X,1))
 
