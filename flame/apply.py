@@ -382,7 +382,7 @@ class Apply:
         model = None
         for imethod in registered_methods:
             if imethod[0] == self.param.getVal('model'):
-                model = imethod[1](None, None, self.param)
+                model = imethod[1](None, None, self.param, self.conveyor)
                 LOG.debug('Recognized learner: '
                           f"{self.param.getVal('model')}")
                 break
@@ -401,7 +401,7 @@ class Apply:
             return False, f'Exception ocurred when loading model: {e}'
 
         # project the X matrix into the model and save predictions in self.conveyor
-        model.project(X, self.conveyor)
+        model.project(X)
         
         # The following code us used to check the reproducibility of the results
 

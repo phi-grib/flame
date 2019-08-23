@@ -33,10 +33,10 @@ class Combo (BaseEstimator):
     """
        Generic class for combining results of multiple models
     """
-    def __init__(self, X, Y, parameters):
+    def __init__(self, X, Y, parameters, conveyor):
         # Initialize parent class
         try:
-            BaseEstimator.__init__(self, X, Y, parameters)
+            BaseEstimator.__init__(self, X, Y, parameters, conveyor)
             LOG.debug('Initialize BaseEstimator parent class')
         except Exception as e:
             LOG.error(f'Error initializing BaseEstimator parent'
@@ -54,14 +54,14 @@ class Combo (BaseEstimator):
 
         return True, results
 
-    def predict(self, X, conveyor):
+    def predict(self, X):
         ''' the method used to combine the results, this is a dummy method '''
         return 0
 
-    def project(self, Xb, conveyor):
+    def project(self, Xb):
         '''return the median of the input parameters'''
 
-        Yp = self.predict(Xb, conveyor)
+        Yp = self.predict(Xb)
 
         conveyor.addVal(Yp, 'values', 'Prediction',
                         'result', 'objs',
@@ -150,32 +150,80 @@ class median (Combo):
     """
        Simple median calculator used to combine the results of multiple models
     """
-    def __init__(self, X, Y, parameters):
-        Combo.__init__(self, X, Y, parameters)
+    def __init__(self, X, Y, parameters, conveyor):
+        Combo.__init__(self, X, Y, parameters, conveyor)
         self.method_name = 'median'
 
-    def predict(self, X, conveyor):
-        return np.median (X,1)
+    def predict(self, X):
+
+       # obtain dimensions of X matrix
+        self.nobj, self.nvarx = np.shape(X)
+
+        CI_names = self.conveyor.getVal('ensemble_confidence_names')
+
+        if  CI_names is not None and len(CI_names)==(2 * self.nvarx):
+
+            # get values
+            CI_vals = self.conveyor.getVal('ensemble_confidence')
+
+            #TODO: compute a weighted median and associated CI
+
+            # the concept could be based in 
+            # order the values and CI according to the value
+            # weigth the prediction by 1/var
+            # compute the center using the weights selecting the value having a balanced weight in both sides
+            # assign the CI of the value or the mean of the adjacent values
+            #   
+            #    https://en.wikipedia.org/wiki/Weighted_median
+            #
+            # conveyor.addVal(np.array(cilow), 
+            #             'lower_limit', 
+            #             'Lower limit', 
+            #             'confidence',
+            #             'objs',
+            #             'Lower limit of the conformal prediction'
+            #         )
+
+            # conveyor.addVal(np.array(ciupp), 
+            #             'upper_limit', 
+            #             'Upper limit', 
+            #             'confidence',
+            #             'objs',
+            #             'Upper limit of the conformal prediction'
+            #         )
+
+            # provisional
+            return np.median (X,1)
+
+        else:
+
+            return np.median (X,1)
 
 class mean (Combo):
     """
        Simple mean calculator used to combine the results of multiple models
     """
-    def __init__(self, X, Y, parameters):
-        Combo.__init__(self, X, Y, parameters)
+    def __init__(self, X, Y, parameters, conveyor):
+        Combo.__init__(self, X, Y, parameters, conveyor)
         self.method_name = 'mean'
 
-    def predict(self, X, conveyor):
+    def predict(self, X):
 
         # obtain dimensions of X matrix
         self.nobj, self.nvarx = np.shape(X)
 
-        CI_names = conveyor.getVal('ensemble_confidence_names')
+        CI_names = self.conveyor.getVal('ensemble_confidence_names')
 
         if  CI_names is not None and len(CI_names)==(2 * self.nvarx):
 
+            # compute weigthed mean and CI for the estimator
+            # as described here
+            #
+            #   https://en.wikipedia.org/wiki/Weighted_arithmetic_mean#Weighted_sample_variance
+            #
+
             # get values
-            CI_vals = conveyor.getVal('ensemble_confidence')
+            CI_vals = self.conveyor.getVal('ensemble_confidence')
 
             # assume that the CI represent 95% CI and normal distribution        
             z = 1.96 
@@ -227,10 +275,43 @@ class majority (Combo):
     """
        Simple majority voting calculator used to combine the results of multiple models
     """
-    def __init__(self, X, Y, parameters):
-        Combo.__init__(self, X, Y, parameters)
+    def __init__(self, X, Y, parameters, conveyor):
+        Combo.__init__(self, X, Y, parameters, conveyor)
         self.method_name = 'majority voting'
 
-    def predict(self, X, conveyor):
+    def predict(self, X):
+
+        # check if the undelying models use conformal methods and then handle classes
+        # for example, for three models
+        # 
+        # clear majority -> majority
+        # 10 10 10        10
+        # 10 10 01        10
+        # 01 01 10        01
+        # 01 01 01        01
+        #
+        # minority of uncertain -> ignored
+        # 11 10 10        10
+        # 00 10 10        10
+        # 11 01 01        01
+        # 00 01 01        01
+        #   
+        # ties -> uncertain
+        # 11 10 01        11
+        # 00 10 01        11
+        #
+        # majority of uncertain -> uncertain
+        # 11 11 01        11
+        # 11 00 01        11
+        # 11 11 10        11
+        # 11 00 01        11
+
+        # proposed algorithm:
+        # 1. If majority of results is uncertain -> uncertain (use 11 or 00 as the most frequent result)
+        # 2. Remove uncertains
+        # 3. It result is a tie -> uncertain (11)
+        # 4. Compute majority
+
+
         return np.round(np.mean (X,1))
 

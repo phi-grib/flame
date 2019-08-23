@@ -134,7 +134,7 @@ class BaseEstimator:
             Checks type of projection and calls it
 
     """
-    def __init__(self, X, Y, parameters):
+    def __init__(self, X, Y, parameters, conveyor=None):
         """Initializes the estimator.
         Actions
         -------
@@ -142,6 +142,9 @@ class BaseEstimator:
         """
 
         self.param = parameters
+        self.conveyor = None
+        if conveyor != None:
+            self.conveyor = conveyor
 
         if X is None:
             return
@@ -165,7 +168,8 @@ class BaseEstimator:
                 LOG.error(f'Error retrieving cross-validator with'
                         f'exception: {e}')
                 raise e
-
+        
+        
 
 
     # Validation methods section
@@ -635,22 +639,22 @@ class BaseEstimator:
 
     # Projection section
 
-    def regularProject(self, Xb, conveyor):
+    def regularProject(self, Xb):
         ''' projects a collection of query objects in a regular model,
          for obtaining predictions '''
 
         Yp = self.estimator.predict(Xb)
 
-        conveyor.addVal(Yp, 'values', 'Prediction',
+        self.conveyor.addVal(Yp, 'values', 'Prediction',
                         'result', 'objs',
                         'Results of the prediction', 'main')
 
-    def conformalProject(self, Xb, conveyor):
+    def conformalProject(self, Xb):
         ''' projects a collection of query objects in a conformal model,
          for obtaining predictions '''
 
         if not 'nonconformist' in str(type(self.estimator)):
-            conveyor.setError('Inconsistence error: non-conformal classifier found. Rebuild the model')
+            self.conveyor.setError('Inconsistence error: non-conformal classifier found. Rebuild the model')
             return
 
         prediction = self.estimator.predict(
@@ -660,13 +664,13 @@ class BaseEstimator:
             mean1 = np.mean(prediction, axis=1)
             lower_limit = prediction[:, 0]
             upper_limit = prediction[:, 1]
-            conveyor.addVal(mean1, 'values', 'Prediction',
+            self.conveyor.addVal(mean1, 'values', 'Prediction',
                              'result', 'objs',
                               'Results of the prediction', 'main')
-            conveyor.addVal(lower_limit, 'lower_limit',
+            self.conveyor.addVal(lower_limit, 'lower_limit',
                              'Lower limit', 'confidence', 'objs',
                               'Lower limit of the conformal prediction')
-            conveyor.addVal(upper_limit, 'upper_limit',
+            self.conveyor.addVal(upper_limit, 'upper_limit',
                              'Upper limit', 'confidence', 'objs',
                               'Upper limit of the conformal prediction')
         else:
@@ -678,18 +682,18 @@ class BaseEstimator:
                 class_key = 'c' + str(i)
                 class_label = 'Class ' + str(i)
                 class_list = prediction[:, i].tolist()
-                conveyor.addVal(class_list, 
+                self.conveyor.addVal(class_list, 
                                 class_key, 
                                 class_label,
                                 'result', 'objs', 
                                 'Conformal class assignment',
                                  'main')
 
-    def project(self, Xb, conveyor):
+    def project(self, Xb):
         ''' Uses the X matrix provided as argument to predict Y'''
 
         if self.estimator == None:
-            conveyor.setError('failed to load classifier')
+            self.conveyor.setError('failed to load classifier')
             return
         # Apply variable mask to prediction vector/matrix
         # if self.param.getVal("feature_selection"):
@@ -701,9 +705,9 @@ class BaseEstimator:
             # Xb = self.scaler.transform(Xb)
         # Select the type of projection
         if not self.param.getVal('conformal'):
-            self.regularProject(Xb, conveyor)
+            self.regularProject(Xb)
         else:
-            self.conformalProject(Xb, conveyor)
+            self.conformalProject(Xb)
     
     def save_model(self):
         ''' This function saves estimator and scaler in a pickle file '''

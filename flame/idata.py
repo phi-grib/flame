@@ -1092,6 +1092,8 @@ class Idata:
                 if item['type'] == 'result':
                     item_key = item['key']
 
+                    print (item)
+
                     if combined_md is None:  # for first element just copy
                         combined_md = np.array(
                             i_result[item_key], dtype=np.float64)
@@ -1134,6 +1136,8 @@ class Idata:
 
         self.conveyor.addVal( combined_cf_names, 'ensemble_confidence_names', 'Ensemble Conf. names',
                          'method', 'vars', 'Confidence indexes from external sources')
+
+        print (combined_md, combined_md_names)
 
         #print (self.conveyor.getJSON())
 

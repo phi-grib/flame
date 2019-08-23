@@ -135,10 +135,10 @@ class PLSDA(BaseEstimator):
         
     """
 
-    def __init__(self, X, Y, parameters):
+    def __init__(self, X, Y, parameters, conveyor):
         # Initialize parent class
         try:
-            super(PLSDA, self).__init__(X, Y, parameters)
+            BaseEstimator.__init__(self,X, Y, parameters, conveyor)
             LOG.debug('Initialize BaseEstimator parent class')
         except Exception as e:
             LOG.error(f'Error initializing BaseEstimator parent'

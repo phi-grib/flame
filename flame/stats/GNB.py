@@ -61,10 +61,10 @@ class GNB(BaseEstimator):
         
     """
 
-    def __init__(self, X, Y, parameters):
+    def __init__(self, X, Y, parameters, conveyor):
         # Initialize parent class
         try:
-            super(GNB, self).__init__(X, Y, parameters)
+            BaseEstimator.__init__(self, X, Y, parameters, conveyor)
             LOG.debug('Initializing BaseEstimator parent class')
         except Exception as e:
             LOG.error(f'Error initializing BaseEstimator parent'

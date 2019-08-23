@@ -206,7 +206,7 @@ class Learn:
         model = None
         for imethod in registered_methods:
             if imethod[0] == self.param.getVal('model'):
-                model = imethod[1](self.X, self.Y, self.param)
+                model = imethod[1](self.X, self.Y, self.param, self.conveyor)
                 LOG.debug('Recognized learner: '
                           f"{self.param.getVal('model')}")
                 break
@@ -233,7 +233,6 @@ class Learn:
                     'method',
                     'single',
                     'Information about the model')
-        # self.results['model_build'] = results
 
         # validate model
         LOG.info('Starting model validation')
