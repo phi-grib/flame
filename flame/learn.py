@@ -189,9 +189,6 @@ class Learn:
             self.conveyor.setError(message)
             return
 
-        # TODO: preprocess has created scaler and variable mask. If these are not null, they must be saved from here and loaded from here
-        # and not within base_model as 
-
         # expand with new methods here:
         registered_methods = [('RF', RF),
                               ('SVM', SVM),
@@ -206,6 +203,13 @@ class Learn:
         model = None
         for imethod in registered_methods:
             if imethod[0] == self.param.getVal('model'):
+
+                # we instantiate the subtype of base_model, 
+                # passing 
+                # - preteated X and Y matrices for model building
+                # - model parameters (param) 
+                # - already obtained results (conveyor)
+
                 model = imethod[1](self.X, self.Y, self.param, self.conveyor)
                 LOG.debug('Recognized learner: '
                           f"{self.param.getVal('model')}")
@@ -218,7 +222,6 @@ class Learn:
                        'not recognized')
             return
 
-
         # build model
         LOG.info('Starting model building')
         success, model_building_results = model.build()
@@ -226,6 +229,7 @@ class Learn:
             self.conveyor.setError(model_building_results)
             return
 
+        #TODO: move to base model all conveyor.addVal
         self.conveyor.addVal(
                     model_building_results,
                     'model_build_info',
@@ -287,20 +291,6 @@ class Learn:
         # conformal quantitataive models produce a list of tuples, indicating
         # the minumum and maximum value
 
-        # if 'interval' in model_validation_results:
-            # mean1 = np.mean(model_validation_results['classes'], axis=1)
-            # lower_limit = model_validation_results['classes'][:, 0]
-            # upper_limit = model_validation_results['classes'][:, 1]
-            # utils.add_result(results, mean1, 'values', 'Prediction',
-            #                  'result', 'objs',
-            #                   'Results of the prediction', 'main')
-            # utils.add_result(results, lower_limit, 'lower_limit',
-            #                  'Lower limit', 'confidence', 'objs',
-            #                   'Lower limit of the conformal prediction')
-            # utils.add_result(results, upper_limit, 'upper_limit',
-            #                  'Upper limit', 'confidence', 'objs',
-            #                   'Upper limit of the conformal prediction')
-
         # TODO: compute AD (when applicable)
 
         LOG.info('Model finished successfully')
@@ -308,8 +298,6 @@ class Learn:
         # save model
         try:
             model.save_model()
-
-            # TODO: save scaled and variable_mask
 
         except Exception as e:
             LOG.error(f'Error saving model with exception {e}')

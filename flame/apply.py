@@ -330,7 +330,6 @@ class Apply:
         Most of these methods can be found at the stats folder
 
         '''
-
         # assume X matrix is present in 'xmatrix'
         X = self.conveyor.getVal("xmatrix")
 
@@ -352,21 +351,12 @@ class Apply:
             self.conveyor.setError('Failed to generate MDs')
             return
             
-
         # Load scaler and variable mask and preprocess the data
-
         success, result = self.preprocess(X)
         if not success:
             self.conveyor.setError(result)
-            return
+            return            
         X = result
-
-        ## uncomment this code to control the reproducibility of X
-        # hash = hashlib.md5()
-        # hash.update(X.tostring())
-        # print (hash.hexdigest())
-
-        # Load model 
 
         # expand with new methods here:
         registered_methods = [('RF', RF),
@@ -382,6 +372,12 @@ class Apply:
         model = None
         for imethod in registered_methods:
             if imethod[0] == self.param.getVal('model'):
+
+                # we instantiate the subtype of base_model, 
+                # passing 
+                # - model parameters (param) 
+                # - already obtained results (conveyor)
+
                 model = imethod[1](None, None, self.param, self.conveyor)
                 LOG.debug('Recognized learner: '
                           f"{self.param.getVal('model')}")
@@ -392,35 +388,18 @@ class Apply:
             LOG.error(f'Modeling method {self.param.getVal("model")}'
                       'not recognized')
             return
+        
+        # try to load model previously built
         try:
             model.load_model()
             LOG.debug(f'Loading model from pickle file')
         except Exception as e:
-            #LOG.error(f'No valid model estimator found with exception "{e}"')
             self.conveyor.setError(f'No valid model estimator found with exception "{e}"')
             return False, f'Exception ocurred when loading model: {e}'
 
         # project the X matrix into the model and save predictions in self.conveyor
         model.project(X)
         
-        # The following code us used to check the reproducibility of the results
-
-        # uncomment this for conformal methods
-        # Yp0 = np.asarray(self.conveyor.getVal("c0"))
-        # Yp1 = np.asarray(self.conveyor.getVal("c1"))
-
-        # hash = hashlib.md5()
-        # hash.update(Yp0.tostring())
-        # hash.update(Yp1.tostring())
-        # print (hash.hexdigest())
-
-        # uncomment this for non-conformal methods
-        # Yp = np.asarray(self.conveyor.getVal("values"))
-
-        # hash = hashlib.md5()
-        # hash.update(Yp.tostring())
-        # print (hash.hexdigest())
-
         # if the input file contains activity values use them to run external validation 
         if self.conveyor.isKey('ymatrix'):
             self.external_validation()
@@ -472,5 +451,4 @@ class Apply:
             self.run_custom()
         else:
             self.conveyor.setError('Unknown prediction toolkit to run ')
-            
         return 

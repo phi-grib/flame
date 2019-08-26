@@ -674,10 +674,11 @@ class BaseEstimator:
                              'Upper limit', 'confidence', 'objs',
                               'Upper limit of the conformal prediction')
         else:
-            # For the moment is returning a dictionary with class
-            #  predictions
-            # / c0 / c1 / c2 /
-            # /True/True/False/
+            # Returns a dictionary with class
+            # predictions
+            # / c0 / c1 
+            # /True/False
+            # This is also converted to a binary 1/0 results
             for i in range(len(prediction[0])):
                 class_key = 'c' + str(i)
                 class_label = 'Class ' + str(i)
@@ -685,9 +686,24 @@ class BaseEstimator:
                 self.conveyor.addVal(class_list, 
                                 class_key, 
                                 class_label,
-                                'result', 'objs', 
-                                'Conformal class assignment',
-                                 'main')
+                                'confidence', 'objs', 
+                                'Conformal class assignment')
+
+            # the use of np.zeros defaults to 0 (negative)
+
+            nobj, nvary = np.shape(prediction)
+
+            Yp = np.zeros(nobj, dtype = np.float64)
+            for j in range (nobj):
+                p0 = prediction[j,0]
+                if p0==prediction[j,1]:  # if both are equal results are unconclusive
+                    Yp[j]=-1
+                elif p0 == 0: # if do not belong to class 0 is must be class 1 (positive)
+                    Yp[j]=1
+
+            self.conveyor.addVal(Yp, 'values', 'Prediction',
+                    'result', 'objs',
+                    'Results of the prediction', 'main')
 
     def project(self, Xb):
         ''' Uses the X matrix provided as argument to predict Y'''

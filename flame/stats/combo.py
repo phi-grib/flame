@@ -63,7 +63,7 @@ class Combo (BaseEstimator):
 
         Yp = self.predict(Xb)
 
-        conveyor.addVal(Yp, 'values', 'Prediction',
+        self.conveyor.addVal(Yp, 'values', 'Prediction',
                         'result', 'objs',
                         'Results of the prediction', 'main')
 
@@ -251,7 +251,7 @@ class mean (Combo):
                 cilow.append(xm-z*s)
                 ciupp.append(xm+z*s)
 
-            conveyor.addVal(np.array(cilow), 
+            self.conveyor.addVal(np.array(cilow), 
                         'lower_limit', 
                         'Lower limit', 
                         'confidence',
@@ -259,7 +259,7 @@ class mean (Combo):
                         'Lower limit of the conformal prediction'
                     )
 
-            conveyor.addVal(np.array(ciupp), 
+            self.conveyor.addVal(np.array(ciupp), 
                         'upper_limit', 
                         'Upper limit', 
                         'confidence',
@@ -281,37 +281,50 @@ class majority (Combo):
 
     def predict(self, X):
 
-        # check if the undelying models use conformal methods and then handle classes
-        # for example, for three models
-        # 
-        # clear majority -> majority
-        # 10 10 10        10
-        # 10 10 01        10
-        # 01 01 10        01
-        # 01 01 01        01
-        #
-        # minority of uncertain -> ignored
-        # 11 10 10        10
-        # 00 10 10        10
-        # 11 01 01        01
-        # 00 01 01        01
-        #   
-        # ties -> uncertain
-        # 11 10 01        11
-        # 00 10 01        11
-        #
-        # majority of uncertain -> uncertain
-        # 11 11 01        11
-        # 11 00 01        11
-        # 11 11 10        11
-        # 11 00 01        11
+        # obtain dimensions of X matrix
+        self.nobj, self.nvarx = np.shape(X)
 
-        # proposed algorithm:
-        # 1. If majority of results is uncertain -> uncertain (use 11 or 00 as the most frequent result)
-        # 2. Remove uncertains
-        # 3. It result is a tie -> uncertain (11)
-        # 4. Compute majority
+        # check if the underlying models are conformal
+        confidence = self.conveyor.getVal('ensemble_confidence')
 
+        # when not all models are conformal use a simple approach
+        if confidence is None or len(confidence[0]) != (2 * self.nvarx):
+            return np.round(np.mean (X,1))
+        
+        # print (confidence)
 
-        return np.round(np.mean (X,1))
+        # if all models are conformal, simply add the classes
+        # and return 0 if majority is class 0, 1 if majority is class 1
+        # and -1 if there is a tie
+        yp = np.zeros(self.nobj, dtype=np.float64)
+        c0 = np.zeros(self.nobj, dtype=np.float64)
+        c1 = np.zeros(self.nobj, dtype=np.float64)
+
+        for i,iobj in enumerate(confidence):
+            for j in range(self.nvarx):
+                c0[i] += iobj[j*2]
+                c1[i] += iobj[(j*2)+1] 
+            if c1[i] > c0[i]:
+                yp[i] = 1
+            elif c0[i] == c1[i]:
+                yp[i] = -1
+
+        # add the sum of classes for evaluating the result
+        self.conveyor.addVal(c0, 
+                    'ensemble_c0', 
+                    'Ensemble Class 0', 
+                    'confidence',
+                    'objs',
+                    'Conformal class assignment'
+                )
+
+        self.conveyor.addVal(c1, 
+                    'ensemble_c1', 
+                    'Ensemble Class 1', 
+                    'confidence',
+                    'objs',
+                    'Conformal class assignment'
+                )
+        
+        return yp
 

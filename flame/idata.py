@@ -1092,7 +1092,7 @@ class Idata:
                 if item['type'] == 'result':
                     item_key = item['key']
 
-                    print (item)
+                    #print (item)
 
                     if combined_md is None:  # for first element just copy
                         combined_md = np.array(
@@ -1116,9 +1116,10 @@ class Idata:
                         combined_cf = np.array(
                             i_result[item_key], dtype=np.float64)
                     else:  # append laterally
-                        combined_cf = np.c_[combined_cf, np.array(
-                            i_result[item_key], dtype=np.float64)]
-
+                        # combined_cf = np.c_[combined_cf, np.array(
+                        #     i_result[item_key], dtype=np.float64)]
+                        combined_cf = np.column_stack((combined_cf, np.array(
+                            i_result[item_key], dtype=np.float64)))
                     combined_cf_names.append(
                         item_key+':'+i_meta['endpoint']+':'+str(i_meta['version']))
 
@@ -1137,7 +1138,10 @@ class Idata:
         self.conveyor.addVal( combined_cf_names, 'ensemble_confidence_names', 'Ensemble Conf. names',
                          'method', 'vars', 'Confidence indexes from external sources')
 
-        print (combined_md, combined_md_names)
+        # print ('combined_md', combined_md)
+        # print ('combined_md_names', combined_md_names)
+        # print ('ensemble_confidence', combined_cf)
+        # print ('ensemble_confidence_names', combined_cf_names)
 
         #print (self.conveyor.getJSON())
 
