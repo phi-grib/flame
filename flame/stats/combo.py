@@ -166,34 +166,68 @@ class median (Combo):
             # get values
             CI_vals = self.conveyor.getVal('ensemble_confidence')
 
-            #TODO: compute a weighted median and associated CI
+            # assume that the CI represent 95% CI and normal distribution        
+            z = 1.96 
+    
+            # compute weighted average 
+            w = np.zeros(self.nvarx, dtype = np.float64 )
+            xmedian = []
+            cilow = []
+            ciupp = []
 
-            # the concept could be based in 
-            # order the values and CI according to the value
-            # weigth the prediction by 1/var
-            # compute the center using the weights selecting the value having a balanced weight in both sides
-            # assign the CI of the value or the mean of the adjacent values
-            #   
-            #    https://en.wikipedia.org/wiki/Weighted_median
-            #
-            # conveyor.addVal(np.array(cilow), 
-            #             'lower_limit', 
-            #             'Lower limit', 
-            #             'confidence',
-            #             'objs',
-            #             'Lower limit of the conformal prediction'
-            #         )
+            for j in range (self.nobj):
+                pred = []
+                for i in range (self.nvarx):
+                    r = CI_vals[j,i*2+1] - CI_vals[j,i*2]
+                    sd = r/(z*2)
+                    w[i] = 1.0/np.square(sd)
 
-            # conveyor.addVal(np.array(ciupp), 
-            #             'upper_limit', 
-            #             'Upper limit', 
-            #             'confidence',
-            #             'objs',
-            #             'Upper limit of the conformal prediction'
-            #         )
+                    # create a tupla with prediction ID, value and weight
+                    pred.append ( (i, X[j,i], w[i]) )
+                    
+                wmean = np.mean(w)
 
-            # provisional
-            return np.median (X,1)
+                # sort pred
+                sorted_pred = sorted(pred, key=lambda tup: tup[1])
+
+                #TODO: This is OK for odd #obj, Do another method which promediates for even #obj
+                # iterate elements until se sum 1/2 of weights
+                acc_w = 0.00
+                selected = sorted_pred[0][0]
+                for ipred in sorted_pred:
+
+                    # accumulate weights
+                    acc_w += ipred[2]
+                    if acc_w > wmean:
+                        break
+                    
+                    selected = ipred[0]    
+
+                print (j, selected)
+
+                xmedian.append(X[j,selected])
+                cilow.append(CI_vals[j,selected*2])
+                ciupp.append(CI_vals[j,(selected*2)+1])
+
+            self.conveyor.addVal(np.array(cilow), 
+                        'lower_limit', 
+                        'Lower limit', 
+                        'confidence',
+                        'objs',
+                        'Lower limit of the conformal prediction'
+                    )
+
+            self.conveyor.addVal(np.array(ciupp), 
+                        'upper_limit', 
+                        'Upper limit', 
+                        'confidence',
+                        'objs',
+                        'Upper limit of the conformal prediction'
+                    )
+
+            print (xmedian, cilow, ciupp)
+
+            return np.array(xmedian)
 
         else:
 
@@ -229,16 +263,16 @@ class mean (Combo):
             z = 1.96 
     
             # compute weighted average 
-            w = np.zeros(self.nvarx, dtype = np.float64 )
             xmean = []
             cilow = []
             ciupp = []
 
             for j in range (self.nobj):
+                w = np.zeros(self.nvarx, dtype = np.float64 )
                 for i in range (self.nvarx):
                     r = CI_vals[j,i*2+1] - CI_vals[j,i*2]
                     sd = r/(z*2)
-                    w[i] = 1.0/(sd*sd)
+                    w[i] = 1.0/np.square(sd)
 
                 ws = np.sum(w)
                 s = 1.0/np.sqrt(ws)

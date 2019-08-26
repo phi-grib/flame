@@ -85,7 +85,7 @@ def get_ensemble_input(task, model_names, model_versions, infile):
     return True, model_res
 
 
-def predict_cmd(model, output_format=None):
+def predict_cmd(arguments, output_format=None):
     '''
     Instantiates a Predict object to run a prediction using the given input
     file and model.
@@ -95,13 +95,21 @@ def predict_cmd(model, output_format=None):
     '''
     from flame.predict import Predict
 
-    predict = Predict(model['endpoint'], model['version'], output_format)
+    # safety check if model exists
+    repo_path = pathlib.Path(utils.model_repository_path())
+    model_list = os.listdir(repo_path)
+
+    if arguments['endpoint'] not in model_list:
+        LOG.error('Endpoint name not found in model repository.')
+        return False, 'Endpoint name not found in model repository.'
+
+    predict = Predict(arguments['endpoint'], arguments['version'], output_format)
 
     ensemble = predict.get_ensemble()
 
     if ensemble[0]:
 
-        success, model_res = get_ensemble_input(predict, ensemble[1], ensemble[2], model['infile'])
+        success, model_res = get_ensemble_input(predict, ensemble[1], ensemble[2], arguments['infile'])
 
         if not success:
             return False, model_res
@@ -112,7 +120,7 @@ def predict_cmd(model, output_format=None):
     else:
 
         # run the model with the input file
-        success, results = predict.run(model['infile'])
+        success, results = predict.run(arguments['infile'])
 
     LOG.info('Prediction completed...')
 
