@@ -185,29 +185,53 @@ class median (Combo):
                     # create a tupla with prediction ID, value and weight
                     pred.append ( (i, X[j,i], w[i]) )
                     
-                wmean = np.mean(w)
+                wcenter = np.sum(w)/2.00
 
                 # sort pred
                 sorted_pred = sorted(pred, key=lambda tup: tup[1])
 
                 #TODO: This is OK for odd #obj, Do another method which promediates for even #obj
                 # iterate elements until se sum 1/2 of weights
-                acc_w = 0.00
-                selected = sorted_pred[0][0]
-                for ipred in sorted_pred:
 
-                    # accumulate weights
-                    acc_w += ipred[2]
-                    if acc_w > wmean:
-                        break
-                    
-                    selected = ipred[0]    
+                # fpr even number of predictions
+                if self.nvarx % 2 == 0:
 
-                print (j, selected)
+                    if self.nvarx == 2:
+                        selectedA = 0
+                        selectedB = 1
+                    else:
+                        #TODO: adjust the algorithm to promediate the two central values
+                        acc_w = 0.00
+                        selectedA = sorted_pred[0][0]
+                        for i,ipred in enumerate(sorted_pred):
+                            selectedB = ipred[0]
+                            # accumulate weights
+                            acc_w += ipred[2]
+                            if acc_w > wcenter:
+                                break
+                        selectedA = sorted_pred[i-1][0]
 
-                xmedian.append(X[j,selected])
-                cilow.append(CI_vals[j,selected*2])
-                ciupp.append(CI_vals[j,(selected*2)+1])
+                    print ('even',j, selectedA, selectedB)
+
+                    xmedian.append(np.mean((X[j,selectedA], X[j,selectedB])))
+                    cilow.append(np.mean((CI_vals[j,selectedA*2], CI_vals[j,selectedB*2])))
+                    ciupp.append(np.mean((CI_vals[j,(selectedA*2)+1], CI_vals[j,(selectedB*2)+1])))
+
+                # for odd number of predictions
+                else:
+                    acc_w = 0.00
+                    for ipred in sorted_pred:
+                        selected = ipred[0]    
+                        # accumulate weights
+                        acc_w += ipred[2]
+                        if acc_w >= wcenter:
+                            break
+
+                    print ('odd',j, selected)
+
+                    xmedian.append(X[j,selected])
+                    cilow.append(CI_vals[j,selected*2])
+                    ciupp.append(CI_vals[j,(selected*2)+1])
 
             self.conveyor.addVal(np.array(cilow), 
                         'lower_limit', 
@@ -225,7 +249,7 @@ class median (Combo):
                         'Upper limit of the conformal prediction'
                     )
 
-            print (xmedian, cilow, ciupp)
+            #print (xmedian, cilow, ciupp)
 
             return np.array(xmedian)
 
