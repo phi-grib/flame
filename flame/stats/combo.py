@@ -190,9 +190,6 @@ class median (Combo):
                 # sort pred
                 sorted_pred = sorted(pred, key=lambda tup: tup[1])
 
-                #TODO: This is OK for odd #obj, Do another method which promediates for even #obj
-                # iterate elements until se sum 1/2 of weights
-
                 # fpr even number of predictions
                 if self.nvarx % 2 == 0:
 
@@ -200,7 +197,6 @@ class median (Combo):
                         selectedA = 0
                         selectedB = 1
                     else:
-                        #TODO: adjust the algorithm to promediate the two central values
                         acc_w = 0.00
                         selectedA = sorted_pred[0][0]
                         for i,ipred in enumerate(sorted_pred):

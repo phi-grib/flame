@@ -48,6 +48,16 @@ class Apply:
         self.conveyor = conveyor
         self.conveyor.setOrigin('apply')
 
+        # expand with new methods here:
+        self.registered_methods = [('RF', RF),
+                              ('SVM', SVM),
+                              ('GNB', GNB),
+                              ('PLSR', PLSR),
+                              ('PLSDA', PLSDA),
+                              ('median', median),
+                              ('mean', mean),
+                              ('majority', majority)]
+
 
     def external_validation(self):
         ''' when experimental values are available for the predicted compounds,
@@ -358,19 +368,11 @@ class Apply:
             return            
         X = result
 
-        # expand with new methods here:
-        registered_methods = [('RF', RF),
-                              ('SVM', SVM),
-                              ('GNB', GNB),
-                              ('PLSR', PLSR),
-                              ('PLSDA', PLSDA),
-                              ('median', median),
-                              ('mean', mean),
-                              ('majority', majority)]
+
 
         # instantiate an appropriate child of base_model
         model = None
-        for imethod in registered_methods:
+        for imethod in self.registered_methods:
             if imethod[0] == self.param.getVal('model'):
 
                 # we instantiate the subtype of base_model, 
@@ -389,6 +391,9 @@ class Apply:
                       'not recognized')
             return
         
+        if self.conveyor.getError():
+            return
+
         # try to load model previously built
         try:
             model.load_model()

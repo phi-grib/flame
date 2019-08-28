@@ -57,6 +57,16 @@ class Learn:
         self.scaler = None
         self.variable_mask = None
 
+        # expand with new methods here:
+        self.registered_methods = [('RF', RF),
+                              ('SVM', SVM),
+                              ('GNB', GNB),
+                              ('PLSR', PLSR),
+                              ('PLSDA', PLSDA), 
+                              ('median', median),
+                              ('mean', mean),
+                              ('majority', majority)]
+
     def run_custom(self):
         '''
         Build a model using custom code to be defined in the learn child
@@ -189,19 +199,11 @@ class Learn:
             self.conveyor.setError(message)
             return
 
-        # expand with new methods here:
-        registered_methods = [('RF', RF),
-                              ('SVM', SVM),
-                              ('GNB', GNB),
-                              ('PLSR', PLSR),
-                              ('PLSDA', PLSDA), 
-                              ('median', median),
-                              ('mean', mean),
-                              ('majority', majority)]
+
 
         # instantiate an appropriate child of base_model
         model = None
-        for imethod in registered_methods:
+        for imethod in self.registered_methods:
             if imethod[0] == self.param.getVal('model'):
 
                 # we instantiate the subtype of base_model, 
@@ -221,6 +223,9 @@ class Learn:
             LOG.error(f'Modeling method {self.param.getVal("model")}'
                        'not recognized')
             return
+            
+        if self.conveyor.getError():
+            return
 
         # build model
         LOG.info('Starting model building')
@@ -229,7 +234,6 @@ class Learn:
             self.conveyor.setError(model_building_results)
             return
 
-        #TODO: move to base model all conveyor.addVal
         self.conveyor.addVal(
                     model_building_results,
                     'model_build_info',

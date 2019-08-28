@@ -26,8 +26,8 @@
 # To ignore warnings comming from data precision in Cross-validation
 # Study more in deep
 
-from flame.stats.base_model import BaseEstimator
 import copy
+from flame.stats.base_model import BaseEstimator
 
 from sklearn.cross_decomposition import PLSCanonical,\
  PLSRegression, CCA
@@ -87,9 +87,10 @@ class PLS_da(PLSRegression):
                                          tol=tol, copy=copy)
             LOG.debug(f'Initializing PLSRegression parent class')
         except Exception as e:
-            LOG.error(f'Error initializing PLSRegression parent'
-                      f'class with exception: {e}')
-            raise e
+            LOG.error(f'Error initializing PLSRegression parent class with exception: {e}')
+            # self.conveyor.setError(f'Error initializing PLSRegression parent class with exception: {e}')
+            return 
+
         # Cut-off for class assignation
         self.threshold = threshold
 
@@ -141,22 +142,22 @@ class PLSDA(BaseEstimator):
             BaseEstimator.__init__(self,X, Y, parameters, conveyor)
             LOG.debug('Initialize BaseEstimator parent class')
         except Exception as e:
-            LOG.error(f'Error initializing BaseEstimator parent'
-                    f'class with exception: {e}')
+            LOG.error(f'Error initializing BaseEstimator parent class with exception: {e}')
+            self.conveyor.setError(f'Error initializing BaseEstimator parent class with exception: {e}')
 
         self.estimator_parameters = self.param.getDict('PLSDA_parameters')
+
         self.name = "PLSDA"
 
         if self.param.getVal('quantitative'):
-            LOG.error('PLSDA only applies to ' 
-                        'qualitative data')
-            raise Exception("PLSDA only applies to qualitative data")
+            LOG.error('PLSDA only applies to qualitative data')
+            self.conveyor.setError('PLSDA only applies to qualitative data')
+            return 
+
         if self.param.getVal('conformal'):
-            LOG.error('Conformal prediction no implemented'
-                            ' in PLSDA yet')
-            raise ValueError("Conformal prediction no implemented " 
-                             "in PLSDA yet, please change "
-                             "conformal option to false in the parameter file")
+            LOG.error('Conformal prediction no implemented in PLSDA yet')
+            self.conveyor.setError('Conformal prediction no implemented in PLSDA yet')
+            return 
 
     def build(self):
         '''Build a new PLSDA model with the X and Y numpy matrices '''
@@ -173,32 +174,43 @@ class PLSDA(BaseEstimator):
             # Optimize estimator using sklearn-gridsearch
             if self.estimator_parameters['optimize'] == 'auto':
                 try:
+
+                    LOG.info('Optimizing PLSDA using SK-LearnGridSearch')
+                    
                     super(PLSDA, self).optimize(X, Y, 
-                                            PLS_da(n_components=2,
-                                            scale=False, max_iter=500,
-                                            tol=1e-6, copy=True,
-                                            threshold=0.5), 
+                                            PLS_da(n_components='default',
+                                            scale='default', max_iter='default',
+                                            tol='default', copy='default',
+                                            threshold='default'), 
                                             self.param.getDict('PLSDA_optimize'))
-                    LOG.debug('Optimizing PLSDA through SK-LearnGridSearch')
+
                 except Exception as e:
-                    LOG.error(f'Error performing sk-learn GridSearch'
-                              f' on  PLSDA estimator with exception'
+                    LOG.error(f'Error performing SK-LearnGridSearch'
+                              f' on PLSDA estimator with exception'
                               f' {e}')
-                    raise e
+                    return False, f'Error performing SK-LearnGridSearch on PLSDA estimator with exception {e}'
+
             # Optimize using flame implementation (recommended)
             elif self.estimator_parameters['optimize'] == 'manual':
-                self.optimize(X, Y,
-                            PLS_da(n_components=2, scale=False, max_iter=500,
-                            tol=1e-6, copy=True, threshold=None),
-                            self.param.getDict('PLSDA_optimize'))
-                LOG.debug('Optimizing PLSDA')
+                
+                LOG.info('Optimizing PLSDA using manual method')
+                
+                success, message = self.optimize(X, Y,
+                                        PLS_da(n_components=2, 
+                                        scale=False, max_iter=500,
+                                        tol=1e-6, copy=True, 
+                                        threshold=None),
+                                        self.param.getDict('PLSDA_optimize'))
+                if not success:
+                    return False, message
 
             else:
-                LOG.error('Type of tune not recognized, check the input')
-                raise ValueError('Type of estimator tune not recognized')
 
-            results.append(
-                ('model', 'model type', 'PLSDA qualitative (optimized)'))
+                LOG.error('Type of tune not recognized, check the input')
+                
+                return False, 'Type of tune not recognized, check the input'
+
+            results.append(('model', 'model type', 'PLSDA qualitative (optimized)'))
 
         else:
             LOG.debug('Building  Qualitative PLSDA with no optimization')
@@ -210,7 +222,8 @@ class PLSDA(BaseEstimator):
             except Exception as e:
                 LOG.error(f'Error at PLS_da instantiation with '
                           f'exception {e}')
-                raise e
+                return False, f'Error at PLS_da instantiation with exception {e}'
+
             results.append(('model', 'model type', 'PLSDA qualitative'))
 
         # Fit estimator to the data
@@ -222,14 +235,13 @@ class PLSDA(BaseEstimator):
         ''' optimizes a model using a grid search over a 
         range of values for diverse parameters'''
 
-        LOG.info('Optimizing PLS-DA algorithm using local ' 
-        'implementation of gridsearch cv specially designed '
-        'for PLS discriminant analysis')
         # Max number of latent variables
         latent_variables = tune_parameters["n_components"]
+
         # Mathew correlation coefficient of best threshold
         mcc_final = 0
         estimator0 = ""
+
         # List to add the best threshold and Matthews correlation
         # coefficient for each number of latent variables
         list_latent = []
@@ -263,16 +275,17 @@ class PLSDA(BaseEstimator):
                 list_latent.append([n_comp, threshold_1, mcc0])
         except Exception as e:
             LOG.error(f'Error optimizing PLS-DA with exception {e}')
-            raise e
+            return False, f'Error optimizing PLS-DA with exception {e}'
 
-        LOG.debug('Number of latent variables, Best cutoff, and its Matthews '
-        'correlation coefficient')
-        for lv in list_latent:
-            LOG.debug(f'Number of latent variables: '
-            f'{lv[0]} \nBest cutoff: {lv[1]} \nMCC: {lv[2]}\n')
+        # LOG.debug('Number of latent variables, Best cutoff, and its Matthews '
+        # 'correlation coefficient')
+        # for lv in list_latent:
+        #     LOG.debug(f'Number of latent variables: '
+        #     f'{lv[0]} \nBest cutoff: {lv[1]} \nMCC: {lv[2]}\n')
                   
         self.estimator.fit(X, Y)
         LOG.info(f'Estimator best parameters: {self.estimator.get_params()}')
+        return True, 'OK'
 
 
 #### Overriding of parent methods

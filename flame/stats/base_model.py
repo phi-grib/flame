@@ -169,8 +169,6 @@ class BaseEstimator:
                         f'exception: {e}')
                 raise e
         
-        
-
 
     # Validation methods section
     def CF_quantitative_validation(self):
