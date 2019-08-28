@@ -26,31 +26,30 @@
 # To ignore warnings comming from data precision in Cross-validation
 # Study more in deep
 
-import copy
+from copy import copy
 from flame.stats.base_model import BaseEstimator
-
-from sklearn.cross_decomposition import PLSCanonical,\
- PLSRegression, CCA
 
 from nonconformist.base import ClassifierAdapter, RegressorAdapter
 from nonconformist.acp import AggregatedCp
 from nonconformist.acp import BootstrapSampler
 from nonconformist.icp import IcpClassifier, IcpRegressor
-from nonconformist.nc import ClassifierNc,\
- MarginErrFunc, RegressorNc
+from nonconformist.nc import ClassifierNc, MarginErrFunc, RegressorNc
 
-import pandas as pd
 import numpy as np
+
 from sklearn.metrics import make_scorer
 from sklearn.model_selection import cross_val_predict
 from sklearn.metrics import confusion_matrix
-from sklearn.metrics import mean_squared_error,\
-matthews_corrcoef as mcc, f1_score as f1
+from sklearn.metrics import mean_squared_error
+from sklearn.metrics import matthews_corrcoef as mcc 
+from sklearn.metrics import f1_score as f1
+from sklearn.cross_decomposition import PLSCanonical
+from sklearn.cross_decomposition import PLSRegression, CCA
 
 import warnings
 warnings.filterwarnings('ignore')
-from flame.util import get_logger
 
+from flame.util import get_logger
 LOG = get_logger(__name__)
 
 
@@ -85,7 +84,6 @@ class PLS_da(PLSRegression):
             super(PLS_da, self).__init__(n_components=n_components,
                                         scale=scale, max_iter=max_iter,
                                          tol=tol, copy=copy)
-            LOG.debug(f'Initializing PLSRegression parent class')
         except Exception as e:
             LOG.error(f'Error initializing PLSRegression parent class with exception: {e}')
             # self.conveyor.setError(f'Error initializing PLSRegression parent class with exception: {e}')
@@ -144,6 +142,7 @@ class PLSDA(BaseEstimator):
         except Exception as e:
             LOG.error(f'Error initializing BaseEstimator parent class with exception: {e}')
             self.conveyor.setError(f'Error initializing BaseEstimator parent class with exception: {e}')
+            return
 
         self.estimator_parameters = self.param.getDict('PLSDA_parameters')
 
@@ -171,6 +170,13 @@ class PLSDA(BaseEstimator):
         results.append(('nvarx', 'number of predictor variables', self.nvarx))
 
         if self.param.getVal('tune'):
+
+            opt_param = self.param.getDict('PLSDA_optimize')
+
+            # workaround to solve problem with tolerance values not recognized as float
+            if 'tol' in opt_param:
+                opt_param['tol'] = [np.float(i) for i in opt_param['tol']]
+
             # Optimize estimator using sklearn-gridsearch
             if self.estimator_parameters['optimize'] == 'auto':
                 try:
@@ -178,16 +184,15 @@ class PLSDA(BaseEstimator):
                     LOG.info('Optimizing PLSDA using SK-LearnGridSearch')
                     
                     super(PLSDA, self).optimize(X, Y, 
-                                            PLS_da(n_components='default',
-                                            scale='default', max_iter='default',
-                                            tol='default', copy='default',
-                                            threshold='default'), 
-                                            self.param.getDict('PLSDA_optimize'))
+                                            PLS_da(n_components=2,
+                                            scale=False, max_iter=500,
+                                            tol=0.000006, copy=True,
+                                            threshold=0.5), 
+                                            opt_param)
 
                 except Exception as e:
                     LOG.error(f'Error performing SK-LearnGridSearch'
-                              f' on PLSDA estimator with exception'
-                              f' {e}')
+                              f' on PLSDA estimator with exception {e}')
                     return False, f'Error performing SK-LearnGridSearch on PLSDA estimator with exception {e}'
 
             # Optimize using flame implementation (recommended)
@@ -200,7 +205,7 @@ class PLSDA(BaseEstimator):
                                         scale=False, max_iter=500,
                                         tol=1e-6, copy=True, 
                                         threshold=None),
-                                        self.param.getDict('PLSDA_optimize'))
+                                        opt_param)
                 if not success:
                     return False, message
 
@@ -213,10 +218,11 @@ class PLSDA(BaseEstimator):
             results.append(('model', 'model type', 'PLSDA qualitative (optimized)'))
 
         else:
-            LOG.debug('Building  Qualitative PLSDA with no optimization')
+            LOG.info('Building Qualitative PLSDA with no optimization')
             try:
                 # Remove optimize key from parameters to avoid error
                 self.estimator_parameters.pop("optimize")   
+
                 # as the sklearn estimator does not have this key
                 self.estimator = PLS_da(**self.estimator_parameters)
             except Exception as e:
@@ -256,20 +262,20 @@ class PLSDA(BaseEstimator):
                 # Get optimum threshold
                 for threshold in range(0, 100, 5):
                     threshold = threshold / 100
-                    y_pred2 = copy.copy(y_pred)
+                    y_pred2 = copy(y_pred)
                     y_pred2[y_pred2 < threshold] = 0
                     y_pred2[y_pred2 >= threshold] = 1
                     mcc1 = mcc(Y, y_pred2)
                     # Update threshold value with current best value
                     if mcc1 >= mcc0:
                         mcc0 = mcc1
-                        estimator1 = copy.copy(estimator)
+                        estimator1 = copy(estimator)
                         estimator1.set_params(**{'threshold': threshold})
                         threshold_1 = (threshold)
                 # Assign class estimator the best current estimator
                 if mcc0 >= mcc_final:
                     mcc_final = mcc0
-                    estimator0 = copy.copy(estimator1)
+                    estimator0 = copy(estimator1)
                     self.estimator = estimator0
 
                 list_latent.append([n_comp, threshold_1, mcc0])

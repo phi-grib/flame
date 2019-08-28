@@ -603,7 +603,6 @@ class BaseEstimator:
         for key, value in tune_parameters.items():
             if 'default' in value:
                 tune_parameters[key] = [None if i == 'default' else i for i in value ]
-        #print (tune_parameters)
 
         LOG.info('Computing best hyperparameter values')
         metric = ""
