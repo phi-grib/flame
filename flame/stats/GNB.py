@@ -22,19 +22,19 @@
 # You should have received a copy of the GNU General Public License
 # along with Flame.  If not, see <http://www.gnu.org/licenses/>.
 
+from copy import copy
 
 from sklearn.naive_bayes import GaussianNB
-from flame.stats.base_model import BaseEstimator
 
 from nonconformist.base import ClassifierAdapter, RegressorAdapter
 from nonconformist.acp import AggregatedCp
 from nonconformist.acp import BootstrapSampler
 from nonconformist.icp import IcpClassifier, IcpRegressor
 from nonconformist.nc import ClassifierNc, MarginErrFunc, RegressorNc
-from flame.util import get_logger
-from copy import copy
-LOG = get_logger(__name__)
 
+from flame.stats.base_model import BaseEstimator
+from flame.util import get_logger
+LOG = get_logger(__name__)
 
 class GNB(BaseEstimator):
     """
@@ -67,11 +67,16 @@ class GNB(BaseEstimator):
             BaseEstimator.__init__(self, X, Y, parameters, conveyor)
             LOG.debug('Initializing BaseEstimator parent class')
         except Exception as e:
-            LOG.error(f'Error initializing BaseEstimator parent'
-                f'class with exception {e}')
+            self.conveyor.setError(f'Error initializing BaseEstimator parent class with exception: {e}')
+            LOG.error(f'Error initializing BaseEstimator parent class with exception: {e}')
+            return
+
+        # Load estimator parameters                
         self.estimator_parameters = self.param.getDict('GNB_parameters')
+
         if self.param.getVal('quantitative'):
-            raise Exception("GNB only applies to qualitative data")
+            self.conveyor.setError('GNB only applies to qualitative data')
+            LOG.error('GNB only applies to qualitative data')
         else:
             self.name = "GNB-Classifier"
 
@@ -86,22 +91,29 @@ class GNB(BaseEstimator):
         results.append(('nobj', 'number of objects', self.nobj))
         results.append(('nvarx', 'number of predictor variables', self.nvarx))
 
-        LOG.info('Building GaussianNB model')
         # Build estimator
+        LOG.info('Building GaussianNB model')
         self.estimator = GaussianNB(**self.estimator_parameters)
         results.append(('model', 'model type', 'GNB qualitative'))
-        # If conformal, then create aggregated conformal classifier
+
         self.estimator.fit(X, Y)
+
+        if not self.param.getVal('conformal'):
+            return True, results
+
+        # If conformal, then create aggregated conformal classifier
         self.estimator_temp = copy(self.estimator)
-        if self.param.getVal('conformal'):
-            self.estimator = AggregatedCp(
-                IcpClassifier(ClassifierNc(
-                    ClassifierAdapter(
-                        self.estimator_temp),
-                    MarginErrFunc())),
-                BootstrapSampler())
-            # Fit estimator to the data
-            self.estimator.fit(X, Y)
-            results.append(
-                ('model', 'model type', 'conformal GNB qualitative'))
+        self.estimator = AggregatedCp(
+                            IcpClassifier(
+                                ClassifierNc(
+                                    ClassifierAdapter(self.estimator_temp),
+                                    MarginErrFunc()
+                                )
+                            ),
+                            BootstrapSampler())
+        
+        # Fit estimator to the data
+        self.estimator.fit(X, Y)
+        results.append(('model', 'model type', 'conformal GNB qualitative'))
+        
         return True, results

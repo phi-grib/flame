@@ -141,7 +141,6 @@ class RF(BaseEstimator):
             except Exception as e:
                 return False, f'Exception building RF estimator with exception {e}'
 
-
         if not self.param.getVal('conformal'):
             return True, results
 

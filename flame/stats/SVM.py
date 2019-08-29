@@ -22,19 +22,20 @@
 # You should have received a copy of the GNU General Public License
 # along with Flame.  If not, see <http://www.gnu.org/licenses/>.
 
-from flame.stats.base_model import BaseEstimator
-from sklearn import svm
 from copy import copy
+
+from sklearn import svm
+from sklearn.neighbors import KNeighborsRegressor
 
 from nonconformist.base import ClassifierAdapter, RegressorAdapter
 from nonconformist.acp import AggregatedCp
 from nonconformist.acp import BootstrapSampler
 from nonconformist.icp import IcpClassifier, IcpRegressor
 from nonconformist.nc import ClassifierNc, MarginErrFunc, RegressorNc
-from sklearn.neighbors import KNeighborsRegressor
 from nonconformist.nc import AbsErrorErrFunc, RegressorNormalizer
-from flame.util import get_logger
 
+from flame.stats.base_model import BaseEstimator
+from flame.util import get_logger
 LOG = get_logger(__name__)
 
 
@@ -143,7 +144,6 @@ class SVM(BaseEstimator):
                     results.append(('model', 'model type', 'SVM qualitative'))
 
                 self.estimator.fit(X, Y)
-                self.estimator_temp = copy(self.estimator)
 
             except Exception as e:
                 return False, f'Exception building SVM estimator with exception {e}'
@@ -151,6 +151,8 @@ class SVM(BaseEstimator):
         if not self.param.getVal('conformal'):
             return True, results
 
+        self.estimator_temp = copy(self.estimator)
+        
         # Create the conformal estimator
         try:
             if self.param.getVal('quantitative'):
