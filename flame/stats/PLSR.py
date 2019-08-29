@@ -110,6 +110,7 @@ class PLSR(BaseEstimator):
             self.conveyor.setError(f'Error initializing BaseEstimator parent class with exception: {e}')
             return
 
+        # Load estimator parameters
         self.estimator_parameters = self.param.getDict('PLSR_parameters')
 
         self.name = "PLSR"

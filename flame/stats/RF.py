@@ -73,7 +73,7 @@ class RF(BaseEstimator):
             LOG.error(f'Error initializing BaseEstimator parent class with exception: {e}')
             return
 
-        # estimator and optimizer parameters
+        # Load estimator parameters        
         self.estimator_parameters = self.param.getDict('RF_parameters')
 
         # Load tune parameters

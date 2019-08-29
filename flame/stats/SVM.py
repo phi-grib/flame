@@ -70,16 +70,19 @@ class SVM(BaseEstimator):
             
             LOG.debug('Initialize BaseEstimator parent class')
         except Exception as e:
-            LOG.error(f'Error initializing BaseEstimator parent'
-                      f'class with exception: {e}')
-            raise e
+            LOG.error(f'Error initializing BaseEstimator parent class with exception: {e}')
+            self.conveyor.setError(f'Error initializing BaseEstimator parent class with exception: {e}')
+            return
+
         # Load estimator parameters
         self.estimator_parameters = self.param.getDict('SVM_parameters')
+        
         # Load tune parameters
         self.tune_parameters = self.param.getDict('SVM_optimize')
+        
         if self.param.getVal('quantitative'):
-            self.name = "SVM-R"
             # Remove parameters of SVC class and set the name
+            self.name = "SVM-R"
             self.estimator_parameters.pop("class_weight", None)
             self.estimator_parameters.pop("probability", None)
             self.estimator_parameters.pop("decision_function_shape", None)
@@ -106,76 +109,96 @@ class SVM(BaseEstimator):
         
         # If tune then call gridsearch to optimize the estimator
         if self.param.getVal('tune'):
+
+            LOG.info("Optimizing SVM estimator")
+
             try:
                 # Check type of model
                 if self.param.getVal('quantitative'):
                     self.optimize(X, Y, svm.SVR(**self.estimator_parameters),
                                  self.tune_parameters)
-                    results.append(
-                        ('model', 'model type', 'SVM quantitative (optimized)'))
+                    results.append(('model', 'model type', 'SVM quantitative (optimized)'))
 
                 else:
                     self.optimize(X, Y, svm.SVC(**self.estimator_parameters),
                                   self.tune_parameters)
-                    results.append(
-                        ('model', 'model type', 'SVM qualitative (optimized)'))
+                    results.append(('model', 'model type', 'SVM qualitative (optimized)'))
                 LOG.debug('SVM estimator optimized')
             except Exception as e:
-                LOG.error(f'Exception optimizing SVM'
-                          f'estimator with exception {e}')
+                return False, f'Exception optimizing SVM estimator with exception {e}'
+        
         else:
             try:
-                LOG.info("Building  SVM model")
                 if self.param.getVal('quantitative'):
+
                     LOG.info("Building Quantitative SVM-R model")
+
                     self.estimator = svm.SVR(**self.estimator_parameters)
                     results.append(('model', 'model type', 'SVM quantitative'))
                 else:
+
+                    LOG.info("Building Qualitative SVM-C model")
+
                     self.estimator = svm.SVC(**self.estimator_parameters)
                     results.append(('model', 'model type', 'SVM qualitative'))
-            except Exception as e:
-                LOG.error(f'Exception building SVM'
-                          f'estimator with exception {e}')
-        self.estimator.fit(X, Y)
-        self.estimator_temp = copy(self.estimator)
-        if self.param.getVal('conformal'):
-            try:
-                LOG.info("Building aggregated conformal SVM model")
-                if self.param.getVal('quantitative'):
-                    underlying_model = RegressorAdapter(self.estimator_temp)
-                    # normalizing_model = RegressorAdapter(
-                    # KNeighborsRegressor(n_neighbors=5))
-                    normalizing_model = RegressorAdapter(self.estimator_temp)
-                    normalizer = RegressorNormalizer(
-                        underlying_model, normalizing_model, AbsErrorErrFunc())
-                    nc = RegressorNc(underlying_model,
-                                     AbsErrorErrFunc(), normalizer)
-                    # self.conformal_pred = AggregatedCp(IcpRegressor(
-                    # RegressorNc(RegressorAdapter(self.estimator))),
-                    #                                   BootstrapSampler())
 
-                    self.estimator = AggregatedCp(IcpRegressor(nc),
-                                                  BootstrapSampler())
-                    self.estimator.fit(X, Y)
-                    # overrides non-conformal
-                    results.append(
-                        ('model', 'model type', 'conformal SVM quantitative'))
+                self.estimator.fit(X, Y)
+                self.estimator_temp = copy(self.estimator)
 
-                else:
-                    self.estimator = AggregatedCp(
-                        IcpClassifier(
-                            ClassifierNc(
-                                ClassifierAdapter(self.estimator_temp),
-                                MarginErrFunc())),
-                        BootstrapSampler())
-                    self.estimator.fit(X, Y)
-                    # overrides non-conformal
-                    results.append(
-                        ('model', 'model type', 'conformal SVM qualitative'))
             except Exception as e:
-                LOG.error(f'Exception building aggregated conformal SVM '
-                          f'estimator with exception {e}')
-        # Fit estimator to the data
+                return False, f'Exception building SVM estimator with exception {e}'
+
+        if not self.param.getVal('conformal'):
+            return True, results
+
+        # Create the conformal estimator
+        try:
+            if self.param.getVal('quantitative'):
+
+                LOG.info("Building conformal Quantitative SVM-R model")
+
+                underlying_model = RegressorAdapter(self.estimator_temp)
+                # normalizing_model = RegressorAdapter(
+                # KNeighborsRegressor(n_neighbors=5))
+                normalizing_model = RegressorAdapter(self.estimator_temp)
+                normalizer = RegressorNormalizer(
+                                underlying_model, 
+                                normalizing_model, 
+                                AbsErrorErrFunc())
+                nc = RegressorNc(underlying_model,
+                                    AbsErrorErrFunc(), 
+                                    normalizer)
+                # self.conformal_pred = AggregatedCp(IcpRegressor(
+                # RegressorNc(RegressorAdapter(self.estimator))),
+                #                                   BootstrapSampler())
+
+                self.estimator = AggregatedCp(IcpRegressor(nc),
+                                                BootstrapSampler())
+                self.estimator.fit(X, Y)
+
+                # overrides non-conformal
+                results.append(('model', 'model type', 'conformal SVM quantitative'))
+
+            else:
+
+                LOG.info("Building conformal Qualitative SVM-C model")
+
+                self.estimator = AggregatedCp(
+                                    IcpClassifier(
+                                        ClassifierNc(
+                                            ClassifierAdapter(self.estimator_temp),
+                                            MarginErrFunc()
+                                        )
+                                    ),
+                                    BootstrapSampler())
+                self.estimator.fit(X, Y)
+
+                # overrides non-conformal
+                results.append(('model', 'model type', 'conformal SVM qualitative'))
+
+        except Exception as e:
+            return False, f'Exception building aggregated conformal SVM estimator with exception {e}'
+
         return True, results
 
 

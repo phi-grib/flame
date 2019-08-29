@@ -144,6 +144,7 @@ class PLSDA(BaseEstimator):
             self.conveyor.setError(f'Error initializing BaseEstimator parent class with exception: {e}')
             return
 
+        # Load estimator parameters
         self.estimator_parameters = self.param.getDict('PLSDA_parameters')
 
         self.name = "PLSDA"
