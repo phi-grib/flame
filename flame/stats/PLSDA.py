@@ -146,6 +146,9 @@ class PLSDA(BaseEstimator):
 
         # Load estimator parameters
         self.estimator_parameters = self.param.getDict('PLSDA_parameters')
+        
+        # Scale is hard-coded to False for making use of external scalers        
+        self.estimator_parameters['scale'] = False
 
         self.name = "PLSDA"
 

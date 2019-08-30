@@ -113,6 +113,9 @@ class PLSR(BaseEstimator):
         # Load estimator parameters
         self.estimator_parameters = self.param.getDict('PLSR_parameters')
 
+        # Scale is hard-coded to False for making use of external scalers        
+        self.estimator_parameters['scale'] = False
+
         self.name = "PLSR"
 
         # Check if the model is quantitative
@@ -192,10 +195,6 @@ class PLSR(BaseEstimator):
         # Fit estimator to the data
         self.estimator.fit(X, Y)
 
-        y_pred = cross_val_predict(self.estimator, X, Y,
-                                   cv=self.cv, n_jobs=1)
-        print (y_pred, Y, r2_score(Y, y_pred))
-
         if not self.param.getVal('conformal'):
             return True, results
 
@@ -254,7 +253,7 @@ class PLSR(BaseEstimator):
                 
                 r2_0 = r2_score(Y, y_pred)
 
-                print (n_comp, r2_0)
+                # print (n_comp, r2_0)
 
                 # Update estimator0 to best current estimator
                 if r2_0 >= r2 or estimator0 == None:

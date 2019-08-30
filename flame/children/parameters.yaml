@@ -191,6 +191,14 @@ MD_settings:
       options:
         - null
       description: Morgan fingerprint radius
+    rdkit_black_list:
+      object_type: list
+      writable: true
+      value: 
+        - Ipc
+      options:
+        - null
+      description: Name of problematic RDKit molecular descriptor to avoid 
   options: null
   description: Settings for molecular descriptors (when needed) 
   dependencies: 
@@ -682,14 +690,6 @@ PLSR_parameters:
   writable: false
   options: null
   value:
-    scale:
-      object_type: boolean
-      writable: false
-      value: false
-      options:
-        - true
-        - false
-      description: Wether X variables should be scaled to unit variance 
     tol:
       object_type: float
       writable: true
@@ -734,14 +734,12 @@ PLSR_optimize:
         - 3
         - 4
         - 5
-        - 6
       options: 
         - 1
         - 2
         - 3
         - 4
         - 5
-        - 6
       description: 
   description: PLSR optimize parameters
   dependencies: 
@@ -756,14 +754,6 @@ PLSDA_parameters:
   writable: false
   options: null
   value:
-    scale:
-      object_type: boolean
-      writable: false
-      value: false
-      options:
-        - true
-        - false
-      description: Wether X variables should be scaled to unit variance
     tol:
       object_type: float
       writable: true
@@ -806,24 +796,6 @@ PLSDA_optimize:
   writable: false
   options: null
   value:
-    scale:
-      object_type: boolean
-      writable: false
-      value: 
-        - true
-        - false
-      options:
-        - true
-        - false
-      description: 
-    tol:
-      object_type: float
-      writable: true
-      value: 
-        - 0.000006
-      options:
-        - 0.000006
-      description: 
     n_components:
       object_type: int
       writable: true
