@@ -967,6 +967,9 @@ class Idata:
         # remove the temp directory with all the temp files inside
         shutil.rmtree(temp_path)
 
+        #TODO: optional sanitization step, to check if the X matrix contains extreme values or variables
+        # with unreasonable variances
+
         self.conveyor.addVal(results[0], 'xmatrix', 'X matrix',
             'method', 'vars', 'Molecular descriptors')
 
@@ -1031,6 +1034,10 @@ class Idata:
 
         self.conveyor.addVal( obj_num, 'obj_num', 'Num mol', 'method',
                          'single', 'Number of molecules present in the input file')
+
+        #TODO: optional sanitization step, to check if the X matrix contains extreme values or variables
+        # with unreasonable variances
+        
         self.conveyor.addVal( xmatrix, 'xmatrix',
                          'X matrix', 'method', 'vars', 'Molecular descriptors')
 
