@@ -1067,7 +1067,7 @@ class Idata:
         # the data usable for input must be listed in the ['meta']['main'] key
 
         # use first JSON to load common info like obj_nam, etc
-        obj_common = ['label', 'decoration']
+        obj_common = ['label', 'decoration', 'smiles']
         
         first_results = json.loads(self.idata[0])
         first_manifest = first_results['manifest']

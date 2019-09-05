@@ -98,7 +98,6 @@ class Parameters:
         # self.setVal('md5',utils.md5sum(parameters_file_name))
         self.setVal('md5',self.idataHash())
 
-
         return True, 'OK'
 
     def delta(self, model, version, param, iformat='YAML', isSpace=False):

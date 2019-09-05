@@ -42,7 +42,9 @@ class Combo (BaseEstimator):
             LOG.error(f'Error initializing BaseEstimator parent'
                     f'class with exception: {e}')
             raise e
+
         self.method_name = ''
+
 
     def build(self):
         '''nothing to build, just return a some model information '''
@@ -332,6 +334,11 @@ class majority (Combo):
     def __init__(self, X, Y, parameters, conveyor):
         Combo.__init__(self, X, Y, parameters, conveyor)
         self.method_name = 'majority voting'
+
+        # majority is not compatible with conformal because the prediction results
+        # are not stored as c0, c1 but as value, ensemble_c0, ensemble_c1
+        if self.param.getVal('conformal'):
+            self.param.setVal('conformal', False)
 
     def predict(self, X):
 
