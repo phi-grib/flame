@@ -178,6 +178,10 @@ class Odata():
 
                         val_array = self.conveyor.getVal(key)
 
+                        if val_array is None:
+                            line += '-\t'
+                            continue
+
                         if i >= len(val_array):
                             val = None
                         else:
@@ -273,6 +277,10 @@ class Odata():
                     for key in key_list:
 
                         ikey = self.conveyor.getVal(key)
+
+                        if ikey is None:
+                            line += '-\t'
+                            continue
 
                         if i >= len(ikey):
                             val = None

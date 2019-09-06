@@ -1139,11 +1139,13 @@ class Idata:
         self.conveyor.addVal( combined_md_names, 'var_nam', 'Var. names',
                          'method', 'vars', 'Variable names from external sources')
 
-        self.conveyor.addVal( combined_cf, 'ensemble_confidence', 'Ensemble Confidence',
-                         'method', 'objs', 'Combined confidence from external sources')
+        if combined_cf is not None:
+            self.conveyor.addVal( combined_cf, 'ensemble_confidence', 'Ensemble Confidence',
+                            'method', 'objs', 'Combined confidence from external sources')
 
-        self.conveyor.addVal( combined_cf_names, 'ensemble_confidence_names', 'Ensemble Conf. names',
-                         'method', 'vars', 'Confidence indexes from external sources')
+        if len(combined_cf_names) > 0:
+            self.conveyor.addVal( combined_cf_names, 'ensemble_confidence_names', 'Ensemble Conf. names',
+                            'method', 'vars', 'Confidence indexes from external sources')
 
         # print ('combined_md', combined_md)
         # print ('combined_md_names', combined_md_names)
