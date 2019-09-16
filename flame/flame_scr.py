@@ -143,7 +143,7 @@ def main():
             print('flame build : endpoint argument is compulsory')
             return
 
-        command_build = {'endpoint': args.endpoint, 'infile': args.infile, 'parameters': args.parameters}
+        command_build = {'endpoint': args.endpoint, 'infile': args.infile, 'param_file': args.parameters}
 
         LOG.info(f'Starting building model {args.endpoint}'
                  f' with file {args.infile} and parameters {args.parameters}')
@@ -159,7 +159,7 @@ def main():
             print('flame sbuild : space argument is compulsory')
             return
 
-        command_build = {'space': args.space, 'infile': args.infile, 'parameters': args.parameters}
+        command_build = {'space': args.space, 'infile': args.infile, 'param_file': args.parameters}
 
         LOG.info(f'Starting building model {args.space}'
                  f' with file {args.infile} and parameters {args.parameters}')
