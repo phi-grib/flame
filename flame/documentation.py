@@ -29,6 +29,7 @@ import numpy as np
 
 from flame.util import utils
 from flame.conveyor import Conveyor
+from flame.parameters import Parameters
 from rdkit.Chem import AllChem
 
 
@@ -74,7 +75,7 @@ class Documentation:
         self.model = model
         self.version = version
         self.fields = None
-        self.parameters = None
+        self.parameters = Parameters()
         self.conveyor = None
 
         # obtain the path and the default name of the model documents
@@ -92,31 +93,38 @@ class Documentation:
         except Exception as e:
             # LOG.error(f'Error loading documentation file with exception: {e}')
             raise e
+        
+        success, message = self.parameters.loadYaml(model, 0)
 
-        self.load_parameters()
+        if not success:
+            print('Parameters could not be loaded. Please assure endpoint is correct')
+            return
+        
+        # Remove this after acc
+        #self.load_parameters()
         if context == 'model':
             self.load_results()
             self.assign_parameters()
             self.assign_results()
 
-    def load_parameters(self):
-        '''This function takes info from results and
-        param file and assigns it to corresponding fields
-        in documentation dictionary'''
-
+    # def load_parameters(self):
+    #     '''This function takes info from results and
+    #     param file and assigns it to corresponding fields
+    #     in documentation dictionary'''
         # obtain the path and the default name of the parameter_file
-        parameters_file_path = utils.model_path(self.model, self.version)
-        parameters_file_name = os.path.join(parameters_file_path,
-                                            'parameters.yaml')
-
-        if not os.path.isfile(parameters_file_name):
-            raise Exception('Parameter file not found')
-        try:
-            with open(parameters_file_name, 'r') as parameter_file:
-                self.parameters = yaml.load(parameter_file)
-        except Exception as e:
-            # LOG.error(f'Error loading parameter file with exception: {e}')
-            raise e
+        # parameters_file_path = utils.model_path(self.model, self.version)
+        # parameters_file_name = os.path.join(parameters_file_path,
+        #                                     'parameters.yaml')
+        
+        # success, message = self.parameters.loadYaml(self.model, 0)
+        # if not os.path.isfile(parameters_file_name):
+        #     raise Exception('Parameter file not found')
+        # try:
+        #     with open(parameters_file_name, 'r') as parameter_file:
+        #         self.parameters = yaml.load(parameter_file)
+        # except Exception as e:
+        #     # LOG.error(f'Error loading parameter file with exception: {e}')
+        #     raise e
 
     def load_results(self):
         '''
@@ -148,18 +156,17 @@ class Documentation:
             raise ('Parameters were not loaded')
 
         self.fields['Algorithm']['subfields']['algorithm']['value'] = \
-            self.parameters['model']['value']
+            self.parameters.getVal('model')
         self.fields['Algorithm']['subfields']['descriptors']['value'] = \
-            self.parameters['computeMD_method']['value']
-        if self.parameters['conformal']['value']:
+            self.parameters.getVal('computeMD_method')
+        if self.parameters.getVal('conformal'):
             self.fields['AD_method']['subfields']['name']['value'] = \
                 'conformal prediction'
-        if self.parameters['conformal']:
             self.fields['AD_parameters']['value'] = \
                 (f'Conformal Significance: '
-                    f'{self.parameters["conformalSignificance"]["value"]}')
+                    f'{self.parameters.getVal("conformalSignificance")}')
         self.fields['Algorithm_settings']['subfields']['name']['value'] = \
-            self.parameters['model']['value']
+            self.parameters.getVal('model')
 
     def assign_results(self):
         '''
@@ -244,6 +251,45 @@ class Documentation:
         template['Internal_validation_1'] = [self.fields[
                         'Internal_validation_1']['value']]
         template.to_csv('QMRF_template.tsv', sep='\t')
+
+    def get_upf_template2(self):
+        '''
+            This function creates a tabular model template based
+            on the QMRF document type
+        '''
+        fields = ['ID', 'Version', 'Contact', 'Institution',\
+            'Date', 'Endpoint', 'Endpoint_units', 'Dependent_variable', 'Species',\
+                'Limits_applicability', 'Experimental_protocol', 'Data_info',\
+                    'Model_availability', 'Algorithm', 'Software', 'Descriptors',\
+                        'Algorithm_settings', 'AD_method', 'AD_parameters',\
+                            'Goodness_of_fit_statistics', 'Internal_validation_1' ]
+        template = pd.DataFrame(columns=['Field', 'Parameter name', 'Parameter value'])
+        for field in fields: 
+            subfields = self.fields[field]['subfields']
+            if subfields is not None:
+                for index, subfield in enumerate(subfields):
+                    field2 = ''
+                    if index == 0:
+                        field2 = field
+                    else:
+                        field2 = ""
+                    value = str(subfields[subfield]['value'])
+                    # None types are retrieved as str from yaml??
+                    if value == "None":
+                        value = ""
+                    row = dict(zip(['Field', 'Parameter name', 'Parameter value'],\
+                        [field2, subfield, value]))
+                    template = template.append(row, ignore_index=True)
+            else:
+                value = str(self.fields[field]['value'])
+                if value == 'None':
+                    value = ""
+                row = dict(zip(['Field', 'Parameter name', 'Parameter value'],\
+                    [field, "", value]))
+                template = template.append(row, ignore_index=True)
+        template.to_csv('QMRF_template3.tsv', sep='\t', index=False)
+
+
 
     def get_prediction_template(self):
         '''

@@ -618,7 +618,7 @@ def action_model_template(model, version=None):
             return False, 'Info file not found'
 
     documentation = Documentation(model, version, context='model')
-    documentation.get_upf_template()
+    documentation.get_upf_template2()
 
     return True, 'Model documentation template created'
 
