@@ -192,23 +192,23 @@ class Parameters:
 
         return True
 
-    # def update_file(self, model, version=0):
-    #     '''Function to save current parameter values modified
-    #     at the object level (i.e: From a interactive python shell)
-    #     '''
-    #     p = self.p
-    #     if not p:
-    #         return False, 'No loaded parameters'
+    def update_file(self, model, version=0):
+        '''Function to save current parameter values modified
+        at the object level (i.e: From a interactive python shell)
+        '''
+        p = self.p
+        if not p:
+            return False, 'No loaded parameters'
 
-    #     parameters_file_path = utils.model_path(model, version)
-    #     parameters_file_name = os.path.join (parameters_file_path,
-    #                                         'parameters.yaml')
-    #     try:
-    #         with open(parameters_file_name, 'w') as pfile:
-    #             yaml.dump (p, pfile)
-    #     except Exception as e:
-    #         return False, e
-    #     return True
+        parameters_file_path = utils.model_path(model, version)
+        parameters_file_name = os.path.join (parameters_file_path,
+                                            'parameters.yaml')
+        try:
+            with open(parameters_file_name, 'w') as pfile:
+                yaml.dump (p, pfile)
+        except Exception as e:
+            return False, e
+        return True
 
     def getVal(self, key):
         ''' Return the value of the key parameter or None if it is
@@ -228,7 +228,7 @@ class Parameters:
 
     
     def getDict(self, key):
-        ''' Return the value of the key parameter or None if it is
+        ''' Return the value of the key parameter or None if it ises.
             not found in the parameters dictionary
         ''' 
         d = {}

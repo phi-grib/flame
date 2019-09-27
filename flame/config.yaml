@@ -6,4 +6,7 @@ model_repository_path: C:\Users\mpastor\Documents\soft\flame\flame\models
 space_repository_path: C:\Users\mpastor\Documents\soft\flame\flame\spaces
 #model_repository_path: /home/jcgomez/projects/internals/flame/flame/flame/models
 model_repository_path: /home/jcgomez/projects/internals/flame/test
+model_repository_path: /home/jcgomez/projects/databases/sider_kevin/regular_models/flame
+model_repository_path: /home/jcgomez/projects/databases/sider_kevin/metamodels/flame
+
 provider: UPF (Pompeu Fabra University)
