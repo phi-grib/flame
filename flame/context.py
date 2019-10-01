@@ -179,6 +179,8 @@ def build_cmd(arguments, output_format=None):
                 LOG.error(f'Wrong training series file {ifile}')
                 return False, f'Wrong training series file {ifile}'
             try:
+                print(lfile)
+                print(ifile)
                 shutil.copy(ifile, lfile)
             except:
                 LOG.error(f'Unable to copy input file to model directory')
