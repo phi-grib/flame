@@ -117,7 +117,6 @@ class Parameters:
         
         # parse parameter file assuning it will be in
         # a YAML-compatible format
-
         if iformat == 'JSONS':
             try:
                 newp = json.loads(param)

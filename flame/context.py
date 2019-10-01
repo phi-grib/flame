@@ -146,7 +146,13 @@ def build_cmd(arguments, output_format=None):
         LOG.error('Endpoint name not found in model repository.')
         return False, 'Endpoint name not found in model repository.'
 
-    build = Build(arguments['endpoint'], param_file=arguments['parameters'], output_format=output_format)
+    if 'params_file' in arguments:
+
+        build = Build(arguments['endpoint'], param_file=arguments['param_file'], output_format=output_format)
+
+    else:
+
+        build = Build(arguments['endpoint'], param_string=arguments['param_string'], output_format=output_format)
 
     ensemble = build.get_ensemble()
 
@@ -173,6 +179,8 @@ def build_cmd(arguments, output_format=None):
                 LOG.error(f'Wrong training series file {ifile}')
                 return False, f'Wrong training series file {ifile}'
             try:
+                print(lfile)
+                print(ifile)
                 shutil.copy(ifile, lfile)
             except:
                 LOG.error(f'Unable to copy input file to model directory')
