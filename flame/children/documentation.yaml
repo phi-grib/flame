@@ -26,6 +26,7 @@ Institution:
   level: 1
   QMRF_field: '2.5'
   description: 'Affiliation details'
+  value: 'UPF'
   subfields: null
 
 Date:
