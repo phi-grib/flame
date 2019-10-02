@@ -100,18 +100,19 @@ class RF(BaseEstimator):
         if self.param.getVal('tune'):
 
             LOG.info("Optimizing RF estimator")
-
+            
             try:
                 # Check type of model
                 if self.param.getVal('quantitative'):
-                    self.optimize(X, Y, RandomForestRegressor(
-                                    **self.estimator_parameters),
-                                    self.tune_parameters)
+                    self.estimator = RandomForestRegressor(
+                                        **self.estimator_parameters)
+                    self.optimize(X, Y, self.estimator, self.tune_parameters)
                     results.append(('model','model type','RF quantitative (optimized)'))
                 else:
-                    self.optimize(X, Y, RandomForestClassifier(
-                                    **self.estimator_parameters),
-                                    self.tune_parameters)
+                    self.estimator = RandomForestClassifier(
+                                        **self.estimator_parameters)
+                    self.optimize(X, Y, self.estimator,
+                                  self.tune_parameters)
                     results.append(('model','model type','RF qualitative (optimized)'))
 
             except Exception as e:
@@ -136,14 +137,14 @@ class RF(BaseEstimator):
                     results.append(('model', 'model type', 'RF qualitative'))
 
                 self.estimator.fit(X, Y)
-                self.estimator_temp = copy(self.estimator)
 
             except Exception as e:
                 return False, f'Exception building RF estimator with exception {e}'
 
+        self.estimator_temp = copy(self.estimator)
+
         if not self.param.getVal('conformal'):
             return True, results
-
         # Create the conformal estimator
         try:
             # Conformal regressor

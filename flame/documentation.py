@@ -165,8 +165,7 @@ class Documentation:
             self.fields['AD_parameters']['value'] = \
                 (f'Conformal Significance: '
                     f'{self.parameters.getVal("conformalSignificance")}')
-        self.fields['Algorithm_settings']['subfields']['name']['value'] = \
-            self.parameters.getVal('model')
+
 
     def assign_results(self):
         '''
@@ -179,6 +178,19 @@ class Documentation:
                    'Q2', 'SDEP']
         model_info = self.conveyor.getVal('model_build_info')
         validation = self.conveyor.getVal('model_valid_info')
+
+
+        # The code below to filter the hyperparameters to be 
+        # reported.
+        
+        # Get parameter keys for the used estimator
+        #param_key = self.parameters.getVal('model') + '_parameters'
+        # Get parameter dictionary
+        #estimator_params = self.parameters.getDict(param_key)
+        
+        self.fields['Algorithm_settings']['subfields']['name']['value'] = \
+            self.get_string2(self.conveyor.getVal('estimator_parameters'))
+
         self.fields['Data_info']\
             ['subfields']['training_set_size']['value'] = \
             model_info[0][2]
@@ -197,12 +209,27 @@ class Documentation:
 
     def get_string(self, dictionary):
         '''
-        Convert a dictionary to string format for the model
-        template
+        Convert a dictionary (from documentation.yaml)
+        to string format for the model template
         '''
         text = ''
         for key, val in dictionary.items():
             text += f'{key} : {val["value"]}\n'
+        return text
+
+    def get_string2(self, dictionary):
+        '''
+        Convert a dictionary (from parameter file) to 
+        string format for the model template
+        '''
+        text = ''
+        for key, val in dictionary.items():
+            try:
+                if isinstance(str(val), str):
+                    text += f'{key} : {val}\n'
+            except:
+                continue
+
         return text
 
     def get_upf_template(self):
@@ -281,6 +308,7 @@ class Documentation:
                         [field2, subfield, value]))
                     template = template.append(row, ignore_index=True)
             else:
+                print(field)
                 value = str(self.fields[field]['value'])
                 if value == 'None':
                     value = ""
