@@ -226,9 +226,9 @@ class Odata():
             for val in self.conveyor.getVal('external-validation'):
                 self.print_result (val)   
 
-        # if self.conveyor.isKey('values'):
-        #     for i in range (self.conveyor.getVal('obj_num')):
-        #         print (self.conveyor.getVal('obj_nam')[i], '\t', float("{0:.4f}".format(self.conveyor.getVal('values')[i])))
+        if self.conveyor.isKey('values'):
+            for i in range (self.conveyor.getVal('obj_num')):
+                print (self.conveyor.getVal('obj_nam')[i], '\t', float("{0:.4f}".format(self.conveyor.getVal('values')[i])))
 
         ###
         # 2. molecular descriptors file in TSV format [optional]
