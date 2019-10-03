@@ -270,6 +270,9 @@ model:
     - PLSR
     - PLSDA
     - GNB
+    - mean
+    - median
+    - majority
   description: List of available algorithms
   dependencies: 
     input_type: molecule
