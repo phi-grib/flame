@@ -216,6 +216,16 @@ class Apply:
                 FN = c1_incorrect
                 coverage = float((len(Yp) - not_predicted) / len(Yp))
 
+                try:
+                    # Compute accuracy (% of correct predictions)
+                    conformal_accuracy = (float(TN + TP) /
+                                                float(FP + FN + 
+                                                    TN + TP))
+                except Exception as e:
+                    LOG.error(f'Failed to compute conformal accuracy with'
+                                f'exception {e}')
+                    conformal_accuracy = '-'
+                                                            
                 if (TP+FN) > 0:
                     sensitivity = (TP / (TP + FN))
                 else:
@@ -224,6 +234,7 @@ class Apply:
                     specificity = (TN / (TN + FP))
                 else:
                     specificity = 0.0
+
                 ext_val_results.append(('TP',
                                         'True positives in external-validation',
                                         float(TP)))
@@ -248,6 +259,11 @@ class Apply:
                 ext_val_results.append(('Conformal_coverage',
                                         'Conformal coverage in external-validation',
                                         float(coverage)))
+                ext_val_results.append(('Conformal_accuracy',
+                                        'Conformal accuracy in external-validation',
+                                        float(conformal_accuracy)))
+
+
                 self.conveyor.addVal(
                                  ext_val_results,
                                  'external-validation',

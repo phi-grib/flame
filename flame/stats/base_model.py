@@ -737,6 +737,17 @@ class BaseEstimator:
                         protocol=pickle.HIGHEST_PROTOCOL)
         LOG.debug('Model saved as:{}'.format(model_pkl_path))
 
+
+        # Add estimator parameters to Conveyor
+        params = dict()
+        if  self.param.getVal('conformal'):
+            params = self.estimator_temp.get_params()
+        else:
+            params = self.estimator.get_params()
+
+        self.conveyor.addVal(params, 'estimator_parameters',
+                            'estimator parameters', 'method', 'single',
+                            'Hyperparameter values for the algorithm')
         return
 
     def load_model(self):

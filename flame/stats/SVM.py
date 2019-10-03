@@ -116,15 +116,18 @@ class SVM(BaseEstimator):
             try:
                 # Check type of model
                 if self.param.getVal('quantitative'):
-                    self.optimize(X, Y, svm.SVR(**self.estimator_parameters),
+                    self.estimator = svm.SVR(**self.estimator_parameters)
+                    self.optimize(X, Y, self.estimator,
                                  self.tune_parameters)
                     results.append(('model', 'model type', 'SVM quantitative (optimized)'))
 
                 else:
-                    self.optimize(X, Y, svm.SVC(**self.estimator_parameters),
+                    self.estimator = svm.SVC(**self.estimator_parameters)
+                    self.optimize(X, Y, self.estimator,
                                   self.tune_parameters)
                     results.append(('model', 'model type', 'SVM qualitative (optimized)'))
                 LOG.debug('SVM estimator optimized')
+                self.estimator.fit(X, Y)
             except Exception as e:
                 return False, f'Exception optimizing SVM estimator with exception {e}'
         
@@ -147,11 +150,11 @@ class SVM(BaseEstimator):
 
             except Exception as e:
                 return False, f'Exception building SVM estimator with exception {e}'
+                
+        self.estimator_temp = copy(self.estimator)
 
         if not self.param.getVal('conformal'):
             return True, results
-
-        self.estimator_temp = copy(self.estimator)
         
         # Create the conformal estimator
         try:
