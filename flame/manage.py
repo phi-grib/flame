@@ -517,6 +517,112 @@ def action_parameters(model, version=None, oformat='text'):
 ## the following commands are argument-less, intended to be called from a web-service to 
 ## generate JSON output only
 
+def action_documentation(model, version=None, doc_file=None, oformat='text'):
+    ''' Returns a JSON with whole results info for a given model and version '''
+
+    if model is None:
+        return False, 'Empty model label'
+
+    from flame.documentation import Documentation
+    
+    # get de model repo path
+    rdir = utils.model_path(model, version)
+    if not os.path.isfile(os.path.join(rdir, 'results.pkl')):
+        return False, 'Info file not found' 
+
+    doc = Documentation(model, version)
+
+    if doc_file is not None:
+        # use the param_file to update existing parameters at the model
+        # directory and save changes to make them persistent
+        success, message = doc.delta(model, 0, doc_file, iformat='YAML')
+    doc = Documentation(model, version)
+    if oformat == 'JSON':
+        return True, doc.dumpJSON()
+
+    else:
+        order = ['ID', 'Version', 'Contact', 'Institution', 'Date', 'Endpoint',
+         'Endpoint_units', 'Dependent_variable', 'Species',
+        'Limits_applicability', 'Experimental_protocol', 'Model_availability',
+        'Data_info', 'Algorithm', 'Software', 'Descriptors', 'Algorithm_settings',
+        'AD_method', 'AD_parameters', 'Goodness_of_fit_statistics', 
+        'Internal_validation_1', 'Internal_validation_2', 'External_validation',
+        'Comments', 'Other_related_models', 'Date_of_QMRF', 'Data_of_QMRF_updates',
+        'QMRF_updates', 'References', 'QMRF_same_models', 'Comment_on_the_endpoint',
+        'Endpoint_data_quality_and_variability', 'Descriptor_selection'
+        ]
+
+
+        for ik in order:
+            if ik in doc.fields:
+                k = ik
+                v = doc.fields[k]
+
+                ivalue = ''
+                idescr = ''
+                ioptio = ''
+
+                ## newest parameter formats are extended and contain
+                ## rich metainformation for each entry
+                if 'value' in v:
+                    if not isinstance(v['value'] ,dict):
+                        ivalue = v['value']
+                    else:
+                        # print header of dictionary
+                        print (f'{k} :')
+
+                        # iterate keys assuming existence of value and description
+                        for intk in v['value']:
+                            intv = v['value'][intk]
+                            if not isinstance(intv, dict):
+                                print (f'   {intk:27} : {str(intv):30}')  #{iioptio} {iidescr}')
+                            
+                            else:
+                                #print(intk)
+                                intv = v['value'][intk]
+
+                                iivalue = ''
+                                if "value" in intv:                                
+                                    iivalue = intv["value"]
+                                # else: 
+                                #     iivalue = intv
+
+                                iidescr = ''
+                                if "description" in intv and intv["description"] is not None:
+                                    iidescr = intv["description"]
+
+                                iioptio = ''
+                                if 'options' in intv:
+                                    toptio = intv['options']
+
+                                    if isinstance(toptio, list):
+                                        if toptio != [None]:
+                                            iioptio = f' {toptio}'
+
+                                if isinstance (iivalue, float):
+                                    iivalue =  f'{iivalue:f}'
+                                elif iivalue is None:
+                                    iivalue = ''
+
+                                print (f'   {intk:27} : {str(iivalue):30} #{iioptio} {iidescr}')
+
+                        continue
+
+                    if 'description' in v:
+                        idescr = v['description'] 
+
+                    if 'options' in v:
+                        toptio = v['options']
+
+                        if isinstance(toptio, list):
+                            ioptio = f' {toptio}'
+
+                print (f'{k:30} : {str(ivalue):30} #{ioptio} {idescr}')
+
+        return True, 'parameters listed'
+
+
+
 def action_dir():
     '''
     Returns a JSON with the list of models and versions
@@ -596,12 +702,12 @@ def action_report():
     print (json.dumps(results))
     return True, json.dumps(results)
 
-def action_model_template(model, version=None):
+def action_model_template(model, version=None, doc_file=None):
     '''
     Returns a TSV model reporting template
     '''
-
     from flame.documentation import Documentation
+    documentation = Documentation(model, version, context='model')
 
     if not model:
         return False, 'Empty model label'
@@ -611,13 +717,17 @@ def action_model_template(model, version=None):
         # compatibity method. use info.pkl
         if not os.path.isfile(os.path.join(rdir, 'info.pkl')):
             return False, 'Info file not found'
-
     else:
         # new method, use results.pkl
         if not os.path.isfile(os.path.join(rdir, 'results.pkl')):
             return False, 'Info file not found'
 
-    documentation = Documentation(model, version, context='model')
+    if doc_file is not None:
+        # use the param_file to update existing parameters at the model
+        # directory and save changes to make them persistent
+        success, message = documentation.delta(model, 0, doc_file, iformat='YAML')
+        print(success, message)
+
     documentation.get_upf_template2()
 
     return True, 'Model documentation template created'
