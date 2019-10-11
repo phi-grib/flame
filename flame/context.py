@@ -146,13 +146,12 @@ def build_cmd(arguments, output_format=None):
         LOG.error('Endpoint name not found in model repository.')
         return False, 'Endpoint name not found in model repository.'
 
-    if 'params_file' in arguments:
-
+    if 'param_file' in arguments:
         build = Build(arguments['endpoint'], param_file=arguments['param_file'], output_format=output_format)
-
-    else:
-
+    elif 'param_string' in arguments:
         build = Build(arguments['endpoint'], param_string=arguments['param_string'], output_format=output_format)
+    else:
+        build = Build(arguments['endpoint'], output_format=output_format)
 
     ensemble = build.get_ensemble()
 
