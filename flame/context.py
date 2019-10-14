@@ -190,6 +190,11 @@ def build_cmd(arguments, output_format=None):
             LOG.error(f'No training series found')
             return False, 'No training series found'
 
+        # remove pre-existing results file
+        epd = utils.model_path(arguments['endpoint'], 0)
+        rfile = os.path.join(epd, 'results.pkl')
+        os.remove(rfile)
+
         # run the model with the input file
         success, results = build.run(lfile)
 
