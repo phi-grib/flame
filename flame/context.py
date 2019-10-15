@@ -193,7 +193,8 @@ def build_cmd(arguments, output_format=None):
         # remove pre-existing results file
         epd = utils.model_path(arguments['endpoint'], 0)
         rfile = os.path.join(epd, 'results.pkl')
-        os.remove(rfile)
+        if os.path.isfile(rfile):
+            os.remove(rfile)
 
         # run the model with the input file
         success, results = build.run(lfile)
