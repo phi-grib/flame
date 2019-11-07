@@ -401,6 +401,7 @@ class Idata:
                                    ('morganFP', computeMD._RDKit_morganFPS),
                                    ('RDKit_md', computeMD._RDKit_descriptors),
                                    ('padel', computeMD._padel_descriptors),
+                                   ('mordred', computeMD._mordred_descriptors),
                                    ('custom', self.computeMD_custom)])
 
         # check if input methods are members of registered methods
@@ -945,6 +946,7 @@ class Idata:
         # to be complete MD generation.
         # This should never happen, because they
         # do not pass the normalization step
+
         for i, (inform, workflow) in enumerate(zip(success_inform,
                                                    success_workflow)):
             if workflow and not inform:
