@@ -80,6 +80,9 @@ def main():
     parser.add_argument('-d', '--directory',
                         help='Defines the root directory for the models and spaces repositories.',
                         required=False)
+    parser.add_argument('-t', '--documentation_file',
+                        help='File with manually filled documentation fields.',
+                        required=False)
 
     args = parser.parse_args()
 
