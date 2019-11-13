@@ -31,7 +31,6 @@ from rdkit.Chem import rdMolDescriptors
 from rdkit.Chem import Descriptors
 from rdkit.Chem import DataStructs
 from rdkit.ML.Descriptors import MoleculeDescriptors
-from mordred import Calculator, descriptors
 from flame.util import get_logger
 
 LOG = get_logger(__name__)
@@ -53,6 +52,7 @@ def _mordred_descriptors(ifile, **kwargs) -> (bool, (np.ndarray, list, list)):
     # Import pandas library to compute/filter descriptors
     import pandas as pd
     import pathlib
+    from mordred import Calculator, descriptors
 
     try:
         suppl = Chem.SDMolSupplier(ifile)
