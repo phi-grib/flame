@@ -218,7 +218,12 @@ def sbuild_cmd(arguments, output_format=None):
         LOG.error('Endpoint name not found in space repository.')
         return False, 'Endpoint name not found in space repository.'
 
-    sbuild = Sbuild(arguments['space'], param_file=arguments['parameters'], output_format=output_format)
+    if 'param_string' in arguments:
+        sbuild = Sbuild(arguments['space'], param_file=arguments['param_string'], output_format=output_format)
+    elif 'param_file' in arguments:
+        sbuild = Sbuild(arguments['space'], param_file=arguments['param_file'], output_format=output_format)
+    else:
+        sbuild = Sbuild(arguments['space'], output_format=output_format)
 
     ifile = arguments['infile']
     epd = utils.space_path(arguments['space'], 0)
