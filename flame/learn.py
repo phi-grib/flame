@@ -30,7 +30,7 @@ from flame.stats.SVM import SVM
 from flame.stats.GNB import GNB
 from flame.stats.PLSR import PLSR
 from flame.stats.PLSDA import PLSDA
-from flame.stats.combo import median, mean, majority
+from flame.stats.combo import median, mean, majority, matrix
 from sklearn.preprocessing import MinMaxScaler 
 from sklearn.preprocessing import StandardScaler 
 from sklearn.preprocessing import RobustScaler
@@ -65,7 +65,8 @@ class Learn:
                               ('PLSDA', PLSDA), 
                               ('median', median),
                               ('mean', mean),
-                              ('majority', majority)]
+                              ('majority', majority),
+                              ('matrix', matrix)]
 
     def run_custom(self):
         '''

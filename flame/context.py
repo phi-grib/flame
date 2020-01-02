@@ -78,7 +78,7 @@ def get_ensemble_input(task, model_names, model_versions, infile):
             model_res.append(results)
 
     if False in model_suc:
-        return False, 'Some external input sources failed: ', str(model_suc)
+        return False, 'Some external input sources failed: '+str(model_suc)
 
     LOG.info('External input computed')
 
@@ -107,7 +107,14 @@ def predict_cmd(arguments, output_format=None):
 
     ensemble = predict.get_ensemble()
 
+    # ensemble[0]     Boolean with True for ensemble models and False otherwyse
+    # ensemble[1]     List of ensemble model model_names
+    # ensemble[2]     List of ensemble model versions
+
     if ensemble[0]:
+
+        if arguments['infile'] is None:
+            return False, 'ensemble models require allways an input file'
 
         success, model_res = get_ensemble_input(predict, ensemble[1], ensemble[2], arguments['infile'])
 
@@ -155,7 +162,14 @@ def build_cmd(arguments, output_format=None):
 
     ensemble = build.get_ensemble()
 
+    # ensemble[0]     Boolean with True for ensemble models and False otherwyse
+    # ensemble[1]     List of ensemble model model_names
+    # ensemble[2]     List of ensemble model versions
+
     if ensemble[0]:
+
+        if arguments['infile'] is None:
+            return False, 'ensemble models require allways an input file'
 
         success, model_res = get_ensemble_input(build, ensemble[1], ensemble[2], arguments['infile'])
 

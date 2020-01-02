@@ -389,3 +389,164 @@ class majority (Combo):
         
         return yp
 
+class matrix (Combo):
+    """
+       Lockup matrix
+    """
+    def __init__(self, X, Y, parameters, conveyor):
+        Combo.__init__(self, X, Y, parameters, conveyor)
+        self.method_name = 'matrix'
+
+
+
+    def predict(self, X):
+
+        #TODO: load this from a file
+        #load info for each input value [name] (loop + vnum + vzero + vstep)
+        mmatrix = {}
+        mmatrix ['CACO2'] = [0,3,-7.0,1.0]
+        mmatrix ['CACO3'] = [1,3,-7.0,1.0]
+        
+        #load input matrix 
+        vmatrix = [ 10.0,12.0,15.0,
+                    11.0,20.0,25.0,
+                    12.0,18.0,30.0]
+        ##################################
+
+        # obtain dimensions of X matrix
+        self.nobj, self.nvarx = np.shape(X)
+        ymatrix = []
+
+        var_names = self.conveyor.getVal('var_nam')
+        
+        vloop = []
+        vsize = []
+        vzero = []
+        vstep = []
+        for i in var_names:
+            vname = i.split(':')[1]
+            if not vname in mmatrix:
+                return False
+            
+            vloop.append(mmatrix[vname][0]) # inner loop is 0, then 1, 2 etc...
+            vsize.append(mmatrix[vname][1]) # number of bins in the matrix for this variable
+            vzero.append(mmatrix[vname][2]) # origin (left side) of the first bin 
+            vstep.append(mmatrix[vname][3]) # width of each bin, must the identical for all bins
+
+        # compute offset for each variable in sequential order
+        # this means computing the factor for which each
+        # variable value must be multiplied in order to identify
+        # the position the linear vector representing 
+
+        offset = []
+        for i in range(self.nvarx):
+            ioffset = 1.0
+            for j in range(self.nvarx):
+                if vloop[j]<vloop[i]:
+                    ioffset*=vsize[j]
+            offset.append(int(ioffset))
+
+        print ('offset:', offset)
+
+        for j in range (self.nobj):
+
+            ############## move all this to a function with 
+            # input  = the vector of variables X[j] 
+            # output = the Y value
+            # ############################################## 
+            index = []
+            for i in range (self.nvarx):
+                # value of the variable to be binned
+                valuei = X[j,i]
+
+                # max value in the matrix
+                valuemax = vzero[i]+(vsize[i]*vstep[i])
+
+                # any value smaller than vzero plus vstep will 
+                # fall in the first cell (0) 
+                vrule = vzero[i]+vstep[i]
+                
+                irule = 0
+                while vrule < valuemax:
+                    if valuei < vrule:
+                        index.append(irule)
+                        break
+                    else:
+                        vrule += vstep[i]
+                        irule += 1
+                        if vrule >= valuemax:
+                            index.append(irule)
+                            break
+
+            matrix_index = 0
+            for i in range(self.nvarx):
+                matrix_index += (index[i]*offset[i])
+
+            ymatrix.append (vmatrix[matrix_index]) 
+            # ############################################## 
+
+            print ('matrix index, array index and value:', index, matrix_index, vmatrix[matrix_index])
+
+
+        CI_names = self.conveyor.getVal('ensemble_confidence_names')
+        if  CI_names is not None and len(CI_names)==(2 * self.nvarx):
+
+            # compute weigthed mean and CI for the estimator
+            # as described here
+            #
+            #   https://en.wikipedia.org/wiki/Weighted_arithmetic_mean#Weighted_sample_variance
+            #
+
+            # get values
+            CI_vals = self.conveyor.getVal('ensemble_confidence')
+
+            # assume that the CI represent 95% CI and normal distribution        
+            z = 1.96 
+    
+            # # compute weighted average 
+            # xmean = []
+            cilow = []
+            ciupp = []
+
+            for j in range (self.nobj):
+                # w = np.zeros(self.nvarx, dtype = np.float64 )
+
+                # y1000 = []
+                #for r in range (1000):
+
+                    # (to increase efficiency, do this out of the 1000 loop and store values)
+                    # for i in range (self.nvarx):
+                    #     r = CI_vals[j,i*2+1] - CI_vals[j,i*2]
+                    #     sd = r/(z*2)
+
+
+                        # compute a random number with mean 0 and sd 
+                        # add this to the X[j,i]
+                      
+                    # transform X values into lookup indexes
+                    # get value
+                    # append value to list of 1000 y's
+
+                # obtain percentile 5 and 95 from list of 1000 y's
+
+                cilow.append(0.000)
+                ciupp.append(10.000)
+
+            self.conveyor.addVal(np.array(cilow), 
+                        'lower_limit', 
+                        'Lower limit', 
+                        'confidence',
+                        'objs',
+                        'Lower limit of the conformal prediction'
+                    )
+
+            self.conveyor.addVal(np.array(ciupp), 
+                        'upper_limit', 
+                        'Upper limit', 
+                        'confidence',
+                        'objs',
+                        'Upper limit of the conformal prediction'
+                    )
+
+        return np.mean(X,1)
+            

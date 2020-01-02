@@ -30,7 +30,7 @@ from flame.stats.SVM import SVM
 from flame.stats.GNB import GNB
 from flame.stats.PLSR import PLSR
 from flame.stats.PLSDA import PLSDA
-from flame.stats.combo import median, mean, majority
+from flame.stats.combo import median, mean, majority, matrix
 
 from sklearn.metrics import mean_squared_error, matthews_corrcoef as mcc
 from sklearn.metrics import f1_score
@@ -56,7 +56,8 @@ class Apply:
                               ('PLSDA', PLSDA),
                               ('median', median),
                               ('mean', mean),
-                              ('majority', majority)]
+                              ('majority', majority),
+                              ('matrix', matrix)]
 
 
     def external_validation(self):
@@ -403,7 +404,7 @@ class Apply:
 
         if not model:
             self.conveyor.setError('modeling method not recognized')
-            LOG.error(f'Modeling method {self.param.getVal("model")}'
+            LOG.error(f'Modeling method {self.param.getVal("model")} '
                       'not recognized')
             return
         
