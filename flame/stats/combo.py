@@ -21,6 +21,7 @@
 # along with Flame.  If not, see <http://www.gnu.org/licenses/>.
 
 import numpy as np
+import copy
 from sklearn.metrics import mean_squared_error
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import matthews_corrcoef
@@ -398,6 +399,38 @@ class matrix (Combo):
         self.method_name = 'matrix'
 
 
+    def lookup (self, x, vmatrix):
+        """Uses the array x of quantitative values to lookup in the matrix of values vmatrix the
+         corresponding value 
+         
+         The binning of the cells of vmatrix are defined by the following class variables which 
+         define, for each matrix dimension: 
+          - self.vzero: starting value
+          - self.vsize: number of cells
+          - self.vstep: width of bins 
+         
+         Once the variables are transformed into vmatrix indexes, a single matrix_index is computed
+         since the n-dimensional vmatrix is stored as a deconvoluted monodimensional array
+        """
+
+        # transform the values of the vectors into vmatrix indexes
+        index = []
+        for i in range (self.nvarx):
+            cellmax = self.vzero[i]
+            for j in range (int(self.vsize[i])):
+                cellmax += self.vstep[i]
+                if x[i] < cellmax:
+                    break
+            index.append (j)
+
+        # compute the index in the deconvoluted monodimensional vector where
+        # the values of vmatrix are stored
+        matrix_index = 0
+        for i in range(self.nvarx):
+            matrix_index += (index[i]*self.offset[i])
+
+        return vmatrix[matrix_index]
+
 
     def predict(self, X):
 
@@ -408,6 +441,7 @@ class matrix (Combo):
         mmatrix ['CACO3'] = [1,3,-7.0,1.0]
         
         #load input matrix 
+        
         vmatrix = [ 10.0,12.0,15.0,
                     11.0,20.0,25.0,
                     12.0,18.0,30.0]
@@ -415,87 +449,51 @@ class matrix (Combo):
 
         # obtain dimensions of X matrix
         self.nobj, self.nvarx = np.shape(X)
-        ymatrix = []
+        
+        # this is the array of predicted Y values 
+        yarray = []
 
         var_names = self.conveyor.getVal('var_nam')
         
-        vloop = []
-        vsize = []
-        vzero = []
-        vstep = []
+        self.vloop = []
+        self.vsize = []
+        self.vzero = []
+        self.vstep = []
         for i in var_names:
             vname = i.split(':')[1]
             if not vname in mmatrix:
                 return False
             
-            vloop.append(mmatrix[vname][0]) # inner loop is 0, then 1, 2 etc...
-            vsize.append(mmatrix[vname][1]) # number of bins in the matrix for this variable
-            vzero.append(mmatrix[vname][2]) # origin (left side) of the first bin 
-            vstep.append(mmatrix[vname][3]) # width of each bin, must the identical for all bins
+            self.vloop.append(mmatrix[vname][0]) # inner loop is 0, then 1, 2 etc...
+            self.vsize.append(mmatrix[vname][1]) # number of bins in the matrix for this variable
+            self.vzero.append(mmatrix[vname][2]) # origin (left side) of the first bin 
+            self.vstep.append(mmatrix[vname][3]) # width of each bin, must the identical for all bins
 
         # compute offset for each variable in sequential order
         # this means computing the factor for which each
         # variable value must be multiplied in order to identify
         # the position the linear vector representing 
 
-        offset = []
+        self.offset = []
         for i in range(self.nvarx):
             ioffset = 1.0
             for j in range(self.nvarx):
-                if vloop[j]<vloop[i]:
-                    ioffset*=vsize[j]
-            offset.append(int(ioffset))
+                if self.vloop[j]<self.vloop[i]:
+                    ioffset*=self.vsize[j]
+            self.offset.append(int(ioffset))
 
-        print ('offset:', offset)
+        print ('offset:', self.offset)
 
+        # For each object look up in the vmatrix, by transforming the input X variables
+        # into indexes and then extracting the corresponding values
         for j in range (self.nobj):
+            yarray.append (self.lookup (X[j],vmatrix))
 
-            ############## move all this to a function with 
-            # input  = the vector of variables X[j] 
-            # output = the Y value
-            # ############################################## 
-            index = []
-            for i in range (self.nvarx):
-                # value of the variable to be binned
-                valuei = X[j,i]
-
-                # max value in the matrix
-                valuemax = vzero[i]+(vsize[i]*vstep[i])
-
-                # any value smaller than vzero plus vstep will 
-                # fall in the first cell (0) 
-                vrule = vzero[i]+vstep[i]
-                
-                irule = 0
-                while vrule < valuemax:
-                    if valuei < vrule:
-                        index.append(irule)
-                        break
-                    else:
-                        vrule += vstep[i]
-                        irule += 1
-                        if vrule >= valuemax:
-                            index.append(irule)
-                            break
-
-            matrix_index = 0
-            for i in range(self.nvarx):
-                matrix_index += (index[i]*offset[i])
-
-            ymatrix.append (vmatrix[matrix_index]) 
-            # ############################################## 
-
-            print ('matrix index, array index and value:', index, matrix_index, vmatrix[matrix_index])
+        print ('values:', yarray)
 
 
         CI_names = self.conveyor.getVal('ensemble_confidence_names')
         if  CI_names is not None and len(CI_names)==(2 * self.nvarx):
-
-            # compute weigthed mean and CI for the estimator
-            # as described here
-            #
-            #   https://en.wikipedia.org/wiki/Weighted_arithmetic_mean#Weighted_sample_variance
-            #
 
             # get values
             CI_vals = self.conveyor.getVal('ensemble_confidence')
@@ -503,34 +501,35 @@ class matrix (Combo):
             # assume that the CI represent 95% CI and normal distribution        
             z = 1.96 
     
-            # # compute weighted average 
-            # xmean = []
             cilow = []
             ciupp = []
+            cimean = []
 
             for j in range (self.nobj):
-                # w = np.zeros(self.nvarx, dtype = np.float64 )
+                ymulti = []
+                for m in range (1000):
+                    x = copy.copy(X[j])
+                    for i in range (self.nvarx):
+                        r = CI_vals[j,i*2+1] - CI_vals[j,i*2]
+                        sd = r/(z*2)
+                        x[i]+=np.random.normal(0.0,sd)
 
-                # y1000 = []
-                #for r in range (1000):
+                    print (m, x)
+                
+                    ymulti.append (self.lookup (x,vmatrix))
 
-                    # (to increase efficiency, do this out of the 1000 loop and store values)
-                    # for i in range (self.nvarx):
-                    #     r = CI_vals[j,i*2+1] - CI_vals[j,i*2]
-                    #     sd = r/(z*2)
-
-
-                        # compute a random number with mean 0 and sd 
-                        # add this to the X[j,i]
-                      
-                    # transform X values into lookup indexes
-                    # get value
-                    # append value to list of 1000 y's
+                ymulti_array = np.array(ymulti)
+                print (ymulti_array)
 
                 # obtain percentile 5 and 95 from list of 1000 y's
+                cilow.append(np.percentile(ymulti_array,5))
+                ciupp.append(np.percentile(ymulti_array,95))
+                cimean.append (np.mean(ymulti_array))
+                print (np.percentile(ymulti_array,5))
 
-                cilow.append(0.000)
-                ciupp.append(10.000)
+            print ('****',cilow)
+            print ('====',cimean)
+            print ('++++',ciupp)
 
             self.conveyor.addVal(np.array(cilow), 
                         'lower_limit', 
@@ -548,5 +547,5 @@ class matrix (Combo):
                         'Upper limit of the conformal prediction'
                     )
 
-        return np.mean(X,1)
+        return np.array(yarray)
             
