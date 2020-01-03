@@ -281,6 +281,7 @@ model:
     - mean
     - median
     - majority
+    - matrix
   description: List of available algorithms
   dependencies: 
     input_type: molecule
