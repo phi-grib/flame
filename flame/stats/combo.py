@@ -493,6 +493,9 @@ class matrix (Combo):
 
 
         CI_names = self.conveyor.getVal('ensemble_confidence_names')
+
+        # if all the original methods contain CI run a simulation to compute the CI for the 
+        # output values and return the mean, the 5% percentil and 95% percentil of the values obtained 
         if  CI_names is not None and len(CI_names)==(2 * self.nvarx):
 
             # get values
@@ -514,18 +517,18 @@ class matrix (Combo):
                         sd = r/(z*2)
                         x[i]+=np.random.normal(0.0,sd)
 
-                    print (m, x)
+                    #print (m, x)
                 
                     ymulti.append (self.lookup (x,vmatrix))
 
                 ymulti_array = np.array(ymulti)
-                print (ymulti_array)
+                #print (ymulti_array)
 
                 # obtain percentile 5 and 95 from list of 1000 y's
                 cilow.append(np.percentile(ymulti_array,5))
                 ciupp.append(np.percentile(ymulti_array,95))
                 cimean.append (np.mean(ymulti_array))
-                print (np.percentile(ymulti_array,5))
+                #print (np.percentile(ymulti_array,5))
 
             print ('****',cilow)
             print ('====',cimean)
@@ -546,6 +549,8 @@ class matrix (Combo):
                         'objs',
                         'Upper limit of the conformal prediction'
                     )
+        
+            return (np.array(cimean))
 
-        return np.array(yarray)
+        return (np.array(yarray))
             
