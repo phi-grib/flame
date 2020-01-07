@@ -20,7 +20,7 @@ dependencies:
   - pytest
   - psycopg2
   - pip:
-     - django
+     - django==2.2.8
      - djangorestframework
      - django-cors-headers
      - djangorestframework-yaml
