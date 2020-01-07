@@ -445,6 +445,8 @@ class Idata:
                               'does not match those computed by other methods')
                     continue
 
+                #print (np.shape(combined_md), np.shape(results['matrix']))
+
                 combined_md = np.hstack((combined_md, results['matrix']))
                 combined_nm.extend(results['names'])
 
