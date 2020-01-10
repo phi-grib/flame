@@ -169,6 +169,13 @@ def getVal(mol, value_label) :
 
     value_num = None
 
+    # the value_label must be string, not a list 
+    if not isinstance(value_label,str):
+
+        LOG.error('SDFile property name must be a text string')
+        
+        return None
+
     # if the SDFile contains the field
     if mol.HasProp(value_label):  
 

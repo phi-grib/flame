@@ -642,6 +642,18 @@ class BaseEstimator:
 
         Yp = self.estimator.predict(Xb)
 
+        # if conveyor contains experimental values for any of the objects replace the
+        # predictions with the experimental results
+        exp = self.conveyor.getVal('experim')
+        if exp is not None:
+            if len(exp) == len(Yp):
+                for i in range (len(Yp)):
+                    if not np.isnan(exp[i]):
+                        # print (exp[i], Yp[i])
+                        Yp[i] = exp[i]
+                    else:
+                        exp[i]= float ('-99999')
+
         self.conveyor.addVal(Yp, 'values', 'Prediction',
                         'result', 'objs',
                         'Results of the prediction', 'main')
@@ -658,15 +670,33 @@ class BaseEstimator:
             Xb, significance=self.param.getVal('conformalSignificance'))
 
         if self.param.getVal('quantitative'):
-            mean1 = np.mean(prediction, axis=1)
+            Yp = np.mean(prediction, axis=1)
+            
             lower_limit = prediction[:, 0]
             upper_limit = prediction[:, 1]
-            self.conveyor.addVal(mean1, 'values', 'Prediction',
-                             'result', 'objs',
-                              'Results of the prediction', 'main')
+
+            # if conveyor contains experimental values for any of the objects replace the
+            # predictions with the experimental results
+            exp = self.conveyor.getVal('experim')
+            if exp is not None:
+                if len(exp) == len(Yp):
+                    for i in range (len(Yp)):
+                        if not np.isnan(exp[i]):
+                            # print (exp[i], Yp[i])
+                            Yp[i] = exp[i]
+                            lower_limit[i] = exp[i]
+                            upper_limit[i] = exp[i]
+                        else:
+                            exp[i]= float ('-99999')
+
+            self.conveyor.addVal(Yp, 'values', 'Prediction',
+                    'result', 'objs',
+                    'Results of the prediction', 'main')
+
             self.conveyor.addVal(lower_limit, 'lower_limit',
                              'Lower limit', 'confidence', 'objs',
                               'Lower limit of the conformal prediction')
+
             self.conveyor.addVal(upper_limit, 'upper_limit',
                              'Upper limit', 'confidence', 'objs',
                               'Upper limit of the conformal prediction')
@@ -697,6 +727,20 @@ class BaseEstimator:
                     Yp[j]=-1
                 elif p0 == 0: # if do not belong to class 0 is must be class 1 (positive)
                     Yp[j]=1
+
+            # if conveyor contains experimental values for any of the objects replace the
+            # predictions with the experimental results
+            exp = self.conveyor.getVal('experim')
+            if exp is not None:
+                if len(exp) == len(Yp):
+                    for i in range (len(Yp)):
+                        if not np.isnan(exp[i]):
+                            # print (exp[i], Yp[i])
+                            Yp[i] = exp[i]
+                        else:
+                            exp[i]= float ('-99999')
+
+            #TODO: moddify the classes
 
             self.conveyor.addVal(Yp, 'values', 'Prediction',
                     'result', 'objs',

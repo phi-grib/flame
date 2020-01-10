@@ -396,6 +396,13 @@ class majority (Combo):
 class matrix (Combo):
     """
        Lockup matrix
+
+       TODO: 
+       - transform/customize values of matrix?
+       - adding extra model info and validation results to conveyor
+       - implementing qualitative input and/or output
+       - use conformal settings to decide to run or not the simulations to compute CI
+
     """
     def __init__(self, X, Y, parameters, conveyor):
         Combo.__init__(self, X, Y, parameters, conveyor)

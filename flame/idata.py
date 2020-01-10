@@ -180,7 +180,8 @@ class Idata:
             # which overrides any model predicted value
             exp = None    
             if self.param.getVal('SDFile_experimental') is not None:
-                exp = sdfutils.getVal(mol, self.param.getVal('SDFile_experimental'))
+                if isinstance (self.param.getVal('SDFile_experimental'),str):
+                    exp = sdfutils.getVal(mol, self.param.getVal('SDFile_experimental'))
 
             # generates a SMILES
             sml = None
@@ -219,7 +220,7 @@ class Idata:
         if not utils.is_empty(obj_exp):
             self.conveyor.addVal(np.array(obj_exp, dtype=np.float64),
                              'experim', 'Experim.',
-                             'decoration', 'objs',
+                             'method', 'objs',
                              'Experimental anotation present in the input file')
 
         LOG.debug(f'processed {obj_num} molecules'
