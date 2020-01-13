@@ -308,7 +308,6 @@ class Apply:
         prepro_file = os.path.join(self.param.getVal('model_path'),
                                     'preprocessing.pkl')
 
-        print (prepro_file)
         LOG.debug(f'Loading model from pickle file, path: {prepro_file}')
         try:
             with open(prepro_file, "rb") as input_file:
@@ -349,7 +348,6 @@ class Apply:
         if self.scaler is None:
             return False, 'Inconsistency error. Scaling method defined but no Scaler loaded'
         
-        print ('scaling...')
         return True, self.scaler.transform(X)
 
     def run_internal(self): 
