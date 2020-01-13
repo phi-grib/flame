@@ -651,8 +651,8 @@ class BaseEstimator:
                     if not np.isnan(exp[i]):
                         # print (exp[i], Yp[i])
                         Yp[i] = exp[i]
-                    else:
-                        exp[i]= float ('-99999')
+                    # else:
+                    #     exp[i]= float ('-99999')
 
         self.conveyor.addVal(Yp, 'values', 'Prediction',
                         'result', 'objs',
@@ -686,8 +686,8 @@ class BaseEstimator:
                             Yp[i] = exp[i]
                             lower_limit[i] = exp[i]
                             upper_limit[i] = exp[i]
-                        else:
-                            exp[i]= float ('-99999')
+                        # else:
+                        #     exp[i]= float ('-99999')
 
             self.conveyor.addVal(Yp, 'values', 'Prediction',
                     'result', 'objs',
@@ -737,8 +737,8 @@ class BaseEstimator:
                         if not np.isnan(exp[i]):
                             # print (exp[i], Yp[i])
                             Yp[i] = exp[i]
-                        else:
-                            exp[i]= float ('-99999')
+                        # else:
+                        #     exp[i]= float ('-99999')
 
             #TODO: moddify the classes
 
