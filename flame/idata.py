@@ -402,7 +402,6 @@ class Idata:
                                    ('morganFP', computeMD._RDKit_morganFPS),
                                    ('RDKit_md', computeMD._RDKit_descriptors),
                                    ('padel', computeMD._padel_descriptors),
-                                   ('mordred', computeMD._mordred_descriptors),
                                    ('custom', self.computeMD_custom)])
 
         # check if input methods are members of registered methods

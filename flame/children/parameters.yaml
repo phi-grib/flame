@@ -163,7 +163,6 @@ computeMD_method:
     - RDKit_md
     - morganFP
     - padel
-    - mordred
     - custom
   description: Selection of molecular descriptors to be used in model generation
   dependencies: 
@@ -200,13 +199,6 @@ MD_settings:
       options:
         - null
       description: Name of problematic RDKit molecular descriptor to avoid 
-    mordred_3D:
-      object_type: boolean
-      writable: false
-      value: False
-      options:
-        - null
-      description: Whether to compute or not mordred 3D descriptors
   options: null
   description: Settings for molecular descriptors (when needed) 
   dependencies: 
