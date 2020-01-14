@@ -63,25 +63,6 @@ def _mordred_descriptors(ifile, **kwargs) -> (bool, (np.ndarray, list, list)):
     # Whether or not compute 3D descriptors
     compute3D = kwargs['mordred_3D']
     
-    # Read black list for 2D or 3D descriptors
-    wkd = pathlib.Path(os.path.dirname(os.path.abspath(__file__)))
-    black_list = []
-    if not compute3D:
-        try:
-            black_list = pd.read_csv(str(wkd) + '/mordred_discarded_1percent2D.csv',
-                                     sep="\t")
-            black_list = black_list['Name'].to_list()
-        except Exception as e:
-            print(e)
-    else:
-        try:
-            black_list = pd.read_csv(str(wkd) + '/mordred3D_discarded_1percent.csv',
-                                     sep="\t")
-            black_list = black_list['Name'].to_list()
-        except Exception as e:
-            print(e)
-
-    LOG.info(f'computing mordred descriptors... with ignore_3D option = { not compute3D}')
 
      # list of MD computation success/failure for every object
     success_list = []
@@ -109,23 +90,8 @@ def _mordred_descriptors(ifile, **kwargs) -> (bool, (np.ndarray, list, list)):
    
     # Create a DataFrame and remove black list descritors 
     frame = pd.DataFrame(xmatrix, columns=nms)
-    frame = frame.drop(columns=black_list, axis=0)
+    frame = frame.fillna(0)
     xmatrix = frame.values
-    nms = frame.columns.to_list()
-    success_list2 = []
-    matrix_f = []
-    # Now check nan values in rows 
-    for row in xmatrix:
-        if np.isnan(row).any():
-            success_list2.append(False)
-        else:
-            matrix_f.append(row)
-            success_list2.append(True)
-    xmatrix = np.asarray(matrix_f)
-    success_l1 = np.asarray(success_list)
-    success_l2 = np.asarray(success_list2)
-    # Update success list
-    success_list = list(success_l1 & success_l2) 
     if num_obj < est_obj:
         clean_extra_xrows(xmatrix, num_obj, est_obj)
 
