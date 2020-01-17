@@ -19,7 +19,7 @@ dependencies:
   - requests
   - pytest
   - psycopg2
-  - xgboost
+  - xgboost 
   - pip:
      - django==2.2.8
      - djangorestframework
