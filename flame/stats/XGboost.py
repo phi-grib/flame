@@ -22,7 +22,10 @@
 
 from copy import copy
 
-from sklearn.ensemble import RandomForestClassifier
+from flame.stats.xgb_adapter import XGBoostClassifier
+from flame.stats.xgb_adapter import XGBoostRegressor
+from xgboost.sklearn import XGBClassifier
+from xgboost.sklearn import XGBRegressor
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.neighbors import KNeighborsRegressor
 
@@ -38,7 +41,7 @@ from flame.util import get_logger
 LOG = get_logger(__name__)
 
 
-class RF(BaseEstimator):
+class XGBOOST(BaseEstimator):
     """
         This class inherits from BaseEstimator and wraps SKLEARN
         RandomForestClassifier or RandomForestRegressor estimator
@@ -74,20 +77,20 @@ class RF(BaseEstimator):
             return
 
         # Load estimator parameters        
-        self.estimator_parameters = self.param.getDict('RF_parameters')
+        self.estimator_parameters = self.param.getDict('XGBOOST_parameters')
 
         # Load tune parameters
-        self.tune_parameters = self.param.getDict('RF_optimize')
+        self.tune_parameters = self.param.getDict('XGBOOST_optimize')
 
         if self.param.getVal('quantitative'):
-            self.name = "RF-R"
-            self.tune_parameters.pop("class_weight")
-            self.estimator_parameters.pop("class_weight")
+            self.estimator_parameters['objective'] = 'reg:squarederror'
+            self.name = "XGB-Regressor"
         else:
-            self.name = "RF-C"
+            self.estimator_parameters['objective'] = 'binary:logistic'
+            self.name = "XGB-Classifier"
 
     def build(self):
-        '''Build a new RF model with the X and Y numpy matrices '''
+        '''Build a new XGBOOST model with the X and Y numpy matrices '''
 
         # Make a copy of data matrices
         X = self.X.copy()
@@ -100,46 +103,60 @@ class RF(BaseEstimator):
         # If tune then call gridsearch to optimize the estimator
         if self.param.getVal('tune'):
 
-            LOG.info("Optimizing RF estimator")
+            LOG.info("Optimizing XGBOOST estimator")
             
             try:
                 # Check type of model
                 if self.param.getVal('quantitative'):
-                    self.estimator = RandomForestRegressor(
+                    self.estimator = XGBRegressor(
                                         **self.estimator_parameters)
                     self.optimize(X, Y, self.estimator, self.tune_parameters)
-                    results.append(('model','model type','RF quantitative (optimized)'))
+                    results.append(('model','model type','XGBOOST quantitative (optimized)'))
                 else:
-                    self.estimator = RandomForestClassifier(
+                    self.estimator = XGBoostClassifier(
                                         **self.estimator_parameters)
+                    params = self.estimator.get_params()
+                    params['num_class'] = 2
                     self.optimize(X, Y, self.estimator,
                                   self.tune_parameters)
-                    results.append(('model','model type','RF qualitative (optimized)'))
+                    results.append(('model','model type','XGBOOST qualitative (optimized)'))
 
             except Exception as e:
-                return False, f'Exception optimizing RF estimator with exception {e}'
+                return False, f'Exception optimizing XGBOOST estimator with exception {e}'
             
         else:
             try:
                 if self.param.getVal('quantitative'):
 
-                    LOG.info("Building Quantitative RF model")
-
-                    self.estimator = RandomForestRegressor(
-                        **self.estimator_parameters)
-                    results.append(('model', 'model type', 'RF quantitative'))
+                    LOG.info("Building Quantitative XGBOOST model")
+                    params = {
+                        'objective': 'reg:squarederror',
+                        # 'max_depth': 20,
+                        # 'learning_rate': 1.0,
+                        # 'silent': 1,
+                        # 'n_estimators': 25
+                        }
+                    self.estimator = XGBRegressor(**params)
+                    results.append(('model', 'model type', 'XGBOOST quantitative'))
                 else:
 
-                    LOG.info("Building Qualitative RF model")
-
-                    self.estimator = RandomForestClassifier(
-                        **self.estimator_parameters)
-                    results.append(('model', 'model type', 'RF qualitative'))
+                    LOG.info("Building Qualitative XGBOOST model")
+                    params = {
+                        'objective': 'binary:logistic',
+                         'max_depth': 3,
+                         #'learning_rate': 0.7,
+                         #'silent': 1,
+                         'n_estimators': 100
+                        }
+                    self.estimator = XGBClassifier(**self.estimator_parameters                       )
+                    results.append(('model', 'model type', 'XGBOOST qualitative'))
 
                 self.estimator.fit(X, Y)
+                print(self.estimator)
 
             except Exception as e:
-                return False, f'Exception building RF estimator with exception {e}'
+                raise e
+                return False, f'Exception building XGBOOST estimator with exception {e}'
 
         self.estimator_temp = copy(self.estimator)
 
@@ -150,7 +167,7 @@ class RF(BaseEstimator):
             # Conformal regressor
             if self.param.getVal('quantitative'):
 
-                LOG.info("Building conformal Quantitative RF model")
+                LOG.info("Building conformal Quantitative XGBOOST model")
 
                 underlying_model = RegressorAdapter(self.estimator_temp)
                 #normalizing_model = RegressorAdapter(
@@ -172,12 +189,12 @@ class RF(BaseEstimator):
                                                 BootstrapSampler())
 
                 self.estimator.fit(X, Y)
-                results.append(('model', 'model type', 'conformal RF quantitative'))
+                results.append(('model', 'model type', 'conformal XGBOOST quantitative'))
 
             # Conformal classifier
             else:
 
-                LOG.info("Building conformal Qualitative RF model")
+                LOG.info("Building conformal Qualitative XGBOOST model")
 
                 self.estimator = AggregatedCp(
                                     IcpClassifier(
@@ -190,10 +207,11 @@ class RF(BaseEstimator):
 
                 # Fit estimator to the data
                 self.estimator.fit(X, Y)
-                results.append(('model', 'model type', 'conformal RF qualitative'))
+                results.append(('model', 'model type', 'conformal XGBOOST qualitative'))
 
         except Exception as e:
-            return False, f'Exception building conformal RF estimator with exception {e}'
+            raise e
+            return False, f'Exception building conformal XGBOOST estimator with exception {e}'
 
         return True, results
 

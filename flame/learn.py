@@ -30,6 +30,7 @@ from flame.stats.SVM import SVM
 from flame.stats.GNB import GNB
 from flame.stats.PLSR import PLSR
 from flame.stats.PLSDA import PLSDA
+from flame.stats.XGboost import XGBOOST
 from flame.stats.combo import median, mean, majority, matrix
 from sklearn.preprocessing import MinMaxScaler 
 from sklearn.preprocessing import StandardScaler 
@@ -59,6 +60,7 @@ class Learn:
 
         # expand with new methods here:
         self.registered_methods = [('RF', RF),
+                              ('XGBOOST', XGBOOST),
                               ('SVM', SVM),
                               ('GNB', GNB),
                               ('PLSR', PLSR),
