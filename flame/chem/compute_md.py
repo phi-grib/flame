@@ -335,6 +335,7 @@ def _RDKit_descriptors(ifile, **kwargs) -> (bool, (np.ndarray, list, list)):
 
     #nms = [x[0] for x in Descriptors._descList]
 
+    #print (nms)
     md = MoleculeDescriptors.MolecularDescriptorCalculator(nms)
 
     # list of MD computation success/failure for every object
@@ -411,6 +412,8 @@ def _RDKit_properties(ifile, **kwargs) -> (bool, (np.ndarray, list, list)):
     # get from here num of properties
     md_name = [prop_name for prop_name in properties.GetPropertyNames()]
 
+    #print (md_name)
+
     success_list = []
     est_obj = len(suppl)
     xmatrix = np.zeros((est_obj,len(md_name)))
@@ -421,6 +424,7 @@ def _RDKit_properties(ifile, **kwargs) -> (bool, (np.ndarray, list, list)):
             if mol is None:
                 LOG.error(
                     f'Unable to process molecule #{num_obj+1} in {ifile}')
+
                 success_list.append(False)
                 continue
 
@@ -453,6 +457,7 @@ def _RDKit_properties(ifile, **kwargs) -> (bool, (np.ndarray, list, list)):
     LOG.debug(f'computed RDKit properties matrix with shape {np.shape(xmatrix)}')
     if num_obj == 0:
         return False, 'Unable to compute RDKit properties for molecule '+ifile
+
 
     results = {
         'matrix': xmatrix,

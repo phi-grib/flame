@@ -146,8 +146,12 @@ def getName(mol, count=1, field=None):
 
     for iname in candidates:
         if mol.HasProp(iname):
-            name = mol.GetProp(iname)
-            break
+            # in some cases the name contains not UTF-8 codes producing errors
+            try:
+                name = mol.GetProp(iname)
+                break
+            except:
+                pass
 
     if name == '':
         name = 'mol%0.10d' % count
