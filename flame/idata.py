@@ -310,11 +310,21 @@ class Idata:
                         LOG.error(f'Critical standardize execution exception {e}'
                                     f' when processing mol #{mcount} {name}. Discarding molecule')
                         success_list[mcount]=False
+                        mcount += 1
                         continue
 
                 else:
                     #LOG.info(f'Skipping normalization.')
-                    parent = Chem.MolToMolBlock(m)
+                    try:
+                        parent = Chem.MolToMolBlock(m)
+                    except Exception as e:
+                        # this error means an severe error when processing the molecule
+                        # the molecule is discarded and therefore the list of molecules must be updated 
+                        LOG.error(f'Critical molecule processing exception {e}'
+                                    f' when processing mol #{mcount} {name}. Discarding molecule')
+                        success_list[mcount]=False
+                        mcount += 1
+                        continue
 
                 # in any case, write parent plus internal ID (flameID)
                 fo.write(parent)
@@ -445,8 +455,6 @@ class Idata:
                     LOG.error(f'Number of objects processed by {method}'
                               'does not match those computed by other methods')
                     continue
-
-                #print (np.shape(combined_md), np.shape(results['matrix']))
 
                 combined_md = np.hstack((combined_md, results['matrix']))
                 combined_nm.extend(results['names'])
@@ -609,11 +617,11 @@ class Idata:
         Saves the results in serialized form, together with the MD5 signature
         of the control class and the input file.
         '''
-
+        #######################################################
         # uncomment to avoid saving results
         # print ('*** save commented for debugging ***')
         # return
-        ##
+        #######################################################
 
         if self.param.getVal('input_type') == 'model_ensemble':
             return
@@ -1103,8 +1111,6 @@ class Idata:
                 # predictions
                 if item['type'] == 'result':
                     item_key = item['key']
-
-                    #print (item)
 
                     if combined_md is None:  # for first element just copy
                         combined_md = np.array(
