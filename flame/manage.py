@@ -702,6 +702,40 @@ def action_report():
     print (json.dumps(results))
     return True, json.dumps(results)
 
+def getdate (element):
+    return element[0]
+
+def action_predictions_list ():
+    '''
+    shows a table with the list of predictions 
+    '''
+    # get de model repo path
+    predictions_path = pathlib.Path(utils.predictions_repository_path())
+
+    # get directories in model repo path
+    dirs = [x for x in predictions_path.iterdir() if x.is_dir()]
+
+    result = []
+    # iterate models
+    for d in dirs:
+        label = d.parts[-1]
+
+        with open(d.joinpath('prediction-meta.pkl'), 'rb') as handle:
+            endpoint = pickle.load (handle)
+            version  = pickle.load (handle)
+            ifile    = pickle.load (handle)
+            time     = pickle.load (handle)
+            timestamp= pickle.load (handle)
+
+        line = f'{label} {endpoint} {version} {time} {ifile}'
+        result.append( (timestamp, line) )
+
+    result.sort (reverse=True, key = getdate)
+
+    [print (i[1]) for i in result]
+
+    return True, 'OK'
+
 def action_model_template(model, version=None, doc_file=None):
     '''
     Returns a TSV model reporting template

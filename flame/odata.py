@@ -317,20 +317,25 @@ class Odata():
 
         #print (self.conveyor.getJSON())
         
-        # Save conveyor from prediction just if confidential is False
+        # Save conveyor from prediction only if confidential is False
         if not self.param.getVal('confidential'):
 
             results_pkl_path = os.path.join(opath,'prediction-results.pkl')
             meta_pkl_path = os.path.join(opath,'prediction-meta.pkl')
-            LOG.debug('saving model results to:{}'.format(results_pkl_path))
+            LOG.info('saving model results to: {}'.format(opath))
+
+            # dump conveyor
             with open(results_pkl_path, 'wb') as handle:
                 self.conveyor.save(handle)
+
+            # dump metainfo
             with open(meta_pkl_path, 'wb') as handle:
                 pickle.dump (self.conveyor.getMeta('endpoint'),handle)
                 pickle.dump (self.conveyor.getMeta('version'),handle)
                 pickle.dump (self.conveyor.getMeta('input_file'),handle)
                 now = datetime.now()
                 pickle.dump (now.strftime("%d/%m/%Y %H:%M:%S"),handle)
+                pickle.dump (datetime.timestamp(now), handle)
 
                 # print (self.conveyor.getMeta('endpoint'))
                 # print (self.conveyor.getMeta('version'))
@@ -338,6 +343,7 @@ class Odata():
 
                 # now = datetime.now()
                 # print (now.strftime("%d/%m/%Y %H:%M:%S"))
+
         return True, output
 
 

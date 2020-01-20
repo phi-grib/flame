@@ -354,6 +354,8 @@ def manage_cmd(args):
             success, results = manage.action_report()
         elif args.action == 'list':
             success, results = manage.action_list(args.endpoint)
+        elif args.action == 'predictions':
+            success, results = manage.action_predictions_list()
         else: 
             success = False
             results = "Specified manage action is not defined"
