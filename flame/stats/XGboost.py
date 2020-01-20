@@ -22,8 +22,6 @@
 
 from copy import copy
 
-from flame.stats.xgb_adapter import XGBoostClassifier
-from flame.stats.xgb_adapter import XGBoostRegressor
 from xgboost.sklearn import XGBClassifier
 from xgboost.sklearn import XGBRegressor
 from sklearn.ensemble import RandomForestRegressor
