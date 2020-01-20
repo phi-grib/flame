@@ -65,16 +65,17 @@ def config(path: str=None) -> bool:
     if path is None:  # set default
         default_models_path = Path(appdirs.user_data_dir('models', 'flame'))
         default_spaces_path = Path(appdirs.user_data_dir('spaces', 'flame'))
+        default_predictions_path = Path(appdirs.user_data_dir('predictions', 'flame'))
 
-        print(f'Setting model and space repositories (default) to {default_models_path} and {default_spaces_path}'
+        print(f'Setting model, space and predictions repositories (default) to {default_models_path}, {default_spaces_path} and {default_predictions_path}'
               '\nWould you like to continue?(y/n)')
 
         if ask_user():
-            if default_models_path.exists() or default_spaces_path.exists():
+            if default_models_path.exists() or default_spaces_path.exists() or default_predictions_path.exists():
                 print(f'These paths already exists. '
                       'Would you like to set them anyway?(y/n)')
                 if ask_user():
-                    utils.set_repositories(default_models_path, default_spaces_path)
+                    utils.set_repositories(default_models_path, default_spaces_path, default_predictions_path)
                 else:
                     print('aborting...')
                     return False
@@ -82,10 +83,12 @@ def config(path: str=None) -> bool:
             else:  # models_path doesn't exists
                 default_models_path.mkdir(parents=True)
                 default_spaces_path.mkdir(parents=True)
-                utils.set_repositories(default_models_path, default_spaces_path)
+                default_predictions_path.mkdir(parents=True)
+                utils.set_repositories(default_models_path, default_spaces_path, default_predictions_path)
 
             print(f'model repository set to {default_models_path}')
             print(f'space repository set to {default_spaces_path}')
+            print(f'predictions repository set to {default_predictions_path}')
             return True
 
         else:
@@ -96,15 +99,18 @@ def config(path: str=None) -> bool:
         in_path = Path(path).expanduser()
         in_path_models = Path.joinpath(in_path,'models')
         in_path_spaces = Path.joinpath(in_path,'spaces')
+        in_path_predictions = Path.joinpath(in_path,'predictions')
         current_models_path = Path(utils.model_repository_path())
         current_spaces_path = Path(utils.space_repository_path())
+        current_predictions_path = Path(utils.predictions_repository_path())
 
-        if in_path_models == current_models_path and in_path_spaces == current_spaces_path:
+        if in_path_models == current_models_path and in_path_spaces == current_spaces_path and in_path_predictions == current_predictions_path:
             print(f'{in_path_models} already is model repository path')
             print(f'{in_path_spaces} already is space repository path')
+            print(f'{in_path_predictions} already is predictions repository path')
             return False
 
-        elif not (in_path_models.exists() and in_path_spaces.exists()):
+        elif not (in_path_models.exists() and in_path_spaces.exists() and in_path_predictions.exists()):
             print("paths doesn't exists. Would you like to create it?(y/n)")
 
             if ask_user():
@@ -112,13 +118,15 @@ def config(path: str=None) -> bool:
                     in_path_models.mkdir(parents=True)
                 if not in_path_spaces.exists():                
                     in_path_spaces.mkdir(parents=True)
+                if not in_path_predictions.exists():                
+                    in_path_predictions.mkdir(parents=True)
                 utils.set_repositories(in_path_models, in_path_spaces)
             else:
                 print('aborting...')
                 return False
 
         else:  # in_path exists
-            utils.set_repositories(in_path_models, in_path_spaces)
+            utils.set_repositories(in_path_models, in_path_spaces, in_path_predictions)
 
         print(f'space repository set to {in_path_spaces}')
         print(f'model repository set to {in_path_models}')

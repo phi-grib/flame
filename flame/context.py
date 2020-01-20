@@ -103,7 +103,7 @@ def predict_cmd(arguments, output_format=None):
         LOG.error('Endpoint name not found in model repository.')
         return False, 'Endpoint name not found in model repository.'
 
-    predict = Predict(arguments['endpoint'], arguments['version'], output_format)
+    predict = Predict(arguments['endpoint'], arguments['version'],  output_format, label=arguments['label'],)
 
     ensemble = predict.get_ensemble()
 

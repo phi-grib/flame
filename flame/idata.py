@@ -79,7 +79,7 @@ class Idata:
             randomName = 'flame-'+utils.id_generator()
             self.dest_path = os.path.join(tempfile.gettempdir(), randomName)
         else:
-            self.idate = None
+            self.idata = None
             self.ifile = input_source
             self.dest_path = os.path.dirname(self.ifile)
 
@@ -199,7 +199,11 @@ class Idata:
             success_list.append(True)
             obj_num += 1
 
+        # Insert in metadata the name of the input file
+        self.conveyor.addMeta('input_file',ifile)
+
         # Insert the values as lists in 'results' using an utility function
+
         self.conveyor.addVal(obj_num, 'obj_num', 'Num mol',
                          'method', 'single',
                          'Number of molecules present in the input file')

@@ -96,6 +96,11 @@ class Conveyor:
     def addMeta (self, key, value):
         self.meta[key] = value
 
+    def getMeta (self, key):
+        if not key in self.meta:
+            return None
+        return self.meta[key]
+
     def getError (self):
         return self.error is not None
     
