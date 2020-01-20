@@ -220,7 +220,7 @@ class BaseEstimator:
                                 (Y_pred[:, 1].reshape(1, -1) 
                                 > Y)).reshape(1, -1)
         # Compute the accuracy (number of instances within the AD).
-        accuracy = np.sum(inside_interval[inside_interval])/len(Y)
+        accuracy = np.sum(inside_interval/len(Y))
 
         # Cut into two decimals.
         self.conformal_interval_medians = (np.mean(Y_pred, axis=1))
