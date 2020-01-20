@@ -307,7 +307,7 @@ conformalSignificance:
   advanced: regular
   object_type: float
   writable: true
-  value: 0.1
+  value: 0.2
   options: null
   min: 0
   max: 1
