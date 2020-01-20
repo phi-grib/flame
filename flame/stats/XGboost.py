@@ -88,15 +88,16 @@ class XGBOOST(BaseEstimator):
 
     def build(self):
         '''Build a new XGBOOST model with the X and Y numpy matrices '''
+
         try:
             from xgboost.sklearn import XGBClassifier
             from xgboost.sklearn import XGBRegressor
         except Exception as e:
-            return False, f'XGboost libraries are not installed, this probably\
-                 means the program is running\under a windows environment, please\
-                 contact your IT support in order to manually install\
-                 needed libraries'
-    '
+            return False,  \
+                """XGboost libraries are not installed, this probably
+                means the program is running under a windows
+                environment, pleasecontact your IT support in 
+                order to manually install needed libraries """
 
         # Make a copy of data matrices
         X = self.X.copy()
