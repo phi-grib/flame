@@ -3,6 +3,7 @@ channels:
   - default
   - rdkit
   - mordred-descriptor
+  - conda-forge xgboost
 dependencies:
   - cherrypy=>18
   - numpy=>1.14.0
