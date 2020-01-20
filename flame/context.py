@@ -103,6 +103,12 @@ def predict_cmd(arguments, output_format=None):
         LOG.error('Endpoint name not found in model repository.')
         return False, 'Endpoint name not found in model repository.'
 
+    # ** DEPRECATE **
+    # this is a back-compatibility trick for older versions of APIs 
+    # not supporting the label argument
+    if 'label' not in arguments:
+        arguments['label'] = 'temp'
+
     predict = Predict(arguments['endpoint'], arguments['version'],  output_format, label=arguments['label'],)
 
     ensemble = predict.get_ensemble()

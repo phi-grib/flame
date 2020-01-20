@@ -120,8 +120,8 @@ def main():
 
         command_predict = {'endpoint': args.endpoint,
                  'version': version,
-                 'infile': args.infile,
-                 'label': label}
+                 'label': label,
+                 'infile': args.infile}
 
         LOG.info(f'Starting prediction with model {args.endpoint}'
                  f' version {version} for file {args.infile}, labelled as {label}')
