@@ -183,6 +183,12 @@ def _RDKit_morganFPS(ifile, **kwargs) -> (bool, (np.ndarray, list, list)):
                 success_list.append(False)
                 continue
 
+            if mol.GetNumHeavyAtoms() == 0:
+                LOG.error('Empty molecule'
+                          f'#{num_obj+1} in {ifile}')
+                success_list.append(False)
+                continue
+
             fp = AllChem.GetMorganFingerprintAsBitVect(mol,
                             morgan_radius,  
                             useFeatures=morgan_features)
@@ -218,93 +224,93 @@ def _RDKit_morganFPS(ifile, **kwargs) -> (bool, (np.ndarray, list, list)):
     return True, results
 
 
-def _padel_descriptors(ifile):
-    ''' 
-    computes Padel molecular descriptors calling an external web service for
-    the file provided as argument
+# def _padel_descriptors(ifile):
+#     ''' 
+#     computes Padel molecular descriptors calling an external web service for
+#     the file provided as argument
 
-    output is a boolean and a tupla with the xmatrix and the variable names
+#     output is a boolean and a tupla with the xmatrix and the variable names
 
-    '''
+#     '''
 
-    # TODO: this cannot be hardcoded! maybe read from the component registry?
-    uri = "http://localhost:5000/padel/api/v0.1/calc/json"
+#     # TODO: this cannot be hardcoded! maybe read from the component registry?
+#     uri = "http://localhost:5000/padel/api/v0.1/calc/json"
 
-    tmpdir = os.path.abspath(tempfile.mkdtemp(dir=os.path.dirname(ifile)))
-    shutil.copy(ifile, tmpdir)
+#     tmpdir = os.path.abspath(tempfile.mkdtemp(dir=os.path.dirname(ifile)))
+#     shutil.copy(ifile, tmpdir)
 
-    payload = {
-        '-2d': '',
-        '-dir': tmpdir
-    }
+#     payload = {
+#         '-2d': '',
+#         '-dir': tmpdir
+#     }
 
-    try:
-        req = requests.post(uri, json=payload)
-        if req.status_code != 200:
-            return False, 'ERROR: failed to contact padel service with code: '+str(req.status_code)
-    except:
-        return False, 'ERROR: failed to contact padel service'
+#     try:
+#         req = requests.post(uri, json=payload)
+#         if req.status_code != 200:
+#             return False, 'ERROR: failed to contact padel service with code: '+str(req.status_code)
+#     except:
+#         return False, 'ERROR: failed to contact padel service'
 
-    # DEBUG only
-    print('padel service results : ', req.json())
+#     # DEBUG only
+#     print('padel service results : ', req.json())
 
-    results = req.json()
+#     results = req.json()
 
-    if not results['success']:
-        return False, 'padel service returned error condition'
+#     if not results['success']:
+#         return False, 'padel service returned error condition'
 
-    ofile = os.path.join(tmpdir, results['filename'])
+#     ofile = os.path.join(tmpdir, results['filename'])
 
-    if not os.path.isfile(ofile):
-        return False, 'padel service returned no file'
+#     if not os.path.isfile(ofile):
+#         return False, 'padel service returned no file'
 
-    with open(ofile, 'r') as of:
-        index = 0
-        var_nam = []
-        success_list = []
-        xmatrix = []
+#     with open(ofile, 'r') as of:
+#         index = 0
+#         var_nam = []
+#         success_list = []
+#         xmatrix = []
 
-        for line in of:
+#         for line in of:
 
-            if index == 0:  # we asume that the first row contains var names
-                var_nam = line.strip().split(',')
-                var_nam = var_nam[1:]
+#             if index == 0:  # we asume that the first row contains var names
+#                 var_nam = line.strip().split(',')
+#                 var_nam = var_nam[1:]
 
-            else:
+#             else:
 
-                value_list = line.strip().split(',')
+#                 value_list = line.strip().split(',')
 
-                try:
-                    nvalue_list = [float(x) for x in value_list[1:]]
-                except:
-                    success_list.append(False)
-                    print(
-                        'ERROR (@_padel_descriptors) in Padel results parsing for object '+str(index))
-                    continue
+#                 try:
+#                     nvalue_list = [float(x) for x in value_list[1:]]
+#                 except:
+#                     success_list.append(False)
+#                     print(
+#                         'ERROR (@_padel_descriptors) in Padel results parsing for object '+str(index))
+#                     continue
 
-                md = np.array(nvalue_list, dtype=np.float64)
+#                 md = np.array(nvalue_list, dtype=np.float64)
 
-                # md = np.nan_to_num(md)
-                # detected a rare bug producing extremely large PaDel
-                # descriptors (>1.0e300), leading to overflows
-                # apply a conservative top cutoff of 1.0e10
-                # md [ md > 1.0e10 ] = 1.0e10
+#                 # md = np.nan_to_num(md)
+#                 # detected a rare bug producing extremely large PaDel
+#                 # descriptors (>1.0e300), leading to overflows
+#                 # apply a conservative top cutoff of 1.0e10
+#                 # md [ md > 1.0e10 ] = 1.0e10
 
-                if index == 1:  # copy the value list to the xmatrix
-                    xmatrix = md
-                else:
-                    xmatrix = np.vstack((xmatrix, md))
+#                 if index == 1:  # copy the value list to the xmatrix
+#                     xmatrix = md
+#                 else:
+#                     xmatrix = np.vstack((xmatrix, md))
 
-                success_list.append(True)
+#                 success_list.append(True)
 
-            index += 1
+#             index += 1
 
-    shutil.rmtree(tmpdir)
+#     shutil.rmtree(tmpdir)
 
-    # if no object was processed with success (index==1) return False
-    # this is common when series are processed object-wise
+#     # if no object was processed with success (index==1) return False
+#     # this is common when series are processed object-wise
 
-    return (index > 1), (xmatrix, var_nam, success_list)
+#     return (index > 1), (xmatrix, var_nam, success_list)
 
 
 def _RDKit_descriptors(ifile, **kwargs) -> (bool, (np.ndarray, list, list)):
@@ -352,6 +358,12 @@ def _RDKit_descriptors(ifile, **kwargs) -> (bool, (np.ndarray, list, list)):
         for mol in suppl:
             if mol is None:
                 LOG.error('Unable to process molecule'
+                          f'#{num_obj+1} in {ifile}')
+                success_list.append(False)
+                continue
+
+            if mol.GetNumHeavyAtoms() == 0:
+                LOG.error('Empty molecule'
                           f'#{num_obj+1} in {ifile}')
                 success_list.append(False)
                 continue
@@ -425,6 +437,12 @@ def _RDKit_properties(ifile, **kwargs) -> (bool, (np.ndarray, list, list)):
                 LOG.error(
                     f'Unable to process molecule #{num_obj+1} in {ifile}')
 
+                success_list.append(False)
+                continue
+
+            if mol.GetNumHeavyAtoms() == 0:
+                LOG.error('Empty molecule'
+                          f'#{num_obj+1} in {ifile}')
                 success_list.append(False)
                 continue
 

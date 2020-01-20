@@ -162,8 +162,6 @@ computeMD_method:
     - RDKit_properties 
     - RDKit_md
     - morganFP
-    - padel
-    - mordred
     - custom
   description: Selection of molecular descriptors to be used in model generation
   dependencies: 

@@ -34,6 +34,13 @@ def count_mols(ifile):
         a valid 'mol' (those for which 'mol is None')
     '''
     suppl = Chem.SDMolSupplier(ifile)
+
+    # the call to len(suppl) is important in case the series contains
+    # syntactically wrong molecules. Due to a RDKit bug (?) it is important
+    # to call len for every supplier to obtain correct mol identification
+    if len(suppl) == 0:
+        return 0
+
     num_mols = 0
     for mol in suppl:
         if mol is not None :
@@ -60,13 +67,14 @@ def split_SDFile(ifile, num_chunks):
 
     # Count number of molecules in input file
     suppl = Chem.SDMolSupplier(ifile)
-
-    num_mols = count_mols(ifile)
     
     # Inital checking for early return
-    if num_mols == 0:
+    if len(suppl) == 0:
         LOG.critical(f'No molecule found in {ifile}')
         return False, 'No molecule found in file: '+ifile
+
+    # Call count_mols to know how may of these molecules are valid
+    num_mols = count_mols(ifile)
 
     if num_chunks < 2:
         # If only one CPU, the output will be only the original file

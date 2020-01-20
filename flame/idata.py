@@ -139,7 +139,7 @@ class Idata:
             self.conveyor.setError(f'unable to open {ifile}. {e}')
             return
 
-        # Raise error if SDF is empty
+        #Raise error if SDF is empty
         if len(suppl) == 0:
             LOG.debug(f'Input file {ifile} is empty')
             self.conveyor.setError(f'Input file {ifile} is empty')
@@ -162,7 +162,6 @@ class Idata:
             if mol is None:
                 LOG.error(f'(@extractInformaton) Unable to process molecule #{obj_num+1}'
                           f' in file {ifile}')
-                # success_list.append(False)
                 continue
 
             # extract the molecule name, using a sdfileutils algorithm 
@@ -261,6 +260,12 @@ class Idata:
                       f'{e}')
             return False, 'Error at processing input file for standardizing structures'
 
+        # Raise error if SDF is empty
+        if len(suppl) == 0:
+            LOG.debug(f'Input file {ifile} is empty')
+            self.conveyor.setError(f'Input file {ifile} is empty')
+            return
+
         filename, fileext = os.path.splitext(ifile)
         ofile = filename + '_std' + fileext
         LOG.debug(f'writing standarized molecules to {ofile}')
@@ -290,7 +295,7 @@ class Idata:
                         if e.name == "no_non_salt":
                             # very commong warning, use parent mol and proceed
                             LOG.debug(f'"No non salt error" found. Skiped standardize for mol'
-                                      f' #{mcount} {name}')
+                                    f' #{mcount} {name}')
                             parent = Chem.MolToMolBlock(m)
                         else:
                             # serious issue, no parent was generated, use original mol
@@ -411,8 +416,8 @@ class Idata:
         registered_methods = dict([('RDKit_properties', computeMD._RDKit_properties),
                                    ('morganFP', computeMD._RDKit_morganFPS),
                                    ('RDKit_md', computeMD._RDKit_descriptors),
-                                   ('padel', computeMD._padel_descriptors),
-                                   ('mordred', computeMD._mordred_descriptors),
+                                #    ('padel', computeMD._padel_descriptors),
+                                #    ('mordred', computeMD._mordred_descriptors),
                                    ('custom', self.computeMD_custom)])
 
         # check if input methods are members of registered methods
