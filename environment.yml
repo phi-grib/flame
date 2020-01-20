@@ -19,7 +19,6 @@ dependencies:
   - requests
   - pytest
   - psycopg2
-  - xgboost 
   - pip:
      - django==2.2.8
      - djangorestframework
@@ -27,3 +26,4 @@ dependencies:
      - djangorestframework-yaml
      - "https://github.com/phi-grib/standardiser/archive/master.zip"
      - "https://github.com/josecarlosgomezt/nonconformist/archive/master.zip"
+     - "https://github.com/dmlc/xgboost.zip"
