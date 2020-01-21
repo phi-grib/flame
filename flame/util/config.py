@@ -120,7 +120,7 @@ def config(path: str=None) -> bool:
                     in_path_spaces.mkdir(parents=True)
                 if not in_path_predictions.exists():                
                     in_path_predictions.mkdir(parents=True)
-                utils.set_repositories(in_path_models, in_path_spaces)
+                utils.set_repositories(in_path_models, in_path_spaces, in_path_predictions)
             else:
                 print('aborting...')
                 return False
@@ -130,4 +130,5 @@ def config(path: str=None) -> bool:
 
         print(f'space repository set to {in_path_spaces}')
         print(f'model repository set to {in_path_models}')
+        print(f'predictions repository set to {in_path_predictions}')
         return True
