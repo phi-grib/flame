@@ -103,7 +103,13 @@ def predict_cmd(arguments, output_format=None):
         LOG.error('Endpoint name not found in model repository.')
         return False, 'Endpoint name not found in model repository.'
 
-    predict = Predict(arguments['endpoint'], arguments['version'], output_format)
+    # ** DEPRECATE **
+    # this is a back-compatibility trick for older versions of APIs 
+    # not supporting the label argument
+    if 'label' not in arguments:
+        arguments['label'] = 'temp'
+
+    predict = Predict(arguments['endpoint'], arguments['version'],  output_format, label=arguments['label'],)
 
     ensemble = predict.get_ensemble()
 
@@ -348,6 +354,10 @@ def manage_cmd(args):
             success, results = manage.action_report()
         elif args.action == 'list':
             success, results = manage.action_list(args.endpoint)
+        elif args.action == 'predictions':
+            success, results = manage.action_predictions_list()
+        elif args.action == 'predictions_result':
+            success, results = manage.action_predictions_result(args.label)
         else: 
             success = False
             results = "Specified manage action is not defined"

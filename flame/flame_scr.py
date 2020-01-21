@@ -84,6 +84,10 @@ def main():
                         help='File with manually filled documentation fields.',
                         required=False)
 
+    parser.add_argument('-l', '--label',
+                        help='Label for facilitating the identification of the prediction.',
+                        required=False )
+
     args = parser.parse_args()
 
     # init logger Level and set general config
@@ -109,12 +113,18 @@ def main():
 
         version = utils.intver(args.version)
 
+        if args.label is None:
+            label = 'temp'
+        else:
+            label = args.label
+
         command_predict = {'endpoint': args.endpoint,
                  'version': version,
+                 'label': label,
                  'infile': args.infile}
 
         LOG.info(f'Starting prediction with model {args.endpoint}'
-                 f' version {version} for file {args.infile}')
+                 f' version {version} for file {args.infile}, labelled as {label}')
 
         success, results = context.predict_cmd(command_predict)
         if not success:

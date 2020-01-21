@@ -52,7 +52,7 @@ class Conveyor:
         self.error = None
         self.warning = None
 
-    def save(self,fo):        
+    def save(self, fo):        
         ''' constructor '''
         pickle.dump(self.conveyor_ver, fo)
         pickle.dump(self.origin, fo)
@@ -95,6 +95,11 @@ class Conveyor:
 
     def addMeta (self, key, value):
         self.meta[key] = value
+
+    def getMeta (self, key):
+        if not key in self.meta:
+            return None
+        return self.meta[key]
 
     def getError (self):
         return self.error is not None

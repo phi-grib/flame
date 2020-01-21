@@ -74,6 +74,10 @@ def read_config() -> dict:
     space_abs_path = pathlib.Path(space_path).resolve()
     conf['space_repository_path'] = str(space_abs_path)
 
+    predictions_path = pathlib.Path(conf['predictions_repository_path'])
+    predictions_abs_path = pathlib.Path(predictions_path).resolve()
+    conf['predictions_repository_path'] = str(predictions_abs_path)
+
     # LOG.info('Configuration loaded')
     return conf
 
@@ -168,7 +172,7 @@ def set_model_repository(path=None):
 
     write_config(configuration)
 
-def set_repositories(model_path, space_path):
+def set_repositories(model_path, space_path, predictions_path):
     """
     Set the model repository path.
     This is the dir where flame is going to create and load models.
@@ -181,9 +185,11 @@ def set_repositories(model_path, space_path):
 
     new_model_path = pathlib.Path(model_path)
     new_space_path = pathlib.Path(space_path)
+    new_predictions_path = pathlib.Path(predictions_path)
 
     configuration['model_repository_path'] = str(new_model_path.resolve())
     configuration['space_repository_path'] = str(new_space_path.resolve())
+    configuration['predictions_repository_path'] = str(new_predictions_path.resolve())
 
     write_config(configuration)
 
@@ -279,6 +285,13 @@ def smodule_path(space, version):
 
     return modpath
 
+def predictions_repository_path():
+    '''
+    Returns the path to the root of the predictions repository,
+    containing all predictions
+    '''
+    configuration = read_config()
+    return configuration['predictions_repository_path']
 
 def md5sum(filename, blocksize=65536):
     '''
