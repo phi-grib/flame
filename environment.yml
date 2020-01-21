@@ -20,8 +20,8 @@ dependencies:
   - requests
   - pytest
   - psycopg2
-  - xgboost
   - pip:
+     - xgboost
      - django==2.2.8
      - djangorestframework
      - django-cors-headers
