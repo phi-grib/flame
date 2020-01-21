@@ -4,4 +4,5 @@ config_status: true
 homepage: http://phi.upf.edu
 model_repository_path: C:\Users\mpastor\Documents\soft\flame\flame\models
 space_repository_path: C:\Users\mpastor\Documents\soft\flame\flame\spaces
+predictions_repository_path: C:\Users\mpastor\Documents\soft\flame\flame\predictions
 provider: UPF (Pompeu Fabra University)
