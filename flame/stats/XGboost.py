@@ -93,11 +93,7 @@ class XGBOOST(BaseEstimator):
             from xgboost.sklearn import XGBClassifier
             from xgboost.sklearn import XGBRegressor
         except Exception as e:
-            return False,  \
-                """XGboost libraries are not installed, this probably
-                means the program is running under a windows
-                environment, pleasecontact your IT support in 
-                order to manually install needed libraries """
+            return False,  'XGboost not found, please revise your environment'
 
         # Make a copy of data matrices
         X = self.X.copy()
