@@ -52,7 +52,7 @@ class Conveyor:
         self.error = None
         self.warning = None
 
-    def save(self,fo):        
+    def save(self, fo):        
         ''' constructor '''
         pickle.dump(self.conveyor_ver, fo)
         pickle.dump(self.origin, fo)
