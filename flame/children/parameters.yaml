@@ -891,7 +891,7 @@ XGBOOST_parameters:
         - 1
         - 0.1
         - 0.01
-      description:  Boosting learning rate (xgb’s “eta”)
+      description:  Boosting learning rate (xgb's "eta")
     n_estimators:
       object_type: int
       writable: true
