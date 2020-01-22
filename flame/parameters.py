@@ -380,8 +380,8 @@ class Parameters:
         for key in md_params:
             # combine key + value in a single string
             md_list.append(key+str(md_params[key]))
-
-        idata_params.append(md_list.sort())
+        md_list.sort()
+        idata_params.append(md_list)
 
         # use picke as a buffered object, neccesary to generate the hexdigest
         p = pickle.dumps(idata_params)

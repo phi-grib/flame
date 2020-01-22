@@ -175,6 +175,20 @@ MD_settings:
   object_type: dictionary
   writable: false
   value: 
+    morgan_radius:
+      object_type: int
+      writable: true
+      value: 2
+      options:
+        - null
+      description: Morgan fingerprint radius (e.g. 2, 4)
+    morgan_nbits:
+      object_type: int
+      writable: true
+      value: 2048
+      options:
+        - null
+      description: Size of the Morgan fingerprint (e.g. 1024, 2048)
     morgan_features:
       object_type: boolean
       writable: false
@@ -183,13 +197,6 @@ MD_settings:
         - true
         - false
       description: Whether to use or not feature-based invariants.
-    morgan_radius:
-      object_type: int
-      writable: true
-      value: 2
-      options:
-        - null
-      description: Morgan fingerprint radius
     rdkit_black_list:
       object_type: list
       writable: true

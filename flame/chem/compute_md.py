@@ -163,16 +163,28 @@ def _RDKit_morganFPS(ifile, **kwargs) -> (bool, (np.ndarray, list, list)):
         LOG.error(f'Unable to create supplier with exception {e}')
         return False, 'unable to create supplier'
 
-    morgan_radius = kwargs['morgan_radius']
-    morgan_features = kwargs['morgan_features']
+    # defaults
+    morgan_radius = 2
+    morgan_nbits = 2048
+    morgan_features = True
 
-    LOG.info(f'computing MorganFP fingerprint... with r={morgan_radius}')
+    # read arguments
+    if 'morgan_radius' in kwargs:
+        morgan_radius = kwargs['morgan_radius']
+
+    if 'morgan_features' in kwargs:
+        morgan_features = kwargs['morgan_features']
+
+    if 'morgan_nbits' in kwargs:
+        morgan_nbits = kwargs['morgan_nbits']
+
+    LOG.info(f'computing RDKit Morgan fingerprint... with radius {morgan_radius}, size {morgan_nbits} and features {morgan_features}')
 
     # get from here num of properties
 
     success_list = []
     est_obj = len(suppl)
-    xmatrix = np.zeros((est_obj, 2048), dtype=np.int8)
+    xmatrix = np.zeros((est_obj, morgan_nbits), dtype=np.int8)
 
     try:
         num_obj = 0
@@ -191,6 +203,7 @@ def _RDKit_morganFPS(ifile, **kwargs) -> (bool, (np.ndarray, list, list)):
 
             fp = AllChem.GetMorganFingerprintAsBitVect(mol,
                             morgan_radius,  
+                            nBits=morgan_nbits,
                             useFeatures=morgan_features)
 
             #xvector = np.empty((1, 2048), dtype=np.int8)

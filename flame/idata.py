@@ -664,10 +664,14 @@ class Idata:
                 return False
 
             with open(picklfile, 'rb') as fi:
+                # check that MD5 hash of the relevant parameters is the same that the stored 
+                # hash value in the pickle
                 md5_parameters = pickle.load(fi)
                 if md5_parameters != self.param.getVal('md5'):
                     return False
 
+                # check that MD5 hash of the input file is the same that the stored 
+                # hash value in the pickle
                 md5_input = pickle.load(fi)
                 if md5_input != utils.md5sum(self.ifile):
                     return False
