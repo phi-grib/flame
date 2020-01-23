@@ -386,8 +386,8 @@ def action_searches_result (label):
     '''
     try to retrieve the searches result with the label used as argument
     returns 
-        - (False, Null) if it there is no directory or the predictions 
-          pickle files cannot be found 
+        - (False, Null) if it there is no directory or the search 
+          pickle file cannot be found 
         
         - (True, JSON) with the results otherwyse
     '''
@@ -395,6 +395,7 @@ def action_searches_result (label):
     if not os.path.isdir(opath):
         return False, f'directory {opath} not found'
 
+    # default in case label was not provided
     if label is None:
         label = 'temp'
 
@@ -412,7 +413,7 @@ def action_searches_result (label):
         return False, None
 
     if not iconveyor.isKey('search_results'):
-        return False, 'results not found'
+        return False, 'search results not found'
 
     results = iconveyor.getVal('search_results')
     names = iconveyor.getVal('obj_nam')
