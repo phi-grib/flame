@@ -414,7 +414,11 @@ def action_parameters(model, version=None, oformat='text'):
     from flame.parameters import Parameters
 
     param = Parameters()
-    param.loadYaml(model, version)
+    success, results = param.loadYaml(model, version)
+
+    if not success:
+        print (f'error obtaining parametes for model {model} : {results}')
+        return False, results
 
     if oformat == 'JSON':
         return True, param.dumpJSON()
