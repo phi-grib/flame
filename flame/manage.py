@@ -832,6 +832,7 @@ def action_predictions_remove (label):
 
     return (True, 'OK')
 
+
 def action_model_template(model, version=None, doc_file=None):
     '''
     Returns a TSV model reporting template

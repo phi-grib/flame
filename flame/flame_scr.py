@@ -137,14 +137,19 @@ def main():
             return
 
         version = utils.intver(args.version)
-
+        if args.label is None:
+            label = 'temp'
+        else:
+            label = args.label
+        
         command_search = {'space': args.space,
                  'version': version,
                  'infile': args.infile,
-                 'runtime_param': args.parameters}
+                 'runtime_param': args.parameters,
+                 'label': label}
 
         LOG.info(f'Starting search on space {args.space}'
-                 f' version {version} for file {args.infile}')
+                 f' version {version} for file {args.infile}, labelled as {label}')
 
         success, results = context.search_cmd(command_search)
         if not success:

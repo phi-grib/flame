@@ -23,13 +23,12 @@
 import os
 import pickle
 import json
+import tempfile
 import numpy as np
 from flame.util import utils, get_logger, supress_log
 from datetime import datetime
 
-
 LOG = get_logger(__name__)
-
 
 class Odata():
     """
@@ -455,6 +454,19 @@ class Odata():
         # returns a JSON with the prediction results
         if 'JSON' in self.format:
             output = self.conveyor.getJSON()
+
+
+        # save in a temp file for asyncronous similarity search
+        opath = tempfile.gettempdir()
+        if not os.path.isdir(opath):
+            return True, output
+
+        search_pkl_path = os.path.join(opath,'similars-'+self.label+'.pkl')
+        LOG.info('saving search results to: {}'.format(search_pkl_path))
+
+        # dump conveyor
+        with open(search_pkl_path, 'wb') as handle:
+            self.conveyor.save(handle)
 
         return True, output
 

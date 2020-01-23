@@ -36,10 +36,11 @@ LOG = get_logger(__name__)
 
 class Search:
 
-    def __init__(self, space, version, output_format=None):
+    def __init__(self, space, version, output_format=None, label='temp'):
         LOG.debug('Starting predict...')
         self.space = space
         self.version = version
+        self.label = label
         self.param = Parameters()
         self.conveyor = Conveyor()
 
@@ -127,9 +128,9 @@ class Search:
         # note that if any of the above steps failed, an error has been inserted in the
         # conveyor and odata will take case of showing an error message
         try:
-            odata = odata_child.OdataChild(self.param, self.conveyor)
+            odata = odata_child.OdataChild(self.param, self.conveyor, self.label)
         except:
             LOG.warning ('Odata child architecture mismatch, defaulting to Odata parent')
-            odata = Odata(self.param, self.conveyor)
+            odata = Odata(self.param, self.conveyor, self.label)
 
         return odata.run()

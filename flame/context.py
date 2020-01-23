@@ -109,7 +109,7 @@ def predict_cmd(arguments, output_format=None):
     if 'label' not in arguments:
         arguments['label'] = 'temp'
 
-    predict = Predict(arguments['endpoint'], version=arguments['version'],  output_format=output_format, label=arguments['label'],)
+    predict = Predict(arguments['endpoint'], version=arguments['version'],  output_format=output_format, label=arguments['label'])
 
     ensemble = predict.get_ensemble()
 
@@ -279,7 +279,8 @@ def search_cmd(model, output_format=None):
     '''
     from flame.search import Search
 
-    search = Search(model['space'], model['version'], output_format)
+    search = Search(model['space'], version=model['version'], output_format=output_format, label=model['label'])
+
     success, results = search.run(model['infile'], model['runtime_param'])
 
     LOG.info('Search completed...')
@@ -293,7 +294,7 @@ def manage_cmd(args):
 
     version = utils.intver(args.version)
 
-    if args.space is not None:
+    if args.space is not None or 'searches' in args.action :
     
         import flame.smanage as smanage
     
@@ -311,6 +312,8 @@ def manage_cmd(args):
             success, results = smanage.action_parameters(args.space, version)
         elif args.action == 'info':
             success, results = smanage.action_info(args.space, version)
+        elif args.action == 'searches_result':
+            success, results = smanage.action_searches_result(args.label)
         else: 
             success = False
             results = "Specified manage action is not defined"
