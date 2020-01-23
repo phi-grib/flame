@@ -109,7 +109,7 @@ def predict_cmd(arguments, output_format=None):
     if 'label' not in arguments:
         arguments['label'] = 'temp'
 
-    predict = Predict(arguments['endpoint'], arguments['version'],  output_format, label=arguments['label'],)
+    predict = Predict(arguments['endpoint'], version=arguments['version'],  output_format=output_format, label=arguments['label'],)
 
     ensemble = predict.get_ensemble()
 

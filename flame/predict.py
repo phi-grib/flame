@@ -76,7 +76,6 @@ class Predict:
             self.conveyor.setError(f'Unable to find model {self.model}, version {self.version}')
             #LOG.error(f'Unable to find model {self.model}')
 
-
         if not self.conveyor.getError():
             # uses the child classes within the 'model' folder,
             # to allow customization of

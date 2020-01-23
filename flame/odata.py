@@ -338,7 +338,7 @@ class Odata():
                 pickle.dump (datetime.timestamp(now), handle)
 
                 # print (self.conveyor.getMeta('endpoint'))
-                # print (self.conveyor.getMeta('version'))
+                # print ('saving version',self.conveyor.getMeta('version'))
                 # print (self.conveyor.getMeta('input_file'))
 
                 # now = datetime.now()
