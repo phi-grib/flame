@@ -52,7 +52,7 @@ def test_classificationl(make_model, build_model, fixed_results):
     build_status, _ = build_model
     assert build_status is True
 
-    predictor = predict.Predict(MODEL_NAME, 0)
+    predictor = predict.Predict(MODEL_NAME, 0, label='temp')
     predictor.param.setVal("quantitative", False)
     predictor.param.setVal("mol_batch", "objects")
     predictor.param.setVal("conformal", False)

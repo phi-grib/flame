@@ -51,7 +51,7 @@ def test_regression(make_model, build_model, fixed_results):
     build_status, _ = build_model
     assert build_status is True
 
-    predictor = predict.Predict(MODEL_NAME, 0)
+    predictor = predict.Predict(MODEL_NAME, 0, label='temp')
     predictor.param.setVal("conformal", False)
     predictor.param.setVal("output_format", "JSON")
     _, results_str = predictor.run(SDF_FILE_NAME)
