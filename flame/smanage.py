@@ -368,18 +368,18 @@ def action_dir():
 
     results = []
     for ispace in space_dirs:
-
-        # versions = ['dev']
-        versions = [{'text': 'dev'}]
+        idict = {}
+        idict ["spacename"] = ispace
+        versions = [0]
 
         for iversion in os.listdir(utils.space_tree_path(ispace)):
             if iversion.startswith('ver'):
-                # versions.append (iversion)
-                versions.append({'text': iversion})
+                versions.append(utils.modeldir2ver(iversion))
 
-        # results.append ((ispace,versions))
-        results.append({'text': ispace, 'nodes': versions})
+        idict ["versions"] = versions
+        results.append(idict)
 
+    # print (json.dumps(results))
     return True, json.dumps(results)
 
 def action_searches_result (label):

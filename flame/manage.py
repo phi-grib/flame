@@ -644,18 +644,18 @@ def action_dir():
 
     results = []
     for imodel in model_dirs:
-
-        # versions = ['dev']
-        versions = [{'text': 'dev'}]
+        idict = {}
+        idict ["modelname"] = imodel
+        versions = [0]
 
         for iversion in os.listdir(utils.model_tree_path(imodel)):
             if iversion.startswith('ver'):
-                # versions.append (iversion)
-                versions.append({'text': iversion})
+                versions.append(utils.modeldir2ver(iversion))
 
-        # results.append ((imodel,versions))
-        results.append({'text': imodel, 'nodes': versions})
+        idict ["versions"] = versions
+        results.append(idict)
 
+    #print (json.dumps(results))
     return True, json.dumps(results)
 
 

@@ -312,6 +312,8 @@ def manage_cmd(args):
             success, results = smanage.action_parameters(args.space, version)
         elif args.action == 'info':
             success, results = smanage.action_info(args.space, version)
+        elif args.action == 'dir':
+            success, results = smanage.action_dir()
         elif args.action == 'searches_result':
             success, results = smanage.action_searches_result(args.label)
         else: 
