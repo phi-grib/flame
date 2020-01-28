@@ -651,8 +651,10 @@ class BaseEstimator:
                     if not np.isnan(exp[i]):
                         # print (exp[i], Yp[i])
                         Yp[i] = exp[i]
-                    # else:
-                    #     exp[i]= float ('-99999')
+                    else:
+                    # if exp is nan, substitute it with a number which can be recognized
+                    # to facilitate handling and do not replace Yp
+                        exp[i]= float ('-99999')
 
         self.conveyor.addVal(Yp, 'values', 'Prediction',
                         'result', 'objs',
@@ -686,8 +688,10 @@ class BaseEstimator:
                             Yp[i] = exp[i]
                             lower_limit[i] = exp[i]
                             upper_limit[i] = exp[i]
-                        # else:
-                        #     exp[i]= float ('-99999')
+                        # if exp is nan, substitute it with a number which can be recognized
+                        # to facilitate handling and do not replace Yp
+                        else:
+                            exp[i]= float ('-99999')
 
             self.conveyor.addVal(Yp, 'values', 'Prediction',
                     'result', 'objs',
@@ -730,17 +734,23 @@ class BaseEstimator:
 
             # if conveyor contains experimental values for any of the objects replace the
             # predictions with the experimental results
+            # TODO: this section is incomplete and experimental. The replacement of cualitative
+            # variables without checking can produce wrong results
             exp = self.conveyor.getVal('experim')
             if exp is not None:
                 if len(exp) == len(Yp):
                     for i in range (len(Yp)):
                         if not np.isnan(exp[i]):
                             # print (exp[i], Yp[i])
+                            # Yp is copied without any checking, BEWARE!!! 
                             Yp[i] = exp[i]
-                        # else:
-                        #     exp[i]= float ('-99999')
+                        # if exp is nan, substitute it with a number which can be recognized
+                        # to facilitate handling and do not replace Yp
+                        else:
+                            exp[i]= float ('-99999')
 
-            #TODO: moddify the classes
+                #TODO: moddify the classes, by getting the classes, overwritting the values and
+                # saving again
 
             self.conveyor.addVal(Yp, 'values', 'Prediction',
                     'result', 'objs',
