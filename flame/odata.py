@@ -395,6 +395,8 @@ class Odata():
 
         results = self.conveyor.getVal('search_results')
         names = self.conveyor.getVal('obj_nam')
+        ids = self.conveyor.getVal('obj_id')
+
         if self.conveyor.isKey('SMILES'):
             smiles = self.conveyor.getVal('SMILES')
         if len (results) != len (names):
@@ -406,7 +408,7 @@ class Odata():
         for i in range (len(results)):
 
             if self.conveyor.isKey('SMILES'):
-                print (f'similars to {names[i]} [{smiles[i]}]')
+                print (f'similars to {names[i] } id:{ids[i]} [{smiles[i]}]')
             else:
                 print (f'similars to {names[i]}')
 
@@ -414,8 +416,9 @@ class Odata():
             for j in range (len(iresult['distances'])):
                 dist = iresult['distances'][j]
                 name = iresult['names'][j]
+                idv = iresult['ids'][j]
                 smil = iresult['SMILES'][j]
-                print (f'   {dist:.3f} : {name} [{smil}]')
+                print (f'   {dist:.3f} : {name} id:{idv} [{smil}]')
         
         ###
         # 2. results file in TSV format [optional]

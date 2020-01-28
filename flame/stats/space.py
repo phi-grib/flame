@@ -40,12 +40,13 @@ class Space:
         self.param = param
         self.Dmax = 1000.0 # an arbitrary value
 
-    def build(self, X, names, SMILES):
+    def build(self, X, names, ids, SMILES):
         ''' This function pre-process the X matrix, optimizing it for searching in the case
             of fingerprints 
         '''
 
         self.names = names
+        self.ids = ids
         self.SMILES = SMILES
         self.nobj, self.nvarx = np.shape(X)
 
@@ -159,17 +160,20 @@ class Space:
             #print ('completed')
             results_distances = []
             results_names = []
+            results_ids = []
             results_smiles = []
 
             for sd,si in zip(selected_d, selected_i):
                 results_distances.append(sd)
                 results_names.append(self.names[si])
+                results_ids.append(self.ids[si])
                 results_smiles.append(self.SMILES[si])
                 
                 #print (i, sd, self.names[si], self.SMILES[si])
 
             results.append({'distances':results_distances,
                             'names':results_names,
+                            'ids':results_ids,
                             'SMILES':results_smiles
             })
 
@@ -186,6 +190,7 @@ class Space:
             pickle.dump(self.nobj, fo)
             pickle.dump(self.X, fo)
             pickle.dump(self.names, fo)
+            pickle.dump(self.ids, fo)
             pickle.dump(self.SMILES, fo)
             pickle.dump(self.Dmax, fo)
         return
@@ -201,6 +206,7 @@ class Space:
             self.nobj = pickle.load(fo)
             self.X = pickle.load(fo)
             self.names = pickle.load(fo)
+            self.ids = pickle.load(fo)
             self.SMILES = pickle.load(fo)
             self.Dmax = pickle.load(fo)
         return

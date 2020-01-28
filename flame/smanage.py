@@ -222,7 +222,7 @@ def action_parameters(space, version=None, oformat='text'):
 
     else:
 
-        order = ['input_type', 'quantitative', 'SDFile_activity', 'SDFile_name', 
+        order = ['input_type', 'quantitative', 'SDFile_activity', 'SDFile_name','SDFile_id',
         'SDFile_experimental', 'normalize_method', 'ionize_method', 'convert3D_method', 
         'computeMD_method', 'model', 'modelAutoscaling', 'tune', 'conformal', 
         'conformalSignificance', 'ModelValidationCV', 'ModelValidationLC', 

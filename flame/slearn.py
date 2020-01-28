@@ -116,7 +116,7 @@ class Slearn:
 
         # builds space from idata results
         LOG.info('Starting space building')
-        success, space_building_results = space.build(self.X, self.conveyor.getVal('obj_nam'), self.conveyor.getVal('SMILES'))
+        success, space_building_results = space.build(self.X, self.conveyor.getVal('obj_nam'), self.conveyor.getVal('obj_id'), self.conveyor.getVal('SMILES'))
         if not success:
             LOG.error('space_building_results')
             self.conveyor.setError(space_building_results)

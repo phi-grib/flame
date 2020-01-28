@@ -147,6 +147,7 @@ class Idata:
 
         # Initate lists which will contain the extracted values
         obj_nam = []
+        obj_id  = []
         obj_bio = []
         obj_exp = []
         obj_sml = []
@@ -167,6 +168,12 @@ class Idata:
             # extract the molecule name, using a sdfileutils algorithm 
             name = sdfutils.getName(
                 mol, count=obj_num, field=self.param.getVal('SDFile_name'))
+
+            # extracts molecule ID value, if any.
+            idv = ''    
+            if self.param.getVal('SDFile_id') is not None:
+                if isinstance (self.param.getVal('SDFile_id'),str):
+                    idv = sdfutils.getStr(mol, self.param.getVal('SDFile_id'))
 
             # extracts biological information (activity) which is used as dependent variable
             # for the model training and is provided as a prediction for new compounds
@@ -192,6 +199,7 @@ class Idata:
 
             # assigns the information extracted from the SDFile to the corresponding lists
             obj_nam.append(name)
+            obj_id.append(idv)
             obj_bio.append(bio)
             obj_exp.append(exp)
             obj_sml.append(sml)
@@ -210,6 +218,9 @@ class Idata:
         self.conveyor.addVal(obj_nam, 'obj_nam', 'Mol name',
                          'label', 'objs',
                          'Name of the molecule, as present in the input file')
+        self.conveyor.addVal(obj_id, 'obj_id', 'Mol id',
+                         'label', 'objs',
+                         'ID of the molecule, as present in the input file')
         self.conveyor.addVal(obj_sml, 'SMILES', 'SMILES',
                          'smiles', 'objs',
                          'Structure of the molecule in SMILES format')

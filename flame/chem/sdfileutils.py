@@ -204,3 +204,27 @@ def getVal(mol, value_label) :
                         f' to float: {e}')
 
     return value_num
+
+def getStr(mol, value_label) :
+    ''' Returns the value of the certain field present in a SDFIle mol 
+    
+        The field containing this value is recognized using the value_label
+
+        Returns a string or a string
+    '''
+
+    value_str = ''
+
+    # the value_label must be string, not a list 
+    if not isinstance(value_label,str):
+
+        LOG.error('SDFile property name must be a text string')
+        
+        return value_str
+
+    # if the SDFile contains the field
+    if mol.HasProp(value_label):  
+
+        value_str = mol.GetProp(value_label)
+        
+    return value_str
