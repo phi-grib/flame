@@ -280,6 +280,12 @@ def search_cmd(model, output_format=None):
     '''
     from flame.search import Search
 
+    # ** DEPRECATE **
+    # this is a back-compatibility trick for older versions of APIs 
+    # not supporting the label argument
+    if 'label' not in model:
+        model['label'] = 'temp'
+
     search = Search(model['space'], version=model['version'], output_format=output_format, label=model['label'])
 
     success, results = search.run(model['infile'], model['runtime_param'])

@@ -36,13 +36,17 @@ LOG = get_logger(__name__)
 
 class Search:
 
-    def __init__(self, space, version, output_format=None, label='temp'):
+    def __init__(self, space, version, output_format=None, label=None):
         LOG.debug('Starting predict...')
         self.space = space
         self.version = version
         self.label = label
         self.param = Parameters()
         self.conveyor = Conveyor()
+
+        self.conveyor.addVal(label, 'prediction_label', 'prediction label',
+            'method', 'single',
+            'Label used to identify the prediction')
 
         if not self.param.loadYaml(space, version, isSpace=True):
             LOG.critical('Unable to load space parameters. Aborting...')

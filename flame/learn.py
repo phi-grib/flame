@@ -104,11 +104,13 @@ class Learn:
         # Run scaling.
         self.scaler = None
 
-        # update if other fingerprints are added
-        isFingerprint = (self.param.getVal('computeMD_method') == ['morganFP'])
+        # # update if other fingerprints are added
+        # isFingerprint = (self.param.getVal('computeMD_method') == ['morganFP'])
 
-        if self.param.getVal('modelAutoscaling') and \
-                        not isFingerprint:
+        # if self.param.getVal('modelAutoscaling') and \
+        #                 not isFingerprint:
+
+        if self.param.getVal('modelAutoscaling'):
             try:
                 scaler = None
                 if self.param.getVal('modelAutoscaling') == 'StandardScaler':
