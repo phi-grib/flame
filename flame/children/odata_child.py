@@ -25,6 +25,6 @@ from flame.odata import Odata
 
 class OdataChild(Odata):
 
-    def __init__(self, parameters, conveyor, label=None):
+    def __init__(self, parameters, conveyor):
 
-        Odata.__init__(self, parameters, conveyor, label)
+        Odata.__init__(self, parameters, conveyor)

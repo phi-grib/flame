@@ -39,9 +39,12 @@ class Predict:
         LOG.debug('Starting predict...')
         self.model = model
         self.version = version
-        self.label = label
         self.param = Parameters()
         self.conveyor = Conveyor()
+
+        self.conveyor.addVal(label, 'prediction_label', 'prediction label',
+                    'method', 'single',
+                    'Label used to identify the prediction')
 
         if not self.param.loadYaml(model, version):
             LOG.critical('Unable to load model parameters. Aborting...')
@@ -117,9 +120,9 @@ class Predict:
         # note that if any of the above steps failed, an error has been inserted in the
         # conveyor and odata will take case of showing an error message
         try:
-            odata = odata_child.OdataChild(self.param, self.conveyor, self.label)
+            odata = odata_child.OdataChild(self.param, self.conveyor)
         except:
             LOG.warning ('Odata child architecture mismatch, defaulting to Odata parent')
-            odata = Odata(self.param, self.conveyor, self.label)
+            odata = Odata(self.param, self.conveyor)
 
         return odata.run()

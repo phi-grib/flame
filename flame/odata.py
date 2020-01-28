@@ -42,8 +42,8 @@ class Odata():
         # previous results (eg. object names, mol descriptors) are retained
         self.param = parameters
         self.conveyor = conveyor
-        self.label = label
         self.format = self.param.getVal('output_format')
+        self.label = self.conveyor.getVal("prediction_label")
 
     def _output_md(self):
         ''' dumps the molecular descriptors to a TSV file'''
@@ -214,6 +214,9 @@ class Odata():
             self.conveyor.setError('Unable to find main prediction')
             return
         
+        if self.label is None:
+            self.label = 'temp'
+
         opath = utils.predictions_repository_path()
         if os.path.isdir (opath):
             opath = os.path.join(opath,self.label)
@@ -444,8 +447,9 @@ class Odata():
   
                         dist = iresult['distances'][j]
                         name = iresult['names'][j]
+                        idv = iresult['ids'][j]
                         smil = iresult['SMILES'][j]
-                        line += f'{dist:.3f}\t{name}\t[{smil}]'
+                        line += f'{dist:.3f}\t{name}\t{idv}\t[{smil}]'
                         fo.write(line+'\n')
 
         # the function returns "True, output". output can be empty or a JSON
