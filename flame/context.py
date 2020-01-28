@@ -55,7 +55,8 @@ def get_ensemble_input(task, model_names, model_versions, infile):
     for i in range(num_models):
         model_cmd.append({'endpoint': model_names[i],
                           'version': model_versions[i],
-                          'infile': infile})
+                          'infile': infile,
+                          'label': f'ensemble{i}'})
 
     # run in multithreading
     if parallel:

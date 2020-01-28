@@ -45,6 +45,9 @@ class Odata():
         self.format = self.param.getVal('output_format')
         self.label = self.conveyor.getVal("prediction_label")
 
+        if self.label is None:
+            self.label = 'temp'
+
     def _output_md(self):
         ''' dumps the molecular descriptors to a TSV file'''
 
@@ -214,9 +217,6 @@ class Odata():
             self.conveyor.setError('Unable to find main prediction')
             return
         
-        if self.label is None:
-            self.label = 'temp'
-
         opath = utils.predictions_repository_path()
         if os.path.isdir (opath):
             opath = os.path.join(opath,self.label)
