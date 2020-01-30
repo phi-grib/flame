@@ -66,30 +66,53 @@ class Search:
         LOG.debug('parameter "numCPUs" forced to be 1')
         self.param.setVal('numCPUs',1)
 
-    def run(self, input_source, runtime_param=None, metric=None, numsel=None, cutoff=None):
+    # def run(self, input_source, runtime_param=None, metric=None, numsel=None, cutoff=None):
+    def run(self, param_dict):
         ''' Executes a default predicton workflow '''
 
+        print ('*********',param_dict)
+
+        metric = None
+        numsel = None
+        cutoff = None
+        
         # path to endpoint
         epd = utils.space_path(self.space, self.version)
         if not os.path.isdir(epd):
             self.conveyor.setError(f'Unable to find space {self.space}, version {self.version}')
             #LOG.error(f'Unable to find space {self.space}')
 
-        print (runtime_param)
-        if runtime_param is not None:
+        if 'infile' in param_dict:
+            input_source = param_dict['infile']
+        else:
+            LOG.error(f'Unable to find input_file')
+            self.conveyor.setError('wrong format in the runtime similarity parameters')
+
+        if 'runtime_param' in param_dict:
+            runtime_param = param_dict['runtime_param']
+            if runtime_param is not None:
+                print (runtime_param)
+                try:
+                    with open(runtime_param, 'r') as pfile:
+                        rtparam = yaml.safe_load(pfile)
+                        try:
+                            metric = rtparam['similarity_metric']
+                            numsel = rtparam['similarity_cutoff_num']
+                            cutoff = rtparam['similarity_cutoff_distance']
+                        except:
+                            LOG.error('wrong format in the runtime similarity parameters')
+                            self.conveyor.setError('wrong format in the runtime similarity parameters')
+                except:
+                    LOG.error('runtime similarity parameter file not found')
+                    self.conveyor.setError('runtime similarity parameter file not found')
+        else:
             try:
-                with open(runtime_param, 'r') as pfile:
-                    rtparam = yaml.safe_load(pfile)
-                    try:
-                        cutoff = rtparam['similarity_cutoff_distance']
-                        numsel = rtparam['similarity_cutoff_num']
-                        metric = rtparam['similarity_metric']
-                    except:
-                        LOG.error('wrong format in the runtime similarity parameters')
-                        self.conveyor.setError('wrong format in the runtime similarity parameters')
+                metric = param_dict['metric']
+                numsel = param_dict['numsel']
+                cutoff = param_dict['cutoff']
             except:
-                LOG.error('runtime similarity parameter file not found')
-                self.conveyor.setError('runtime similarity parameter file not found')
+                LOG.error('wrong format in the runtime similarity parameters')
+                self.conveyor.setError('wrong format in the runtime similarity parameters')
 
         if not self.conveyor.getError():
             # uses the child classes within the 'space' folder,

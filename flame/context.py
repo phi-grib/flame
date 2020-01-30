@@ -240,7 +240,7 @@ def sbuild_cmd(arguments, output_format=None):
         return False, 'Endpoint name not found in space repository.'
 
     if 'param_string' in arguments:
-        sbuild = Sbuild(arguments['space'], param_file=arguments['param_string'], output_format=output_format)
+        sbuild = Sbuild(arguments['space'], param_string=arguments['param_string'], output_format=output_format)
     elif 'param_file' in arguments:
         sbuild = Sbuild(arguments['space'], param_file=arguments['param_file'], output_format=output_format)
     else:
@@ -288,7 +288,7 @@ def search_cmd(model, output_format=None):
 
     search = Search(model['space'], version=model['version'], output_format=output_format, label=model['label'])
 
-    success, results = search.run(model['infile'], model['runtime_param'])
+    success, results = search.run(model)
 
     LOG.info('Search completed...')
 
