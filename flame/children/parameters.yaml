@@ -106,7 +106,20 @@ SDFile_name:
     - GENERIC_NAME
     - name
   options: null
-  description: Name of the identifier field in the SDF file
+  description: Name of the compound name field in the SDF file
+  dependencies: 
+    input_type: molecule
+  comments: 
+  group: data
+
+SDFile_id:
+  advanced: regular
+  object_type: string
+  writable: true
+  value: 
+    ID
+  options: null
+  description: Name of the compound ID field in the SDF file
   dependencies: 
     input_type: molecule
   comments: 
