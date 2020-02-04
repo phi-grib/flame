@@ -399,7 +399,6 @@ class matrix (Combo):
 
        TODO: 
        - transform/customize values of matrix?
-       - adding extra model info and validation results to conveyor
        - implementing qualitative input and/or output
        - use conformal settings to decide to run or not the simulations to compute CI
 
@@ -432,13 +431,23 @@ class matrix (Combo):
         index = []
         for i in range (self.nvarx):
             cellmax = self.vzero[i]
-            for j in range (int(self.vsize[i])):
-                cellmax += self.vstep[i]
-                if x[i] < cellmax:
-                    break
-            index.append (j)
+            step = self.vstep[i]
 
-        # print (x, index)
+            # if values grow, find the first j producing matrix 
+            # value bigger than the x 
+            if step > 0.0: 
+                for j in range (int(self.vsize[i])):
+                    cellmax += step
+                    if x[i] < cellmax:
+                        break
+                        # if values shrink, find the first j producing matrix 
+            # value lower than the x 
+            else:          
+                for j in range (int(self.vsize[i])):
+                    cellmax += step
+                    if x[i] > cellmax:
+                        break
+            index.append (j)
 
         # compute the index in the deconvoluted monodimensional vector where
         # the values of vmatrix are stored
@@ -448,15 +457,12 @@ class matrix (Combo):
 
         return vmatrix[matrix_index]
 
-
-    def predict(self, X):
+    def load_data(self):
 
         #load input matrix metadata
         mmatrix_path = os.path.join(self.model_path,'mmatrix.yaml')
         with open(mmatrix_path, 'r') as f:
             mmatrix = yaml.safe_load(f)
-        
-        # print (mmatrix)
         
         #load input matrix 
         vmatrix_path = os.path.join(self.model_path,'vmatrix.txt')
@@ -465,11 +471,26 @@ class matrix (Combo):
             if len(np.shape(vmatrix))>1:
                 vmatrix = vmatrix.flatten()
 
-        # print (vmatrix)
+        return mmatrix, vmatrix
+
+    def preprocess (self, X):
+
+        return X
+
+    def postprocess (self, cilow, ciup, cimean):
+
+        return cilow, ciup, cimean
+
+    def predict(self, X):
+
+        X = self.preprocess (X)
 
         # obtain dimensions of X matrix
         self.nobj, self.nvarx = np.shape(X)
-        
+
+        # load matrix and matrix metadata        
+        mmatrix, vmatrix = self.load_data()
+
         # this is the array of predicted Y values 
         yarray = []
 
@@ -558,6 +579,8 @@ class matrix (Combo):
                 cimean.append (np.mean(ymulti_array))
                 #print (np.percentile(ymulti_array,5))
 
+            cilow, ciup, cimean = self.postprocess (cilow, ciup, cimean)
+
             self.conveyor.addVal(np.array(cilow), 
                         'lower_limit', 
                         'Lower limit', 
@@ -578,7 +601,7 @@ class matrix (Combo):
             print ('====',cimean)
             print ('++++',ciupp)
 
-            return (np.array(cimean))
+            yarray = np.array(cimean)
 
         else:
 
@@ -587,7 +610,7 @@ class matrix (Combo):
             for j in range (self.nobj):
                 yarray.append (self.lookup (X[j],vmatrix))
 
-            print ('values:', yarray)
+            dummy1, dummy2, yarray = self.postprocess( None, None, np.array(yarray)) 
 
-            return (np.array(yarray))
+        return yarray
             
