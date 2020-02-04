@@ -387,9 +387,10 @@ class Idata:
         if not method:
             return success_list, ifile
         
-        if method is 'ETKDG':
+        if method == 'ETKDG':
             success_list, ofile = convert3D._ETKDG(ifile)
         else:
+            LOG.warning(f'Value of parameter "convert3D_method" not recognized: {method}. No 3D conversion applied')
             ofile = ifile
 
         return success_list, ofile

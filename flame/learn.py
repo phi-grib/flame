@@ -204,8 +204,6 @@ class Learn:
             self.conveyor.setError(message)
             return
 
-
-
         # instantiate an appropriate child of base_model
         model = None
         for imethod in self.registered_methods:
