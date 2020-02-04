@@ -78,10 +78,14 @@ class Idata:
             self.ifile = None
             randomName = 'flame-'+utils.id_generator()
             self.dest_path = os.path.join(tempfile.gettempdir(), randomName)
+
+            self.conveyor.addMeta('input_file','ensemble input')
         else:
             self.idata = None
             self.ifile = input_source
             self.dest_path = os.path.dirname(self.ifile)
+
+            self.conveyor.addMeta('input_file',os.path.basename(self.ifile))
 
 
     def captureStdError (self, status):
@@ -207,8 +211,8 @@ class Idata:
             success_list.append(True)
             obj_num += 1
 
-        # Insert in metadata the name of the input file
-        self.conveyor.addMeta('input_file',ifile)
+        # # Insert in metadata the name of the input file
+        # self.conveyor.addMeta('input_file',ifile)
 
         # Insert the values as lists in 'results' using an utility function
 

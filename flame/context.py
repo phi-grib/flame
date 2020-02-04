@@ -24,6 +24,7 @@
 import os
 import shutil
 import pathlib
+# import json
 
 from flame.util import utils, get_logger
 
@@ -70,6 +71,9 @@ def get_ensemble_input(task, model_names, model_versions, infile):
         for iresult in model_tmp:
             model_suc.append(iresult[0])
             model_res.append(iresult[1])
+            # i_result = json.loads(iresult[1])
+            # i_manifest = i_result['manifest']
+            # print (i_result['meta'],)
     
     # run in a single thread
     else:
@@ -77,6 +81,7 @@ def get_ensemble_input(task, model_names, model_versions, infile):
             success, results = predict_cmd(model_cmd[i])
             model_suc.append(success)
             model_res.append(results)
+
 
     if False in model_suc:
         return False, 'Some external input sources failed: '+str(model_suc)
