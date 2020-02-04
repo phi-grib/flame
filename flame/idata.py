@@ -73,19 +73,19 @@ class Idata:
         self.conveyor.addMeta('version',self.param.getVal('version'))
 
         if self.param.getVal('input_type') == 'model_ensemble':
-            LOG.debug('model_ensemble input type')
             self.idata = input_source
             self.ifile = None
             randomName = 'flame-'+utils.id_generator()
             self.dest_path = os.path.join(tempfile.gettempdir(), randomName)
 
             self.conveyor.addMeta('input_file','ensemble input')
+
         else:
             self.idata = None
             self.ifile = input_source
             self.dest_path = os.path.dirname(self.ifile)
 
-            self.conveyor.addMeta('input_file',os.path.basename(self.ifile))
+            self.conveyor.addMeta('input_file',self.ifile)
 
 
     def captureStdError (self, status):
@@ -1108,21 +1108,26 @@ class Idata:
         # idata is a list conveyor (in JSON format) from n sources
         # the data usable for input must be listed in the ['meta']['main'] key
 
-        # use first JSON to load common info like obj_nam, etc
-        obj_common = ['label', 'decoration', 'smiles']
-        
+        # use first JSON to load obtain the input_file name
         first_results = json.loads(self.idata[0])
-        first_manifest = first_results['manifest']
+        first_meta = first_results['meta']
+        ifile = first_meta['input_file']
 
-        for item in first_manifest:
-            if item['type'] in obj_common:  # for elements of type label or decoration
-                self.conveyor.addVal(first_results[item['key']], 
-                                     item['key'], 
-                                     item['label'], 
-                                     item['type'],
-                                     item['dimension'],
-                                     item['description']
-                                    )
+        # call extractInformation to obtain names, activities, smiles, id, etc.
+        success_inform = self.extractInformation(ifile)
+        if not success_inform or self.conveyor.getError():
+            return
+
+        # obj_common = ['label', 'decoration', 'smiles']
+        # for item in first_manifest:
+        #     if item['type'] in obj_common:  # for elements of type label or decoration
+        #         self.conveyor.addVal(first_results[item['key']], 
+        #                              item['key'], 
+        #                              item['label'], 
+        #                              item['type'],
+        #                              item['dimension'],
+        #                              item['description']
+        #                             )
 
         # extract usable data from every source and add to 'combo' np.array
         combined_md = None
@@ -1146,8 +1151,12 @@ class Idata:
                             i_result[item_key], dtype=np.float64)
                         num_obj = len(i_result[item_key])
                     else:  # append laterally
+
+                        #TODO: so far we discard any situation where the length of the inputs to be merged is
+                        # non consistent
+                        # We must implement an analysis of the output allowing to discard  
                         if len(i_result[item_key]) != num_obj:
-                            self.conveyor.setError('incompatible size of results obtained from external sources')
+                            self.conveyor.setError('the length of the results produced by some models is inconsistent')
                             return
 
                         combined_md = np.c_[combined_md, np.array(
