@@ -116,7 +116,7 @@ class XGBOOST(BaseEstimator):
                     self.optimize(X, Y, self.estimator, self.tune_parameters)
                     results.append(('model','model type','XGBOOST quantitative (optimized)'))
                 else:
-                    self.estimator = XGBoostClassifier(
+                    self.estimator = XGBClassifier(
                                         **self.estimator_parameters)
                     params = self.estimator.get_params()
                     params['num_class'] = 2
