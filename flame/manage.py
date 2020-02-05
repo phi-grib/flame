@@ -736,6 +736,9 @@ def action_predictions_list ():
             time     = pickle.load (handle)
             timestamp= pickle.load (handle)
 
+        # ifile is simplified to avoid discossing the repository
+        ifile = os.path.basename(ifile)
+
         # add as a tupla for JSON formatting
         jresult.append( ( label, endpoint, version, time, ifile) )
 

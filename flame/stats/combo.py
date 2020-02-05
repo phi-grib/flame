@@ -99,7 +99,10 @@ class Combo (BaseEstimator):
                 self.scoringR = np.mean(
                     mean_squared_error(Y, Yp)) 
                 self.SDEC = np.sqrt(SSY/self.nobj)
-                self.R2 = 1.00 - (SSY/SSY0)
+                if SSY0 == 0.00:
+                    self.R2 = 0.0
+                else:
+                    self.R2 = 1.00 - (SSY/SSY0)
 
                 info.append(('scoringR', 'Scoring P', self.scoringR))
                 info.append(('R2', 'Determination coefficient', self.R2))

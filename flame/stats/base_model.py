@@ -407,7 +407,10 @@ class BaseEstimator:
             self.scoringR = np.mean(
                 mean_squared_error(Y, Yp)) 
             self.SDEC = np.sqrt(SSY/self.nobj)
-            self.R2 = 1.00 - (SSY/SSY0)
+            if SSY0 == 0.0:
+                self.R2 = 0.0
+            else:
+                self.R2 = 1.00 - (SSY/SSY0)
 
             info.append(('scoringR', 'Scoring P', self.scoringR))
             info.append(('R2', 'Determination coefficient', self.R2))
@@ -431,7 +434,10 @@ class BaseEstimator:
             SSY_out = np.sum(np.square(Y - y_pred))
             self.scoringP = mean_squared_error(Y, y_pred)
             self.SDEP = np.sqrt(SSY_out/(self.nobj))
-            self.Q2 = 1.00 - (SSY_out/SSY0_out)
+            if SSY0_out == 0.0:
+                self.Q2 = 0.0
+            else:
+                self.Q2 = 1.00 - (SSY_out/SSY0_out)
 
             info.append(('scoringP', 'Scoring P', self.scoringP))
             info.append(

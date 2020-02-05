@@ -152,7 +152,10 @@ class Apply:
                 SSY_out = np.sum(np.square(Ye - Yp))
                 scoringP = mean_squared_error(Ye, Yp)
                 SDEP = np.sqrt(SSY_out / (nobj))
-                Q2 = 1.00 - (SSY_out / SSY0_out)
+                if SSY0_out == 0:
+                    Q2 = 0.0
+                else:
+                    Q2 = 1.00 - (SSY_out / SSY0_out)
 
                 ext_val_results.append(
                     ('scoringP', 'Scoring P', scoringP))
