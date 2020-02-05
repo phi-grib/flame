@@ -31,7 +31,7 @@ from flame.stats.GNB import GNB
 from flame.stats.PLSR import PLSR
 from flame.stats.PLSDA import PLSDA
 from flame.stats.combo import median, mean, majority, matrix
-
+from flame.stats.XGboost import XGBOOST
 from sklearn.metrics import mean_squared_error, matthews_corrcoef as mcc
 from sklearn.metrics import f1_score
 from sklearn.metrics import make_scorer
@@ -51,7 +51,7 @@ class Apply:
         # expand with new methods here:
         self.registered_methods = [('RF', RF),
                               ('SVM', SVM),
-                              ('XGBOOST'),
+                              ('XGBOOST', XGBOOST),
                               ('GNB', GNB),
                               ('PLSR', PLSR),
                               ('PLSDA', PLSDA),
