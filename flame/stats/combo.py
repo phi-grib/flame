@@ -27,11 +27,13 @@ import os
 from sklearn.metrics import mean_squared_error
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import matthews_corrcoef
+from scipy import stats
 from flame.stats.base_model import BaseEstimator
 from flame.util import get_logger
 
 LOG = get_logger(__name__)
 SIMULATION_SIZE = 500
+CONFIDENCE = 0.80
 
 class Combo (BaseEstimator):
     """
@@ -398,7 +400,6 @@ class matrix (Combo):
        Lockup matrix
 
        TODO: 
-       - transform/customize values of matrix?
        - implementing qualitative input and/or output
        - use conformal settings to decide to run or not the simulations to compute CI
 
@@ -458,7 +459,9 @@ class matrix (Combo):
         return vmatrix[matrix_index]
 
     def load_data(self):
-
+        ''' read the matrix, stored as a 1D or 2D table of floats, separted by ',' 
+            and the metaiformation 
+        '''
         #load input matrix metadata
         mmatrix_path = os.path.join(self.model_path,'mmatrix.yaml')
         with open(mmatrix_path, 'r') as f:
@@ -474,15 +477,23 @@ class matrix (Combo):
         return mmatrix, vmatrix
 
     def preprocess (self, X):
-
+        ''' transform to customize input values, before looking into the table '''
         return X
 
-    def postprocess (self, cilow, ciup, cimean):
-
-        return cilow, ciup, cimean
+    def postprocess (self, varray):
+        ''' transform to customize output values, after they were extracted from the table 
+            input is an array of np.arrays
+            For simple predictions, it only contains a single value
+            For simulations, it contains the low, up and mean values of the CI
+        '''
+        return varray
 
     def predict(self, X):
-
+        ''' return a prediction obtained by looking up a table of preprocessed values
+            The input X values are converted to the matrix indexes
+            When all the X values have an associated error, run a simulation to estimate the
+            output error 
+        '''
         X = self.preprocess (X)
 
         # obtain dimensions of X matrix
@@ -494,7 +505,7 @@ class matrix (Combo):
         # this is the array of predicted Y values 
         yarray = []
 
-        #print(self.conveyor.getJSON())
+        # assign metainformation to every variable
         var_names = self.conveyor.getVal('var_nam')
         
         self.vloop = []
@@ -531,8 +542,6 @@ class matrix (Combo):
                     ioffset*=self.vsize[j]
             self.offset.append(int(ioffset))
 
-        # print ('offset:', self.offset)
-
         # if all the original methods contain CI run a simulation to compute the CI for the 
         # output values and return the mean, the 5% percentil and 95% percentil of the values obtained 
         CI_names = self.conveyor.getVal('ensemble_confidence_names')
@@ -541,9 +550,15 @@ class matrix (Combo):
             # get CI values
             CI_vals = self.conveyor.getVal('ensemble_confidence')
 
-            # assume that the CI represent 95% CI and normal distribution    
-            # TODO: read CI info and tune accordingly    
-            z = 1.96 
+            # we asume a confidence level of CONFIDENCE (default is 95%)
+            # and that the input CI follow a normal distribution
+            # TODO: gather input Confidence Level from parameters     
+            confidence_left  = (1.0 - CONFIDENCE)/2.0
+            confidence_right = 1.0 - confidence_left
+
+            print ("confidences: ", CONFIDENCE, confidence_left, confidence_right)
+
+            z = stats.norm.ppf (confidence_right)
     
             cilow = []
             ciupp = []
@@ -566,22 +581,22 @@ class matrix (Combo):
                         # now we add normal random noise, with mean 0 and SD = sd
                         x[i]+=np.random.normal(0.0,sd)
 
-                    #print (m, x)
-                
                     ymulti.append (self.lookup (x,vmatrix))
 
                 ymulti_array = np.array(ymulti)
-                # print (ymulti_array)
+                print (ymulti_array)
 
-                # obtain percentile 5 and 95 from list of 1000 y's
-                cilow.append(np.percentile(ymulti_array,5,interpolation='linear'))
-                ciupp.append(np.percentile(ymulti_array,95,interpolation='linear'))
-                cimean.append (np.mean(ymulti_array))
-                #print (np.percentile(ymulti_array,5))
 
-            cilow, ciup, cimean = self.postprocess (cilow, ciup, cimean)
+                # obtain percentiles to estimate the left and right part of the CI 
+                cilow.append (np.percentile(ymulti_array,confidence_left*100 ,interpolation='linear'))
+                ciupp.append (np.percentile(ymulti_array,confidence_right*100 ,interpolation='linear'))
+                cimean.append(np.percentile(ymulti_array,50,interpolation='linear'))
+                # cimean.append(np.median(ymulti_array))
 
-            self.conveyor.addVal(np.array(cilow), 
+            cival = [cilow, ciupp, cimean]
+            cival = self.postprocess (cival)
+
+            self.conveyor.addVal(cival[0], 
                         'lower_limit', 
                         'Lower limit', 
                         'confidence',
@@ -589,7 +604,7 @@ class matrix (Combo):
                         'Lower limit of the conformal prediction'
                     )
 
-            self.conveyor.addVal(np.array(ciupp), 
+            self.conveyor.addVal(cival[1], 
                         'upper_limit', 
                         'Upper limit', 
                         'confidence',
@@ -597,11 +612,10 @@ class matrix (Combo):
                         'Upper limit of the conformal prediction'
                     )
         
-            print ('----',cilow)
-            print ('====',cimean)
-            print ('++++',ciupp)
+            for i in range (len(cival[0])):
+                print (f'{cival[0][i]:.2f} - {cival[2][i]:.2f} - {cival[1][i]:.2f}')
 
-            yarray = np.array(cimean)
+            yarray = np.array(cival[2])
 
         else:
 
@@ -610,7 +624,8 @@ class matrix (Combo):
             for j in range (self.nobj):
                 yarray.append (self.lookup (X[j],vmatrix))
 
-            dummy1, dummy2, yarray = self.postprocess( None, None, np.array(yarray)) 
+            sval = [np.array(yarray)]
+            yarray = self.postprocess(sval) 
 
         return yarray
             
