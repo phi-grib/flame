@@ -33,7 +33,7 @@ from flame.util import get_logger
 
 LOG = get_logger(__name__)
 SIMULATION_SIZE = 500
-CONFIDENCE = 0.80
+CONFIDENCE = 0.95
 
 class Combo (BaseEstimator):
     """
@@ -494,10 +494,11 @@ class matrix (Combo):
             When all the X values have an associated error, run a simulation to estimate the
             output error 
         '''
-        X = self.preprocess (X)
-
         # obtain dimensions of X matrix
         self.nobj, self.nvarx = np.shape(X)
+
+        # apply custom modifications to the input values
+        X = self.preprocess (X)
 
         # load matrix and matrix metadata        
         mmatrix, vmatrix = self.load_data()
@@ -550,15 +551,20 @@ class matrix (Combo):
             # get CI values
             CI_vals = self.conveyor.getVal('ensemble_confidence')
 
-            # we asume a confidence level of CONFIDENCE (default is 95%)
-            # and that the input CI follow a normal distribution
-            # TODO: gather input Confidence Level from parameters     
+            # we read the conformal significance from the top model
+            # ideally we must read this from every bottom model and store a list of
+            # conformal significances at the conveyor to derive individual z for
+            # each variable
+            # TODO: implement this
+            conformal_significance = self.param.getVal('conformalSignificance') 
+            conformal_confidence_left  = conformal_significance /2.0
+            conformal_confidence_right = 1.0 - conformal_confidence_left
+
             confidence_left  = (1.0 - CONFIDENCE)/2.0
             confidence_right = 1.0 - confidence_left
-
             print ("confidences: ", CONFIDENCE, confidence_left, confidence_right)
 
-            z = stats.norm.ppf (confidence_right)
+            z = stats.norm.ppf (conformal_confidence_right)
     
             cilow = []
             ciupp = []
@@ -584,8 +590,6 @@ class matrix (Combo):
                     ymulti.append (self.lookup (x,vmatrix))
 
                 ymulti_array = np.array(ymulti)
-                print (ymulti_array)
-
 
                 # obtain percentiles to estimate the left and right part of the CI 
                 cilow.append (np.percentile(ymulti_array,confidence_left*100 ,interpolation='linear'))

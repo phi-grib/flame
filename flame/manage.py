@@ -426,7 +426,7 @@ def action_parameters(model, version=None, oformat='text'):
     else:
 
         order = ['input_type', 'quantitative', 'SDFile_activity', 'SDFile_name', 'SDFile_id',
-        'SDFile_experimental', 'normalize_method', 'ionize_method', 'convert3D_method', 
+        'SDFile_experimental', 'SDFile_complementary', 'normalize_method', 'ionize_method', 'convert3D_method', 
         'computeMD_method', 'model', 'modelAutoscaling', 'tune', 'conformal', 
         'conformalSignificance', 'ModelValidationCV', 'ModelValidationLC', 
         'ModelValidationN', 'ModelValidationP', 'output_format', 'output_md', 

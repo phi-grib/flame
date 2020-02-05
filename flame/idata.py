@@ -154,6 +154,7 @@ class Idata:
         obj_id  = []
         obj_bio = []
         obj_exp = []
+        obj_cmp = []
         obj_sml = []
         success_list = []
         obj_num = 0
@@ -193,6 +194,12 @@ class Idata:
                 if isinstance (self.param.getVal('SDFile_experimental'),str):
                     exp = sdfutils.getVal(mol, self.param.getVal('SDFile_experimental'))
 
+            # extracts complementary information, if any.
+            cmp = None    
+            if self.param.getVal('SDFile_complementary') is not None:
+                if isinstance (self.param.getVal('SDFile_complementary'),str):
+                    cmp = sdfutils.getVal(mol, self.param.getVal('SDFile_complementary'))
+
             # generates a SMILES
             sml = None
             try:
@@ -206,6 +213,7 @@ class Idata:
             obj_id.append(idv)
             obj_bio.append(bio)
             obj_exp.append(exp)
+            obj_cmp.append(cmp)
             obj_sml.append(sml)
 
             success_list.append(True)
@@ -240,6 +248,12 @@ class Idata:
                              'experim', 'Experim.',
                              'method', 'objs',
                              'Experimental anotation present in the input file')
+
+        if not utils.is_empty(obj_cmp):
+            self.conveyor.addVal(np.array(obj_cmp, dtype=np.float64),
+                             'complementary', 'Complem.',
+                             'method', 'objs',
+                             'Complementary anotation present in the input file')
 
         LOG.debug(f'processed {obj_num} molecules'
                   f' from a supplier of {len(suppl)} without issues')
