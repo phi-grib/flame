@@ -51,6 +51,7 @@ class Apply:
         # expand with new methods here:
         self.registered_methods = [('RF', RF),
                               ('SVM', SVM),
+                              ('XGBOOST'),
                               ('GNB', GNB),
                               ('PLSR', PLSR),
                               ('PLSDA', PLSDA),
