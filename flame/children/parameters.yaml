@@ -263,7 +263,19 @@ SDFile_experimental:
   writable: true
   value: null
   options: null
-  description: Experimental measure field in the SDF file
+  description: Experimental data field in the SDF file
+  dependencies: 
+    input_type: molecule
+  comments: 
+  group: data    
+
+SDFile_complementary:
+  advanced: advanced
+  object_type: string
+  writable: true
+  value: null
+  options: null
+  description: Complementary data field in the SDF file
   dependencies: 
     input_type: molecule
   comments: 
