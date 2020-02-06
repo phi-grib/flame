@@ -632,7 +632,7 @@ class matrix (Combo):
                 yarray.append (self.lookup (X[j],vmatrix))
 
             sval = [np.array(yarray)]
-            yarray = self.postprocess(sval) 
+            yarray = self.postprocess(sval)[0] 
 
         return yarray
             
