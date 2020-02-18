@@ -739,6 +739,10 @@ def action_predictions_list ():
         # ifile is simplified to avoid discossing the repository
         ifile = os.path.basename(ifile)
 
+        # ensemble models are hidden
+        if label[0:8]=='ensemble':
+            continue
+
         # add as a tupla for JSON formatting
         jresult.append( ( label, endpoint, version, time, ifile) )
 
