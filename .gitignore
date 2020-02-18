@@ -119,8 +119,12 @@ flame/models
 
 # other
 flame/models/
+flame/spaces/
+flame/old_models/
+similarity/
 
 *.tsv
+flame/*.yaml
 
 # compressed files
 *.tgz
@@ -132,4 +136,3 @@ flame/models/
 flame/config.yaml
 flame/config.yml
 
-flame/spaces/
