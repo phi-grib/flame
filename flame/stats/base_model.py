@@ -493,7 +493,7 @@ class BaseEstimator:
             info.append(('TNpred', 'True negatives', self.TNpred))
             info.append(('FPpred', 'False positives', self.FPpred))
             info.append(('FNpred', 'False negatives', self.FNpred))
-            info.append(('SensitivityPed', 'Sensitivity in fitting', 
+            info.append(('SensitivityPred', 'Sensitivity in fitting', 
                     self.sensitivityPred))
             info.append(
                 ('SpecificityPred', 'Specificity in fitting', 
