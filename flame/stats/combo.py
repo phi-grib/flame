@@ -134,7 +134,7 @@ class Combo (BaseEstimator):
                 info.append(('TNpred', 'True negatives', self.TNpred))
                 info.append(('FPpred', 'False positives', self.FPpred))
                 info.append(('FNpred', 'False negatives', self.FNpred))
-                info.append(('SensitivityPred', 'Sensitivity in fitting', self.sensitivityPred))
+                info.append(('SensitivityPed', 'Sensitivity in fitting', self.sensitivityPred))
                 info.append(('SpecificityPred', 'Specificity in fitting', self.specificityPred))
                 info.append(('MCCpred', 'Matthews Correlation Coefficient', self.mccp))
 
