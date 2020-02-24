@@ -491,6 +491,8 @@ class Idata:
                 # for 2D arrays, shape[0] is the number of objects
                 if (len(ishape) > 1) and ishape[0] != shape[0]:
 
+                    #TODO analyze differences and perform a more smart 
+                    # combination
                     LOG.error(f'Number of objects processed by {method}'
                               'does not match those computed by other methods')
                     continue
