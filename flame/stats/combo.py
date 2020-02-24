@@ -106,9 +106,7 @@ class Combo (BaseEstimator):
 
                 info.append(('scoringR', 'Scoring P', self.scoringR))
                 info.append(('R2', 'Determination coefficient', self.R2))
-                info.append(
-                    ('SDEC', 'Standard Deviation Error of the Calculations', 
-                        self.SDEC))
+                info.append(('SDEC', 'Standard Deviation Error of the Calculations', self.SDEC))
                 LOG.debug(f'Goodness of the fit calculated: {self.scoringR}')
             except Exception as e:
                 LOG.error(f'Error computing goodness of the fit'
@@ -130,6 +128,9 @@ class Combo (BaseEstimator):
 
                 self.mccp = matthews_corrcoef(Y, Yp)
 
+                # TODO: it is not too clear if the results of validation in ensemble models is internal or
+                # external. Both sets are added to avoid problems with the GUI but this requires futher
+                # clarification
                 info.append(('TPpred', 'True positives', self.TPpred))
                 info.append(('TNpred', 'True negatives', self.TNpred))
                 info.append(('FPpred', 'False positives', self.FPpred))

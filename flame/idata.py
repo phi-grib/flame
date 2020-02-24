@@ -135,7 +135,7 @@ class Idata:
 
         # Initiate a RDKit SDFile iterator to process the molecules one by one
         try:
-            suppl = Chem.SDMolSupplier(ifile)
+            suppl = Chem.SDMolSupplier(ifile, sanitize=True)
             LOG.debug(f'mol supplier created from {ifile}')
         except Exception as e:
             LOG.debug('Unable to create mol supplier with the exception: '

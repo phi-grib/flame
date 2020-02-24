@@ -127,7 +127,7 @@ def _mordred_descriptors(ifile, **kwargs) -> (bool, (np.ndarray, list, list)):
     # Update success list
     success_list = list(success_l1 & success_l2) 
     if num_obj < est_obj:
-        clean_extra_xrows(xmatrix, num_obj, est_obj)
+        xmatrix = clean_extra_xrows(xmatrix, num_obj, est_obj)
 
         # # if some molecules failed to compute we will clean xmatrix by 
         # # removing extra rows
@@ -223,7 +223,7 @@ def _RDKit_morganFPS(ifile, **kwargs) -> (bool, (np.ndarray, list, list)):
         return False, 'Failed computing RDKit Morgan Fingerprints for molecule' + str(num_obj+1) + 'in file ' + ifile
 
     if num_obj < est_obj:
-        clean_extra_xrows(xmatrix, num_obj, est_obj)
+        xmatrix = clean_extra_xrows(xmatrix, num_obj, est_obj)
 
     LOG.debug(f'computed RDKit Morgan Fingerprints matrix with shape {np.shape(xmatrix)}')
     if num_obj == 0:
@@ -383,7 +383,7 @@ def _RDKit_descriptors(ifile, **kwargs) -> (bool, (np.ndarray, list, list)):
 
             mdi = md.CalcDescriptors(mol)
 
-            if np.isnan(mdi).any():
+            if np.isnan(mdi).any() or np.isinf(mdi).any():
                 success_list.append(False)
                 continue               
 
@@ -395,7 +395,7 @@ def _RDKit_descriptors(ifile, **kwargs) -> (bool, (np.ndarray, list, list)):
         return False, 'Failed computing RDKit descriptors for molecule' + str(num_obj+1) + 'in file ' + ifile
 
     if num_obj < est_obj:
-        clean_extra_xrows(xmatrix, num_obj, est_obj)
+        xmatrix = clean_extra_xrows(xmatrix, num_obj, est_obj)
 
         # # if some molecules failed to compute we will clean xmatrix by 
         # # removing extra rows
@@ -461,7 +461,7 @@ def _RDKit_properties(ifile, **kwargs) -> (bool, (np.ndarray, list, list)):
 
             descriptors = properties.ComputeProperties(mol)
 
-            if np.isnan(descriptors).any():
+            if np.isnan(descriptors).any() or np.isinf(descriptors).any():
                 success_list.append(False)
                 continue
             
@@ -483,7 +483,7 @@ def _RDKit_properties(ifile, **kwargs) -> (bool, (np.ndarray, list, list)):
         return False, 'Failed computing RDKit properties for molecule' + str(num_obj+1) + 'in file ' + ifile
 
     if num_obj < est_obj:
-        clean_extra_xrows(xmatrix, num_obj, est_obj)
+        xmatrix = clean_extra_xrows(xmatrix, num_obj, est_obj)
 
     LOG.debug(f'computed RDKit properties matrix with shape {np.shape(xmatrix)}')
     if num_obj == 0:
