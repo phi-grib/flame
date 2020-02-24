@@ -239,6 +239,7 @@ class Documentation:
                 if not isinstance(self.fields[key]['value'], dict):
                     self.fields[key]["value"] = value
                 else:
+                    print(key)
                     for k in value.keys():
                         self.fields[key][k] = value[k]
 
@@ -324,7 +325,8 @@ class Documentation:
         allowed = ['Conformal_accuracy', 'Conformal_mean_interval',
                    'Sensitivity', 'Specificity', 'MCC',
                    'Conformal_coverage', 'Conformal_accuracy',
-                   'Q2', 'SDEP']
+                   'Q2', 'SDEP', 'SensitivityPed', 'SpecificityPred',
+                   'SpecificityPred', 'MCCpred', 'scoringR', 'R2', 'SDEC' ]
         model_info = self.conveyor.getVal('model_build_info')
         validation = self.conveyor.getVal('model_valid_info')
 
@@ -353,8 +355,9 @@ class Documentation:
         for stat in validation:
             if stat[0] in allowed:
                 internal_val[stat[0]] = float("{0:.2f}".format(stat[2]))
-        self.fields['Internal_validation_1']\
-            ['value'] = internal_val
+        if internal_val:
+            self.fields['Internal_validation_1']\
+                ['value'] = internal_val
 
     def get_string(self, dictionary):
         '''
