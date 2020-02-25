@@ -78,7 +78,16 @@ class Idata:
             randomName = 'flame-'+utils.id_generator()
             self.dest_path = os.path.join(tempfile.gettempdir(), randomName)
 
-            self.conveyor.addMeta('input_file','ensemble input')
+            #analyze first result to get the name of the input file
+            ifile = 'ensemble input'
+            try:
+                first_results = json.loads(input_source[0])
+                first_meta = first_results['meta']
+                ifile = first_meta['input_file']
+            except:
+                pass
+
+            self.conveyor.addMeta('input_file',ifile)
 
         else:
             self.idata = None
