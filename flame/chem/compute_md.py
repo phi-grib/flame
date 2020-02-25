@@ -36,14 +36,6 @@ from flame.util import get_logger
 LOG = get_logger(__name__)
 
 
-def clean_extra_xrows (xmatrix, num_obj, est_obj):
-    for i in range (num_obj, est_obj):
-        xmatrix = np.delete(xmatrix,num_obj,axis=0)
-
-    return xmatrix
-
-
-
 def _mordred_descriptors(ifile, **kwargs) -> (bool, (np.ndarray, list, list)):
     ''' 
     mordred descriptors. output is a boolean and
@@ -127,15 +119,10 @@ def _mordred_descriptors(ifile, **kwargs) -> (bool, (np.ndarray, list, list)):
     # Update success list
     success_list = list(success_l1 & success_l2) 
     if num_obj < est_obj:
-        xmatrix = clean_extra_xrows(xmatrix, num_obj, est_obj)
-
-        # # if some molecules failed to compute we will clean xmatrix by 
-        # # removing extra rows
-        # # for this we will call the first extra row (xmatrix[num_obj])
-        # # est_obj-num_obj times
-        # for i in range (num_obj,est_obj):
-        #     xmatrix = np.delete(xmatrix,num_obj,axis=0)
-        #     print ('deleted ', i, np.shape(xmatrix))
+        # if some molecules failed to compute we will clean xmatrix by 
+        # removing extra rows
+        for i in range (num_obj, est_obj):
+            xmatrix = np.delete(xmatrix,num_obj,axis=0)
 
     LOG.info(f'computed mordred descriptors matrix with shape {np.shape(xmatrix)}')
     if num_obj == 0:
@@ -223,7 +210,10 @@ def _RDKit_morganFPS(ifile, **kwargs) -> (bool, (np.ndarray, list, list)):
         return False, 'Failed computing RDKit Morgan Fingerprints for molecule' + str(num_obj+1) + 'in file ' + ifile
 
     if num_obj < est_obj:
-        xmatrix = clean_extra_xrows(xmatrix, num_obj, est_obj)
+        # if some molecules failed to compute we will clean xmatrix by 
+        # removing extra rows
+        for i in range (num_obj, est_obj):
+            xmatrix = np.delete(xmatrix,num_obj,axis=0)
 
     LOG.debug(f'computed RDKit Morgan Fingerprints matrix with shape {np.shape(xmatrix)}')
     if num_obj == 0:
@@ -395,15 +385,10 @@ def _RDKit_descriptors(ifile, **kwargs) -> (bool, (np.ndarray, list, list)):
         return False, 'Failed computing RDKit descriptors for molecule' + str(num_obj+1) + 'in file ' + ifile
 
     if num_obj < est_obj:
-        xmatrix = clean_extra_xrows(xmatrix, num_obj, est_obj)
-
-        # # if some molecules failed to compute we will clean xmatrix by 
-        # # removing extra rows
-        # # for this we will call the first extra row (xmatrix[num_obj])
-        # # est_obj-num_obj times
-        # for i in range (num_obj,est_obj):
-        #     xmatrix = np.delete(xmatrix,num_obj,axis=0)
-        #     print ('deleted ', i, np.shape(xmatrix))
+        # if some molecules failed to compute we will clean xmatrix by 
+        # removing extra rows
+        for i in range (num_obj,est_obj):
+            xmatrix = np.delete(xmatrix,num_obj,axis=0)
 
     LOG.debug(f'computed RDKit descriptors matrix with shape {np.shape(xmatrix)}')
     if num_obj == 0:
@@ -483,7 +468,10 @@ def _RDKit_properties(ifile, **kwargs) -> (bool, (np.ndarray, list, list)):
         return False, 'Failed computing RDKit properties for molecule' + str(num_obj+1) + 'in file ' + ifile
 
     if num_obj < est_obj:
-        xmatrix = clean_extra_xrows(xmatrix, num_obj, est_obj)
+        # if some molecules failed to compute we will clean xmatrix by 
+        # removing extra rows
+        for i in range (num_obj,est_obj):
+            xmatrix = np.delete(xmatrix,num_obj,axis=0)
 
     LOG.debug(f'computed RDKit properties matrix with shape {np.shape(xmatrix)}')
     if num_obj == 0:
