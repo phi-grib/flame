@@ -69,10 +69,13 @@ class Idata:
         # path for temp files (fallback default)
         self.dest_path = '.'
 
+        # add metainformation
         self.conveyor.addMeta('endpoint',self.param.getVal('endpoint'))
         self.conveyor.addMeta('version',self.param.getVal('version'))
+        input_type = self.param.getVal('input_type')
+        self.conveyor.addMeta('input_type',input_type)
 
-        if self.param.getVal('input_type') == 'model_ensemble':
+        if input_type == 'model_ensemble':
             self.idata = input_source
             self.ifile = None
             randomName = 'flame-'+utils.id_generator()
@@ -81,9 +84,9 @@ class Idata:
             #analyze first result to get the name of the input file
             ifile = 'ensemble input'
             try:
-                first_results = json.loads(input_source[0])
-                first_meta = first_results['meta']
-                ifile = first_meta['input_file']
+                iresult = json.loads(input_source[0])
+                imeta = iresult['meta']
+                ifile = imeta['input_file']
             except:
                 pass
 
@@ -1133,10 +1136,8 @@ class Idata:
         # idata is a list conveyor (in JSON format) from n sources
         # the data usable for input must be listed in the ['meta']['main'] key
 
-        # use first JSON to load obtain the input_file name
-        first_results = json.loads(self.idata[0])
-        first_meta = first_results['meta']
-        ifile = first_meta['input_file']
+        # get input file name from conveyor, as defined in the constructor
+        ifile = self.conveyor.getMeta('input_file')
 
         # call extractInformation to obtain names, activities, smiles, id, etc.
         success_inform = self.extractInformation(ifile)
