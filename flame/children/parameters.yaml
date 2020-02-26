@@ -34,7 +34,7 @@ normalize_method:
   advanced: regular
   object_type: string
   writable: false
-  value: chEMBL
+  value: standardize
   options:
     - null
     - standardize
