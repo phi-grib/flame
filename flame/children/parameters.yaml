@@ -34,15 +34,35 @@ normalize_method:
   advanced: regular
   object_type: string
   writable: false
-  value: standardize
+  value: chEMBL
   options:
     - null
     - standardize
+    - chEMBL
   description: Selection of a standardization method
   dependencies: 
     input_type: molecule
   comments: 
   group: data
+
+normalize_settings:
+  advanced: regular
+  object_type: dictionary
+  writable: false
+  value: 
+    score:
+      object_type: int
+      writable: true
+      value: 2
+      options:
+        - null
+      description: Penalty score for serioussness of molecules issues. 0 to 8 from less to more permissive.
+  description: Settings for standardizer
+  dependencies: 
+    - ext_input: false
+    - input_type: molecule
+  comments: 
+  group: data  
 
 ionize_method:
   advanced: regular

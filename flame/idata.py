@@ -363,6 +363,29 @@ class Idata:
                         mcount += 1
                         continue
 
+                elif 'chEMBL' in method:
+                    # Get allowed penalty score from parameters
+                    score = self.param.getDict('normalize_settings')['score']
+                    from chembl_structure_pipeline import standardizer as embl
+                    from chembl_structure_pipeline import checker
+                    try:
+                        parent = embl.standardize_molblock(Chem.MolToMolBlock(m))
+                        issues = checker.check_molblock(Chem.MolToMolBlock(m))
+                        if len(issues) > 0:
+                            if issues[0][0] > score:
+                                success_list[mcount]=False
+                                mcount += 1
+                                continue
+
+                    except Exception as e:
+                        # this error means an execution error running standardizer
+                        # the molecule is discarded and therefore the list of molecules must be updated 
+                        LOG.error(f'Critical standardize execution exception {e}'
+                                    f' when processing mol #{mcount} {name}. Discarding molecule')
+                        success_list[mcount]=False
+                        mcount += 1
+                        continue
+
                 else:
                     #LOG.info(f'Skipping normalization.')
                     try:
