@@ -106,9 +106,7 @@ class Combo (BaseEstimator):
 
                 info.append(('scoringR', 'Scoring P', self.scoringR))
                 info.append(('R2', 'Determination coefficient', self.R2))
-                info.append(
-                    ('SDEC', 'Standard Deviation Error of the Calculations', 
-                        self.SDEC))
+                info.append(('SDEC', 'Standard Deviation Error of the Calculations', self.SDEC))
                 LOG.debug(f'Goodness of the fit calculated: {self.scoringR}')
             except Exception as e:
                 LOG.error(f'Error computing goodness of the fit'
@@ -118,24 +116,37 @@ class Combo (BaseEstimator):
         else:
             # Get confusion matrix for predicted Y
             try:
-                self.TNpred, self.FPpred,\
-                self.FNpred, self.TPpred = confusion_matrix(Y, Yp,
-                                                        labels=[0, 1]).ravel()
-                self.sensitivityPred = (self.TPpred / (self.TPpred + self.FNpred))
-                self.specificityPred = (self.TNpred / (self.TNpred + self.FPpred))
+                self.TNpred, self.FPpred,self.FNpred, self.TPpred = confusion_matrix(Y, Yp, labels=[0, 1]).ravel()
+
+                self.sensitivityPred = 0.000
+                if (self.TPpred + self.FNpred) > 0:
+                    self.sensitivityPred = (self.TPpred / (self.TPpred + self.FNpred))
+                
+                self.specificityPred = 0.000
+                if (self.TNpred + self.FPpred) > 0:
+                    self.specificityPred = (self.TNpred / (self.TNpred + self.FPpred))
+
                 self.mccp = matthews_corrcoef(Y, Yp)
 
+                # TODO: it is not too clear if the results of validation in ensemble models is internal or
+                # external. Both sets are added to avoid problems with the GUI but this requires futher
+                # clarification
                 info.append(('TPpred', 'True positives', self.TPpred))
                 info.append(('TNpred', 'True negatives', self.TNpred))
                 info.append(('FPpred', 'False positives', self.FPpred))
                 info.append(('FNpred', 'False negatives', self.FNpred))
-                info.append(('SensitivityPed', 'Sensitivity in fitting', 
-                        self.sensitivityPred))
-                info.append(
-                    ('SpecificityPred', 'Specificity in fitting', 
-                        self.specificityPred))
-                info.append(('MCCpred', 'Matthews Correlation Coefficient', 
-                        self.mccp))
+                info.append(('SensitivityPed', 'Sensitivity in fitting', self.sensitivityPred))
+                info.append(('SpecificityPred', 'Specificity in fitting', self.specificityPred))
+                info.append(('MCCpred', 'Matthews Correlation Coefficient', self.mccp))
+
+                info.append(('TP', 'True positives', self.TPpred))
+                info.append(('TN', 'True negatives', self.TNpred))
+                info.append(('FP', 'False positives', self.FPpred))
+                info.append(('FN', 'False negatives', self.FNpred))
+                info.append(('Sensitivity', 'Sensitivity in fitting', self.sensitivityPred))
+                info.append(('Specificity', 'Specificity in fitting', self.specificityPred))
+                info.append(('MCC', 'Matthews Correlation Coefficient', self.mccp))
+
                 LOG.debug('Computed class prediction for estimator instances')
             except Exception as e:
                 LOG.error(f'Error computing class prediction of Yexp'

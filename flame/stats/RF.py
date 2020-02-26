@@ -33,6 +33,8 @@ from nonconformist.icp import IcpClassifier, IcpRegressor
 from nonconformist.nc import ClassifierNc, MarginErrFunc, RegressorNc
 from nonconformist.nc import AbsErrorErrFunc, RegressorNormalizer
 
+import numpy as np
+
 from flame.stats.base_model import BaseEstimator
 from flame.util import get_logger
 LOG = get_logger(__name__)

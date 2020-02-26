@@ -69,16 +69,28 @@ class Idata:
         # path for temp files (fallback default)
         self.dest_path = '.'
 
+        # add metainformation
         self.conveyor.addMeta('endpoint',self.param.getVal('endpoint'))
         self.conveyor.addMeta('version',self.param.getVal('version'))
+        input_type = self.param.getVal('input_type')
+        self.conveyor.addMeta('input_type',input_type)
 
-        if self.param.getVal('input_type') == 'model_ensemble':
+        if input_type == 'model_ensemble':
             self.idata = input_source
             self.ifile = None
             randomName = 'flame-'+utils.id_generator()
             self.dest_path = os.path.join(tempfile.gettempdir(), randomName)
 
-            self.conveyor.addMeta('input_file','ensemble input')
+            #analyze first result to get the name of the input file
+            ifile = 'ensemble input'
+            try:
+                iresult = json.loads(input_source[0])
+                imeta = iresult['meta']
+                ifile = imeta['input_file']
+            except:
+                pass
+
+            self.conveyor.addMeta('input_file',ifile)
 
         else:
             self.idata = None
@@ -135,7 +147,7 @@ class Idata:
 
         # Initiate a RDKit SDFile iterator to process the molecules one by one
         try:
-            suppl = Chem.SDMolSupplier(ifile)
+            suppl = Chem.SDMolSupplier(ifile, sanitize=True)
             LOG.debug(f'mol supplier created from {ifile}')
         except Exception as e:
             LOG.debug('Unable to create mol supplier with the exception: '
@@ -491,6 +503,8 @@ class Idata:
                 # for 2D arrays, shape[0] is the number of objects
                 if (len(ishape) > 1) and ishape[0] != shape[0]:
 
+                    #TODO analyze differences and perform a more smart 
+                    # combination
                     LOG.error(f'Number of objects processed by {method}'
                               'does not match those computed by other methods')
                     continue
@@ -922,6 +936,8 @@ class Idata:
         message += '\nWill show results for the rest of the series...'
         message += '\nCheck the error.log file for further details'
 
+        LOG.warning(message)
+
         self.conveyor.setWarning(message)
 
         return
@@ -1122,10 +1138,8 @@ class Idata:
         # idata is a list conveyor (in JSON format) from n sources
         # the data usable for input must be listed in the ['meta']['main'] key
 
-        # use first JSON to load obtain the input_file name
-        first_results = json.loads(self.idata[0])
-        first_meta = first_results['meta']
-        ifile = first_meta['input_file']
+        # get input file name from conveyor, as defined in the constructor
+        ifile = self.conveyor.getMeta('input_file')
 
         # call extractInformation to obtain names, activities, smiles, id, etc.
         success_inform = self.extractInformation(ifile)

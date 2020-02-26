@@ -316,7 +316,10 @@ class Odata():
         ###
         # returns a JSON with the prediction results
         if 'JSON' in self.format:
-            output = self.conveyor.getJSON()
+            if self.param.getVal('input_type') == 'model_ensemble':
+                output = self.conveyor.getJSON(xdata=True)
+            else:
+                output = self.conveyor.getJSON()
 
         #print (self.conveyor.getJSON())
         
