@@ -223,7 +223,7 @@ class Conveyor:
         if xdata:
             white_keys += self.xmatrixKeys()
 
-        #print (white_keys)
+        print (white_keys)
 
         for key in white_keys:
             value = self.data[key]
@@ -240,7 +240,7 @@ class Conveyor:
             else:
                 temp_json[key]=value
 
-        #print (json.dumps(temp_json))
+        print (json.dumps(temp_json))
 
         return json.dumps(temp_json)
 
