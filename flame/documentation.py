@@ -91,7 +91,7 @@ class Documentation:
 
         try:
             with open(documentation_file_name, 'r') as documentation_file:
-                self.fields = yaml.load(documentation_file)
+                self.fields = yaml.safe_load(documentation_file)
         except Exception as e:
             # LOG.error(f'Error loading documentation file with exception: {e}')
             raise e
@@ -239,7 +239,7 @@ class Documentation:
                 if not isinstance(self.fields[key]['value'], dict):
                     self.fields[key]["value"] = value
                 else:
-                    print(key)
+                    # print(key)
                     for k in value.keys():
                         self.fields[key][k] = value[k]
 
