@@ -547,7 +547,7 @@ def action_documentation(model, version=None, doc_file=None, oformat='text'):
 
     else:
         order = ['ID', 'Version', 'Contact', 'Institution', 'Date', 'Endpoint',
-         'Endpoint_units', 'Dependent_variable', 'Species',
+         'Endpoint_units', 'Interpretation', 'Dependent_variable', 'Species',
         'Limits_applicability', 'Experimental_protocol', 'Model_availability',
         'Data_info', 'Algorithm', 'Software', 'Descriptors', 'Algorithm_settings',
         'AD_method', 'AD_parameters', 'Goodness_of_fit_statistics', 

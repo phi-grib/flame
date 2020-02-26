@@ -936,6 +936,8 @@ class Idata:
         message += '\nWill show results for the rest of the series...'
         message += '\nCheck the error.log file for further details'
 
+        LOG.warning(message)
+
         self.conveyor.setWarning(message)
 
         return
