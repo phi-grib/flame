@@ -342,15 +342,27 @@ class Documentation:
         self.fields['Algorithm_settings']['value'] = \
             (self.conveyor.getVal('estimator_parameters'))
 
+        # Horrendous patch to solve backcompatibility problem
+        if 'subfields' in self.fields['Data_info']:
+            sub_label = 'subfields'
+        else:
+            sub_label = 'value'
+
         self.fields['Data_info']\
-            ['value']['training_set_size']['value'] = \
+            [sub_label]['training_set_size']['value'] = \
             model_info[0][2]
+        
+        self.fields['Data_info']\
+            [sub_label]['training_set_size']['value'] = \
+            model_info[0][2]
+
         self.fields['Descriptors']\
-            ['value']['final_number']['value'] = \
+            [sub_label]['final_number']['value'] = \
             model_info[1][2]
         self.fields['Descriptors']\
-            ['value']['ratio']['value'] = \
+            [sub_label]['ratio']['value'] = \
             '{:0.2f}'.format(model_info[1][2]/model_info[0][2])
+        
         internal_val = dict()
         for stat in validation:
             if stat[0] in allowed:
