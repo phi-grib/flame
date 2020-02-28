@@ -31,6 +31,7 @@ from flame.stats.GNB import GNB
 from flame.stats.PLSR import PLSR
 from flame.stats.PLSDA import PLSDA
 from flame.stats.XGboost import XGBOOST
+from flame.stats.Keras import Keras_nn
 from flame.stats.combo import median, mean, majority, matrix
 from sklearn.preprocessing import MinMaxScaler 
 from sklearn.preprocessing import StandardScaler 
@@ -67,6 +68,7 @@ class Learn:
                               ('PLSDA', PLSDA), 
                               ('median', median),
                               ('mean', mean),
+                              ('Keras', Keras_nn),
                               ('majority', majority),
                               ('matrix', matrix)]
 
