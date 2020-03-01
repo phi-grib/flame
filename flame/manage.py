@@ -704,7 +704,7 @@ def action_report():
         # build a tuple (model_name, [version_info]) for each model and append
         results.append((imodel_name, imodel_vers_info))
         
-    print (json.dumps(results))
+    #print (json.dumps(results))
     return True, json.dumps(results)
 
 def getdate (element):
