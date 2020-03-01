@@ -143,7 +143,7 @@ class XGBOOST(BaseEstimator):
                     #     # 'n_estimators': 25
                     #     }
                     # self.estimator = XGBRegressor(**params)
-                    self.estimator = XGBClassifier(**self.estimator_parameters)
+                    self.estimator = XGBRegressor(**self.estimator_parameters)
                     results.append(('model', 'model type', 'XGBOOST quantitative'))
                 else:
 
