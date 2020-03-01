@@ -86,6 +86,8 @@ class XGBOOST(BaseEstimator):
             self.estimator_parameters['objective'] = 'binary:logistic'
             self.name = "XGB-Classifier"
 
+        self.estimator_parameters['missing'] = -99.99999
+
     def build(self):
         '''Build a new XGBOOST model with the X and Y numpy matrices '''
 
