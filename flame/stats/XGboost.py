@@ -22,7 +22,6 @@
 
 from copy import copy
 
-
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.neighbors import KNeighborsRegressor
 
@@ -36,7 +35,6 @@ from nonconformist.nc import AbsErrorErrFunc, RegressorNormalizer
 from flame.stats.base_model import BaseEstimator
 from flame.util import get_logger
 LOG = get_logger(__name__)
-
 
 class XGBOOST(BaseEstimator):
     """
@@ -86,6 +84,8 @@ class XGBOOST(BaseEstimator):
             self.estimator_parameters['objective'] = 'binary:logistic'
             self.name = "XGB-Classifier"
 
+        # Missing value must be defined. Otherwyse it returns 'nan' which cannot be
+        # converted to JSON and produces trouble in different points
         self.estimator_parameters['missing'] = -99.99999
 
     def build(self):
