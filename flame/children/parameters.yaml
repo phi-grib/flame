@@ -952,7 +952,7 @@ XGBOOST_parameters:
         - null
       description: Number of trees to fit.
     booster:
-      object_type: int
+      object_type: string
       writable: true
       value: gbtree
       options: 
