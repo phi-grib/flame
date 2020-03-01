@@ -134,26 +134,28 @@ class XGBOOST(BaseEstimator):
                 if self.param.getVal('quantitative'):
 
                     LOG.info("Building Quantitative XGBOOST model")
-                    params = {
-                        'objective': 'reg:squarederror',
-                        # 'max_depth': 20,
-                        # 'learning_rate': 1.0,
-                        # 'silent': 1,
-                        # 'n_estimators': 25
-                        }
-                    self.estimator = XGBRegressor(**params)
+                    # params = {
+                    #     'objective': 'reg:squarederror',
+                    #     'missing': -99.99999,
+                    #     # 'max_depth': 20,
+                    #     # 'learning_rate': 1.0,
+                    #     # 'silent': 1,
+                    #     # 'n_estimators': 25
+                    #     }
+                    # self.estimator = XGBRegressor(**params)
+                    self.estimator = XGBClassifier(**self.estimator_parameters)
                     results.append(('model', 'model type', 'XGBOOST quantitative'))
                 else:
 
                     LOG.info("Building Qualitative XGBOOST model")
-                    params = {
-                        'objective': 'binary:logistic',
-                         'max_depth': 3,
-                         #'learning_rate': 0.7,
-                         #'silent': 1,
-                         'n_estimators': 100
-                        }
-                    self.estimator = XGBClassifier(**self.estimator_parameters                       )
+                    # params = {
+                    #     'objective': 'binary:logistic',
+                    #      'max_depth': 3,
+                    #      #'learning_rate': 0.7,
+                    #      #'silent': 1,
+                    #      'n_estimators': 100
+                    #     }
+                    self.estimator = XGBClassifier(**self.estimator_parameters)
                     results.append(('model', 'model type', 'XGBOOST qualitative'))
 
                 self.estimator.fit(X, Y)
