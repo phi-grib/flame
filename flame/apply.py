@@ -32,6 +32,7 @@ from flame.stats.PLSR import PLSR
 from flame.stats.PLSDA import PLSDA
 from flame.stats.combo import median, mean, majority, matrix
 from flame.stats.XGboost import XGBOOST
+from flame.stats.Keras import Keras_nn
 from sklearn.metrics import mean_squared_error, matthews_corrcoef as mcc
 from sklearn.metrics import f1_score
 from sklearn.metrics import make_scorer
@@ -55,6 +56,7 @@ class Apply:
                               ('GNB', GNB),
                               ('PLSR', PLSR),
                               ('PLSDA', PLSDA),
+                              ('Keras', Keras_nn),
                               ('median', median),
                               ('mean', mean),
                               ('majority', majority),

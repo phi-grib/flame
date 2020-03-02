@@ -66,9 +66,9 @@ class Learn:
                               ('GNB', GNB),
                               ('PLSR', PLSR),
                               ('PLSDA', PLSDA), 
+                              ('Keras', Keras_nn),
                               ('median', median),
                               ('mean', mean),
-                              ('Keras', Keras_nn),
                               ('majority', majority),
                               ('matrix', matrix)]
 

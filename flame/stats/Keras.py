@@ -232,7 +232,33 @@ class Keras_nn(BaseEstimator):
         model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
         return model
 
+    # Overrides regular project to single class prediction
+    def regularProject(self, Xb):
+        ''' projects a collection of query objects in a regular model,
+         for obtaining predictions '''
+        print("**************HERE***********************")
+        Yp = self.estimator.predict(Xb)
+        Yp = np.asarray([x[0] for x in Yp])
+        print(Yp)
 
+
+        # if conveyor contains experimental values for any of the objects replace the
+        # predictions with the experimental results
+        exp = self.conveyor.getVal('experim')
+        if exp is not None:
+            if len(exp) == len(Yp):
+                for i in range (len(Yp)):
+                    if not np.isnan(exp[i]):
+                        # print (exp[i], Yp[i])
+                        Yp[i] = exp[i]
+                    else:
+                    # if exp is nan, substitute it with a number which can be recognized
+                    # to facilitate handling and do not replace Yp
+                        exp[i]= float ('-99999')
+
+        self.conveyor.addVal(Yp, 'values', 'Prediction',
+                        'result', 'objs',
+                        'Results of the prediction', 'main')
 ## Overriding of parent methods
 
     # def CF_quantitative_validation(self):
