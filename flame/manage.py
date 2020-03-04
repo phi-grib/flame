@@ -331,34 +331,37 @@ def action_info(model, version, output='text'):
 
     rdir = utils.model_path(model, version)
     if not os.path.isfile(os.path.join(rdir, 'results.pkl')):
+        return False, 'Info file not found'
 
-        # compatibity method. use info.pkl
-        if not os.path.isfile(os.path.join(rdir, 'info.pkl')):
-            return False, 'Info file not found'
+    from flame.conveyor import Conveyor
 
-        with open(os.path.join(rdir, 'info.pkl'), 'rb') as handle:
-            #retrieve a pickle file containing the keys 'model_build' 
-            #and 'model_validate' of results
-            info = pickle.load(handle)
-            info += pickle.load(handle)
-        # end of compatibility method
+    conveyor = Conveyor()
+    with open(os.path.join(rdir, 'results.pkl'), 'rb') as handle:
+        conveyor.load(handle)
 
-    else:
-        # new method, use results.pkl
-        if not os.path.isfile(os.path.join(rdir, 'results.pkl')):
-            return False, 'Info file not found'
+    # if there is an error, return the error Message        
+    if conveyor.getError():
+        error = conveyor.getErrorMessage()
+        return False, error
 
-        from flame.conveyor import Conveyor
+    # collect warnings
+    warning = conveyor.getWarningMessage()
 
-        conveyor = Conveyor()
-        with open(os.path.join(rdir, 'results.pkl'), 'rb') as handle:
-            conveyor.load(handle)
-        
-        info =  conveyor.getVal('model_build_info')
-        info += conveyor.getVal('model_valid_info')
-        
+    # collect build and validation info
+    build_info =  conveyor.getVal('model_build_info')
+    valid_info =  conveyor.getVal('model_valid_info')
+
+    # merge everything 
+    info = None
+    for iinfo in (warning, build_info, valid_info):
         if info == None:
-            return False, 'Info not found'
+            info = iinfo
+        else:
+            if iinfo != None:
+                info+=iinfo
+
+    if info == None:
+        return False, 'No relevant information found'
 
     # when this function is called from the console, output is 'text'
     # write and exit
@@ -625,8 +628,6 @@ def action_documentation(model, version=None, doc_file=None, oformat='text'):
                 print (f'{k:30} : {str(ivalue):30} #{ioptio} {idescr}')
 
         return True, 'parameters listed'
-
-
 
 def action_dir():
     '''

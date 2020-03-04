@@ -331,25 +331,28 @@ def action_info(space, version):
     if not os.path.isfile(os.path.join(rdir, 'results.pkl')):
         return False, 'Info file not found'
 
-    from flame.conveyor import Conveyor
+    # from flame.conveyor import Conveyor
 
-    conveyor = Conveyor()
-    with open(os.path.join(rdir, 'results.pkl'), 'rb') as handle:
-        conveyor.load(handle)
+    # conveyor = Conveyor()
+    # with open(os.path.join(rdir, 'results.pkl'), 'rb') as handle:
+    #     conveyor.load(handle)
     
-    info =  conveyor.getVal('space_build_info')
+    # info =  conveyor.getVal('space_build_info')
+
+    with open(os.path.join(rdir, 'results.pkl'), 'rb') as handle:
+        info = pickle.load(handle)
     
     if info == None:
-        return False, 'Info not found'
+        return False, 'No relevant information found'
    
-    # this code serializes the results in a list and then converts it 
-    # to a JSON  
-    json_results = []
-    for i in info:
-        json_results.append(conveyor.modelInfoJSON(i))
+    # # this code serializes the results in a list and then converts it 
+    # # to a JSON  
+    # json_results = []
+    # for i in info:
+    #     json_results.append(conveyor.modelInfoJSON(i))
 
-    #print (json.dumps(json_results))
-    return True, json.dumps(json_results)
+    print (json.dumps(info))
+    return True, json.dumps(info)
 
 
 def action_dir():

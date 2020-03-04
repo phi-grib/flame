@@ -374,7 +374,8 @@ class Odata():
         results_pkl_path = os.path.join(self.param.getVal('model_path'), 'results.pkl')
         LOG.debug('saving space results to:{}'.format(results_pkl_path))
         with open(results_pkl_path, 'wb') as handle:
-            self.conveyor.save(handle)
+            pickle.dump(self.conveyor.getVal('space_build_info'), handle)
+            #self.conveyor.save(handle)
             #pickle.dump(self.conveyor, handle)
 
         ####
@@ -497,6 +498,12 @@ class Odata():
         # write to console
         for key, value in error_json.items():
             LOG.error (value)
+
+        # dump conveyor
+        results_pkl_path = os.path.join(self.param.getVal('model_path'), 'results.pkl')
+        LOG.debug('saving model results to:{}'.format(results_pkl_path))
+        with open(results_pkl_path, 'wb') as handle:
+            self.conveyor.save(handle)
 
         # dump to error.tsv file
         if 'TSV' in self.format:
