@@ -176,6 +176,14 @@ This creates a new entry in the spaces repository and the development version of
 
 Now provide the collection of compounds to include in the chemical space as a SDFile and set up the parameters (e.g. the molecular descriptors used to characterize it) using a delta file, as described above for the models.
 
+You can obtain the current parameters by using the command:
+
+```sh
+flame -c manage -s MySpace -a parameters > delta.txt
+```	
+
+The file `delta.txt` can be edited and then the new parameters can be applied by making reference to the edited file in the sbuild command, as follows:
+
 ```sh
 flame -c sbuild -s MySpace -f series.sdf -p delta.txt
 ```
@@ -185,7 +193,7 @@ Once it was built, this chemical space can be used to search compounds similar t
 ```sh
 flame -c search -s MySpace -v 0 -f query.sdf -p similarity.yaml
 ```
-The file query.sdf can contain the chemical structure of one or many compounds. The file `similarity.yaml` must define the metric used for the search, the distance cutoff and the maximum number of similars to extract per query compound. The last two fields can be left empty to avoid applying these limits. 
+The file `query.sdf` can contain the chemical structure of one or many compounds. The file `similarity.yaml` must define the metric used for the search, the distance cutoff and the maximum number of similars to extract per query compound. The last two fields can be left empty to avoid applying these limits. 
 
 ## Flame commands
 
