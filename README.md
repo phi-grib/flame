@@ -146,6 +146,18 @@ flame -c manage -e MyModel -a parameters > delta.txt
 flame -c build -e MyModel -f series.sdf -p delta.txt
 ```
 
+For model documentation we need to obtain a delta file which will already include some information extracted from both the parameters and the quality metrics from model building. Other fields are empty as they requiere of manual filling (ie: institution info or model interpretation). Delta file documentation can be obtained by executing:
+
+```sh
+flame -c manage -e MyModel -a documentation > delta.txt
+```	
+
+... and then editing it. After edition, changes can be made persistent by executing the following command:
+
+```sh
+flame -c manage -e MyModel -a documentation -t delta.txt
+```
+
 In the above commands we specified the model version used for the prediction. So far we only have a model in the development folder (version 0). This version will be overwritten every time we develop a new model for this endpoint. Let's imagine that we are very satisfied with our model and want to store it for future use. We can obtain a persistent copy of it with the command
 ```sh
 flame -c manage -a publish -e MyModel
