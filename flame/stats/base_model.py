@@ -33,7 +33,6 @@ import time
 import glob
 import gc
 from scipy import stats
-import matplotlib.pyplot as plt
 import warnings
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
