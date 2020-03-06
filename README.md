@@ -12,7 +12,7 @@ Flame is in active development and **no stable release has been produced so far*
 
 ## Installation
 
-Flame can be used in most Windows, Linux or macOS configurations, provided that a suitable execution environment is set up. We recommend, as a fist step, installing the Conda package and environment manager. Download a suitable Anaconda anaconda distribution for your operative system from [here](https://www.anaconda.com/distribution/). 
+Flame can be used in most Windows, Linux or macOS configurations, provided that a suitable execution environment is set up. We recommend, as a fist step, installing the Conda package and environment manager. Download a suitable Conda or Anaconda distribution for your operative system from [here](https://docs.conda.io/projects/conda/en/latest/user-guide/install/download.html#)
 
 
 Download the repository:
@@ -152,7 +152,7 @@ For model documentation we need to obtain a delta file which will already includ
 flame -c manage -e MyModel -a documentation > delta.txt
 ```	
 
-... and then editing it. After edition, changes can be made persistent by executing the following command:
+The file `delta.txt` can be edited to include all the required information. After the edition, changes can be made persistent by executing the following command:
 
 ```sh
 flame -c manage -e MyModel -a documentation -t delta.txt
