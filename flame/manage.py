@@ -323,6 +323,7 @@ def action_refactoring(file):
 def action_info(model, version, output='text'):
     '''
     Returns a text or JSON with results info for a given model and version
+    TODO: add Q/C + conf/no-conf + ensem/no-ensem + list of ensemble (when applicable)
     '''
 
     if model is None:
@@ -348,12 +349,14 @@ def action_info(model, version, output='text'):
     warning = conveyor.getWarningMessage()
 
     # collect build and validation info
-    build_info =  conveyor.getVal('model_build_info')
-    valid_info =  conveyor.getVal('model_valid_info')
+    build_info = conveyor.getVal('model_build_info')
+    valid_info = conveyor.getVal('model_valid_info')
+    type_info  = conveyor.getVal('model_type_info')
 
+    print ('type_info:', type_info)
     # merge everything 
     info = None
-    for iinfo in (warning, build_info, valid_info):
+    for iinfo in (warning, build_info, valid_info, type_info):
         if info == None:
             info = iinfo
         else:
@@ -381,13 +384,13 @@ def action_info(model, version, output='text'):
     
     # this code serializes the results in a list and then converts it 
     # to a JSON  
-    json_results = []
-    for i in info:
-        json_results.append(conveyor.modelInfoJSON(i))
+    # json_results = []
+    # for i in info:
+    #     json_results.append(conveyor.modelInfoJSON(i))
 
     #print (json.dumps(json_results))
-    return True, json.dumps(json_results)
-
+    #return True, json.dumps(json_results)
+    return True, info
 
 def action_results(model, version=None, ouput_variables=False):
     ''' Returns a JSON with whole results info for a given model and version '''
@@ -632,6 +635,7 @@ def action_documentation(model, version=None, doc_file=None, oformat='text'):
 def action_dir():
     '''
     Returns a JSON with the list of models and versions
+    TODO: add action_info for each model
     '''
     # get de model repo path
     models_path = pathlib.Path(utils.model_repository_path())
