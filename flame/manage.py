@@ -346,17 +346,21 @@ def action_info(model, version, output='text'):
         return False, error
 
     # collect warnings
+    warning_info = None
+    
     warning = conveyor.getWarningMessage()
+    if warning != None:
+        warning_info = [('warning', 'runtime warning', warning)]
 
     # collect build and validation info
     build_info = conveyor.getVal('model_build_info')
     valid_info = conveyor.getVal('model_valid_info')
     type_info  = conveyor.getVal('model_type_info')
 
-    print ('type_info:', type_info)
     # merge everything 
     info = None
-    for iinfo in (warning, build_info, valid_info, type_info):
+
+    for iinfo in (build_info, valid_info, type_info, warning_info):
         if info == None:
             info = iinfo
         else:
@@ -651,17 +655,20 @@ def action_dir():
     for imodel in model_dirs:
         idict = {}
         idict ["modelname"] = imodel
-        versions = [0]
+        idict ["version"] = 0
+        idict ["info"] = action_info(imodel, 0, output=None)[1]
+        results.append(idict)
 
         for iversion in os.listdir(utils.model_tree_path(imodel)):
             if iversion.startswith('ver'):
-                versions.append(utils.modeldir2ver(iversion))
+                idict = {}
+                idict ["modelname"] = imodel
+                idict ["version"] = utils.modeldir2ver(iversion)
+                idict ["info"] = action_info(imodel, idict ["version"], output=None)[1]
+                results.append(idict)
 
-        idict ["versions"] = versions
-        results.append(idict)
-
-    #print (json.dumps(results))
-    return True, json.dumps(results)
+    print (results)
+    return True, results
 
 
 def action_report():
