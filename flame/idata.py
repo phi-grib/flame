@@ -24,7 +24,6 @@ import os
 import sys
 import pickle
 import shutil
-import json
 import tempfile
 import multiprocessing as mp
 import pathlib
@@ -84,9 +83,7 @@ class Idata:
             #analyze first result to get the name of the input file
             ifile = 'ensemble input'
             try:
-                iresult = json.loads(input_source[0])
-                imeta = iresult['meta']
-                ifile = imeta['input_file']
+                ifile = input_source[0].getMeta('input_file')
             except:
                 pass
 
@@ -1158,7 +1155,7 @@ class Idata:
         (calling another model to obtain input)
         '''
 
-        # idata is a list conveyor (in JSON format) from n sources
+        # idata is a list of conveyor from n sources
         # the data usable for input must be listed in the ['meta']['main'] key
 
         # get input file name from conveyor, as defined in the constructor
@@ -1186,49 +1183,42 @@ class Idata:
         combined_md_names = []
         combined_cf_names = []
 
-        for ijson in self.idata:
-            i_result = json.loads(ijson)
-            i_manifest = i_result['manifest']
-            i_meta = i_result['meta']
+        for i_result in self.idata:
 
-            for item in i_manifest:
+            # predictions
+            i_md = i_result.getVal('values')
 
-                # predictions
-                if item['type'] == 'result':
-                    item_key = item['key']
+            if combined_md is None:  # for first element just copy
+                combined_md = np.array(i_md, dtype=np.float64)
+                num_obj = len(i_md)
+            else:
+                #TODO: so far we discard any situation where the length of the inputs to be merged is
+                # non consistent
+                # We must implement an analysis of the output allowing to discard  
+                if len(i_md)!= num_obj:
+                    self.conveyor.setError('the length of the results produced by some models is inconsistent')
+                    return
+                combined_md = np.c_[combined_md, np.array(i_md, dtype=np.float64)]
 
-                    if combined_md is None:  # for first element just copy
-                        combined_md = np.array(
-                            i_result[item_key], dtype=np.float64)
-                        num_obj = len(i_result[item_key])
-                    else:  # append laterally
+            #md names
+            combined_md_names.append(
+                'values'+':'+i_result.getMeta('endpoint')+':'+str(i_result.getMeta('version')))
 
-                        #TODO: so far we discard any situation where the length of the inputs to be merged is
-                        # non consistent
-                        # We must implement an analysis of the output allowing to discard  
-                        if len(i_result[item_key]) != num_obj:
-                            self.conveyor.setError('the length of the results produced by some models is inconsistent')
-                            return
+            # confidence values and names
+            i_low = i_result.getVal('lower_limit')
+            i_up  = i_result.getVal('upper_limit')
+            if i_up is not None and i_low is not None:
+                if combined_cf is None:  # for first element just copy
+                    combined_cf = np.array(i_low, dtype=np.float64)
+                    combined_cf = np.column_stack((combined_cf, i_up))
+                else:  # append laterally
+                    combined_cf = np.column_stack((combined_cf, i_low))
+                    combined_cf = np.column_stack((combined_cf, i_up))
 
-                        combined_md = np.c_[combined_md, np.array(
-                            i_result[item_key], dtype=np.float64)]
-
-                    combined_md_names.append(
-                        item_key+':'+i_meta['endpoint']+':'+str(i_meta['version']))
-
-                # confidence indexes 
-                elif item['type'] == 'confidence':
-                    item_key = item['key']
-                    if combined_cf is None:  # for first element just copy
-                        combined_cf = np.array(
-                            i_result[item_key], dtype=np.float64)
-                    else:  # append laterally
-                        # combined_cf = np.c_[combined_cf, np.array(
-                        #     i_result[item_key], dtype=np.float64)]
-                        combined_cf = np.column_stack((combined_cf, np.array(
-                            i_result[item_key], dtype=np.float64)))
-                    combined_cf_names.append(
-                        item_key+':'+i_meta['endpoint']+':'+str(i_meta['version']))
+                combined_cf_names.append(
+                    'lower_limit'+':'+i_result.getMeta('endpoint')+':'+str(i_result.getMeta('version')))
+                combined_cf_names.append(
+                    'upper_limit'+':'+i_result.getMeta('endpoint')+':'+str(i_result.getMeta('version')))
 
         self.conveyor.addVal( num_obj, 'obj_num', 'Num mol', 
                          'method', 'single', 'Number of molecules present in the input file')
@@ -1251,8 +1241,6 @@ class Idata:
         # print ('combined_md_names', combined_md_names)
         # print ('ensemble_confidence', combined_cf)
         # print ('ensemble_confidence_names', combined_cf_names)
-
-        #print (self.conveyor.getJSON())
 
         return
 

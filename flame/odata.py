@@ -308,20 +308,13 @@ class Odata():
                         line += '\t'
                     fo.write(line+'\n')
 
-        # the function returns "True, output". output can be empty or a JSON
-        output = ''
 
         ###
-        # 4. this function return results in JSON format [optional]
+        # 4. this function return results as a conveyor object
         ###
-        # returns a JSON with the prediction results
-        if 'JSON' in self.format:
-            if self.param.getVal('input_type') == 'model_ensemble':
-                output = self.conveyor.getJSON(xdata=True)
-            else:
-                output = self.conveyor.getJSON()
 
-        #print (self.conveyor.getJSON())
+        output = self.conveyor
+
         
         # Save conveyor from prediction only if confidential is False
         if not self.param.getVal('confidential'):

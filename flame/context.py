@@ -50,7 +50,7 @@ def get_ensemble_input(task, model_names, model_versions, infile):
 
     # add input molecule to the model input definition of every internal model
     model_suc = []  # True / False
-    model_res = []  # conveyor (in JSON format) for every prediction, as produced by odata.run_apply
+    model_res = []  # conveyor or every prediction, as produced by odata.run_apply
 
     model_cmd = []
     for i in range(num_models):
@@ -71,9 +71,6 @@ def get_ensemble_input(task, model_names, model_versions, infile):
         for iresult in model_tmp:
             model_suc.append(iresult[0])
             model_res.append(iresult[1])
-            # i_result = json.loads(iresult[1])
-            # i_manifest = i_result['manifest']
-            # print (i_result['meta'],)
     
     # run in a single thread
     else:
