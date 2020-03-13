@@ -308,21 +308,9 @@ def action_export(model):
     return True, f'Model {model} exported as {model}.tgz'
 
 
-# TODO: implement refactoring, starting with simple methods
-def action_refactoring(file):
-    '''
-    NOT IMPLEMENTED,
-    call to import externally generated models (eg. in KNIME or R)
-    '''
-
-    print('refactoring')
-
-    return True, 'OK'
-
-
 def action_info(model, version, output='text'):
     '''
-    Returns a text or JSON with results info for a given model and version
+    Returns a text or an object with results info for a given model and version
     TODO: add Q/C + conf/no-conf + ensem/no-ensem + list of ensemble (when applicable)
     '''
 
@@ -397,7 +385,7 @@ def action_info(model, version, output='text'):
     return True, info
 
 def action_results(model, version=None, ouput_variables=False):
-    ''' Returns a JSON with whole results info for a given model and version '''
+    ''' Returns an object with whole results info for a given model and version '''
 
     if model is None:
         return False, 'Empty model label'
@@ -412,11 +400,12 @@ def action_results(model, version=None, ouput_variables=False):
     with open(os.path.join(rdir, 'results.pkl'), 'rb') as handle:
         conveyor.load(handle)
 
-    return True, conveyor.getJSON()
+    # return True, conveyor.getJSON()
+    return True, conveyor
 
 
 def action_parameters(model, version=None, oformat='text'):
-    ''' Returns a JSON with whole results info for a given model and version '''
+    ''' Returns an object with whole results info for a given model and version '''
 
     if model is None:
         return False, 'Empty model label'
@@ -431,6 +420,7 @@ def action_parameters(model, version=None, oformat='text'):
         return False, results
 
     if oformat == 'JSON':
+        # return True, param.dumpJSON()
         return True, param.dumpJSON()
 
     else:
@@ -533,7 +523,7 @@ def action_parameters(model, version=None, oformat='text'):
 ## generate JSON output only
 
 def action_documentation(model, version=None, doc_file=None, oformat='text'):
-    ''' Returns a JSON with whole results info for a given model and version '''
+    ''' Returns an object with whole results info for a given model and version '''
 
     if model is None:
         return False, 'Empty model label'
@@ -553,7 +543,8 @@ def action_documentation(model, version=None, doc_file=None, oformat='text'):
         success, message = doc.delta(model, 0, doc_file, iformat='YAML')
     doc = Documentation(model, version)
     if oformat == 'JSON':
-        return True, doc.dumpJSON()
+        # return True, doc.dumpJSON()
+        return True, doc
 
     else:
         order = ['ID', 'Version', 'Contact', 'Institution', 'Date', 'Endpoint',
@@ -638,7 +629,7 @@ def action_documentation(model, version=None, doc_file=None, oformat='text'):
 
 def action_dir():
     '''
-    Returns a JSON with the list of models and versions
+    Returns a list of models and versions
     TODO: add action_info for each model
     '''
     # get de model repo path
@@ -673,7 +664,7 @@ def action_dir():
 
 def action_report():
     '''
-    Returns a JSON with the list of models and the results of each one
+    Returns a list of models and the results of each one
     '''
     # get de model repo path
     models_path = pathlib.Path(utils.model_repository_path())
@@ -703,21 +694,22 @@ def action_report():
 
             # now we have the model name and version, try to get the ijson text
             try:
-                isuccess, ijson = action_info(imodel_name, iver, output='JSON')
+                isuccess, iresult=action_info(imodel_name, iver, output='JSON')
             except:
                 continue
 
             if not isuccess:
                 continue
             
-            # build a tuple (version, JSON) for each version and append 
-            imodel_vers_info.append((iver, json.loads(ijson) ))
+            # build a tuple (version, object) for each version and append 
+            imodel_vers_info.append((iver, iresult ))
 
         # build a tuple (model_name, [version_info]) for each model and append
         results.append((imodel_name, imodel_vers_info))
         
     #print (json.dumps(results))
-    return True, json.dumps(results)
+    # return True, json.dumps(results)
+    return True, results
 
 def getdate (element):
     return element[0]
@@ -733,7 +725,7 @@ def action_predictions_list ():
     dirs = [x for x in predictions_path.iterdir() if x.is_dir()]
 
     result = []
-    jresult = []
+    iresult = []
     # iterate models
     for d in dirs:
 
@@ -755,8 +747,8 @@ def action_predictions_list ():
         if label[0:8]=='ensemble':
             continue
 
-        # add as a tupla for JSON formatting
-        jresult.append( ( label, endpoint, version, time, ifile) )
+        # add as a tupla 
+        iresult.append( ( label, endpoint, version, time, ifile) )
 
         # format as a text line for reverse date sorting and printing
         line = f'{label:10} {endpoint:15}   {version}   {time}   {ifile}'
@@ -766,7 +758,8 @@ def action_predictions_list ():
 
     [print (i[1]) for i in result]
 
-    return True, json.dumps(jresult)
+    # return True, json.dumps(jresult)
+    return True, iresult
 
 def print_prediction_result (val):
     ''' Prints in the console the content of results given as an 
@@ -790,7 +783,7 @@ def action_predictions_result (label):
         - (False, Null) if it there is no directory or the predictions 
           pickle files cannot be found 
         
-        - (True, JSON) with the results otherwyse
+        - (True, object) with the results otherwyse
     '''
     # get de model repo path
     predictions_path = pathlib.Path(utils.predictions_repository_path())
@@ -826,10 +819,12 @@ def action_predictions_result (label):
         for i in range (iconveyor.getVal('obj_num')):
             print (iconveyor.getVal('obj_nam')[i], '\t', float("{0:.4f}".format(iconveyor.getVal('values')[i])))
 
+    # return iconveyor
+    return True, iconveyor
+
     # return a JSON generated by iconveyor
-    input_type = iconveyor.getMeta('input_type')
-    
-    return True, iconveyor.getJSON(xdata=(input_type == 'model_ensemble'))
+    # input_type = iconveyor.getMeta('input_type')
+    # return True, iconveyor.getJSON(xdata=(input_type == 'model_ensemble'))
 
 def action_predictions_remove (label):
     '''
