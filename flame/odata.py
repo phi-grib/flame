@@ -235,26 +235,28 @@ class Odata():
         ####
         #print (self.results)
 
-        self.print_result(('obj_num','number of objects',self.conveyor.getVal('obj_num')))
+        if 'ghost' not in self.format:
+            self.print_result(('obj_num','number of objects',self.conveyor.getVal('obj_num')))
 
-        if self.conveyor.isKey('external-validation'):
-            for val in self.conveyor.getVal('external-validation'):
-                self.print_result (val)   
+            if self.conveyor.isKey('external-validation'):
+                for val in self.conveyor.getVal('external-validation'):
+                    self.print_result (val)   
 
-        if self.conveyor.isKey('values'):
-            for i in range (self.conveyor.getVal('obj_num')):
-                print (self.conveyor.getVal('obj_nam')[i], '\t', float("{0:.4f}".format(self.conveyor.getVal('values')[i])))
+            if self.conveyor.isKey('values'):
+                for i in range (self.conveyor.getVal('obj_num')):
+                    print (self.conveyor.getVal('obj_nam')[i], '\t', float("{0:.4f}".format(self.conveyor.getVal('values')[i])))
 
         ###
         # 2. molecular descriptors file in TSV format [optional]
         ###
-        if self.param.getVal('output_md'):
-            self._output_md()
+        if 'ghost' not in self.format:
+            if self.param.getVal('output_md'):
+                self._output_md()
 
         ###
         # 3. results file in TSV format [optional]
         ### 
-        if 'TSV' in self.format:
+        if 'ghost' not in self.format and 'TSV' in self.format:
             LOG.info('writting results to TSV file "output.tsv"')
             # label and smiles
             key_list = ['obj_nam']
@@ -317,7 +319,7 @@ class Odata():
 
         
         # Save conveyor from prediction only if confidential is False
-        if not self.param.getVal('confidential'):
+        if not self.param.getVal('confidential') and 'ghost' not in self.format:
 
             if not os.path.isdir(opath):
                 return True, output

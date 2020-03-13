@@ -29,7 +29,7 @@ import pathlib
 from flame.util import utils, get_logger
 
 # if the number of models is higher, try to run in multithread
-MAX_MODELS_SINGLE_CPU = 2
+MAX_MODELS_SINGLE_CPU = 4
 
 LOG = get_logger(__name__)
 
@@ -57,6 +57,7 @@ def get_ensemble_input(task, model_names, model_versions, infile):
         model_cmd.append({'endpoint': model_names[i],
                           'version': model_versions[i],
                           'infile': infile,
+                          'output_format': 'ghost',
                           'label': f'ensemble{i}'})
 
     # run in multithreading
@@ -78,7 +79,6 @@ def get_ensemble_input(task, model_names, model_versions, infile):
             success, results = predict_cmd(model_cmd[i])
             model_suc.append(success)
             model_res.append(results)
-
 
     if False in model_suc:
         return False, 'Some external input sources failed: '+str(model_suc)
@@ -111,6 +111,9 @@ def predict_cmd(arguments, output_format=None):
     # not supporting the label argument
     if 'label' not in arguments:
         arguments['label'] = 'temp'
+
+    if 'output_format' in arguments:
+        output_format = arguments['output_format']
 
     predict = Predict(arguments['endpoint'], version=arguments['version'],  output_format=output_format, label=arguments['label'])
 
