@@ -152,6 +152,7 @@ def main():
                  f' version {version} for file {args.infile}, labelled as {label}')
 
         success, results = context.search_cmd(command_search)
+        
         if not success:
             LOG.error(results)
 

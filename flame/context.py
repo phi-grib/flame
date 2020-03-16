@@ -103,7 +103,6 @@ def predict_cmd(arguments, output_format=None):
     model_list = os.listdir(repo_path)
 
     if arguments['endpoint'] not in model_list:
-        LOG.error('Endpoint name not found in model repository.')
         return False, 'Endpoint name not found in model repository.'
 
     # ** DEPRECATE **
@@ -162,7 +161,6 @@ def build_cmd(arguments, output_format=None):
     model_list = os.listdir(repo_path)
 
     if arguments['endpoint'] not in model_list:
-        LOG.error('Endpoint name not found in model repository.')
         return False, 'Endpoint name not found in model repository.'
 
     if 'param_file' in arguments:
@@ -241,7 +239,6 @@ def sbuild_cmd(arguments, output_format=None):
     space_list = os.listdir(repo_path)
 
     if arguments['space'] not in space_list:
-        LOG.error('Endpoint name not found in space repository.')
         return False, 'Endpoint name not found in space repository.'
 
     if 'param_string' in arguments:
@@ -290,6 +287,12 @@ def search_cmd(model, output_format=None):
     # not supporting the label argument
     if 'label' not in model:
         model['label'] = 'temp'
+
+    # safety check if model exists
+    repo_path = pathlib.Path(utils.space_repository_path())
+    space_list = os.listdir(repo_path)
+    if model['space'] not in space_list:
+        return False, 'Endpoint name not found in space repository.'
 
     search = Search(model['space'], version=model['version'], output_format=output_format, label=model['label'])
 
@@ -348,8 +351,6 @@ def manage_cmd(args):
             success, results = manage.action_list(args.endpoint)
         elif args.action == 'export':
             success, results = manage.action_export(args.endpoint)
-        elif args.action == 'refactoring':
-            success, results = manage.action_refactoring(args.file)
         elif args.action == 'info':
             success, results = manage.action_info(args.endpoint, version)
         elif args.action == 'results':
