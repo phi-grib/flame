@@ -421,7 +421,7 @@ def action_parameters(model, version=None, oformat='text'):
 
     if oformat == 'JSON':
         # return True, param.dumpJSON()
-        return True, param.dumpJSON()
+        return True, param
 
     else:
 
