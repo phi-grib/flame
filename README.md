@@ -218,6 +218,7 @@ The file `query.sdf` can contain the chemical structure of one or many compounds
 | -a/ --action | Management action to be carried out. Acceptable values are *list*, *new*, *kill*, *publish*, *remove*, *export* and *import*. The meaning of these actions and examples of use are provided below   |
 | -f/ --infile | Name of the input file used by the command. This file can correspond to the training data (*build*) or the query compounds (*predict*) |
 | -p/ --parameters | Name of an input file used to pass a set of parameters used to train a model (*build*) or to performa a similarity search (*search*) |
+| -inc/ --incremental | indicates that the input file must not replace any existing training series and, instead, the compound will be added |
 | -h/ --help | Shows a help message on the screen |
 
 Management commands deserve further description:
@@ -267,6 +268,20 @@ Model building can be easily customized with the Flame modeling GUI or by modify
 Advanced users can customize the models by editting the objects *idata_child*, *appl_child*, *learn_child* and *odata_child* present at the *model/dev* folder. These empty objects are childs of the corresponding objects called by flame, and it is possible to override any of the parents' methods simply by copying and editing these whitin the childs' code files.
 
 Models can be published to obtain persistent versions, usable for predicton in the same environment, or exported for using them in external production environments, as described above.
+
+### Incremental re-training of existing models
+
+Existing model can be re-built using the option -inc (or --incremental) when the model is built to add the compounds present in the input file to the existing training series.
+
+For example, imagine 'MyModel' is a model generated using a series of 1000 compounds and 'series.sdf' contains a collection of 500 additional compounds 
+
+```sh
+flame -c build -e MyModel -f series.sdf -inc
+```
+
+This command will add all the compounds present in the file 'series.sdf' at the end of the existing training series, thus generating a new model with 1500 compounds.
+
+In this process no checking for dupplicate molecules or any other test is carried out.
 
 
 ### Runnning models
