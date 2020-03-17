@@ -191,7 +191,10 @@ def build_cmd(arguments, output_format=None):
 
     else:
 
+        #input file provided in the command
         ifile = arguments['infile']
+        
+        #existing training series
         epd = utils.model_path(arguments['endpoint'], 0)
         lfile = os.path.join(epd, 'training_series')
 
@@ -199,19 +202,35 @@ def build_cmd(arguments, output_format=None):
         # try to copy it to the model directory
         if ifile is not None:
             if not os.path.isfile(ifile):
-                LOG.error(f'Wrong training series file {ifile}')
                 return False, f'Wrong training series file {ifile}'
-            try:
-                # print(lfile)
-                # print(ifile)
-                shutil.copy(ifile, lfile)
-            except:
-                LOG.error(f'Unable to copy input file to model directory')
-                return False, 'Unable to copy input file to model directory'
+        
+            if arguments['incremental'] and os.path.isfile(lfile):
+                LOG.info(f'Merging file {ifile} with existing training series')
+                new_training = os.path.join(epd, 'temp_training')
+
+                with open(new_training, 'w') as outfile:
+                    with open(lfile) as infile:
+                        for line in infile:
+                            outfile.write(line)
+
+                    if line != '$$$$\n':
+                        return False, 'The existing training series does not finish correctly with "$$$$" and a newline. Please correct.'
+
+                    with open(ifile) as infile:
+                        for line in infile:
+                            outfile.write(line)
+
+                shutil.move(new_training, lfile)
+            else:
+                try:
+                    # print(lfile)
+                    # print(ifile)
+                    shutil.copy(ifile, lfile)
+                except:
+                    return False, 'Unable to copy input file to model directory'
 
         # check that the local copy of the input file exists
         if not os.path.isfile(lfile):
-            LOG.error(f'No training series found')
             return False, 'No training series found'
 
         # remove pre-existing results file

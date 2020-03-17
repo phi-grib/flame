@@ -89,6 +89,11 @@ def main():
                         help='Label for facilitating the identification of the prediction.',
                         required=False )
 
+    parser.add_argument('-inc', '--incremental',
+                        help='The input file must be added to the existing training series. Only for "build" command.',
+                        action='store_true',
+                        required=False )
+
     args = parser.parse_args()
 
     # init logger Level and set general config
@@ -168,7 +173,10 @@ def main():
             LOG.error('flame build : endpoint argument is compulsory')
             return
 
-        command_build = {'endpoint': args.endpoint, 'infile': args.infile, 'param_file': args.parameters}
+        command_build = {'endpoint': args.endpoint, 
+                         'infile': args.infile, 
+                         'param_file': args.parameters,
+                         'incremental': args.incremental}
 
         LOG.info(f'Starting building model {args.endpoint}'
                  f' with file {args.infile} and parameters {args.parameters}')
@@ -177,6 +185,7 @@ def main():
 
         if not success:
             LOG.error(results)
+
 
     elif args.command == 'sbuild':
 
