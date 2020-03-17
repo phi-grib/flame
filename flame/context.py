@@ -29,7 +29,7 @@ import pathlib
 from flame.util import utils, get_logger
 
 # if the number of models is higher, try to run in multithread
-MAX_MODELS_SINGLE_CPU = 2
+MAX_MODELS_SINGLE_CPU = 4
 
 LOG = get_logger(__name__)
 
@@ -50,13 +50,14 @@ def get_ensemble_input(task, model_names, model_versions, infile):
 
     # add input molecule to the model input definition of every internal model
     model_suc = []  # True / False
-    model_res = []  # conveyor (in JSON format) for every prediction, as produced by odata.run_apply
+    model_res = []  # conveyor or every prediction, as produced by odata.run_apply
 
     model_cmd = []
     for i in range(num_models):
         model_cmd.append({'endpoint': model_names[i],
                           'version': model_versions[i],
                           'infile': infile,
+                          'output_format': 'ghost',
                           'label': f'ensemble{i}'})
 
     # run in multithreading
@@ -71,9 +72,6 @@ def get_ensemble_input(task, model_names, model_versions, infile):
         for iresult in model_tmp:
             model_suc.append(iresult[0])
             model_res.append(iresult[1])
-            # i_result = json.loads(iresult[1])
-            # i_manifest = i_result['manifest']
-            # print (i_result['meta'],)
     
     # run in a single thread
     else:
@@ -81,7 +79,6 @@ def get_ensemble_input(task, model_names, model_versions, infile):
             success, results = predict_cmd(model_cmd[i])
             model_suc.append(success)
             model_res.append(results)
-
 
     if False in model_suc:
         return False, 'Some external input sources failed: '+str(model_suc)
@@ -106,7 +103,6 @@ def predict_cmd(arguments, output_format=None):
     model_list = os.listdir(repo_path)
 
     if arguments['endpoint'] not in model_list:
-        LOG.error('Endpoint name not found in model repository.')
         return False, 'Endpoint name not found in model repository.'
 
     # ** DEPRECATE **
@@ -114,6 +110,9 @@ def predict_cmd(arguments, output_format=None):
     # not supporting the label argument
     if 'label' not in arguments:
         arguments['label'] = 'temp'
+
+    if 'output_format' in arguments:
+        output_format = arguments['output_format']
 
     predict = Predict(arguments['endpoint'], version=arguments['version'],  output_format=output_format, label=arguments['label'])
 
@@ -162,7 +161,6 @@ def build_cmd(arguments, output_format=None):
     model_list = os.listdir(repo_path)
 
     if arguments['endpoint'] not in model_list:
-        LOG.error('Endpoint name not found in model repository.')
         return False, 'Endpoint name not found in model repository.'
 
     if 'param_file' in arguments:
@@ -241,7 +239,6 @@ def sbuild_cmd(arguments, output_format=None):
     space_list = os.listdir(repo_path)
 
     if arguments['space'] not in space_list:
-        LOG.error('Endpoint name not found in space repository.')
         return False, 'Endpoint name not found in space repository.'
 
     if 'param_string' in arguments:
@@ -290,6 +287,12 @@ def search_cmd(model, output_format=None):
     # not supporting the label argument
     if 'label' not in model:
         model['label'] = 'temp'
+
+    # safety check if model exists
+    repo_path = pathlib.Path(utils.space_repository_path())
+    space_list = os.listdir(repo_path)
+    if model['space'] not in space_list:
+        return False, 'Endpoint name not found in space repository.'
 
     search = Search(model['space'], version=model['version'], output_format=output_format, label=model['label'])
 
@@ -348,8 +351,6 @@ def manage_cmd(args):
             success, results = manage.action_list(args.endpoint)
         elif args.action == 'export':
             success, results = manage.action_export(args.endpoint)
-        elif args.action == 'refactoring':
-            success, results = manage.action_refactoring(args.file)
         elif args.action == 'info':
             success, results = manage.action_info(args.endpoint, version)
         elif args.action == 'results':

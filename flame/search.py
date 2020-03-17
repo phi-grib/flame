@@ -70,8 +70,6 @@ class Search:
     def run(self, param_dict):
         ''' Executes a default predicton workflow '''
 
-        print ('*********',param_dict)
-
         metric = None
         numsel = None
         cutoff = None
@@ -79,8 +77,8 @@ class Search:
         # path to endpoint
         epd = utils.space_path(self.space, self.version)
         if not os.path.isdir(epd):
+            LOG.error(f'Unable to find space {self.space}')
             self.conveyor.setError(f'Unable to find space {self.space}, version {self.version}')
-            #LOG.error(f'Unable to find space {self.space}')
 
         if 'infile' in param_dict:
             input_source = param_dict['infile']
@@ -154,10 +152,11 @@ class Search:
         # run odata object, in charge of formatting the prediction results
         # note that if any of the above steps failed, an error has been inserted in the
         # conveyor and odata will take case of showing an error message
+
         try:
-            odata = odata_child.OdataChild(self.param, self.conveyor, self.label)
+            odata = odata_child.OdataChild(self.param, self.conveyor)
         except:
             LOG.warning ('Odata child architecture mismatch, defaulting to Odata parent')
-            odata = Odata(self.param, self.conveyor, self.label)
+            odata = Odata(self.param, self.conveyor)
 
         return odata.run()

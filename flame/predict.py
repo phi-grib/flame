@@ -73,7 +73,6 @@ class Predict:
         ''' Executes a default predicton workflow '''
 
         # path to endpoint
-        # path to endpoint
         endpoint = utils.model_path(self.model, self.version)
         if not os.path.isdir(endpoint):
             self.conveyor.setError(f'Unable to find model {self.model}, version {self.version}')
