@@ -46,8 +46,9 @@ class Predict:
                     'method', 'single',
                     'Label used to identify the prediction')
 
-        if not self.param.loadYaml(model, version):
-            LOG.critical('Unable to load model parameters. Aborting...')
+        success, results = self.param.loadYaml(model, version)
+        if not success:
+            LOG.critical(f'Unable to load model parameters. {results}. Aborting...')
             sys.exit()
 
         # add additional output formats included in the constructor 

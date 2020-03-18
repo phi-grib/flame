@@ -96,10 +96,10 @@ class Documentation:
             # LOG.error(f'Error loading documentation file with exception: {e}')
             raise e
         
-        success, message = self.parameters.loadYaml(model, 0)
+        success, message = self.parameters.loadYaml(model, version)
 
         if not success:
-            print('Parameters could not be loaded. Please assure endpoint is correct')
+            print(f'Parameters could not be loaded. {message}. Please make sure endpoint and version are correct')
             return
         
         # Remove this after acc

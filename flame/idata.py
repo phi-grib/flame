@@ -27,6 +27,7 @@ import shutil
 import tempfile
 import multiprocessing as mp
 import pathlib
+import logging
 
 import numpy as np
 from rdkit import Chem
@@ -64,6 +65,10 @@ class Idata:
         # control object defining the processing
         self.param = parameters
         self.conveyor = conveyor
+
+        # self.format can inform if we are running in ghost mode
+        # as part of an ensemble
+        self.format = self.param.getVal('output_format')
 
         # path for temp files (fallback default)
         self.dest_path = '.'
@@ -458,10 +463,9 @@ class Idata:
 
         example:    return True, (xmatrix, md_nam, success_list)
         '''
-        raise NotImplementedError
-        #return False, 'not implemented'
+        return False, 'not implemented'
 
-    def computeMD(self, ifile: str, methods: list) -> (bool, (np.ndarray, list, list)):
+    def computeMD(self, ifile: str, methods: list):
         '''
         Uses the molecular structures for computing an array
         of values (int or float).
@@ -473,6 +477,7 @@ class Idata:
 
         FIXIT
         '''
+
         LOG.info(f'Computing molecular descriptors with methods {methods}...')
         
         # Load descriptor settings
@@ -525,7 +530,7 @@ class Idata:
 
                     #TODO analyze differences and perform a more smart 
                     # combination
-                    LOG.error(f'Number of objects processed by {method}'
+                    LOG.error(f'Number of objects processed by {method} '
                               'does not match those computed by other methods')
                     continue
 
@@ -588,41 +593,41 @@ class Idata:
         filtered_matrix = matrix[filter_mask, :]
         return filtered_matrix, filter_mask.tolist()
 
-    @staticmethod
-    def _concat_descriptors_matrix(matrices: list) -> np.ndarray:
-        """ Concatenates horizontaly an arbritary number of matrices.
+    # @staticmethod
+    # def _concat_descriptors_matrix(matrices: list) -> np.ndarray:
+    #     """ Concatenates horizontaly an arbritary number of matrices.
 
-        Used to concat multiple descriptors results into a one array.
+    #     Used to concat multiple descriptors results into a one array.
 
-        Parameters
-        ----------
+    #     Parameters
+    #     ----------
 
-        matrices: list
-            list of matrices (np.ndarrays) to concat horizontally
+    #     matrices: list
+    #         list of matrices (np.ndarrays) to concat horizontally
 
-        Returns
-        -------
+    #     Returns
+    #     -------
 
-        np.ndarray
-            concatenated matrix of input matrices
-        """
-        # type check input
-        if not all(isinstance(m, np.ndarray) for m in matrices):
-            raise TypeError('input matrices must be numpy arrays')
+    #     np.ndarray
+    #         concatenated matrix of input matrices
+    #     """
+    #     # type check input
+    #     if not all(isinstance(m, np.ndarray) for m in matrices):
+    #         raise TypeError('input matrices must be numpy arrays')
 
-        try:
-            xmatrix = np.concatenate(matrices, axis=1)
+    #     try:
+    #         xmatrix = np.concatenate(matrices, axis=1)
 
-            LOG.debug('concatenated matrices with shapes: '
-                      f'{[m.shape for m in matrices]} into a'
-                      f' matrix with shape {xmatrix.shape}')
+    #         LOG.debug('concatenated matrices with shapes: '
+    #                   f'{[m.shape for m in matrices]} into a'
+    #                   f' matrix with shape {xmatrix.shape}')
 
-        except ValueError as e:
-            LOG.critical('Cannot concatenate matrix with different shapes: '
-                         f'{[m.shape[0] for m in matrices]}')
-            raise ValueError('Cannot concatenate matrix with different shapes: '
-                             f'{[m.shape[0] for m in matrices]}')
-        return xmatrix
+    #     except ValueError as e:
+    #         LOG.critical('Cannot concatenate matrix with different shapes: '
+    #                      f'{[m.shape[0] for m in matrices]}')
+    #         raise ValueError('Cannot concatenate matrix with different shapes: '
+    #                          f'{[m.shape[0] for m in matrices]}')
+    #     return xmatrix
 
     def consolidate(self, results, nobj):
         '''
@@ -696,8 +701,13 @@ class Idata:
         # return
         #######################################################
 
+        # if this is the top model or an ensemble, exit
         if self.param.getVal('input_type') == 'model_ensemble':
             return
+
+        # if this is a low model or an ensemble, exit
+        if 'ghost' in self.format:
+            return 
 
         md5_parameters = self.param.getVal('md5')
         md5_input = utils.md5sum(self.ifile)  # run md5 in self.ifile
@@ -718,9 +728,13 @@ class Idata:
         Loads the results in serialized form, together with the MD5 signature
         of the control class and the input file.
         '''
-
+        # if this is the top model or an ensemble, exit
         if self.param.getVal('input_type') == 'model_ensemble':
             return False
+
+        # if this is a low model or an ensemble, exit
+        if 'ghost' in self.format:
+            return 
 
         try:
             picklfile = os.path.join(self.dest_path, 'data.pkl')
@@ -754,7 +768,7 @@ class Idata:
 
         return True
 
-    @supress_log(logger=LOG)
+    #@supress_log(logger=LOG)
     def workflow_objects(self, input_file):
         '''
         Executes in sequence methods required to generate MD,
@@ -774,6 +788,8 @@ class Idata:
 
         if not success:
             return success, results
+
+        #logging.disable(logging.WARNING)
 
         file_list = results[0]
         file_size = results[1]
@@ -817,6 +833,8 @@ class Idata:
                 md_results = np.vstack((md_results, results[0]))
 
         #print (success_list)
+
+        #logging.disable(logging.NOTSET)
 
         return True, (md_results, va_results, success_list)
 
@@ -954,7 +972,6 @@ class Idata:
         message = 'Failed to process ' + \
             str(len(warning_list))+' molecules : '+str(warning_list)
         message += '\nWill show results for the rest of the series...'
-        message += '\nCheck the error.log file for further details'
 
         LOG.warning(message)
 

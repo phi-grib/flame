@@ -70,12 +70,15 @@ class Parameters:
         else:
             parameters_file_path = utils.model_path(model, version)
         
+        if not os.path.isdir (parameters_file_path):
+            return False, f'Model "{model}", version "{version}" not found'
+
         parameters_file_name = os.path.join (parameters_file_path,
                                             'parameters.yaml')
 
         # load the main class dictionary (p) from this yaml file
         if not os.path.isfile(parameters_file_name):
-            return False, 'file not found'
+            return False, 'Parameters file not found'
 
         try:
             with open(parameters_file_name, 'r') as pfile:

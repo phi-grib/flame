@@ -22,7 +22,6 @@
 
 import os
 import pickle
-import json
 import tempfile
 import numpy as np
 from flame.util import utils, get_logger, supress_log
@@ -245,7 +244,7 @@ class Odata():
 
             if self.conveyor.isKey('values'):
                 for i in range (self.conveyor.getVal('obj_num')):
-                    print (self.conveyor.getVal('obj_nam')[i], '\t', float("{0:.4f}".format(self.conveyor.getVal('values')[i])))
+                    print (self.conveyor.getVal('obj_nam')[i], '\t' , float("{0:.4f}".format(self.conveyor.getVal('values')[i])))
 
         ###
         # 2. molecular descriptors file in TSV format [optional]
@@ -310,7 +309,6 @@ class Odata():
                                 line += str(val)
                         line += '\t'
                     fo.write(line+'\n')
-
 
         ###
         # 4. this function return results as a conveyor object
@@ -460,8 +458,7 @@ class Odata():
         ###
         # returns a JSON with the prediction results
         if 'JSON' in self.format:
-            output = self.conveyor.getJSON()
-
+            output = self.conveyor
 
         # save in a temp file for asyncronous similarity search
         opath = tempfile.gettempdir()
@@ -484,15 +481,15 @@ class Odata():
         '''
         LOG.debug('formating errors in results')
 
-        error_json = {}
+        error_msg = {}
         if self.conveyor.getError():
-            error_json['error'] = self.conveyor.getErrorMessage()
+            error_msg['error'] = self.conveyor.getErrorMessage()
 
         if self.conveyor.getWarning():
-            error_json['warning'] = self.conveyor.getWarningMessage()
+            error_msg['warning'] = self.conveyor.getWarningMessage()
 
         # write to console
-        for key, value in error_json.items():
+        for key, value in error_msg.items():
             LOG.error (value)
 
         # dump conveyor
@@ -503,17 +500,16 @@ class Odata():
 
         # dump to error.tsv file
         if 'TSV' in self.format:
-            LOG.info('Dumping errors into errors.tsv')
+            LOG.info('Writting errors into errors.tsv')
             with open('error.tsv', 'w') as fo:
-                for key, value in error_json.items():
+                for key, value in error_msg.items():
                     fo.write(key+'\t'+value+'\n')
 
         output = 'undefined errors'
         
         # replace the undefined error message for a more informative JSON  
         if 'JSON' in self.format:
-            LOG.info('Dumping errors into JSON')
-            output = json.dumps(error_json)
+            output = error_msg
 
         return False, output
 

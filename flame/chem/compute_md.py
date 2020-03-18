@@ -36,7 +36,7 @@ from flame.util import get_logger
 LOG = get_logger(__name__)
 
 
-def _mordred_descriptors(ifile, **kwargs) -> (bool, (np.ndarray, list, list)):
+def _mordred_descriptors(ifile, **kwargs):
     ''' 
     mordred descriptors. output is a boolean and
     a tupla with the xmatrix and the variable names
@@ -139,7 +139,7 @@ def _mordred_descriptors(ifile, **kwargs) -> (bool, (np.ndarray, list, list)):
 
 
 
-def _RDKit_morganFPS(ifile, **kwargs) -> (bool, (np.ndarray, list, list)):
+def _RDKit_morganFPS(ifile, **kwargs):
     ''' 
     Morgan circular FP using RDkit output is a boolean and
     a tupla with the xmatrix and the variable names
@@ -316,12 +316,13 @@ def _RDKit_morganFPS(ifile, **kwargs) -> (bool, (np.ndarray, list, list)):
 #     return (index > 1), (xmatrix, var_nam, success_list)
 
 
-def _RDKit_descriptors(ifile, **kwargs) -> (bool, (np.ndarray, list, list)):
+def _RDKit_descriptors(ifile, **kwargs):
     '''
     computes RDKit descriptors for the file provided as argument
 
     output is a boolean and a tupla with the xmatrix and the variable names
     '''
+    
     try:
         suppl = Chem.SDMolSupplier(ifile)
     except Exception as e:
@@ -338,13 +339,10 @@ def _RDKit_descriptors(ifile, **kwargs) -> (bool, (np.ndarray, list, list)):
     nms = []
     for md_id in Descriptors._descList:
         if md_id[0] in black_list:
-            print ('skipping MD:', md_id[0])
+            LOG.info (f'Skipping MD: {md_id[0]}')
             continue
         nms.append(md_id[0])
 
-    #nms = [x[0] for x in Descriptors._descList]
-
-    #print (nms)
     md = MoleculeDescriptors.MolecularDescriptorCalculator(nms)
 
     # list of MD computation success/failure for every object
@@ -403,7 +401,7 @@ def _RDKit_descriptors(ifile, **kwargs) -> (bool, (np.ndarray, list, list)):
     return True, results
 
 
-def _RDKit_properties(ifile, **kwargs) -> (bool, (np.ndarray, list, list)):
+def _RDKit_properties(ifile, **kwargs):
     ''' 
     computes RDKit properties for the file provided as argument
 

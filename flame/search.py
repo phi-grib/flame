@@ -48,8 +48,9 @@ class Search:
             'method', 'single',
             'Label used to identify the prediction')
 
-        if not self.param.loadYaml(space, version, isSpace=True):
-            LOG.critical('Unable to load space parameters. Aborting...')
+        success, results = self.param.loadYaml(space, version, isSpace=True)
+        if not success:
+            LOG.critical(f'Unable to load space parameters. {results}. Aborting...')
             sys.exit()
 
         # add additional output formats included in the constructor 

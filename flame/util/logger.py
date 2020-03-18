@@ -1,5 +1,6 @@
 import functools
 import logging
+import sys
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 import appdirs
@@ -62,7 +63,8 @@ def get_log_file() -> Path:
     The path of the log file is given by
     appdirs.user_log_dir
     """
-    log_filename_path = appdirs.user_log_dir(appname='flame')
+    # log_filename_path = appdirs.user_log_dir(appname='flame')
+    log_filename_path = './'
     log_filename_path = Path(log_filename_path)
     
     # creeate dir if it does not exist
@@ -93,7 +95,7 @@ def get_logger(name) -> logging.Logger:
 
     # create formatter fdor file handler (more explicit)
     file_formatter = logging.Formatter(
-        '%(levelname)-8s [%(asctime)s] - %(name)s - %(message)s'
+        '%(levelname)-8s [%(asctime)s] - %(threadName)s - %(name)s - %(message)s'
     )
 
     # formater for stream handler (less info)
@@ -105,18 +107,21 @@ def get_logger(name) -> logging.Logger:
     # create console and file handler
     # if not already created
     if not logger.handlers:
+
+        # send DEBUG to the log file
         fh = RotatingFileHandler(log_file, maxBytes=1_024_000, backupCount=5)
+        fh.set_name('filehandler')
         fh.setLevel('DEBUG')
-        # add formatter to handler
         fh.setFormatter(file_formatter)
-        # add handler to logger
         logger.addHandler(fh)
 
-        ch = logging.StreamHandler()
+        # send INFO to the console (stdin)
+        ch = logging.StreamHandler(sys.stdout)
         ch.set_name('streamhandler')
         ch.setLevel('INFO')
         ch.setFormatter(stdout_formatter)
         logger.addHandler(ch)
+
         return logger
         
     # if there already handlers just return the logger

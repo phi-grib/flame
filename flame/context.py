@@ -24,7 +24,6 @@
 import os
 import shutil
 import pathlib
-# import json
 
 from flame.util import utils, get_logger
 
@@ -275,17 +274,14 @@ def sbuild_cmd(arguments, output_format=None):
     # try to copy it to the model directory
     if ifile is not None:
         if not os.path.isfile(ifile):
-            LOG.error(f'Wrong compound database file {ifile}')
             return False, f'Wrong compound database file {ifile}'
         try:
             shutil.copy(ifile, lfile)
         except:
-            LOG.error(f'Unable to copy input file to space directory')
             return False, 'Unable to copy input file to space directory'
 
     # check that the local copy of the input file exists
     if not os.path.isfile(lfile):
-        LOG.error(f'No compound database found')
         return False, 'No compound database found'
 
     # run the space building with the input file
@@ -358,7 +354,6 @@ def manage_cmd(args):
         import flame.manage as manage
 
         if args.action == 'new':
-            #utils.check_repository_path()
             success, results = manage.action_new(args.endpoint)
         elif args.action == 'kill':
             success, results = manage.action_kill(args.endpoint)
@@ -377,10 +372,11 @@ def manage_cmd(args):
         elif args.action == 'parameters':
             success, results = manage.action_parameters(args.endpoint, version)
         elif args.action == 'documentation':
-                            success, results = manage.action_documentation(args.endpoint,
-                                version, args.documentation_file)
+            success, results = manage.action_documentation(args.endpoint,
+            version, args.documentation_file)
         elif args.action == 'model_template':
-            success, results = manage.action_model_template(args.endpoint, version,  args.documentation_file)
+            success, results = manage.action_model_template(args.endpoint, 
+            version,  args.documentation_file)
         elif args.action == 'prediction_template':
             success, results = manage.action_prediction_template(args.endpoint, version)
         elif args.action == 'import':
