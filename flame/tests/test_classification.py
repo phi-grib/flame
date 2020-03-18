@@ -57,9 +57,8 @@ def test_classificationl(make_model, build_model, fixed_results):
     predictor.param.setVal("mol_batch", "objects")
     predictor.param.setVal("conformal", False)
     predictor.param.setVal("output_format", "JSON")
-    _, results_str = predictor.run(SDF_FILE_NAME)
 
-    prediction_results_dict = json.load(io.StringIO(results_str))
-    result_values = np.array(prediction_results_dict["values"])
+    _, results = predictor.run(SDF_FILE_NAME)
+    result_values = results.getVal("values")
 
     assert all(np.isclose(fixed_results, result_values, rtol=1e-4))
