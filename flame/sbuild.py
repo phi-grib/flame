@@ -56,7 +56,7 @@ class Sbuild:
 
         # being unable to load parameters is a critical error
         if not success:
-            LOG.critical(f'Unable to load space parameters. "{message}" Aborting...')
+            LOG.critical(f'Unable to load space parameters. {message}. Aborting...')
             sys.exit(1)
 
         # add additional output formats included in the constructor 

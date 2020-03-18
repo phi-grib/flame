@@ -1,3 +1,26 @@
+#! -*- coding: utf-8 -*-
+
+# Description    Context wrapps calls to predict and build to
+# support models making use of extenal input sources
+#
+# Authors:       Manuel Pastor (manuel.pastor@upf.edu)
+#
+# Copyright 2018-20 Manuel Pastor
+#
+# This file is part of Flame
+#
+# Flame is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation version 3.
+#
+# Flame is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Flame. If not, see <http://www.gnu.org/licenses/>.
+
 import functools
 import logging
 import sys
@@ -95,7 +118,7 @@ def get_logger(name) -> logging.Logger:
 
     # create formatter fdor file handler (more explicit)
     file_formatter = logging.Formatter(
-        '%(levelname)-8s [%(asctime)s] - %(threadName)s - %(name)s - %(message)s'
+        '%(levelname)-8s [%(asctime)s] %(thread)d - %(name)s - %(message)s'
     )
 
     # formater for stream handler (less info)
@@ -108,8 +131,9 @@ def get_logger(name) -> logging.Logger:
     # if not already created
     if not logger.handlers:
 
-        # send DEBUG to the log file
-        fh = RotatingFileHandler(log_file, maxBytes=1_024_000, backupCount=5)
+        # Send DEBUG to a rotating log file
+        # Limit the size to 1000000Bytes ~ 1MB 
+        fh = RotatingFileHandler(log_file, maxBytes=1000000, backupCount=3)
         fh.set_name('filehandler')
         fh.setLevel('DEBUG')
         fh.setFormatter(file_formatter)

@@ -56,7 +56,7 @@ class Build:
 
         # being unable to load parameters is a critical error
         if not success:
-            LOG.critical(f'Unable to load model parameters. "{message}" Aborting...')
+            LOG.critical(f'Unable to load model parameters. {message}. Aborting...')
             sys.exit(1)
 
         # add additional output formats included in the constructor 
