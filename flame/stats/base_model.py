@@ -22,7 +22,7 @@
 
 from flame.util import utils
 from flame.stats.imbalance import *  
-from flame.stats.model_validation import *
+# from flame.stats.model_validation import *
 from flame.stats.scale import center, scale
 from flame.stats.feature_selection import *
 import pickle
@@ -33,7 +33,7 @@ import time
 import glob
 import gc
 from scipy import stats
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 import warnings
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
@@ -75,6 +75,64 @@ from nonconformist.evaluation import class_mean_errors
 
 from flame.util import utils, get_logger, supress_log
 LOG = get_logger(__name__)
+
+
+##################################################################
+# horrible import from model_validation
+##################################################################
+from sklearn.model_selection import learning_curve  # JC
+from sklearn.model_selection import *  # KP
+from sklearn.model_selection import LeavePOut  # KP
+from sklearn.model_selection import LeaveOneOut  # KP
+from sklearn.model_selection import train_test_split
+from sklearn.datasets import load_iris
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.model_selection import cross_val_predict
+from sklearn.model_selection import LeaveOneOut
+
+def getCrossVal(cv, rs, n, p):
+
+    # Splitter Classes:
+
+    # K-Folds cross-validator
+    kfold = KFold(n_splits=n, random_state=rs, shuffle=False)
+    # K-fold iterator variant with non-overlapping groups.
+    gkfold = GroupKFold(n_splits=n)
+    # Stratified K-Folds cross-validator
+    stkfold = StratifiedKFold(n_splits=n, random_state=rs, shuffle=False)
+    logo = LeaveOneGroupOut()  # Leave One Group Out cross-validator
+    lpgo = LeavePGroupsOut(n_groups=n)  # Leave P Group(s) Out cross-validator
+    loo = LeaveOneOut()  # Leave-One-Out cross-validator
+    lpo = LeavePOut(int(p))  # Leave-P-Out cross-validator
+    # Random permutation cross-validator
+    shufsplit = ShuffleSplit(n_splits=n, random_state=rs,
+                             test_size=0.25, train_size=None)
+    # Shuffle-Group(s)-Out cross-validation iterator
+    gshufplit = GroupShuffleSplit(test_size=10, n_splits=n)
+    # Stratified ShuffleSplit cross-validator
+    stshufsplit = StratifiedShuffleSplit(
+        n_splits=n, test_size=0.5, random_state=0)
+    # Predefined split cross-validator
+    psplit = PredefinedSplit(test_fold=[0,  1, -1,  1])
+    tssplit = TimeSeriesSplit(n_splits=n)
+
+    splitClass = {'kfold': kfold, 'gkfold': gkfold, 'stkfold': stkfold, 'logo': logo,
+                  'lpgo': lpgo, 'loo': loo, 'lpo': lpo, 'shufsplit': shufsplit,
+                  'gshufplit': gshufplit, 'stshufsplit': stshufsplit,
+                  'psplit': psplit, 'tssplit': tssplit}
+
+# splitClass = {'kfold': kfold, 'stkfold': stkfold,
+# 'loo': loo, 'lpo': lpo,
+# 'shufsplit': shufsplit}
+
+    cv = splitClass.get(str(cv))
+
+    return cv
+
+##################################################################
+# horrible import from model_validation
+##################################################################
 
 
 class BaseEstimator:
