@@ -20,99 +20,103 @@
 # You should have received a copy of the GNU General Public License
 # along with Flame.  If not, see <http://www.gnu.org/licenses/>.
 
-from flame.util import utils
-from flame.stats.imbalance import *  
 # from flame.stats.model_validation import *
-from flame.stats.scale import center, scale
-from flame.stats.feature_selection import *
 import pickle
 import numpy as np
 import os
 import copy
 import time
-import glob
 import gc
 from scipy import stats
-# import matplotlib.pyplot as plt
 import warnings
-with warnings.catch_warnings():
-    warnings.simplefilter("ignore")
+
+from flame.stats.scale import center, scale
+from flame.stats.feature_selection import *
+from flame.stats.imbalance import *  
+
 from sklearn.model_selection import cross_val_predict
-from sklearn.model_selection import LeaveOneOut
 from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import LeaveOneOut
+from sklearn.model_selection import LeaveOneGroupOut
+from sklearn.model_selection import LeavePOut  
+from sklearn.model_selection import LeavePGroupsOut
+from sklearn.model_selection import PredefinedSplit
+from sklearn.model_selection import TimeSeriesSplit
 from sklearn.model_selection import ShuffleSplit
+from sklearn.model_selection import GroupShuffleSplit
+from sklearn.model_selection import StratifiedShuffleSplit
 from sklearn.model_selection import KFold
+from sklearn.model_selection import GroupKFold
+from sklearn.model_selection import StratifiedKFold
 from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import train_test_split
+# from sklearn.model_selection import *  # KP
+
 from sklearn.metrics import mean_squared_error, matthews_corrcoef as mcc
 from sklearn.metrics import f1_score
 from sklearn.metrics import make_scorer
 from sklearn.metrics import confusion_matrix
-from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler 
+
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.tree import DecisionTreeRegressor
+
 # nonconformist imports
 from nonconformist.base import ClassifierAdapter, RegressorAdapter
 from nonconformist.icp import IcpClassifier, IcpRegressor
 from nonconformist.nc import MarginErrFunc
-from nonconformist.nc import ClassifierNc, RegressorNc
 from nonconformist.nc import AbsErrorErrFunc, SignErrorErrFunc, RegressorNormalizer
+from nonconformist.nc import ClassifierNc, MarginErrFunc
+from nonconformist.nc import RegressorNc
 from nonconformist.acp import AggregatedCp
 from nonconformist.acp import BootstrapSampler, CrossSampler, RandomSubSampler
 from nonconformist.acp import BootstrapConformalClassifier
 from nonconformist.acp import CrossConformalClassifier
 
 from nonconformist.evaluation import class_mean_errors, class_one_c
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.tree import DecisionTreeRegressor
-from nonconformist.base import ClassifierAdapter
-from nonconformist.icp import IcpClassifier
-from nonconformist.nc import ClassifierNc, MarginErrFunc
 from nonconformist.evaluation import cross_val_score as conformal_cross_val_score
 from nonconformist.evaluation import ClassIcpCvHelper, RegIcpCvHelper
-from nonconformist.evaluation import class_avg_c, class_mean_errors
+from nonconformist.evaluation import class_avg_c
 from nonconformist.evaluation import reg_mean_errors, reg_median_size
 from nonconformist.evaluation import reg_mean_size
-from nonconformist.evaluation import class_mean_errors
 
 from flame.util import utils, get_logger, supress_log
+
 LOG = get_logger(__name__)
 
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore")
 
 ##################################################################
 # horrible import from model_validation
 ##################################################################
-from sklearn.model_selection import learning_curve  # JC
-from sklearn.model_selection import *  # KP
-from sklearn.model_selection import LeavePOut  # KP
-from sklearn.model_selection import LeaveOneOut  # KP
-from sklearn.model_selection import train_test_split
-from sklearn.datasets import load_iris
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.model_selection import cross_val_predict
-from sklearn.model_selection import LeaveOneOut
 
 def getCrossVal(cv, rs, n, p):
 
-    # Splitter Classes:
-
     # K-Folds cross-validator
     kfold = KFold(n_splits=n, random_state=rs, shuffle=False)
+
     # K-fold iterator variant with non-overlapping groups.
     gkfold = GroupKFold(n_splits=n)
+
     # Stratified K-Folds cross-validator
     stkfold = StratifiedKFold(n_splits=n, random_state=rs, shuffle=False)
-    logo = LeaveOneGroupOut()  # Leave One Group Out cross-validator
-    lpgo = LeavePGroupsOut(n_groups=n)  # Leave P Group(s) Out cross-validator
-    loo = LeaveOneOut()  # Leave-One-Out cross-validator
-    lpo = LeavePOut(int(p))  # Leave-P-Out cross-validator
+    logo = LeaveOneGroupOut()              # Leave One Group Out cross-validator
+    lpgo = LeavePGroupsOut(n_groups=n)     # Leave P Group(s) Out cross-validator
+    loo  = LeaveOneOut()                   # Leave-One-Out cross-validator
+    lpo  = LeavePOut(int(p))               # Leave-P-Out cross-validator
+
     # Random permutation cross-validator
     shufsplit = ShuffleSplit(n_splits=n, random_state=rs,
                              test_size=0.25, train_size=None)
+
     # Shuffle-Group(s)-Out cross-validation iterator
     gshufplit = GroupShuffleSplit(test_size=10, n_splits=n)
+
     # Stratified ShuffleSplit cross-validator
     stshufsplit = StratifiedShuffleSplit(
         n_splits=n, test_size=0.5, random_state=0)
+
     # Predefined split cross-validator
     psplit = PredefinedSplit(test_fold=[0,  1, -1,  1])
     tssplit = TimeSeriesSplit(n_splits=n)
@@ -122,17 +126,7 @@ def getCrossVal(cv, rs, n, p):
                   'gshufplit': gshufplit, 'stshufsplit': stshufsplit,
                   'psplit': psplit, 'tssplit': tssplit}
 
-# splitClass = {'kfold': kfold, 'stkfold': stkfold,
-# 'loo': loo, 'lpo': lpo,
-# 'shufsplit': shufsplit}
-
-    cv = splitClass.get(str(cv))
-
-    return cv
-
-##################################################################
-# horrible import from model_validation
-##################################################################
+    return splitClass.get(str(cv))
 
 
 class BaseEstimator:

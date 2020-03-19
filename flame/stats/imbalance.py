@@ -20,10 +20,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Flame. If not, see <http://www.gnu.org/licenses/>.
 
-
 import pandas as pd
 import numpy as np
-from flame.util import utils, get_logger, supress_log
+from flame.util import utils, get_logger
+
 LOG = get_logger(__name__)
 
 def simple_subsampling(X, Y, random_seed):
@@ -49,6 +49,7 @@ def simple_subsampling(X, Y, random_seed):
         Y_s = (new["act"].values)
         new = new.drop(["act"], axis=1)
         X_s = new.values
+
     # Perform subsampling of positive instances
     else:
         LOG.info('Subsampling of positive instances')
@@ -58,6 +59,7 @@ def simple_subsampling(X, Y, random_seed):
         Y_s = (new["act"].values)
         new = new.drop(["act"], axis=1)
         X_s = new.values
+
     if Y_s.size == 0  or X_s.size == 0:
         raise ValueError("Error creating subsampled matrices")
     return X_s, Y_s
