@@ -16,7 +16,7 @@ dependencies:
   - rdkit
   - pyyaml
   - pytest
-  - psycopg2
+ # - psycopg2
   - pip:
      - xgboost
      - django==2.2.8
