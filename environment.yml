@@ -9,6 +9,7 @@ dependencies:
   #- numpy=>1.14.0
   - pip
   - python=3.6
+  - pandas
   #- scipy=>1.0.0
   - setuptools=>38.4.0
   - scikit-learn=>0.19.1
@@ -16,6 +17,7 @@ dependencies:
   - rdkit
   - pyyaml
   - pytest
+  - chembl_structure_pipeline
  # - psycopg2
   - pip:
      - xgboost
