@@ -27,7 +27,6 @@ import shutil
 import tempfile
 import multiprocessing as mp
 import pathlib
-import logging
 
 import numpy as np
 from rdkit import Chem
@@ -53,21 +52,21 @@ class Idata:
         ----------
         parameters: dict
             dict with model parameters
-        
+
+        conveyor: class
+            main class to store the workflow results
+
         input_source: str
             SDF file with the molecules to use as training or predict        
 
-        Returns
-        -------
-        # TODO: clear what this class returns
-
         """
-        # control object defining the processing
+        # parameters and conveyor should have been initialized by the
+        # parent class calling idata
         self.param = parameters
         self.conveyor = conveyor
 
         # self.format can inform if we are running in ghost mode
-        # as part of an ensemble
+        # as part of an ensemble (low ensemble models)
         self.format = self.param.getVal('output_format')
 
         # path for temp files (fallback default)
@@ -79,6 +78,7 @@ class Idata:
         input_type = self.param.getVal('input_type')
         self.conveyor.addMeta('input_type',input_type)
 
+        # in case of top ensemble models...
         if input_type == 'model_ensemble':
             self.idata = input_source
             self.ifile = None
@@ -298,7 +298,7 @@ class Idata:
         if not method :
             method = ''
 
-        LOG.info('Starting normalization...')
+        LOG.info(f'Normalizing structures with method: {method}')
         try:
             suppl = Chem.SDMolSupplier(ifile)
             LOG.debug(f'mol supplier created from {ifile}')
@@ -368,8 +368,10 @@ class Idata:
                 elif 'chEMBL' in method:
                     # Get allowed penalty score from parameters
                     score = self.param.getDict('normalize_settings')['score']
+
                     from chembl_structure_pipeline import standardizer as embl
                     from chembl_structure_pipeline import checker
+                    
                     try:
                         parent = embl.standardize_molblock(Chem.MolToMolBlock(m))
                         issues = checker.check_molblock(Chem.MolToMolBlock(m))
@@ -389,7 +391,6 @@ class Idata:
                         continue
 
                 else:
-                    #LOG.info(f'Skipping normalization.')
                     try:
                         parent = Chem.MolToMolBlock(m)
                     except Exception as e:
@@ -414,6 +415,7 @@ class Idata:
                 fo.write('$$$$\n')
 
         return success_list, ofile
+
 
     def ionize(self, ifile, method):
         '''
@@ -478,7 +480,7 @@ class Idata:
         FIXIT
         '''
 
-        LOG.info(f'Computing molecular descriptors with methods {methods}...')
+        LOG.info(f'Computing molecular descriptors with methods: {methods}')
         
         # Load descriptor settings
 
@@ -723,6 +725,7 @@ class Idata:
         except Exception as e:
             LOG.error(f"Can't serialize descriptors because of exception: {e}")
 
+
     def load(self):
         '''
         Loads the results in serialized form, together with the MD5 signature
@@ -789,8 +792,6 @@ class Idata:
         if not success:
             return success, results
 
-        #logging.disable(logging.WARNING)
-
         file_list = results[0]
         file_size = results[1]
 
@@ -831,10 +832,6 @@ class Idata:
                     continue
 
                 md_results = np.vstack((md_results, results[0]))
-
-        #print (success_list)
-
-        #logging.disable(logging.NOTSET)
 
         return True, (md_results, va_results, success_list)
 
@@ -1128,8 +1125,11 @@ class Idata:
 
         obj_num = index
         LOG.debug('loaded TSV with shape {} '.format(xmatrix.shape))
+        
+        # if the TSV contains the variables names (as the first line) this
+        # has increased the line count and the obj_num must be reduced
         if self.param.getVal('TSV_varnames'):
-            obj_num -= 1  # what?
+            obj_num -= 1  
 
         # extract any named as "TSV_activity" as the ymatrix
         activity_param = self.param.getVal('TSV_activity')

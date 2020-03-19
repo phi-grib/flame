@@ -110,25 +110,26 @@ class Learn:
         # if self.param.getVal('modelAutoscaling') and \
         #                 not isFingerprint:
 
-        if self.param.getVal('modelAutoscaling'):
+        scale_method = self.param.getVal('modelAutoscaling')
+        if scale_method is not None:
             try:
                 scaler = None
-                if self.param.getVal('modelAutoscaling') == 'StandardScaler':
+                if scale_method == 'StandardScaler':
                     scaler = StandardScaler()
-                    LOG.info('Data scaled using StandarScaler')
 
-                elif self.param.getVal('modelAutoscaling') == 'MinMaxScaler':
+                elif scale_method == 'MinMaxScaler':
                     scaler = MinMaxScaler(copy=True, feature_range=(0,1))
-                    LOG.info('Data scaled using MinMaxScaler')
 
-                elif self.param.getVal('modelAutoscaling') == 'RobustScaler':
+                elif scale_method == 'RobustScaler':
                     scaler = RobustScaler()
-                    LOG.info('Data scaled using RobustScaler')
 
                 else:
                     return False, 'Scaler not recognized'
 
                 if scaler is not None:
+
+                    LOG.info(f'Data scaled with method: {scale_method}')
+
                     # The scaler is saved so it can be used later
                     # to prediction instances.
                     self.scaler = scaler.fit(self.X)
@@ -247,7 +248,7 @@ class Learn:
             return
 
         # build model
-        LOG.info('Starting model building')
+        LOG.debug('Starting model building')
         success, model_building_results = model.build()
         if not success:
             self.conveyor.setError(model_building_results)
@@ -262,7 +263,7 @@ class Learn:
                     'Information about the model building')
 
         # validate model
-        LOG.info('Starting model validation')
+        LOG.info(f'Validating the model using method: {self.param.getVal("ModelValidationCV"):}')
         success, model_validation_results = model.validate()
         if not success:
             self.conveyor.setError(model_validation_results)
@@ -336,11 +337,11 @@ class Learn:
         toolkit = self.param.getVal('modelingToolkit')
 
         if toolkit == 'internal':
-            LOG.info('Building model using internal toolkit : Sci-kit learn')
+            LOG.info('Using internal machine learning toolkit')
             self.run_internal()
 
         elif toolkit == 'custom':
-            LOG.info('Building model using custom toolkit')
+            LOG.info('Unsing custom machine learning toolkit')
             self.run_custom()
         else:
             LOG.error("Modeling toolkit is not yet supported")

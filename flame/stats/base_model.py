@@ -163,7 +163,7 @@ class BaseEstimator:
                                 self.param.getVal('ModelValidationN'),
                                 self.param.getVal('ModelValidationP'))
                 LOG.debug('Cross-validator retrieved')
-                LOG.info(f'cv is: {self.cv}')
+                LOG.debug(f'cv is: {self.cv}')
             except Exception as e:
                 LOG.error(f'Error retrieving cross-validator with'
                         f'exception: {e}')
