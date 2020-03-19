@@ -6,13 +6,13 @@ channels:
   - chembl
 dependencies:
   - cherrypy=>18
-  - numpy=>1.14.0
+  #- numpy=>1.14.0
   - pip
   - python=3.6
-  - scipy=>1.0.0
+  #- scipy=>1.0.0
   - setuptools=>38.4.0
   - scikit-learn=>0.19.1
-  - statsmodels=>0.8.0
+  #- statsmodels=>0.8.0 
   - rdkit
   - pyyaml
   - pytest
