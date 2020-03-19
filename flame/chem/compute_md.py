@@ -23,7 +23,7 @@
 import os
 import shutil
 import tempfile
-import requests
+#import requests  # Used by PaDEL (removed)
 import numpy as np
 from rdkit import Chem
 from rdkit.Chem import AllChem
