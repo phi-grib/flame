@@ -207,11 +207,12 @@ class Learn:
 
         # collect model information from parameters
         model_type_info = []
-        model_type_info.append(('quantitative', 'True is the endpoint is quantitative', self.param.getVal('quantitative')))
-        model_type_info.append(('conformal', 'True is the endpoint is conformal', self.param.getVal('conformal')))
-        model_type_info.append(('ensemble', 'True is the model is an ensemble of models', self.param.getVal('input_type') == 'model_ensemble'))
+        model_type_info.append(('quantitative', 'True if the endpoint is quantitative', self.param.getVal('quantitative')))
+        model_type_info.append(('conformal', 'True if the endpoint is conformal', self.param.getVal('conformal')))
+        model_type_info.append(('ensemble', 'True if the model is an ensemble of models', self.param.getVal('input_type') == 'model_ensemble'))
         model_type_info.append(('ensemble_names', 'List of ensemble models', self.param.getVal('ensemble_names')))
         model_type_info.append(('ensemble_versions', 'List of ensemble versions', self.param.getVal('ensemble_versions')))
+        model_type_info.append(('conformal_significance', 'Significance of the conformal model', self.param.getVal('conformalSignificance')))
 
         self.conveyor.addVal(
             model_type_info,

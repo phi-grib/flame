@@ -203,23 +203,24 @@ def build_cmd(arguments, output_format=None):
             if not os.path.isfile(ifile):
                 return False, f'Wrong training series file {ifile}'
         
-            if arguments['incremental'] and os.path.isfile(lfile):
-                LOG.info(f'Merging file {ifile} with existing training series')
-                new_training = os.path.join(epd, 'temp_training')
+            if 'incremental' in arguments:    
+                if arguments['incremental'] and os.path.isfile(lfile):
+                    LOG.info(f'Merging file {ifile} with existing training series')
+                    new_training = os.path.join(epd, 'temp_training')
 
-                with open(new_training, 'w') as outfile:
-                    with open(lfile) as infile:
-                        for line in infile:
-                            outfile.write(line)
+                    with open(new_training, 'w') as outfile:
+                        with open(lfile) as infile:
+                            for line in infile:
+                                outfile.write(line)
 
-                    if line != '$$$$\n':
-                        return False, 'The existing training series does not finish correctly with "$$$$" and a newline. Please correct.'
+                        if line != '$$$$\n':
+                            return False, 'The existing training series does not finish correctly with "$$$$" and a newline. Please correct.'
 
-                    with open(ifile) as infile:
-                        for line in infile:
-                            outfile.write(line)
+                        with open(ifile) as infile:
+                            for line in infile:
+                                outfile.write(line)
 
-                shutil.move(new_training, lfile)
+                    shutil.move(new_training, lfile)
             else:
                 try:
                     # print(lfile)
