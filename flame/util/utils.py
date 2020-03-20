@@ -380,6 +380,7 @@ def qualitative_Y (Y):
 def module_versions ():
     from rdkit import __version__ as rdkit_ver
     from sklearn import __version__ as sklearn_ver
+    from nonconformist import __version__ as nonconformist_ver
     from flame import __version__ as flame_ver
 
-    return {'rdkit':rdkit_ver, 'sklearn':sklearn_ver, 'flame': flame_ver}
+    return {'rdkit':rdkit_ver, 'sklearn':sklearn_ver, 'nonconformist':nonconformist_ver, 'flame': flame_ver}

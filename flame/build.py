@@ -115,14 +115,12 @@ class Build:
 
         if not self.conveyor.getError():
             # instantiate learn (build a model from idata) and run it
-            learn = learn_child.LearnChild(self.param, self.conveyor)
-            learn.run()
-
             try:
                 learn = learn_child.LearnChild(self.param, self.conveyor)
             except:
                 LOG.warning ('Learn child architecture mismatch, defaulting to Learn parent')
                 learn = Learn(self.param, self.conveyor)
+            learn.run()
 
             LOG.debug(f'learn child {type(learn).__name__} completed `run()`')
 

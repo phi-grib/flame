@@ -245,12 +245,15 @@ class BaseEstimator:
         Y = self.Y.copy()
 
         info = []
-        kf = KFold(n_splits=self.param.getVal('ModelValidationN')
-                   , shuffle=True, random_state=46)
+
+        # # conformal models only use kfold for validation
+        # kf = KFold(n_splits=self.param.getVal('ModelValidationN'), shuffle=True, random_state=46)
+
         # Copy Y vector to use it as template to assign predictions
         Y_pred = copy.copy(Y).tolist()
         try:
-            for train_index, test_index in kf.split(X):
+            # for train_index, test_index in kf.split(X):
+            for train_index, test_index in self.cv.split(X):
                 # Generate training and test sets
                 X_train, X_test = X[train_index], X[test_index]
                 Y_train, Y_test = Y[train_index], Y[test_index]
@@ -336,11 +339,14 @@ class BaseEstimator:
 
         info = []
 
-        kf = KFold(n_splits=5, shuffle=True, random_state=46)
+        # # conformal models only use kfold for validation
+        # kf = KFold(n_splits=self.param.getVal('ModelValidationN'), shuffle=False, random_state=46)
+
         # Copy Y vector to use it as template to assign predictions
         Y_pred = copy.copy(Y).tolist()
         try:
-            for train_index, test_index in kf.split(X):
+            # for train_index, test_index in kf.split(X):
+            for train_index, test_index in self.cv.split(X):
                 # Generate training and test sets
                 X_train, X_test = X[train_index], X[test_index]
                 Y_train, Y_test = Y[train_index], Y[test_index]
@@ -577,9 +583,7 @@ class BaseEstimator:
 
         # Get cross-validated Y 
         try:
-            y_pred = cross_val_predict(self.estimator, X, Y,
-                    cv=self.cv,
-                             n_jobs=-1)
+            y_pred = cross_val_predict(self.estimator, X, Y, cv=self.cv, n_jobs=-1)
         except Exception as e:
             LOG.error(f'Cross-validation failed with exception' 
                         f'exception {e}')

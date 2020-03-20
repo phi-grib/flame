@@ -94,6 +94,10 @@ class Parameters:
             self.extended = False
             self.param_format = 1.0
 
+        # # correct CV to kfold for conformal models
+        # if self.getVal('conformal') is True:
+        #     self.setVal('ModelValidationCV','kfold')
+
         # add keys for the model and a MD5 hash
         self.setVal('endpoint',model)
         self.setVal('version',version)
@@ -173,6 +177,10 @@ class Parameters:
                 yaml.dump (self.p, pfile)
         except Exception as e:
             return False, 'unable to write parameters'
+
+        # # correct CV to kfold for conformal models
+        # if self.getVal('conformal') is True:
+        #     self.setVal('ModelValidationCV','kfold')
 
         # self.setVal('md5',utils.md5sum(parameters_file_name))
         self.setVal('md5',self.idataHash())
