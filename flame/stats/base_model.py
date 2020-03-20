@@ -35,21 +35,21 @@ from flame.stats.feature_selection import *
 from flame.stats.imbalance import *  
 
 from sklearn.model_selection import cross_val_predict
-from sklearn.model_selection import cross_val_score
-from sklearn.model_selection import LeaveOneOut
-from sklearn.model_selection import LeaveOneGroupOut
-from sklearn.model_selection import LeavePOut  
-from sklearn.model_selection import LeavePGroupsOut
-from sklearn.model_selection import PredefinedSplit
-from sklearn.model_selection import TimeSeriesSplit
-from sklearn.model_selection import ShuffleSplit
-from sklearn.model_selection import GroupShuffleSplit
-from sklearn.model_selection import StratifiedShuffleSplit
+# from sklearn.model_selection import cross_val_score
+# from sklearn.model_selection import LeaveOneOut
+# from sklearn.model_selection import LeaveOneGroupOut
+# from sklearn.model_selection import LeavePOut  
+# from sklearn.model_selection import LeavePGroupsOut
+# from sklearn.model_selection import PredefinedSplit
+# from sklearn.model_selection import TimeSeriesSplit
+# from sklearn.model_selection import ShuffleSplit
+# from sklearn.model_selection import GroupShuffleSplit
+# from sklearn.model_selection import StratifiedShuffleSplit
 from sklearn.model_selection import KFold
-from sklearn.model_selection import GroupKFold
-from sklearn.model_selection import StratifiedKFold
+# from sklearn.model_selection import GroupKFold
+# from sklearn.model_selection import StratifiedKFold
 from sklearn.model_selection import GridSearchCV
-from sklearn.model_selection import train_test_split
+# from sklearn.model_selection import train_test_split
 # from sklearn.model_selection import *  # KP
 
 from sklearn.metrics import mean_squared_error, matthews_corrcoef as mcc
@@ -87,46 +87,61 @@ LOG = get_logger(__name__)
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
 
-##################################################################
-# horrible import from model_validation
-##################################################################
+########################################################################
+#TODO: re-write this. It makes no sense creating so many objects which
+# would not be used at all!!!!
+########################################################################
 
 def getCrossVal(cv, rs, n, p):
 
-    # K-Folds cross-validator
-    kfold = KFold(n_splits=n, random_state=rs, shuffle=False)
+    cv = str(cv)
 
-    # K-fold iterator variant with non-overlapping groups.
-    gkfold = GroupKFold(n_splits=n)
+    if cv == 'loo':
+        from sklearn.model_selection import LeaveOneOut
+        return LeaveOneOut()                   
 
-    # Stratified K-Folds cross-validator
-    stkfold = StratifiedKFold(n_splits=n, random_state=rs, shuffle=False)
-    logo = LeaveOneGroupOut()              # Leave One Group Out cross-validator
-    lpgo = LeavePGroupsOut(n_groups=n)     # Leave P Group(s) Out cross-validator
-    loo  = LeaveOneOut()                   # Leave-One-Out cross-validator
-    lpo  = LeavePOut(int(p))               # Leave-P-Out cross-validator
+    if cv == 'kfold':
+        from sklearn.model_selection import KFold
+        return KFold(n_splits=n, random_state=rs, shuffle=False)
 
-    # Random permutation cross-validator
-    shufsplit = ShuffleSplit(n_splits=n, random_state=rs,
-                             test_size=0.25, train_size=None)
+    if cv == 'lpo':
+        from sklearn.model_selection import LeavePOut 
+        return LeavePOut(int(p))
 
-    # Shuffle-Group(s)-Out cross-validation iterator
-    gshufplit = GroupShuffleSplit(test_size=10, n_splits=n)
+    # # K-Folds cross-validator
+    # kfold = KFold(n_splits=n, random_state=rs, shuffle=False)
 
-    # Stratified ShuffleSplit cross-validator
-    stshufsplit = StratifiedShuffleSplit(
-        n_splits=n, test_size=0.5, random_state=0)
+    # # K-fold iterator variant with non-overlapping groups.
+    # gkfold = GroupKFold(n_splits=n)
 
-    # Predefined split cross-validator
-    psplit = PredefinedSplit(test_fold=[0,  1, -1,  1])
-    tssplit = TimeSeriesSplit(n_splits=n)
+    # # Stratified K-Folds cross-validator
+    # stkfold = StratifiedKFold(n_splits=n, random_state=rs, shuffle=False)
+    # logo = LeaveOneGroupOut()              # Leave One Group Out cross-validator
+    # lpgo = LeavePGroupsOut(n_groups=n)     # Leave P Group(s) Out cross-validator
+    # loo  = LeaveOneOut()                   # Leave-One-Out cross-validator
+    # lpo  = LeavePOut(int(p))               # Leave-P-Out cross-validator
 
-    splitClass = {'kfold': kfold, 'gkfold': gkfold, 'stkfold': stkfold, 'logo': logo,
-                  'lpgo': lpgo, 'loo': loo, 'lpo': lpo, 'shufsplit': shufsplit,
-                  'gshufplit': gshufplit, 'stshufsplit': stshufsplit,
-                  'psplit': psplit, 'tssplit': tssplit}
+    # # Random permutation cross-validator
+    # shufsplit = ShuffleSplit(n_splits=n, random_state=rs,
+    #                          test_size=0.25, train_size=None)
 
-    return splitClass.get(str(cv))
+    # # Shuffle-Group(s)-Out cross-validation iterator
+    # gshufplit = GroupShuffleSplit(test_size=10, n_splits=n)
+
+    # # Stratified ShuffleSplit cross-validator
+    # stshufsplit = StratifiedShuffleSplit(
+    #     n_splits=n, test_size=0.5, random_state=0)
+
+    # # Predefined split cross-validator
+    # psplit = PredefinedSplit(test_fold=[0,  1, -1,  1])
+    # tssplit = TimeSeriesSplit(n_splits=n)
+
+    # splitClass = {'kfold': kfold, 'gkfold': gkfold, 'stkfold': stkfold, 'logo': logo,
+    #               'lpgo': lpgo, 'loo': loo, 'lpo': lpo, 'shufsplit': shufsplit,
+    #               'gshufplit': gshufplit, 'stshufsplit': stshufsplit,
+    #               'psplit': psplit, 'tssplit': tssplit}
+
+    # return splitClass.get(str(cv))
 
 
 class BaseEstimator:
@@ -220,7 +235,6 @@ class BaseEstimator:
                 LOG.error(f'Error retrieving cross-validator with'
                         f'exception: {e}')
                 raise e
-        
 
     # Validation methods section
     def CF_quantitative_validation(self):
@@ -240,18 +254,21 @@ class BaseEstimator:
                 # Generate training and test sets
                 X_train, X_test = X[train_index], X[test_index]
                 Y_train, Y_test = Y[train_index], Y[test_index]
-                # Generate training a test sets
+                
                 # Create the aggregated conformal regressor.
                 conformal_pred = AggregatedCp(IcpRegressor(
                                     RegressorNc(RegressorAdapter(
                                         self.estimator_temp))),
                                             BootstrapSampler())
+
                 # Fit conformal regressor to the data
                 conformal_pred.fit(X_train, Y_train)
 
                 # Perform prediction on test set
                 prediction = conformal_pred.predict(
-                    X_test, self.param.getVal('conformalSignificance'))
+                                X_test, self.param.getVal(
+                                    'conformalSignificance'))
+
                 # Assign the prediction its original index
                 for index, el in enumerate(test_index):
                     Y_pred[el] = prediction[index]
@@ -842,13 +859,12 @@ class BaseEstimator:
         dict_estimator = {'estimator' : self.estimator,\
                             'version' : 1}
 
-        model_pkl_path = os.path.join(self.param.getVal('model_path'),
-                                      'estimator.pkl')
-        with open(model_pkl_path, 'wb') as handle:
-            pickle.dump(dict_estimator, handle, 
-                        protocol=pickle.HIGHEST_PROTOCOL)
-        LOG.debug('Model saved as:{}'.format(model_pkl_path))
+        model_pkl_path = os.path.join(self.param.getVal('model_path'),'estimator.pkl')
 
+        with open(model_pkl_path, 'wb') as handle:
+            pickle.dump(dict_estimator, handle, protocol=pickle.HIGHEST_PROTOCOL)
+        
+        LOG.debug('Model saved as:{}'.format(model_pkl_path))
 
         # Add estimator parameters to Conveyor
         params = dict()
