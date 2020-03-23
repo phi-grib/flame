@@ -731,6 +731,9 @@ class Idata:
         Loads the results in serialized form, together with the MD5 signature
         of the control class and the input file.
         '''
+
+        # return False
+
         # if this is the top model or an ensemble, exit
         if self.param.getVal('input_type') == 'model_ensemble':
             return False
@@ -754,6 +757,7 @@ class Idata:
                 # check that MD5 hash of the input file is the same that the stored 
                 # hash value in the pickle
                 md5_input = pickle.load(fi)
+                # print (self.ifile, md5_input, utils.md5sum(self.ifile))
                 if md5_input != utils.md5sum(self.ifile):
                     return False
 
