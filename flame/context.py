@@ -203,7 +203,7 @@ def build_cmd(arguments, output_format=None):
             if not os.path.isfile(ifile):
                 return False, f'Wrong training series file {ifile}'
         
-            if arguments['incremental']:    
+            if arguments['incremental']:
                 if arguments['incremental'] and os.path.isfile(lfile):
                     LOG.info(f'Merging file {ifile} with existing training series')
                     new_training = os.path.join(epd, 'temp_training')
