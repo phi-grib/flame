@@ -107,15 +107,13 @@ class Sbuild:
 
         if not self.conveyor.getError():
             # instantiate learn (build a space from idata) and run it
-            slearn = slearn_child.SlearnChild(self.param, self.conveyor)
-            slearn.run()
-
             try:
                 slearn = slearn_child.SlearnChild(self.param, self.conveyor)
             except:
                 LOG.warning ('Slearn child architecture mismatch, defaulting to Learn parent')
                 slearn = Slearn(self.param, self.conveyor)
 
+            slearn.run()
             LOG.debug(f'slearn child {type(slearn).__name__} completed `run()`')
 
         # run odata object, in charge of formatting the prediction results

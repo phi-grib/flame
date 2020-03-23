@@ -202,8 +202,8 @@ def build_cmd(arguments, output_format=None):
         if ifile is not None:
             if not os.path.isfile(ifile):
                 return False, f'Wrong training series file {ifile}'
-
-            if  arguments['incremental']:                
+        
+            if arguments['incremental']:
                 if arguments['incremental'] and os.path.isfile(lfile):
                     LOG.info(f'Merging file {ifile} with existing training series')
                     new_training = os.path.join(epd, 'temp_training')
@@ -230,6 +230,7 @@ def build_cmd(arguments, output_format=None):
                     return False, 'Unable to copy input file to model directory'
 
         # check that the local copy of the input file exists
+        
         if not os.path.isfile(lfile):
             return False, 'No training series found'
 
