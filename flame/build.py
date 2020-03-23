@@ -66,7 +66,6 @@ class Build:
             if output_format not in self.param.getVal('output_format'):
                 self.param.appVal('output_format',output_format)
  
-
     def get_ensemble(self):
         ''' Returns a Boolean indicating if the model uses external input
             sources and a list with these sources '''
