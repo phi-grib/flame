@@ -416,10 +416,24 @@ class Odata():
             iresult = results[i]
             for j in range (len(iresult['distances'])):
                 dist = iresult['distances'][j]
-                name = iresult['names'][j]
-                idv = iresult['ids'][j]
-                smil = iresult['SMILES'][j]
-                print (f'   {dist:.3f} : {name} id:{idv} [{smil}]')
+                name = iresult['obj_nam'][j]
+                
+                if 'SMILES' in iresult:
+                    smil = iresult['SMILES'][j]
+                else:
+                    smil = '-'
+                
+                if 'obj_id' in iresult:
+                    idv = iresult['obj_id'][j]
+                else:
+                    obj_id ='-'
+                
+                if 'ymatrix' in iresult:
+                    act = iresult['ymatrix'][j]
+                else:
+                    act = '-'
+
+                print (f'   {dist:.3f} : {name} id:{idv} act:{act} [{smil}]')
         
         ###
         # 2. results file in TSV format [optional]

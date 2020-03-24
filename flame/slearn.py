@@ -118,7 +118,15 @@ class Slearn:
 
         # builds space from idata results
         LOG.debug('Starting space building')
-        success, space_building_results = space.build(self.X, self.conveyor.getVal('obj_nam'), self.conveyor.getVal('obj_id'), self.conveyor.getVal('SMILES'))
+
+        objinfo = {}
+        itemlist = ['obj_nam', 'obj_id', 'SMILES', 'ymatrix']
+        for item in itemlist:
+            item_val = self.conveyor.getVal(item)
+            if item_val is not None:
+                objinfo [item] = item_val
+
+        success, space_building_results = space.build(self.X, objinfo)
         if not success:
             LOG.error('space_building_results')
             self.conveyor.setError(space_building_results)
