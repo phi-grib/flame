@@ -34,24 +34,8 @@ from flame.stats.scale import center, scale
 from flame.stats.feature_selection import *
 from flame.stats.imbalance import *  
 
+from flame.stats.crossval import getCrossVal
 from sklearn.model_selection import cross_val_predict
-# from sklearn.model_selection import cross_val_score
-# from sklearn.model_selection import LeaveOneOut
-# from sklearn.model_selection import LeaveOneGroupOut
-# from sklearn.model_selection import LeavePOut  
-# from sklearn.model_selection import LeavePGroupsOut
-# from sklearn.model_selection import PredefinedSplit
-# from sklearn.model_selection import TimeSeriesSplit
-# from sklearn.model_selection import ShuffleSplit
-# from sklearn.model_selection import GroupShuffleSplit
-# from sklearn.model_selection import StratifiedShuffleSplit
-from sklearn.model_selection import KFold
-# from sklearn.model_selection import GroupKFold
-# from sklearn.model_selection import StratifiedKFold
-from sklearn.model_selection import GridSearchCV
-# from sklearn.model_selection import train_test_split
-# from sklearn.model_selection import *  # KP
-
 from sklearn.metrics import mean_squared_error, matthews_corrcoef as mcc
 from sklearn.metrics import f1_score
 from sklearn.metrics import make_scorer
@@ -72,7 +56,6 @@ from nonconformist.acp import AggregatedCp
 from nonconformist.acp import BootstrapSampler, CrossSampler, RandomSubSampler
 from nonconformist.acp import BootstrapConformalClassifier
 from nonconformist.acp import CrossConformalClassifier
-
 from nonconformist.evaluation import class_mean_errors, class_one_c
 from nonconformist.evaluation import cross_val_score as conformal_cross_val_score
 from nonconformist.evaluation import ClassIcpCvHelper, RegIcpCvHelper
@@ -86,63 +69,6 @@ LOG = get_logger(__name__)
 
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
-
-########################################################################
-#TODO: re-write this. It makes no sense creating so many objects which
-# would not be used at all!!!!
-########################################################################
-
-def getCrossVal(cv, rs, n, p):
-
-    cv = str(cv)
-
-    if cv == 'loo':
-        from sklearn.model_selection import LeaveOneOut
-        return LeaveOneOut()                   
-
-    if cv == 'kfold':
-        from sklearn.model_selection import KFold
-        return KFold(n_splits=n, random_state=rs, shuffle=False)
-
-    if cv == 'lpo':
-        from sklearn.model_selection import LeavePOut 
-        return LeavePOut(int(p))
-
-    # # K-Folds cross-validator
-    # kfold = KFold(n_splits=n, random_state=rs, shuffle=False)
-
-    # # K-fold iterator variant with non-overlapping groups.
-    # gkfold = GroupKFold(n_splits=n)
-
-    # # Stratified K-Folds cross-validator
-    # stkfold = StratifiedKFold(n_splits=n, random_state=rs, shuffle=False)
-    # logo = LeaveOneGroupOut()              # Leave One Group Out cross-validator
-    # lpgo = LeavePGroupsOut(n_groups=n)     # Leave P Group(s) Out cross-validator
-    # loo  = LeaveOneOut()                   # Leave-One-Out cross-validator
-    # lpo  = LeavePOut(int(p))               # Leave-P-Out cross-validator
-
-    # # Random permutation cross-validator
-    # shufsplit = ShuffleSplit(n_splits=n, random_state=rs,
-    #                          test_size=0.25, train_size=None)
-
-    # # Shuffle-Group(s)-Out cross-validation iterator
-    # gshufplit = GroupShuffleSplit(test_size=10, n_splits=n)
-
-    # # Stratified ShuffleSplit cross-validator
-    # stshufsplit = StratifiedShuffleSplit(
-    #     n_splits=n, test_size=0.5, random_state=0)
-
-    # # Predefined split cross-validator
-    # psplit = PredefinedSplit(test_fold=[0,  1, -1,  1])
-    # tssplit = TimeSeriesSplit(n_splits=n)
-
-    # splitClass = {'kfold': kfold, 'gkfold': gkfold, 'stkfold': stkfold, 'logo': logo,
-    #               'lpgo': lpgo, 'loo': loo, 'lpo': lpo, 'shufsplit': shufsplit,
-    #               'gshufplit': gshufplit, 'stshufsplit': stshufsplit,
-    #               'psplit': psplit, 'tssplit': tssplit}
-
-    # return splitClass.get(str(cv))
-
 
 class BaseEstimator:
     """
@@ -338,9 +264,10 @@ class BaseEstimator:
         not_predicted_all = 0
 
         info = []
+        from sklearn.model_selection import KFold
 
         # # conformal models only use kfold for validation
-        # kf = KFold(n_splits=self.param.getVal('ModelValidationN'), shuffle=False, random_state=46)
+        self.cv = KFold(n_splits=self.param.getVal('ModelValidationN'), shuffle=False, random_state=46)
 
         # Copy Y vector to use it as template to assign predictions
         Y_pred = copy.copy(Y).tolist()
