@@ -105,6 +105,28 @@ class Predict:
                 LOG.debug(f'Failed to compute MDs')
                 self.conveyor.setError(f'Failed to compute MDs')
 
+        if False:
+
+            from flame.sapply import Sapply
+
+            # sapply_child = importlib.import_module(modpath+".sappy_child")
+
+            metric = self.param.getVal('metric')
+            numsel = self.param.getVal('numsel')
+            cutoff = self.param.getVal('cutoff')
+            
+            sapply = Sapply(self.param, self.conveyor)
+
+            # # run apply object, in charge of generate a prediction from idata
+            # try:
+            #     sapply = sapply_child.SapplyChild(self.param, self.conveyor)
+            # except:
+            #     LOG.warning ('Sapply child architecture mismatch, defaulting to Sapply parent')
+            #     sapply = Sapply(self.param, self.conveyor)
+
+            sapply.run(cutoff, numsel, metric)
+            LOG.debug(f'sapply child {type(sapply).__name__} completed `run()`')
+
         if not self.conveyor.getError():
             # run apply object, in charge of generate a prediction from idata
             try:

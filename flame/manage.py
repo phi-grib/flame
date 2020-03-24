@@ -315,11 +315,14 @@ def action_info(model, version, output='text'):
     '''
 
     if model is None:
+        if output == 'JSON':
+            return False, {'code':1, 'message': 'Empty model label'}
         return False, 'Empty model label'
-
 
     rdir = utils.model_path(model, version)
     if not os.path.isfile(os.path.join(rdir, 'results.pkl')):
+        if output == 'JSON':
+            return False, {'code':0, 'message': 'Info file not found'}
         return False, 'Info file not found'
 
     from flame.conveyor import Conveyor
@@ -331,6 +334,8 @@ def action_info(model, version, output='text'):
     # if there is an error, return the error Message        
     if conveyor.getError():
         error = conveyor.getErrorMessage()
+        if output == 'JSON':
+            return False, {'code':1, 'message': error}
         return False, error
 
     # collect warnings
@@ -388,11 +393,11 @@ def action_results(model, version=None, ouput_variables=False):
     ''' Returns an object with whole results info for a given model and version '''
 
     if model is None:
-        return False, 'Empty model label'
+        return False, {'code':1, 'message': 'Empty model label'}
 
     rdir = utils.model_path(model, version)
     if not os.path.isfile(os.path.join(rdir, 'results.pkl')):
-        return False, 'results not found'
+        return False, {'code':0, 'message': 'Results file not found'}
 
     from flame.conveyor import Conveyor
 
