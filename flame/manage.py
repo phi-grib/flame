@@ -783,7 +783,7 @@ def print_prediction_result (val):
 
         print(f'       {val[0]} ( {val[1]} ) : {v3}')
 
-def action_predictions_result (label):
+def action_predictions_result (label, output='text'):
     '''
     try to retrieve the prediction result with the label used as argument
     returns 
@@ -798,11 +798,15 @@ def action_predictions_result (label):
     label_path = predictions_path.joinpath(label)
 
     if not label_path.is_dir():
+        if output == 'JSON':
+            return False, {'code':1, 'message': f'directory {label_path} not found'}
         print (f'directory {label_path} not found')
         return False, None
 
     result_path = label_path.joinpath('prediction-results.pkl')
     if not result_path.is_file():
+        if output == 'JSON':
+            return False, {'code':0, 'message': f'predictions not found for {label} directory'}
         print (f'predictions not found for {label} directory')
         return False, None
 
@@ -812,6 +816,8 @@ def action_predictions_result (label):
         success, message = iconveyor.load(handle)
 
     if not success:
+        if output == 'JSON':
+            return False, {'code':1, 'message': f'error reading prediction results with message {message}'}
         print (f'error reading prediction results with message {message}')
         return False, None
 

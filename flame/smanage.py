@@ -385,7 +385,7 @@ def action_dir():
     # print (json.dumps(results))
     return True, json.dumps(results)
 
-def action_searches_result (label):
+def action_searches_result (label, output='text'):
     '''
     try to retrieve the searches result with the label used as argument
     returns 
@@ -394,9 +394,13 @@ def action_searches_result (label):
         
         - (True, JSON) with the results otherwyse
     '''
+
     opath = tempfile.gettempdir()
     if not os.path.isdir(opath):
-        return False, f'directory {opath} not found'
+        if output == 'JSON':
+            return False, {'code':1, 'message': f'directory {opath} not found'}
+        print (f'directory {opath} not found')
+        return False, None
 
     # default in case label was not provided
     if label is None:
@@ -406,16 +410,24 @@ def action_searches_result (label):
 
     search_pkl_path = os.path.join(opath,'similars-'+label+'.pkl')
     if not os.path.isfile(search_pkl_path):
+
+        if output == 'JSON':
+            return False, {'code':0, 'message': f'predictions not found for {label} directory'}
+        print (f'predictions not found for {label} directory')
         return False, f'file {search_pkl_path} not found'
 
     with open(search_pkl_path, 'rb') as handle:
         success, message = iconveyor.load(handle)
 
     if not success:
-        print (f'error reading prediction results with message {message}')
+        if output == 'JSON':
+            return False, {'code':1, 'message': f'error reading search results with message {message}'}
+        print (f'error reading search results with message {message}')
         return False, None
 
     if not iconveyor.isKey('search_results'):
+        if output == 'JSON':
+            return False, {'code':1, 'message': 'search results not found'}
         return False, 'search results not found'
 
     results = iconveyor.getVal('search_results')
@@ -423,6 +435,8 @@ def action_searches_result (label):
     if iconveyor.isKey('SMILES'):
         smiles = iconveyor.getVal('SMILES')
     if len (results) != len (names):
+        if output == 'JSON':
+            return False, {'code':1, 'message': 'results length does not match names'}
         return False, 'results length does not match names'
 
     for i in range (len(results)):
