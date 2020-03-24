@@ -20,7 +20,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Flame.  If not, see <http://www.gnu.org/licenses/>.
 
-# from flame.stats.model_validation import *
 import pickle
 import numpy as np
 import os
@@ -267,7 +266,7 @@ class BaseEstimator:
         from sklearn.model_selection import KFold
 
         # # conformal models only use kfold for validation
-        self.cv = KFold(n_splits=self.param.getVal('ModelValidationN'), shuffle=False, random_state=46)
+        #self.cv = KFold(n_splits=self.param.getVal('ModelValidationN'), shuffle=False, random_state=46)
 
         # Copy Y vector to use it as template to assign predictions
         Y_pred = copy.copy(Y).tolist()
