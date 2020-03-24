@@ -114,7 +114,7 @@ class Build:
     
         # run optional chemical space building for supporting "closest" training series object
         # if self.param.getVal('buildSimilarity'):
-        if False:
+        if self.param.getVal('output_similar') is True:
 
             from flame.slearn import Slearn
 

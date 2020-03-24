@@ -105,24 +105,24 @@ class Predict:
                 LOG.debug(f'Failed to compute MDs')
                 self.conveyor.setError(f'Failed to compute MDs')
 
-        if False:
+        if self.param.getVal('output_similar') is True:
 
             from flame.sapply import Sapply
 
-            # sapply_child = importlib.import_module(modpath+".sappy_child")
-
-            metric = self.param.getVal('metric')
-            numsel = self.param.getVal('numsel')
-            cutoff = self.param.getVal('cutoff')
+            metric = self.param.getVal('similarity_metric')
+            numsel = self.param.getVal('similarity_cutoff_num')
+            cutoff = self.param.getVal('similarity_cutoff_distance')
             
-            sapply = Sapply(self.param, self.conveyor)
+            # sapply = Sapply(self.param, self.conveyor)
 
-            # # run apply object, in charge of generate a prediction from idata
-            # try:
-            #     sapply = sapply_child.SapplyChild(self.param, self.conveyor)
-            # except:
-            #     LOG.warning ('Sapply child architecture mismatch, defaulting to Sapply parent')
-            #     sapply = Sapply(self.param, self.conveyor)
+            sapply_child = importlib.import_module(modpath+".sapply_child")
+
+            # run apply object, in charge of generate a prediction from idata
+            try:
+                sapply = sapply_child.SapplyChild(self.param, self.conveyor)
+            except:
+                LOG.warning ('Sapply child architecture mismatch, defaulting to Sapply parent')
+                sapply = Sapply(self.param, self.conveyor)
 
             sapply.run(cutoff, numsel, metric)
             LOG.debug(f'sapply child {type(sapply).__name__} completed `run()`')

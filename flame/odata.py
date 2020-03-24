@@ -527,7 +527,7 @@ class Odata():
         elif origin == 'apply':
             success, results = self.run_apply()
 
-            if False:
+            if self.param.getVal('output_similar'):
                 success, results = self.run_sapply()
 
         elif origin == 'slearn':

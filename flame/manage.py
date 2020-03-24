@@ -81,7 +81,7 @@ def action_new(model):
 
     # Copy classes skeletons to ndir
     wkd = pathlib.Path(os.path.dirname(os.path.abspath(__file__)))
-    children_names = ['apply', 'idata', 'odata', 'learn']
+    children_names = ['apply', 'idata', 'odata', 'learn', 'slearn', 'sapply']
 
     for cname in children_names:
         filename = cname + '_child.py'
@@ -434,10 +434,12 @@ def action_parameters(model, version=None, oformat='text'):
         'SDFile_experimental', 'SDFile_complementary', 'normalize_method', 'ionize_method', 'convert3D_method', 
         'computeMD_method', 'model', 'modelAutoscaling', 'tune', 'conformal', 
         'conformalSignificance', 'ModelValidationCV', 'ModelValidationLC', 
-        'ModelValidationN', 'ModelValidationP', 'output_format', 'output_md', 
+        'ModelValidationN', 'ModelValidationP', 'output_format', 'output_md', 'output_similar',
         'TSV_activity', 'TSV_objnames', 'TSV_varnames', 'imbalance', 
         'feature_selection', 'feature_number', 'mol_batch',  
-        'ensemble_names','ensemble_versions', 'numCPUs', 'verbose_error', 'modelingToolkit', 
+        'ensemble_names','ensemble_versions', 
+        'similarity_metric', 'similarity_cutoff_num', 'similarity_cutoff_distance',
+        'numCPUs', 'verbose_error', 'modelingToolkit', 
         'endpoint', 'model_path', 
         #'md5', 
         'version']
