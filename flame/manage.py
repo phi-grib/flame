@@ -799,7 +799,7 @@ def action_predictions_result (label, output='text'):
 
     if not label_path.is_dir():
         if output == 'JSON':
-            return False, {'code':1, 'message': f'directory {label_path} not found'}
+            return False, {'code':0, 'message': f'directory {label_path} not found'}
         print (f'directory {label_path} not found')
         return False, None
 
