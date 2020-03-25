@@ -154,7 +154,8 @@ class Keras_nn(BaseEstimator):
                          #'silent': 1,
                          'n_estimators': 100
                         }
-                    self.estimator = KerasClassifier(build_fn=self.create_model, **self.estimator_parameters)
+                    self.estimator = KerasClassifier(build_fn=self.create_model,
+                     **self.estimator_parameters, verbose=0)
                     results.append(('model', 'model type', 'Keras qualitative'))
 
                 self.estimator.fit(X, Y)
@@ -219,14 +220,14 @@ class Keras_nn(BaseEstimator):
             raise e
             return False, f'Exception building conformal Keras estimator with exception {e}'
 
-        return True, results
+        return True, []
 
 # Function to create model, required for KerasClassifier
     def create_model(self):
         # create model
         model = Sequential()
-        model.add(Dense(5, input_dim=25, activation='relu'))
-        model.add(Dense(5, activation='relu'))
+        model.add(Dense(10, input_dim=25, activation='relu'))
+        model.add(Dense(50, activation='sigmoid'))
         model.add(Dense(1, activation='sigmoid'))
         # Compile model
         model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
@@ -259,6 +260,10 @@ class Keras_nn(BaseEstimator):
         self.conveyor.addVal(Yp, 'values', 'Prediction',
                         'result', 'objs',
                         'Results of the prediction', 'main')
+    # Overrides base_model validation
+    # def validate(self,):
+    #     results ['quality'] = []
+    #     return True, None
 ## Overriding of parent methods
 
     # def CF_quantitative_validation(self):

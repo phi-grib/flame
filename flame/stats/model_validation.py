@@ -125,7 +125,7 @@ def getCrossVal(cv, rs, n, p):
     # Splitter Classes:
 
     # K-Folds cross-validator
-    kfold = KFold(n_splits=n, random_state=rs, shuffle=False)
+    kfold = KFold(n_splits=n, random_state=rs, shuffle=True)
     # K-fold iterator variant with non-overlapping groups.
     gkfold = GroupKFold(n_splits=n)
     # Stratified K-Folds cross-validator

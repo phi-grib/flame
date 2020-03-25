@@ -464,6 +464,8 @@ class BaseEstimator:
         results ['Y_pred'] = y_pred
         return True, results
 
+
+
     def qualitativeValidation(self):
         ''' performs validation for qualitative models '''
 
@@ -510,7 +512,7 @@ class BaseEstimator:
         try:
             y_pred = cross_val_predict(self.estimator, X, Y,
                     cv=self.cv,
-                             n_jobs=-1)
+                             n_jobs=1)
         except Exception as e:
             LOG.error(f'Cross-validation failed with exception' 
                         f'exception {e}')
@@ -836,3 +838,4 @@ class BaseEstimator:
                             'Probably model building was not successful')
     
         return
+        

@@ -2,7 +2,7 @@ admin_email: manuel.pastor@upf.edu
 admin_name: Manuel Pastor
 config_status: true
 homepage: http://phi.upf.edu
-model_repository_path: D:\synced\internals\bsep
-space_repository_path: D:\synced\internals\bsep
-predictions_repository_path: D:\synced\internals\bsep
+model_repository_path: D:\synced\internals\flame\eye_irritation
+space_repository_path: D:\synced\internals\flame\eye_irritation
+predictions_repository_path: D:\synced\internals\flame\eye_irritation
 provider: UPF (Pompeu Fabra University)
