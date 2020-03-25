@@ -428,7 +428,7 @@ class Odata():
                 if 'obj_id' in iresult:
                     idv = iresult['obj_id'][j]
                 else:
-                    obj_id ='-'
+                    idv ='-'
                 
                 if 'ymatrix' in iresult:
                     act = iresult['ymatrix'][j]
@@ -473,7 +473,7 @@ class Odata():
                         if 'obj_id' in iresult:
                             idv = iresult['obj_id'][j]
                         else:
-                            obj_id ='-'
+                            idv ='-'
                         
                         if 'ymatrix' in iresult:
                             act = iresult['ymatrix'][j]
