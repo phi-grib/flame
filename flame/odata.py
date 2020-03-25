@@ -416,8 +416,10 @@ class Odata():
             iresult = results[i]
             for j in range (len(iresult['distances'])):
                 dist = iresult['distances'][j]
-                name = iresult['obj_nam'][j]
-                
+                if 'obj_name' in iresult:
+                    name = iresult['obj_nam'][j]
+                else:
+                    name = '-'
                 if 'SMILES' in iresult:
                     smil = iresult['SMILES'][j]
                 else:
@@ -458,10 +460,27 @@ class Odata():
                             line = f'{names[i]}\t'
   
                         dist = iresult['distances'][j]
-                        name = iresult['names'][j]
-                        idv = iresult['ids'][j]
-                        smil = iresult['SMILES'][j]
-                        line += f'{dist:.3f}\t{name}\t{idv}\t[{smil}]'
+                        
+                        if 'obj_name' in iresult:
+                            name = iresult['obj_nam'][j]
+                        else:
+                            name = '-'
+                        if 'SMILES' in iresult:
+                            smil = iresult['SMILES'][j]
+                        else:
+                            smil = '-'
+                        
+                        if 'obj_id' in iresult:
+                            idv = iresult['obj_id'][j]
+                        else:
+                            obj_id ='-'
+                        
+                        if 'ymatrix' in iresult:
+                            act = iresult['ymatrix'][j]
+                        else:
+                            act = '-'
+
+                        line += f'{dist:.3f}\t{name}\t{idv}\t[{smil}]\t{act}'
                         fo.write(line+'\n')
 
         # the function returns "True, output". output can be empty or a JSON
