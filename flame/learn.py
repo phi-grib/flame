@@ -111,6 +111,13 @@ class Learn:
         #                 not isFingerprint:
 
         scale_method = self.param.getVal('modelAutoscaling')
+        
+        # prevent the scaling of input which must be binary or with preserved values
+        non_scale_list = ['majority','matrix']
+        if self.param.getVal('model') in non_scale_list and scale_method is not None:
+            LOG.info(f"Method '{self.param.getVal('model')}' is incompatible with '{scale_method}' scaler. Forced to 'None'")
+            scale_method = None
+
         if scale_method is not None:
             try:
                 scaler = None
