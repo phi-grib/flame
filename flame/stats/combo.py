@@ -370,7 +370,18 @@ class majority (Combo):
 
         # when not all models are conformal use a simple approach
         if confidence is None or len(confidence[0]) != (2 * self.nvarx):
-            return np.round(np.mean (X,1))
+            yp = np.zeros(self.nobj, dtype=np.float64)
+            for i in range(self.nobj):
+                xline = X[i]
+                if xline[xline>=0].size == 0:  # all uncertains
+                    yp[i] = -1
+                else:
+                    temp = np.mean(xline[xline>=0])
+                    if temp == 0.5: # equal number of positive and negatives
+                        yp[i] = -1
+                    elif temp > 0.5:
+                        yp[i] = 1
+            return yp
         
         # print (confidence)
 
