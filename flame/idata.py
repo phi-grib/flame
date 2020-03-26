@@ -75,6 +75,7 @@ class Idata:
         # add metainformation
         self.conveyor.addMeta('endpoint',self.param.getVal('endpoint'))
         self.conveyor.addMeta('version',self.param.getVal('version'))
+        
         input_type = self.param.getVal('input_type')
         self.conveyor.addMeta('input_type',input_type)
 

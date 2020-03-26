@@ -125,11 +125,20 @@ class Odata():
         #     pickle.dump(self.results['model_build_info'], handle)
         #     pickle.dump(self.results['model_valid_info'], handle)
 
-        results_pkl_path = os.path.join(self.param.getVal('model_path'), 'results.pkl')
+        results_pkl_path = os.path.join(self.param.getVal('model_path'), 'model-results.pkl')
         LOG.debug('saving model results to:{}'.format(results_pkl_path))
         with open(results_pkl_path, 'wb') as handle:
             self.conveyor.save(handle)
-            #pickle.dump(self.conveyor, handle)
+
+        meta_pkl_path = os.path.join(self.param.getVal('model_path'), 'model-meta.pkl')
+        LOG.debug('saving model metainformation to:{}'.format(meta_pkl_path))
+        with open(meta_pkl_path, 'wb') as handle:
+            pickle.dump (self.conveyor.getMeta('modelID'), handle)
+            pickle.dump (self.conveyor.getErrorMessage(), handle)
+            pickle.dump (self.conveyor.getWarningMessage(), handle)
+            pickle.dump (self.conveyor.getVal('model_build_info'), handle)
+            pickle.dump (self.conveyor.getVal('model_valid_info'), handle)
+            pickle.dump (self.conveyor.getVal('model_type_info'), handle)
 
         ####
         # 2. console output
@@ -339,6 +348,7 @@ class Odata():
                 now = datetime.now()
                 pickle.dump (now.strftime("%d/%m/%Y %H:%M:%S"),handle)
                 pickle.dump (datetime.timestamp(now), handle)
+                pickle.dump (self.conveyor.getMeta('modelID'),handle)
 
                 # print (self.conveyor.getMeta('endpoint'))
                 # print ('saving version',self.conveyor.getMeta('version'))

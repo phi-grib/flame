@@ -319,41 +319,57 @@ def action_info(model, version, output='text'):
             return False, {'code':1, 'message': 'Empty model label'}
         return False, 'Empty model label'
 
-    rdir = utils.model_path(model, version)
-    if not os.path.isfile(os.path.join(rdir, 'results.pkl')):
+    meta_path = utils.model_path(model, version)
+    meta_file = os.path.join(meta_path, 'model-meta.pkl')
+    if not os.path.isfile(meta_file):
         if output == 'JSON':
             return False, {'code':0, 'message': 'Info file not found'}
         return False, 'Info file not found'
 
-    from flame.conveyor import Conveyor
+    with open(meta_file,'rb') as handle:
+        modelID = pickle.load(handle)
+        errorMessage = pickle.load(handle)
+        warningMessage = pickle.load(handle)
+        build_info = pickle.load(handle)
+        valid_info  = pickle.load(handle)
+        type_info = pickle.load(handle)
 
-    conveyor = Conveyor()
-    with open(os.path.join(rdir, 'results.pkl'), 'rb') as handle:
-        conveyor.load(handle)
-
-    # if there is an error, return the error Message        
-    if conveyor.getError():
-        error = conveyor.getErrorMessage()
+    if errorMessage is not None:
         if output == 'JSON':
-            return False, {'code':1, 'message': error}
-        return False, error
+            return False, {'code':1, 'message': errorMessage}
+        return False, errorMessage        
 
-    # collect warnings
     warning_info = None
-    
-    warning = conveyor.getWarningMessage()
-    if warning != None:
-        warning_info = [('warning', 'runtime warning', warning)]
+    if warningMessage is not None:
+        warning_info = [('warning', 'runtime warning', warningMessage)]
 
-    # collect build and validation info
-    build_info = conveyor.getVal('model_build_info')
-    valid_info = conveyor.getVal('model_valid_info')
-    type_info  = conveyor.getVal('model_type_info')
+    # conveyor = Conveyor()
+    # with open(os.path.join(rdir, 'results.pkl'), 'rb') as handle:
+    #     conveyor.load(handle)
+
+    # # if there is an error, return the error Message        
+    # if conveyor.getError():
+    #     error = conveyor.getErrorMessage()
+    #     if output == 'JSON':
+    #         return False, {'code':1, 'message': error}
+    #     return False, error
+
+    # # collect warnings
+    # warning_info = None
+    
+    # warning = conveyor.getWarningMessage()
+    # if warning != None:
+    #     warning_info = [('warning', 'runtime warning', warning)]
+
+    # # collect build and validation info
+    # build_info = conveyor.getVal('model_build_info')
+    # valid_info = conveyor.getVal('model_valid_info')
+    # type_info  = conveyor.getVal('model_type_info')
 
     # merge everything 
     info = None
 
-    for iinfo in (build_info, valid_info, type_info, warning_info):
+    for iinfo in (build_info, valid_info, type_info, warning_info, [('modelID','unique model ID', modelID)]):
         if info == None:
             info = iinfo
         else:
@@ -395,14 +411,16 @@ def action_results(model, version=None, ouput_variables=False):
     if model is None:
         return False, {'code':1, 'message': 'Empty model label'}
 
-    rdir = utils.model_path(model, version)
-    if not os.path.isfile(os.path.join(rdir, 'results.pkl')):
+    results_path = utils.model_path(model, version)
+    results_file = os.path.join(results_path,'model-results.pkl')
+
+    if not os.path.isfile(results_file):
         return False, {'code':0, 'message': 'Results file not found'}
 
     from flame.conveyor import Conveyor
-
     conveyor = Conveyor()
-    with open(os.path.join(rdir, 'results.pkl'), 'rb') as handle:
+
+    with open(results_file, 'rb') as handle:
         conveyor.load(handle)
 
     # return True, conveyor.getJSON()
@@ -539,7 +557,7 @@ def action_documentation(model, version=None, doc_file=None, oformat='text'):
     
     # get de model repo path
     rdir = utils.model_path(model, version)
-    if not os.path.isfile(os.path.join(rdir, 'results.pkl')):
+    if not os.path.isfile(os.path.join(rdir, 'model-results.pkl')):
         return False, 'Info file not found' 
 
     doc = Documentation(model, version)
@@ -548,6 +566,7 @@ def action_documentation(model, version=None, doc_file=None, oformat='text'):
         # use the param_file to update existing parameters at the model
         # directory and save changes to make them persistent
         success, message = doc.delta(model, 0, doc_file, iformat='YAML')
+
     doc = Documentation(model, version)
     if oformat == 'JSON':
         # return True, doc.dumpJSON()
@@ -746,6 +765,10 @@ def action_predictions_list ():
             ifile    = pickle.load (handle)
             time     = pickle.load (handle)
             timestamp= pickle.load (handle)
+            try:
+                modelID  = pickle.load (handle)
+            except:
+                modelID = '*legacy*'
 
         # ifile is simplified to avoid discossing the repository
         ifile = os.path.basename(ifile)
@@ -755,10 +778,10 @@ def action_predictions_list ():
             continue
 
         # add as a tupla 
-        iresult.append( ( label, endpoint, version, time, ifile) )
+        iresult.append( ( label, endpoint, version, time, ifile, modelID) )
 
         # format as a text line for reverse date sorting and printing
-        line = f'{label:10} {endpoint:15}   {version}   {time}   {ifile}'
+        line = f'{label:10} {endpoint:15}   {version}   {time}   {ifile} {modelID}'
         result.append( (timestamp, line) )
 
     result.sort (reverse=True, key = getdate)

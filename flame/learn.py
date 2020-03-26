@@ -51,6 +51,9 @@ class Learn:
         self.conveyor = conveyor
         self.conveyor.setOrigin('learn')
 
+        self.conveyor.addMeta('modelID',utils.id_generator())
+        print ("generated:", self.conveyor.getMeta('modelID'))
+
         self.X = self.conveyor.getVal('xmatrix')
         self.Y = self.conveyor.getVal('ymatrix')
 
