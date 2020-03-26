@@ -384,3 +384,13 @@ def module_versions ():
     from flame import __version__ as flame_ver
 
     return {'rdkit':rdkit_ver, 'sklearn':sklearn_ver, 'nonconformist':nonconformist_ver, 'flame': flame_ver}
+
+def compatible_modules (ext_libraries):
+    int_libraries = module_versions()
+    for ilib in int_libraries:
+        if ilib not in ext_libraries:
+            return False
+        if int_libraries[ilib] != ext_libraries[ilib]:
+            return False
+    
+    return True

@@ -786,8 +786,9 @@ class BaseEstimator:
 
         # This dictionary contain all the objects which will be needed
         # for prediction
-        dict_estimator = {'estimator' : self.estimator,\
-                            'version' : 1}
+        dict_estimator = {'estimator' : self.estimator,
+             'version': 1,
+             'libraries': utils.module_versions()}
 
         model_pkl_path = os.path.join(self.param.getVal('model_path'),'estimator.pkl')
 
@@ -821,12 +822,17 @@ class BaseEstimator:
             raise FileNotFoundError
 
         # Load model
-        self.version = dict_estimator['version']
-
+        
         # check if the pickle was created with a compatible version
         # currently 1
+        self.version = dict_estimator['version']
         if self.version is not 1:
             raise Exception ('Incompatible model version')
+
+        # check if the libraries used to build this model are similar to current libraries
+        if 'libraries' in dict_estimator:
+            if not utils.compatible_modules(dict_estimator['libraries']):
+                raise Exception ('Incompatible libraries. Please rebuild the model.')
 
         self.estimator = dict_estimator['estimator']
         if self.estimator is None:
