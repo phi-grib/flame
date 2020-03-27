@@ -52,7 +52,7 @@ class Learn:
         self.conveyor.setOrigin('learn')
 
         self.conveyor.addMeta('modelID',utils.id_generator())
-        print ("generated:", self.conveyor.getMeta('modelID'))
+        LOG.debug(f'Generated new model with modelID: {self.conveyor.getMeta("modelID")}')
 
         self.X = self.conveyor.getVal('xmatrix')
         self.Y = self.conveyor.getVal('ymatrix')
@@ -331,12 +331,7 @@ class Learn:
         LOG.info('Model finished successfully')
 
         # save model
-        try:
-            model.save_model()
-
-        except Exception as e:
-            LOG.error(f'Error saving model with exception {e}')
-            return False, 'An error ocurred saving the model'
+        model.save_model()
 
         return
 

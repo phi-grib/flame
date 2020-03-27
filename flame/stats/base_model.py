@@ -790,12 +790,12 @@ class BaseEstimator:
              'version': 1,
              'libraries': utils.module_versions()}
 
-        model_pkl_path = os.path.join(self.param.getVal('model_path'),'estimator.pkl')
+        model_pkl = os.path.join(self.param.getVal('model_path'),'estimator.pkl')
 
-        with open(model_pkl_path, 'wb') as handle:
+        with open(model_pkl, 'wb') as handle:
             pickle.dump(dict_estimator, handle, protocol=pickle.HIGHEST_PROTOCOL)
         
-        LOG.debug('Model saved as:{}'.format(model_pkl_path))
+        LOG.debug('Model saved as:{}'.format(model_pkl))
 
         # Add estimator parameters to Conveyor
         params = dict()
@@ -812,31 +812,28 @@ class BaseEstimator:
     def load_model(self):
         ''' This function loads estimator and scaler in a pickle file '''
 
-        model_file = os.path.join(self.param.getVal('model_path'),'estimator.pkl')
-        LOG.debug(f'Loading model from pickle file, path: {model_file}')
+        model_pkl = os.path.join(self.param.getVal('model_path'),'estimator.pkl')
+        LOG.debug(f'Loading model from pickle file, path: {model_pkl}')
         try:
-            with open(model_file, "rb") as input_file:
+            with open(model_pkl, "rb") as input_file:
                 dict_estimator = pickle.load(input_file)
         except FileNotFoundError:
-            LOG.error(f'No valid model estimator found at: {model_file}')
-            raise FileNotFoundError
+            return False, f'No valid model estimator found at: {model_pkl}'
 
-        # Load model
-        
-        # check if the pickle was created with a compatible version
-        # currently 1
+        # check if the pickle was created with a compatible version (currently, 1)
         self.version = dict_estimator['version']
         if self.version is not 1:
-            raise Exception ('Incompatible model version')
+            return False, 'Incompatible model version'
 
         # check if the libraries used to build this model are similar to current libraries
         if 'libraries' in dict_estimator:
-            if not utils.compatible_modules(dict_estimator['libraries']):
-                raise Exception ('Incompatible libraries. Please rebuild the model.')
+            success, results = utils.compatible_modules(dict_estimator['libraries'])
+            if not success:
+                LOG.warning(f"incompatible libraries detected, {results}. Use at your own risk")
 
+        # load the estimator
         self.estimator = dict_estimator['estimator']
         if self.estimator is None:
-            raise Exception('Loaded estimator is None.'
-                            'Probably model building was not successful')
+            return False, 'No valid model estimator found. Try to rebuild the model'
     
-        return
+        return True, 'model loaded'

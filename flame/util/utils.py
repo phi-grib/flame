@@ -378,6 +378,8 @@ def qualitative_Y (Y):
     return True, 'OK'
 
 def module_versions ():
+    ''' gather the version of key libraries used for generating the models '''
+
     from rdkit import __version__ as rdkit_ver
     from sklearn import __version__ as sklearn_ver
     from nonconformist import __version__ as nonconformist_ver
@@ -386,11 +388,20 @@ def module_versions ():
     return {'rdkit':rdkit_ver, 'sklearn':sklearn_ver, 'nonconformist':nonconformist_ver, 'flame': flame_ver}
 
 def compatible_modules (ext_libraries):
+    ''' compares a set of library versions (typically retrieved for a stored estimator) with current library versions '''
+
     int_libraries = module_versions()
+
     for ilib in int_libraries:
-        if ilib not in ext_libraries:
-            return False
-        if int_libraries[ilib] != ext_libraries[ilib]:
-            return False
     
-    return True
+        # if any current library is not included in the external set return false
+        if ilib not in ext_libraries:
+            return False, f'missing library "{ilib}"'
+    
+        # if any versions dont match return false
+        #TODO: include a more smart set of rules to prevent warnings with minor release updates 
+        if int_libraries[ilib] != ext_libraries[ilib]:
+            return False, f'internal library "{ilib}:{int_libraries[ilib]}" '\
+                            f'does not match imported library "{ilib}:{ext_libraries[ilib]}"'
+    
+    return True, 'OK'
