@@ -159,9 +159,13 @@ def build_cmd(arguments, output_format=None):
         return False, 'Endpoint name not found in model repository.'
 
     # remove pre-existing results file
-    results_file = os.path.join(endpoint_dir, 'results.pkl')
+    results_file = os.path.join(endpoint_dir, 'model-results.pkl')
     if os.path.isfile(results_file):
         os.remove(results_file)
+
+    meta_file = os.path.join(endpoint_dir, 'model-meta.pkl')
+    if os.path.isfile(meta_file):
+        os.remove(meta_file)
 
     if 'param_file' in arguments:
         build = Build(arguments['endpoint'], param_file=arguments['param_file'], output_format=output_format)

@@ -955,7 +955,6 @@ class Idata:
                   'indexes from manifest: {}'.format(remove_index))
         self.conveyor.setVal('obj_num', obj_num)
 
-
         objkeys = self.conveyor.objectKeys()
         for ikey in objkeys: 
             ilist = self.conveyor.getVal(ikey)
@@ -972,12 +971,11 @@ class Idata:
             self.conveyor.setVal(ikey, ilist)
 
         message = 'Failed to process ' + \
-            str(len(warning_list))+' molecules : '+str(warning_list)
-        message += '\nWill show results for the rest of the series...'
+             str(len(warning_list))+' molecules : '+str(warning_list)
+        self.conveyor.setWarning(message)
 
         LOG.warning(message)
-
-        self.conveyor.setWarning(message)
+        LOG.warning('Will show results for the rest of the series...')
 
         return
 

@@ -37,7 +37,9 @@ class Slearn:
 
         self.param = parameters
         self.conveyor = conveyor
-        self.conveyor.setOrigin('slearn')
+
+        self.conveyor.addMeta('modelID',utils.id_generator())
+        LOG.debug(f'Generated new space with modelID: {self.conveyor.getMeta("modelID")}')
 
         self.X = self.conveyor.getVal('xmatrix')
 

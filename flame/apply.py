@@ -46,7 +46,6 @@ class Apply:
 
         self.param = parameters
         self.conveyor = conveyor
-        self.conveyor.setOrigin('apply')
 
         endpoint = self.conveyor.getMeta('endpoint')
         version  = self.conveyor.getMeta('version')

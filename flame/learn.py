@@ -49,7 +49,6 @@ class Learn:
 
         self.param = parameters
         self.conveyor = conveyor
-        self.conveyor.setOrigin('learn')
 
         self.conveyor.addMeta('modelID',utils.id_generator())
         LOG.debug(f'Generated new model with modelID: {self.conveyor.getMeta("modelID")}')

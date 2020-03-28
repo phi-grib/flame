@@ -343,28 +343,6 @@ def action_info(model, version, output='text'):
     if warningMessage is not None:
         warning_info = [('warning', 'runtime warning', warningMessage)]
 
-    # conveyor = Conveyor()
-    # with open(os.path.join(rdir, 'results.pkl'), 'rb') as handle:
-    #     conveyor.load(handle)
-
-    # # if there is an error, return the error Message        
-    # if conveyor.getError():
-    #     error = conveyor.getErrorMessage()
-    #     if output == 'JSON':
-    #         return False, {'code':1, 'message': error}
-    #     return False, error
-
-    # # collect warnings
-    # warning_info = None
-    
-    # warning = conveyor.getWarningMessage()
-    # if warning != None:
-    #     warning_info = [('warning', 'runtime warning', warning)]
-
-    # # collect build and validation info
-    # build_info = conveyor.getVal('model_build_info')
-    # valid_info = conveyor.getVal('model_valid_info')
-    # type_info  = conveyor.getVal('model_type_info')
 
     # merge everything 
     info = None
@@ -377,6 +355,8 @@ def action_info(model, version, output='text'):
                 info+=iinfo
 
     if info == None:
+        if output == 'JSON':
+            return False, {'code':1, 'message': 'No relevant information found'}
         return False, 'No relevant information found'
 
     # when this function is called from the console, output is 'text'
@@ -392,17 +372,6 @@ def action_info(model, version, output='text'):
                 LOG.info(f'{val[0]} ({val[1]}) : {val[2]}')
         return True, 'model informed OK'
 
-    # this is only reached when this funcion is called from a web service
-    # asking for a JSON
-    
-    # this code serializes the results in a list and then converts it 
-    # to a JSON  
-    # json_results = []
-    # for i in info:
-    #     json_results.append(conveyor.modelInfoJSON(i))
-
-    #print (json.dumps(json_results))
-    #return True, json.dumps(json_results)
     return True, info
 
 def action_results(model, version=None, ouput_variables=False):
