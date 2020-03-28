@@ -394,7 +394,7 @@ class Odata():
             pickle.dump (self.conveyor.getMeta('modelID'), handle)
             pickle.dump (self.conveyor.getErrorMessage(), handle)
             pickle.dump (self.conveyor.getWarningMessage(), handle)
-            pickle.dump(self.conveyor.getVal('space_build_info'), handle)
+            pickle.dump (self.conveyor.getVal('space_build_info'), handle)
 
         ####
         # !  in case of error, print and return error
