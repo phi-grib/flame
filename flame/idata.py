@@ -762,10 +762,17 @@ class Idata:
                 if md5_input != utils.md5sum(self.ifile):
                     return False
 
+                # preserve original origin tag, save it
+                origin = self.conveyor.getOrigin()
+
                 success, message = self.conveyor.load(fi)
+                
                 if not success:
                     LOG.error(f'Failed to load pickle file with error: "{message}"')
                     return False
+
+                # presenve original origin tag, apply it
+                self.conveyor.setOrigin(origin)
 
         except Exception as e:
             self.conveyor.setError('Error loading pickle with exception: {}'.format(e))

@@ -248,8 +248,6 @@ class Odata():
         # 1. prediction-results.pkl and prediction-meta.pkl 
         ###
 
-        output = self.conveyor
-
         # Save conveyor from prediction only if confidential is False
         if not self.param.getVal('confidential') and 'ghost' not in self.format:
 
@@ -364,8 +362,7 @@ class Odata():
                         line += '\t'
                     fo.write(line+'\n')
 
-        # output is self.conveyor
-        return True, output
+        return True, self.conveyor
 
 
     def run_slearn(self):
