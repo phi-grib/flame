@@ -252,7 +252,7 @@ class Odata():
         if not self.param.getVal('confidential') and 'ghost' not in self.format:
 
             if not os.path.isdir(opath):
-                return True, output
+                return True, self.conveyor
 
             results_pkl_path = os.path.join(opath,'prediction-results.pkl')
             meta_pkl_path = os.path.join(opath,'prediction-meta.pkl')
