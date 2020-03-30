@@ -34,6 +34,7 @@ os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID";
 os.environ["CUDA_VISIBLE_DEVICES"]="0"
 from keras.models import Sequential
 from keras.layers import Dense
+from sklearn.base import clone
 
 import numpy as np
 
@@ -134,26 +135,13 @@ class Keras_nn(BaseEstimator):
             try:
                 if self.param.getVal('quantitative'):
 
-                    LOG.info("Building Quantitative KERAS model")
-                    params = {
-                        'objective': 'reg:squarederror',
-                        # 'max_depth': 20,
-                        # 'learning_rate': 1.0,
-                        # 'silent': 1,
-                        # 'n_estimators': 25
-                        }
-                    self.estimator = KerasRegressor(**params)
+                    LOG.info("Building Quantitative KERAS mode")
+                    self.estimator = KerasRegressor(build_fn=self.create_model, 
+                    **self.estimator_parameters, verbose=0)
                     results.append(('model', 'model type', 'Keras quantitative'))
                 else:
 
                     LOG.info("Building Qualitative Keras model")
-                    params = {
-                        'objective': 'binary:logistic',
-                         'max_depth': 3,
-                         #'learning_rate': 0.7,
-                         #'silent': 1,
-                         'n_estimators': 100
-                        }
                     self.estimator = KerasClassifier(build_fn=self.create_model,
                      **self.estimator_parameters, verbose=0)
                     results.append(('model', 'model type', 'Keras qualitative'))
@@ -165,7 +153,7 @@ class Keras_nn(BaseEstimator):
                 raise e
                 return False, f'Exception building Keras estimator with exception {e}'
 
-        self.estimator_temp = copy(self.estimator)
+        self.estimator_temp = clone(self.estimator)
 
         if not self.param.getVal('conformal'):
             return True, results
@@ -213,6 +201,7 @@ class Keras_nn(BaseEstimator):
                                     BootstrapSampler())
 
                 # Fit estimator to the data
+                print('build finished')
                 self.estimator.fit(X, Y)
                 results.append(('model', 'model type', 'conformal Keras qualitative'))
 
@@ -226,18 +215,22 @@ class Keras_nn(BaseEstimator):
     def create_model(self):
         # create model
         model = Sequential()
-        model.add(Dense(10, input_dim=25, activation='relu'))
-        model.add(Dense(50, activation='sigmoid'))
+        model.add(Dense(10, input_dim=199, activation='relu'))
+        model.add(Dense(20, activation='sigmoid'))
         model.add(Dense(1, activation='sigmoid'))
         # Compile model
-        model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
+        
+        if self.param.getVal('quantitative'):
+            loss = 'mean_squared_error'
+        else:
+            loss = 'binary_crossentropy'
+        model.compile(loss=loss, optimizer='adam', metrics=['accuracy'])
         return model
 
     # Overrides regular project to single class prediction
     def regularProject(self, Xb):
         ''' projects a collection of query objects in a regular model,
          for obtaining predictions '''
-        print("**************HERE***********************")
         Yp = self.estimator.predict(Xb)
         Yp = np.asarray([x[0] for x in Yp])
         print(Yp)

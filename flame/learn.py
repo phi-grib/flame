@@ -24,6 +24,7 @@
 import os
 import pickle
 import numpy as np
+import time
 
 from flame.stats.RF import RF
 from flame.stats.SVM import SVM
@@ -318,6 +319,8 @@ class Learn:
         '''
         Builds the model using the appropriate toolkit (internal or custom).
         '''
+        # Count the time
+        start = time.time()
 
         toolkit = self.param.getVal('modelingToolkit')
 
@@ -332,5 +335,10 @@ class Learn:
             LOG.error("Modeling toolkit is not yet supported")
             self.conveyor.setError( 'modeling Toolkit ' + \
                 toolkit+' is not supported yet')
-
+        
+        end = time.time()
+        hours, rem = divmod(end-start, 3600)
+        minutes, seconds = divmod(rem, 60)
+        LOG.info("{:0>2}:{:0>2}:{:05.2f}".format(int(hours),
+              int(minutes),seconds))
         return 
