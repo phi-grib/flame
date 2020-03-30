@@ -22,7 +22,6 @@
 
 from copy import copy
 
-
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.neighbors import KNeighborsRegressor
 
@@ -36,7 +35,6 @@ from nonconformist.nc import AbsErrorErrFunc, RegressorNormalizer
 from flame.stats.base_model import BaseEstimator
 from flame.util import get_logger
 LOG = get_logger(__name__)
-
 
 class XGBOOST(BaseEstimator):
     """
@@ -86,6 +84,10 @@ class XGBOOST(BaseEstimator):
             self.estimator_parameters['objective'] = 'binary:logistic'
             self.name = "XGB-Classifier"
 
+        # Missing value must be defined. Otherwyse it returns 'nan' which cannot be
+        # converted to JSON and produces trouble in different points
+        self.estimator_parameters['missing'] = -99.99999
+
     def build(self):
         '''Build a new XGBOOST model with the X and Y numpy matrices '''
 
@@ -132,26 +134,28 @@ class XGBOOST(BaseEstimator):
                 if self.param.getVal('quantitative'):
 
                     LOG.info("Building Quantitative XGBOOST model")
-                    params = {
-                        'objective': 'reg:squarederror',
-                        # 'max_depth': 20,
-                        # 'learning_rate': 1.0,
-                        # 'silent': 1,
-                        # 'n_estimators': 25
-                        }
-                    self.estimator = XGBRegressor(**params)
+                    # params = {
+                    #     'objective': 'reg:squarederror',
+                    #     'missing': -99.99999,
+                    #     # 'max_depth': 20,
+                    #     # 'learning_rate': 1.0,
+                    #     # 'silent': 1,
+                    #     # 'n_estimators': 25
+                    #     }
+                    # self.estimator = XGBRegressor(**params)
+                    self.estimator = XGBRegressor(**self.estimator_parameters)
                     results.append(('model', 'model type', 'XGBOOST quantitative'))
                 else:
 
                     LOG.info("Building Qualitative XGBOOST model")
-                    params = {
-                        'objective': 'binary:logistic',
-                         'max_depth': 3,
-                         #'learning_rate': 0.7,
-                         #'silent': 1,
-                         'n_estimators': 100
-                        }
-                    self.estimator = XGBClassifier(**self.estimator_parameters                       )
+                    # params = {
+                    #     'objective': 'binary:logistic',
+                    #      'max_depth': 3,
+                    #      #'learning_rate': 0.7,
+                    #      #'silent': 1,
+                    #      'n_estimators': 100
+                    #     }
+                    self.estimator = XGBClassifier(**self.estimator_parameters)
                     results.append(('model', 'model type', 'XGBOOST qualitative'))
 
                 self.estimator.fit(X, Y)

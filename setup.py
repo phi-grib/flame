@@ -10,7 +10,7 @@ import shutil
 
 setup(
     name='flame',
-    version='0.1',
+    version='0.2.1',
     license='GNU GPLv3 or posterior',
     description='',
     url='https://github.com/phi-grib/flame',

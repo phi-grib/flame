@@ -91,15 +91,15 @@ class Documentation:
 
         try:
             with open(documentation_file_name, 'r') as documentation_file:
-                self.fields = yaml.load(documentation_file)
+                self.fields = yaml.safe_load(documentation_file)
         except Exception as e:
             # LOG.error(f'Error loading documentation file with exception: {e}')
             raise e
         
-        success, message = self.parameters.loadYaml(model, 0)
+        success, message = self.parameters.loadYaml(model, version)
 
         if not success:
-            print('Parameters could not be loaded. Please assure endpoint is correct')
+            print(f'Parameters could not be loaded. {message}. Please make sure endpoint and version are correct')
             return
         
         # Remove this after acc
@@ -239,6 +239,7 @@ class Documentation:
                 if not isinstance(self.fields[key]['value'], dict):
                     self.fields[key]["value"] = value
                 else:
+                    # print(key)
                     for k in value.keys():
                         self.fields[key][k] = value[k]
 
@@ -324,7 +325,8 @@ class Documentation:
         allowed = ['Conformal_accuracy', 'Conformal_mean_interval',
                    'Sensitivity', 'Specificity', 'MCC',
                    'Conformal_coverage', 'Conformal_accuracy',
-                   'Q2', 'SDEP']
+                   'Q2', 'SDEP', 'SensitivityPed', 'SpecificityPred',
+                   'SpecificityPred', 'MCCpred', 'scoringR', 'R2', 'SDEC' ]
         model_info = self.conveyor.getVal('model_build_info')
         validation = self.conveyor.getVal('model_valid_info')
 
@@ -340,21 +342,34 @@ class Documentation:
         self.fields['Algorithm_settings']['value'] = \
             (self.conveyor.getVal('estimator_parameters'))
 
+        # Horrendous patch to solve backcompatibility problem
+        if 'subfields' in self.fields['Data_info']:
+            sub_label = 'subfields'
+        else:
+            sub_label = 'value'
+
         self.fields['Data_info']\
-            ['value']['training_set_size']['value'] = \
+            [sub_label]['training_set_size']['value'] = \
             model_info[0][2]
+        
+        self.fields['Data_info']\
+            [sub_label]['training_set_size']['value'] = \
+            model_info[0][2]
+
         self.fields['Descriptors']\
-            ['value']['final_number']['value'] = \
+            [sub_label]['final_number']['value'] = \
             model_info[1][2]
         self.fields['Descriptors']\
-            ['value']['ratio']['value'] = \
+            [sub_label]['ratio']['value'] = \
             '{:0.2f}'.format(model_info[1][2]/model_info[0][2])
+        
         internal_val = dict()
         for stat in validation:
             if stat[0] in allowed:
                 internal_val[stat[0]] = float("{0:.2f}".format(stat[2]))
-        self.fields['Internal_validation_1']\
-            ['value'] = internal_val
+        if internal_val:
+            self.fields['Internal_validation_1']\
+                ['value'] = internal_val
 
     def get_string(self, dictionary):
         '''

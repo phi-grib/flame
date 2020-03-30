@@ -22,6 +22,7 @@
 
 import argparse
 import pathlib
+import os
 from flame.util import utils, get_logger, config
 import flame.context as context
 
@@ -88,6 +89,11 @@ def main():
                         help='Label for facilitating the identification of the prediction.',
                         required=False )
 
+    parser.add_argument('-inc', '--incremental',
+                        help='The input file must be added to the existing training series. Only for "build" command.',
+                        action='store_true',
+                        required=False )
+
     args = parser.parse_args()
 
     # init logger Level and set general config
@@ -100,6 +106,11 @@ def main():
     #         raise ValueError('Invalid log level: {}'.format(args.loglevel))
     #     logging.basicConfig(level=numeric_level)
 
+    if args.infile is not None:
+        if not os.path.isfile(args.infile):
+            LOG.error(f'Input file {args.infile} not found')
+            return 
+
     # make sure flame has been configured before running any command, unless this command if used to 
     # configure flame
     if args.command != 'config':
@@ -108,7 +119,7 @@ def main():
     if args.command == 'predict':
 
         if (args.endpoint is None) or (args.infile is None):
-            print('flame predict : endpoint and input file arguments are compulsory')
+            LOG.error('flame predict : endpoint and input file arguments are compulsory')
             return
 
         version = utils.intver(args.version)
@@ -133,7 +144,7 @@ def main():
     elif args.command == 'search':
 
         if (args.space is None) or (args.infile is None) :
-            print('flame search : space and input file arguments are compulsory')
+            LOG.error ('flame search : space and input file arguments are compulsory')
             return
 
         version = utils.intver(args.version)
@@ -152,16 +163,20 @@ def main():
                  f' version {version} for file {args.infile}, labelled as {label}')
 
         success, results = context.search_cmd(command_search)
+
         if not success:
             LOG.error(results)
 
     elif args.command == 'build':
 
         if (args.endpoint is None):
-            print('flame build : endpoint argument is compulsory')
+            LOG.error('flame build : endpoint argument is compulsory')
             return
 
-        command_build = {'endpoint': args.endpoint, 'infile': args.infile, 'param_file': args.parameters}
+        command_build = {'endpoint': args.endpoint, 
+                         'infile': args.infile, 
+                         'param_file': args.parameters,
+                         'incremental': args.incremental}
 
         LOG.info(f'Starting building model {args.endpoint}'
                  f' with file {args.infile} and parameters {args.parameters}')
@@ -171,10 +186,11 @@ def main():
         if not success:
             LOG.error(results)
 
+
     elif args.command == 'sbuild':
 
         if (args.space is None):
-            print('flame sbuild : space argument is compulsory')
+            LOG.error('flame sbuild : space argument is compulsory')
             return
 
         command_build = {'space': args.space, 'infile': args.infile, 'param_file': args.parameters}
@@ -189,7 +205,6 @@ def main():
 
     elif args.command == 'manage':
         success, results = context.manage_cmd(args)
-        # print('flame manage : ', success, results)
         if not success:
             LOG.error(results)
 

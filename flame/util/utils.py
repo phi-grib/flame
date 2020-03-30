@@ -20,6 +20,8 @@
 # You should have received a copy of the GNU General Public License
 # along with Flame. If not, see <http://www.gnu.org/licenses/>.
 
+__modules__ = None
+
 import os
 import sys
 import yaml
@@ -32,7 +34,6 @@ import numpy as np
 from flame.util import get_logger
 
 LOG = get_logger(__name__)
-
 
 def get_conf_yml_path() -> str:
     '''
@@ -79,6 +80,7 @@ def read_config() -> dict:
     conf['predictions_repository_path'] = str(predictions_abs_path)
 
     # LOG.info('Configuration loaded')
+
     return conf
 
 def config_test() -> None:
@@ -374,3 +376,11 @@ def qualitative_Y (Y):
         return False, f'Y values not suitable for building a qualitative model. Found {ext} objects not 1.000 or 0.000'
     
     return True, 'OK'
+
+def module_versions ():
+    from rdkit import __version__ as rdkit_ver
+    from sklearn import __version__ as sklearn_ver
+    from nonconformist import __version__ as nonconformist_ver
+    from flame import __version__ as flame_ver
+
+    return {'rdkit':rdkit_ver, 'sklearn':sklearn_ver, 'nonconformist':nonconformist_ver, 'flame': flame_ver}

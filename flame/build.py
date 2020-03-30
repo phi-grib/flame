@@ -56,7 +56,7 @@ class Build:
 
         # being unable to load parameters is a critical error
         if not success:
-            LOG.critical(f'Unable to load model parameters. "{message}" Aborting...')
+            LOG.critical(f'Unable to load model parameters. {message}. Aborting...')
             sys.exit(1)
 
         # add additional output formats included in the constructor 
@@ -66,7 +66,6 @@ class Build:
             if output_format not in self.param.getVal('output_format'):
                 self.param.appVal('output_format',output_format)
  
-
     def get_ensemble(self):
         ''' Returns a Boolean indicating if the model uses external input
             sources and a list with these sources '''
@@ -112,19 +111,37 @@ class Build:
 
             if not self.conveyor.isKey ('ymatrix'):
                 self.conveyor.setError(f'No activity data (Y) found in training series')
+    
+        # run optional chemical space building for supporting "closest" training series object
+        # if self.param.getVal('buildSimilarity'):
+        if self.param.getVal('output_similar') is True:
+
+            from flame.slearn import Slearn
+
+            slearn_child = importlib.import_module(modpath+".slearn_child")
+            
+            if not self.conveyor.getError():
+                # instantiate learn (build a space from idata) and run it
+                try:
+                    slearn = slearn_child.SlearnChild(self.param, self.conveyor)
+                except:
+                    LOG.warning ('Slearn child architecture mismatch, defaulting to Learn parent')
+                    slearn = Slearn(self.param, self.conveyor)
+
+                slearn.run()
+                LOG.debug(f'slearn child {type(slearn).__name__} completed `run()`')
 
         if not self.conveyor.getError():
             # instantiate learn (build a model from idata) and run it
-            learn = learn_child.LearnChild(self.param, self.conveyor)
-            learn.run()
-
             try:
                 learn = learn_child.LearnChild(self.param, self.conveyor)
             except:
                 LOG.warning ('Learn child architecture mismatch, defaulting to Learn parent')
                 learn = Learn(self.param, self.conveyor)
+            learn.run()
 
             LOG.debug(f'learn child {type(learn).__name__} completed `run()`')
+
 
         # run odata object, in charge of formatting the prediction results
         # note that if any of the above steps failed, an error has been inserted in the

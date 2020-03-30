@@ -46,8 +46,9 @@ class Predict:
                     'method', 'single',
                     'Label used to identify the prediction')
 
-        if not self.param.loadYaml(model, version):
-            LOG.critical('Unable to load model parameters. Aborting...')
+        success, results = self.param.loadYaml(model, version)
+        if not success:
+            LOG.critical(f'Unable to load model parameters. {results}. Aborting...')
             sys.exit()
 
         # add additional output formats included in the constructor 
@@ -72,7 +73,6 @@ class Predict:
     def run(self, input_source):
         ''' Executes a default predicton workflow '''
 
-        # path to endpoint
         # path to endpoint
         endpoint = utils.model_path(self.model, self.version)
         if not os.path.isdir(endpoint):
@@ -104,6 +104,28 @@ class Predict:
             if not self.conveyor.isKey('xmatrix'):
                 LOG.debug(f'Failed to compute MDs')
                 self.conveyor.setError(f'Failed to compute MDs')
+
+        if self.param.getVal('output_similar') is True:
+
+            from flame.sapply import Sapply
+
+            metric = self.param.getVal('similarity_metric')
+            numsel = self.param.getVal('similarity_cutoff_num')
+            cutoff = self.param.getVal('similarity_cutoff_distance')
+            
+            # sapply = Sapply(self.param, self.conveyor)
+
+            sapply_child = importlib.import_module(modpath+".sapply_child")
+
+            # run apply object, in charge of generate a prediction from idata
+            try:
+                sapply = sapply_child.SapplyChild(self.param, self.conveyor)
+            except:
+                LOG.warning ('Sapply child architecture mismatch, defaulting to Sapply parent')
+                sapply = Sapply(self.param, self.conveyor)
+
+            sapply.run(cutoff, numsel, metric)
+            LOG.debug(f'sapply child {type(sapply).__name__} completed `run()`')
 
         if not self.conveyor.getError():
             # run apply object, in charge of generate a prediction from idata

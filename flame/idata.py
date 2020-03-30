@@ -24,7 +24,6 @@ import os
 import sys
 import pickle
 import shutil
-import json
 import tempfile
 import multiprocessing as mp
 import pathlib
@@ -53,32 +52,47 @@ class Idata:
         ----------
         parameters: dict
             dict with model parameters
-        
+
+        conveyor: class
+            main class to store the workflow results
+
         input_source: str
             SDF file with the molecules to use as training or predict        
 
-        Returns
-        -------
-        # TODO: clear what this class returns
-
         """
-        # control object defining the processing
+        # parameters and conveyor should have been initialized by the
+        # parent class calling idata
         self.param = parameters
         self.conveyor = conveyor
+
+        # self.format can inform if we are running in ghost mode
+        # as part of an ensemble (low ensemble models)
+        self.format = self.param.getVal('output_format')
 
         # path for temp files (fallback default)
         self.dest_path = '.'
 
+        # add metainformation
         self.conveyor.addMeta('endpoint',self.param.getVal('endpoint'))
         self.conveyor.addMeta('version',self.param.getVal('version'))
+        input_type = self.param.getVal('input_type')
+        self.conveyor.addMeta('input_type',input_type)
 
-        if self.param.getVal('input_type') == 'model_ensemble':
+        # in case of top ensemble models...
+        if input_type == 'model_ensemble':
             self.idata = input_source
             self.ifile = None
             randomName = 'flame-'+utils.id_generator()
             self.dest_path = os.path.join(tempfile.gettempdir(), randomName)
 
-            self.conveyor.addMeta('input_file','ensemble input')
+            #analyze first result to get the name of the input file
+            ifile = 'ensemble input'
+            try:
+                ifile = input_source[0].getMeta('input_file')
+            except:
+                pass
+
+            self.conveyor.addMeta('input_file',ifile)
 
         else:
             self.idata = None
@@ -284,7 +298,7 @@ class Idata:
         if not method :
             method = ''
 
-        LOG.info('Starting normalization...')
+        LOG.info(f'Normalizing structures with method: {method}')
         try:
             suppl = Chem.SDMolSupplier(ifile)
             LOG.debug(f'mol supplier created from {ifile}')
@@ -351,8 +365,32 @@ class Idata:
                         mcount += 1
                         continue
 
+                elif 'chEMBL' in method:
+                    # Get allowed penalty score from parameters
+                    score = self.param.getDict('normalize_settings')['score']
+
+                    from chembl_structure_pipeline import standardizer as embl
+                    from chembl_structure_pipeline import checker
+                    
+                    try:
+                        parent = embl.standardize_molblock(Chem.MolToMolBlock(m))
+                        issues = checker.check_molblock(Chem.MolToMolBlock(m))
+                        if len(issues) > 0:
+                            if issues[0][0] > score:
+                                success_list[mcount]=False
+                                mcount += 1
+                                continue
+
+                    except Exception as e:
+                        # this error means an execution error running standardizer
+                        # the molecule is discarded and therefore the list of molecules must be updated 
+                        LOG.error(f'Critical standardize execution exception {e}'
+                                    f' when processing mol #{mcount} {name}. Discarding molecule')
+                        success_list[mcount]=False
+                        mcount += 1
+                        continue
+
                 else:
-                    #LOG.info(f'Skipping normalization.')
                     try:
                         parent = Chem.MolToMolBlock(m)
                     except Exception as e:
@@ -377,6 +415,7 @@ class Idata:
                 fo.write('$$$$\n')
 
         return success_list, ofile
+
 
     def ionize(self, ifile, method):
         '''
@@ -426,10 +465,9 @@ class Idata:
 
         example:    return True, (xmatrix, md_nam, success_list)
         '''
-        raise NotImplementedError
-        #return False, 'not implemented'
+        return False, 'not implemented'
 
-    def computeMD(self, ifile: str, methods: list) -> (bool, (np.ndarray, list, list)):
+    def computeMD(self, ifile: str, methods: list):
         '''
         Uses the molecular structures for computing an array
         of values (int or float).
@@ -441,7 +479,8 @@ class Idata:
 
         FIXIT
         '''
-        LOG.info(f'Computing molecular descriptors with methods {methods}...')
+
+        LOG.info(f'Computing molecular descriptors with methods: {methods}')
         
         # Load descriptor settings
 
@@ -493,7 +532,7 @@ class Idata:
 
                     #TODO analyze differences and perform a more smart 
                     # combination
-                    LOG.error(f'Number of objects processed by {method}'
+                    LOG.error(f'Number of objects processed by {method} '
                               'does not match those computed by other methods')
                     continue
 
@@ -556,41 +595,41 @@ class Idata:
         filtered_matrix = matrix[filter_mask, :]
         return filtered_matrix, filter_mask.tolist()
 
-    @staticmethod
-    def _concat_descriptors_matrix(matrices: list) -> np.ndarray:
-        """ Concatenates horizontaly an arbritary number of matrices.
+    # @staticmethod
+    # def _concat_descriptors_matrix(matrices: list) -> np.ndarray:
+    #     """ Concatenates horizontaly an arbritary number of matrices.
 
-        Used to concat multiple descriptors results into a one array.
+    #     Used to concat multiple descriptors results into a one array.
 
-        Parameters
-        ----------
+    #     Parameters
+    #     ----------
 
-        matrices: list
-            list of matrices (np.ndarrays) to concat horizontally
+    #     matrices: list
+    #         list of matrices (np.ndarrays) to concat horizontally
 
-        Returns
-        -------
+    #     Returns
+    #     -------
 
-        np.ndarray
-            concatenated matrix of input matrices
-        """
-        # type check input
-        if not all(isinstance(m, np.ndarray) for m in matrices):
-            raise TypeError('input matrices must be numpy arrays')
+    #     np.ndarray
+    #         concatenated matrix of input matrices
+    #     """
+    #     # type check input
+    #     if not all(isinstance(m, np.ndarray) for m in matrices):
+    #         raise TypeError('input matrices must be numpy arrays')
 
-        try:
-            xmatrix = np.concatenate(matrices, axis=1)
+    #     try:
+    #         xmatrix = np.concatenate(matrices, axis=1)
 
-            LOG.debug('concatenated matrices with shapes: '
-                      f'{[m.shape for m in matrices]} into a'
-                      f' matrix with shape {xmatrix.shape}')
+    #         LOG.debug('concatenated matrices with shapes: '
+    #                   f'{[m.shape for m in matrices]} into a'
+    #                   f' matrix with shape {xmatrix.shape}')
 
-        except ValueError as e:
-            LOG.critical('Cannot concatenate matrix with different shapes: '
-                         f'{[m.shape[0] for m in matrices]}')
-            raise ValueError('Cannot concatenate matrix with different shapes: '
-                             f'{[m.shape[0] for m in matrices]}')
-        return xmatrix
+    #     except ValueError as e:
+    #         LOG.critical('Cannot concatenate matrix with different shapes: '
+    #                      f'{[m.shape[0] for m in matrices]}')
+    #         raise ValueError('Cannot concatenate matrix with different shapes: '
+    #                          f'{[m.shape[0] for m in matrices]}')
+    #     return xmatrix
 
     def consolidate(self, results, nobj):
         '''
@@ -664,8 +703,13 @@ class Idata:
         # return
         #######################################################
 
+        # if this is the top model or an ensemble, exit
         if self.param.getVal('input_type') == 'model_ensemble':
             return
+
+        # if this is a low model or an ensemble, exit
+        if 'ghost' in self.format:
+            return 
 
         md5_parameters = self.param.getVal('md5')
         md5_input = utils.md5sum(self.ifile)  # run md5 in self.ifile
@@ -681,14 +725,22 @@ class Idata:
         except Exception as e:
             LOG.error(f"Can't serialize descriptors because of exception: {e}")
 
+
     def load(self):
         '''
         Loads the results in serialized form, together with the MD5 signature
         of the control class and the input file.
         '''
 
+        # return False
+
+        # if this is the top model or an ensemble, exit
         if self.param.getVal('input_type') == 'model_ensemble':
             return False
+
+        # if this is a low model or an ensemble, exit
+        if 'ghost' in self.format:
+            return 
 
         try:
             picklfile = os.path.join(self.dest_path, 'data.pkl')
@@ -705,6 +757,7 @@ class Idata:
                 # check that MD5 hash of the input file is the same that the stored 
                 # hash value in the pickle
                 md5_input = pickle.load(fi)
+                # print (self.ifile, md5_input, utils.md5sum(self.ifile))
                 if md5_input != utils.md5sum(self.ifile):
                     return False
 
@@ -722,7 +775,7 @@ class Idata:
 
         return True
 
-    @supress_log(logger=LOG)
+    #@supress_log(logger=LOG)
     def workflow_objects(self, input_file):
         '''
         Executes in sequence methods required to generate MD,
@@ -783,8 +836,6 @@ class Idata:
                     continue
 
                 md_results = np.vstack((md_results, results[0]))
-
-        #print (success_list)
 
         return True, (md_results, va_results, success_list)
 
@@ -922,7 +973,8 @@ class Idata:
         message = 'Failed to process ' + \
             str(len(warning_list))+' molecules : '+str(warning_list)
         message += '\nWill show results for the rest of the series...'
-        message += '\nCheck the error.log file for further details'
+
+        LOG.warning(message)
 
         self.conveyor.setWarning(message)
 
@@ -1077,8 +1129,11 @@ class Idata:
 
         obj_num = index
         LOG.debug('loaded TSV with shape {} '.format(xmatrix.shape))
+        
+        # if the TSV contains the variables names (as the first line) this
+        # has increased the line count and the obj_num must be reduced
         if self.param.getVal('TSV_varnames'):
-            obj_num -= 1  # what?
+            obj_num -= 1  
 
         # extract any named as "TSV_activity" as the ymatrix
         activity_param = self.param.getVal('TSV_activity')
@@ -1121,13 +1176,11 @@ class Idata:
         (calling another model to obtain input)
         '''
 
-        # idata is a list conveyor (in JSON format) from n sources
+        # idata is a list of conveyor from n sources
         # the data usable for input must be listed in the ['meta']['main'] key
 
-        # use first JSON to load obtain the input_file name
-        first_results = json.loads(self.idata[0])
-        first_meta = first_results['meta']
-        ifile = first_meta['input_file']
+        # get input file name from conveyor, as defined in the constructor
+        ifile = self.conveyor.getMeta('input_file')
 
         # call extractInformation to obtain names, activities, smiles, id, etc.
         success_inform = self.extractInformation(ifile)
@@ -1151,49 +1204,42 @@ class Idata:
         combined_md_names = []
         combined_cf_names = []
 
-        for ijson in self.idata:
-            i_result = json.loads(ijson)
-            i_manifest = i_result['manifest']
-            i_meta = i_result['meta']
+        for i_result in self.idata:
 
-            for item in i_manifest:
+            # predictions
+            i_md = i_result.getVal('values')
 
-                # predictions
-                if item['type'] == 'result':
-                    item_key = item['key']
+            if combined_md is None:  # for first element just copy
+                combined_md = np.array(i_md, dtype=np.float64)
+                num_obj = len(i_md)
+            else:
+                #TODO: so far we discard any situation where the length of the inputs to be merged is
+                # non consistent
+                # We must implement an analysis of the output allowing to discard  
+                if len(i_md)!= num_obj:
+                    self.conveyor.setError('the length of the results produced by some models is inconsistent')
+                    return
+                combined_md = np.c_[combined_md, np.array(i_md, dtype=np.float64)]
 
-                    if combined_md is None:  # for first element just copy
-                        combined_md = np.array(
-                            i_result[item_key], dtype=np.float64)
-                        num_obj = len(i_result[item_key])
-                    else:  # append laterally
+            #md names
+            combined_md_names.append(
+                'values'+':'+i_result.getMeta('endpoint')+':'+str(i_result.getMeta('version')))
 
-                        #TODO: so far we discard any situation where the length of the inputs to be merged is
-                        # non consistent
-                        # We must implement an analysis of the output allowing to discard  
-                        if len(i_result[item_key]) != num_obj:
-                            self.conveyor.setError('the length of the results produced by some models is inconsistent')
-                            return
+            # confidence values and names
+            i_low = i_result.getVal('lower_limit')
+            i_up  = i_result.getVal('upper_limit')
+            if i_up is not None and i_low is not None:
+                if combined_cf is None:  # for first element just copy
+                    combined_cf = np.array(i_low, dtype=np.float64)
+                    combined_cf = np.column_stack((combined_cf, i_up))
+                else:  # append laterally
+                    combined_cf = np.column_stack((combined_cf, i_low))
+                    combined_cf = np.column_stack((combined_cf, i_up))
 
-                        combined_md = np.c_[combined_md, np.array(
-                            i_result[item_key], dtype=np.float64)]
-
-                    combined_md_names.append(
-                        item_key+':'+i_meta['endpoint']+':'+str(i_meta['version']))
-
-                # confidence indexes 
-                elif item['type'] == 'confidence':
-                    item_key = item['key']
-                    if combined_cf is None:  # for first element just copy
-                        combined_cf = np.array(
-                            i_result[item_key], dtype=np.float64)
-                    else:  # append laterally
-                        # combined_cf = np.c_[combined_cf, np.array(
-                        #     i_result[item_key], dtype=np.float64)]
-                        combined_cf = np.column_stack((combined_cf, np.array(
-                            i_result[item_key], dtype=np.float64)))
-                    combined_cf_names.append(
-                        item_key+':'+i_meta['endpoint']+':'+str(i_meta['version']))
+                combined_cf_names.append(
+                    'lower_limit'+':'+i_result.getMeta('endpoint')+':'+str(i_result.getMeta('version')))
+                combined_cf_names.append(
+                    'upper_limit'+':'+i_result.getMeta('endpoint')+':'+str(i_result.getMeta('version')))
 
         self.conveyor.addVal( num_obj, 'obj_num', 'Num mol', 
                          'method', 'single', 'Number of molecules present in the input file')
@@ -1216,8 +1262,6 @@ class Idata:
         # print ('combined_md_names', combined_md_names)
         # print ('ensemble_confidence', combined_cf)
         # print ('ensemble_confidence_names', combined_cf_names)
-
-        #print (self.conveyor.getJSON())
 
         return
 

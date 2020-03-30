@@ -56,7 +56,7 @@ class Sbuild:
 
         # being unable to load parameters is a critical error
         if not success:
-            LOG.critical(f'Unable to load space parameters. "{message}" Aborting...')
+            LOG.critical(f'Unable to load space parameters. {message}. Aborting...')
             sys.exit(1)
 
         # add additional output formats included in the constructor 
@@ -107,15 +107,13 @@ class Sbuild:
 
         if not self.conveyor.getError():
             # instantiate learn (build a space from idata) and run it
-            slearn = slearn_child.SlearnChild(self.param, self.conveyor)
-            slearn.run()
-
             try:
                 slearn = slearn_child.SlearnChild(self.param, self.conveyor)
             except:
                 LOG.warning ('Slearn child architecture mismatch, defaulting to Learn parent')
                 slearn = Slearn(self.param, self.conveyor)
 
+            slearn.run()
             LOG.debug(f'slearn child {type(slearn).__name__} completed `run()`')
 
         # run odata object, in charge of formatting the prediction results

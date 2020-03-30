@@ -55,9 +55,8 @@ def test_classification_conformal(make_model, build_model, fixed_results):
     predictor = predict.Predict(MODEL_NAME, 0, label='temp')
     predictor.param.setVal("quantitative", False)
     predictor.param.setVal("output_format", "JSON")
-    _, results_str = predictor.run(SDF_FILE_NAME)
 
-    prediction_results_dict = json.load(io.StringIO(results_str))
-    result_values = np.array(prediction_results_dict["c0"])
+    _, results = predictor.run(SDF_FILE_NAME)
+    result_values = results.getVal("c0")
 
     assert all(np.isclose(fixed_results, result_values, rtol=1e-4))

@@ -12,7 +12,7 @@ Flame is in active development and **no stable release has been produced so far*
 
 ## Installation
 
-Flame can be used in most Windows, Linux or macOS configurations, provided that a suitable execution environment is set up. We recommend, as a fist step, installing the Conda package and environment manager. Download a suitable Anaconda anaconda distribution for your operative system from [here](https://www.anaconda.com/distribution/). 
+Flame can be used in most Windows, Linux or macOS configurations, provided that a suitable execution environment is set up. We recommend, as a fist step, installing the Conda package and environment manager. Download a suitable Conda or Anaconda distribution for your operative system from [here](https://docs.conda.io/projects/conda/en/latest/user-guide/install/download.html#)
 
 
 Download the repository:
@@ -146,6 +146,18 @@ flame -c manage -e MyModel -a parameters > delta.txt
 flame -c build -e MyModel -f series.sdf -p delta.txt
 ```
 
+For model documentation we need to obtain a delta file which will already include some information extracted from both the parameters and the quality metrics from model building. Other fields are empty as they requiere of manual filling (ie: institution info or model interpretation). Delta file documentation can be obtained by executing:
+
+```sh
+flame -c manage -e MyModel -a documentation > delta.txt
+```	
+
+The file `delta.txt` can be edited to include all the required information. After the edition, changes can be made persistent by executing the following command:
+
+```sh
+flame -c manage -e MyModel -a documentation -t delta.txt
+```
+
 In the above commands we specified the model version used for the prediction. So far we only have a model in the development folder (version 0). This version will be overwritten every time we develop a new model for this endpoint. Let's imagine that we are very satisfied with our model and want to store it for future use. We can obtain a persistent copy of it with the command
 ```sh
 flame -c manage -a publish -e MyModel
@@ -176,6 +188,14 @@ This creates a new entry in the spaces repository and the development version of
 
 Now provide the collection of compounds to include in the chemical space as a SDFile and set up the parameters (e.g. the molecular descriptors used to characterize it) using a delta file, as described above for the models.
 
+You can obtain the current parameters by using the command:
+
+```sh
+flame -c manage -s MySpace -a parameters > delta.txt
+```	
+
+The file `delta.txt` can be edited and then the new parameters can be applied by making reference to the edited file in the sbuild command, as follows:
+
 ```sh
 flame -c sbuild -s MySpace -f series.sdf -p delta.txt
 ```
@@ -185,7 +205,7 @@ Once it was built, this chemical space can be used to search compounds similar t
 ```sh
 flame -c search -s MySpace -v 0 -f query.sdf -p similarity.yaml
 ```
-The file query.sdf can contain the chemical structure of one or many compounds. The file `similarity.yaml` must define the metric used for the search, the distance cutoff and the maximum number of similars to extract per query compound. The last two fields can be left empty to avoid applying these limits. 
+The file `query.sdf` can contain the chemical structure of one or many compounds. The file `similarity.yaml` must define the metric used for the search, the distance cutoff and the maximum number of similars to extract per query compound. The last two fields can be left empty to avoid applying these limits. 
 
 ## Flame commands
 
@@ -198,6 +218,7 @@ The file query.sdf can contain the chemical structure of one or many compounds. 
 | -a/ --action | Management action to be carried out. Acceptable values are *list*, *new*, *kill*, *publish*, *remove*, *export* and *import*. The meaning of these actions and examples of use are provided below   |
 | -f/ --infile | Name of the input file used by the command. This file can correspond to the training data (*build*) or the query compounds (*predict*) |
 | -p/ --parameters | Name of an input file used to pass a set of parameters used to train a model (*build*) or to performa a similarity search (*search*) |
+| -inc/ --incremental | indicates that the input file must not replace any existing training series and, instead, the compound will be added |
 | -h/ --help | Shows a help message on the screen |
 
 Management commands deserve further description:
@@ -247,6 +268,20 @@ Model building can be easily customized with the Flame modeling GUI or by modify
 Advanced users can customize the models by editting the objects *idata_child*, *appl_child*, *learn_child* and *odata_child* present at the *model/dev* folder. These empty objects are childs of the corresponding objects called by flame, and it is possible to override any of the parents' methods simply by copying and editing these whitin the childs' code files.
 
 Models can be published to obtain persistent versions, usable for predicton in the same environment, or exported for using them in external production environments, as described above.
+
+### Incremental re-training of existing models
+
+Existing model can be re-built using the option -inc (or --incremental) when the model is built to add the compounds present in the input file to the existing training series.
+
+For example, imagine 'MyModel' is a model generated using a series of 1000 compounds and 'series.sdf' contains a collection of 500 additional compounds 
+
+```sh
+flame -c build -e MyModel -f series.sdf -inc
+```
+
+This command will add all the compounds present in the file 'series.sdf' at the end of the existing training series, thus generating a new model with 1500 compounds.
+
+In this process no checking for dupplicate molecules or any other test is carried out.
 
 
 ### Runnning models

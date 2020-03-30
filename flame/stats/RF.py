@@ -39,7 +39,6 @@ from flame.stats.base_model import BaseEstimator
 from flame.util import get_logger
 LOG = get_logger(__name__)
 
-
 class RF(BaseEstimator):
     """
         This class inherits from BaseEstimator and wraps SKLEARN
@@ -99,6 +98,7 @@ class RF(BaseEstimator):
         results.append(('nobj', 'number of objects', self.nobj))
         results.append(('nvarx', 'number of predictor variables', self.nvarx))
 
+        conformal = self.param.getVal('conformal')
         # If tune then call gridsearch to optimize the estimator
         if self.param.getVal('tune'):
 
@@ -125,28 +125,31 @@ class RF(BaseEstimator):
             try:
                 if self.param.getVal('quantitative'):
 
-                    LOG.info("Building Quantitative RF model")
-
                     self.estimator = RandomForestRegressor(
                         **self.estimator_parameters)
-                    results.append(('model', 'model type', 'RF quantitative'))
-                else:
 
-                    LOG.info("Building Qualitative RF model")
+                    if not conformal:
+                        LOG.info("Building Quantitative RF model")
+                        results.append(('model', 'model type', 'RF quantitative'))
+                else:
 
                     self.estimator = RandomForestClassifier(
                         **self.estimator_parameters)
-                    results.append(('model', 'model type', 'RF qualitative'))
+                    
+                    if not conformal:
+                        LOG.info("Building Qualitative RF model")
+                        results.append(('model', 'model type', 'RF qualitative'))
 
                 self.estimator.fit(X, Y)
 
             except Exception as e:
                 return False, f'Exception building RF estimator with exception {e}'
 
+        if not conformal:
+            return True, results
+
         self.estimator_temp = copy(self.estimator)
 
-        if not self.param.getVal('conformal'):
-            return True, results
         # Create the conformal estimator
         try:
             # Conformal regressor
@@ -157,6 +160,7 @@ class RF(BaseEstimator):
                 underlying_model = RegressorAdapter(self.estimator_temp)
                 #normalizing_model = RegressorAdapter(
                     #KNeighborsRegressor(n_neighbors=5))
+
                 normalizing_model = RegressorAdapter(self.estimator_temp)
                 normalizer = RegressorNormalizer(
                                 underlying_model,
@@ -198,7 +202,6 @@ class RF(BaseEstimator):
             return False, f'Exception building conformal RF estimator with exception {e}'
 
         return True, results
-
 
 
 ## Overriding of parent methods

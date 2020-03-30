@@ -24,7 +24,6 @@ Institution:
   QMRF_field: '2.5'
   description: 'Affiliation details'
   value: 'UPF'
-  value: null
 
 Date:
   level: 1
@@ -54,6 +53,12 @@ Species:
   level: 1
   QMRF_field: '3.1'
   description: 'Modeled endpoint species'
+  value: null
+
+Interpretation:
+  level: 1
+  QMRF_field: '8*'
+  description: 'Interpretation of the model'
   value: null
 
 Limits_applicability:

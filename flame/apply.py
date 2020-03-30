@@ -393,7 +393,6 @@ class Apply:
         X = result
 
 
-
         # instantiate an appropriate child of base_model
         model = None
         for imethod in self.registered_methods:

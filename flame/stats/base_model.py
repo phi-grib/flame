@@ -20,61 +20,128 @@
 # You should have received a copy of the GNU General Public License
 # along with Flame.  If not, see <http://www.gnu.org/licenses/>.
 
-from flame.util import utils
-from flame.stats.imbalance import *  
-from flame.stats.model_validation import *
-from flame.stats.scale import center, scale
-from flame.stats.feature_selection import *
+# from flame.stats.model_validation import *
 import pickle
 import numpy as np
 import os
 import copy
 import time
-import glob
 import gc
 from scipy import stats
-import matplotlib.pyplot as plt
 import warnings
-with warnings.catch_warnings():
-    warnings.simplefilter("ignore")
+
+from flame.stats.scale import center, scale
+from flame.stats.feature_selection import *
+from flame.stats.imbalance import *  
+
 from sklearn.model_selection import cross_val_predict
-from sklearn.model_selection import LeaveOneOut
-from sklearn.model_selection import cross_val_score
-from sklearn.model_selection import ShuffleSplit
+# from sklearn.model_selection import cross_val_score
+# from sklearn.model_selection import LeaveOneOut
+# from sklearn.model_selection import LeaveOneGroupOut
+# from sklearn.model_selection import LeavePOut  
+# from sklearn.model_selection import LeavePGroupsOut
+# from sklearn.model_selection import PredefinedSplit
+# from sklearn.model_selection import TimeSeriesSplit
+# from sklearn.model_selection import ShuffleSplit
+# from sklearn.model_selection import GroupShuffleSplit
+# from sklearn.model_selection import StratifiedShuffleSplit
 from sklearn.model_selection import KFold
+# from sklearn.model_selection import GroupKFold
+# from sklearn.model_selection import StratifiedKFold
 from sklearn.model_selection import GridSearchCV
+# from sklearn.model_selection import train_test_split
+# from sklearn.model_selection import *  # KP
+
 from sklearn.metrics import mean_squared_error, matthews_corrcoef as mcc
 from sklearn.metrics import f1_score
 from sklearn.metrics import make_scorer
 from sklearn.metrics import confusion_matrix
-from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler 
+
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.tree import DecisionTreeRegressor
+
 # nonconformist imports
 from nonconformist.base import ClassifierAdapter, RegressorAdapter
 from nonconformist.icp import IcpClassifier, IcpRegressor
 from nonconformist.nc import MarginErrFunc
-from nonconformist.nc import ClassifierNc, RegressorNc
 from nonconformist.nc import AbsErrorErrFunc, SignErrorErrFunc, RegressorNormalizer
+from nonconformist.nc import ClassifierNc, MarginErrFunc
+from nonconformist.nc import RegressorNc
 from nonconformist.acp import AggregatedCp
 from nonconformist.acp import BootstrapSampler, CrossSampler, RandomSubSampler
 from nonconformist.acp import BootstrapConformalClassifier
 from nonconformist.acp import CrossConformalClassifier
 
 from nonconformist.evaluation import class_mean_errors, class_one_c
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.tree import DecisionTreeRegressor
-from nonconformist.base import ClassifierAdapter
-from nonconformist.icp import IcpClassifier
-from nonconformist.nc import ClassifierNc, MarginErrFunc
 from nonconformist.evaluation import cross_val_score as conformal_cross_val_score
 from nonconformist.evaluation import ClassIcpCvHelper, RegIcpCvHelper
-from nonconformist.evaluation import class_avg_c, class_mean_errors
+from nonconformist.evaluation import class_avg_c
 from nonconformist.evaluation import reg_mean_errors, reg_median_size
 from nonconformist.evaluation import reg_mean_size
-from nonconformist.evaluation import class_mean_errors
 
 from flame.util import utils, get_logger, supress_log
+
 LOG = get_logger(__name__)
+
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore")
+
+########################################################################
+#TODO: re-write this. It makes no sense creating so many objects which
+# would not be used at all!!!!
+########################################################################
+
+def getCrossVal(cv, rs, n, p):
+
+    cv = str(cv)
+
+    if cv == 'loo':
+        from sklearn.model_selection import LeaveOneOut
+        return LeaveOneOut()                   
+
+    if cv == 'kfold':
+        from sklearn.model_selection import KFold
+        return KFold(n_splits=n, random_state=rs, shuffle=False)
+
+    if cv == 'lpo':
+        from sklearn.model_selection import LeavePOut 
+        return LeavePOut(int(p))
+
+    # # K-Folds cross-validator
+    # kfold = KFold(n_splits=n, random_state=rs, shuffle=False)
+
+    # # K-fold iterator variant with non-overlapping groups.
+    # gkfold = GroupKFold(n_splits=n)
+
+    # # Stratified K-Folds cross-validator
+    # stkfold = StratifiedKFold(n_splits=n, random_state=rs, shuffle=False)
+    # logo = LeaveOneGroupOut()              # Leave One Group Out cross-validator
+    # lpgo = LeavePGroupsOut(n_groups=n)     # Leave P Group(s) Out cross-validator
+    # loo  = LeaveOneOut()                   # Leave-One-Out cross-validator
+    # lpo  = LeavePOut(int(p))               # Leave-P-Out cross-validator
+
+    # # Random permutation cross-validator
+    # shufsplit = ShuffleSplit(n_splits=n, random_state=rs,
+    #                          test_size=0.25, train_size=None)
+
+    # # Shuffle-Group(s)-Out cross-validation iterator
+    # gshufplit = GroupShuffleSplit(test_size=10, n_splits=n)
+
+    # # Stratified ShuffleSplit cross-validator
+    # stshufsplit = StratifiedShuffleSplit(
+    #     n_splits=n, test_size=0.5, random_state=0)
+
+    # # Predefined split cross-validator
+    # psplit = PredefinedSplit(test_fold=[0,  1, -1,  1])
+    # tssplit = TimeSeriesSplit(n_splits=n)
+
+    # splitClass = {'kfold': kfold, 'gkfold': gkfold, 'stkfold': stkfold, 'logo': logo,
+    #               'lpgo': lpgo, 'loo': loo, 'lpo': lpo, 'shufsplit': shufsplit,
+    #               'gshufplit': gshufplit, 'stshufsplit': stshufsplit,
+    #               'psplit': psplit, 'tssplit': tssplit}
+
+    # return splitClass.get(str(cv))
 
 
 class BaseEstimator:
@@ -163,12 +230,11 @@ class BaseEstimator:
                                 self.param.getVal('ModelValidationN'),
                                 self.param.getVal('ModelValidationP'))
                 LOG.debug('Cross-validator retrieved')
-                LOG.info(f'cv is: {self.cv}')
+                LOG.debug(f'cv is: {self.cv}')
             except Exception as e:
                 LOG.error(f'Error retrieving cross-validator with'
                         f'exception: {e}')
                 raise e
-        
 
     # Validation methods section
     def CF_quantitative_validation(self):
@@ -179,27 +245,33 @@ class BaseEstimator:
         Y = self.Y.copy()
 
         info = []
-        kf = KFold(n_splits=self.param.getVal('ModelValidationN')
-                   , shuffle=True, random_state=46)
+
+        # # conformal models only use kfold for validation
+        # kf = KFold(n_splits=self.param.getVal('ModelValidationN'), shuffle=True, random_state=46)
+
         # Copy Y vector to use it as template to assign predictions
         Y_pred = copy.copy(Y).tolist()
         try:
-            for train_index, test_index in kf.split(X):
+            # for train_index, test_index in kf.split(X):
+            for train_index, test_index in self.cv.split(X):
                 # Generate training and test sets
                 X_train, X_test = X[train_index], X[test_index]
                 Y_train, Y_test = Y[train_index], Y[test_index]
-                # Generate training a test sets
+                
                 # Create the aggregated conformal regressor.
                 conformal_pred = AggregatedCp(IcpRegressor(
                                     RegressorNc(RegressorAdapter(
                                         self.estimator_temp))),
                                             BootstrapSampler())
+
                 # Fit conformal regressor to the data
                 conformal_pred.fit(X_train, Y_train)
 
                 # Perform prediction on test set
                 prediction = conformal_pred.predict(
-                    X_test, self.param.getVal('conformalSignificance'))
+                                X_test, self.param.getVal(
+                                    'conformalSignificance'))
+
                 # Assign the prediction its original index
                 for index, el in enumerate(test_index):
                     Y_pred[el] = prediction[index]
@@ -267,11 +339,14 @@ class BaseEstimator:
 
         info = []
 
-        kf = KFold(n_splits=5, shuffle=True, random_state=46)
+        # # conformal models only use kfold for validation
+        # kf = KFold(n_splits=self.param.getVal('ModelValidationN'), shuffle=False, random_state=46)
+
         # Copy Y vector to use it as template to assign predictions
         Y_pred = copy.copy(Y).tolist()
         try:
-            for train_index, test_index in kf.split(X):
+            # for train_index, test_index in kf.split(X):
+            for train_index, test_index in self.cv.split(X):
                 # Generate training and test sets
                 X_train, X_test = X[train_index], X[test_index]
                 Y_train, Y_test = Y[train_index], Y[test_index]
@@ -510,9 +585,7 @@ class BaseEstimator:
 
         # Get cross-validated Y 
         try:
-            y_pred = cross_val_predict(self.estimator, X, Y,
-                    cv=self.cv,
-                             n_jobs=1)
+            y_pred = cross_val_predict(self.estimator, X, Y, cv=self.cv, n_jobs=-1)
         except Exception as e:
             LOG.error(f'Cross-validation failed with exception' 
                         f'exception {e}')
@@ -792,13 +865,12 @@ class BaseEstimator:
         dict_estimator = {'estimator' : self.estimator,\
                             'version' : 1}
 
-        model_pkl_path = os.path.join(self.param.getVal('model_path'),
-                                      'estimator.pkl')
-        with open(model_pkl_path, 'wb') as handle:
-            pickle.dump(dict_estimator, handle, 
-                        protocol=pickle.HIGHEST_PROTOCOL)
-        LOG.debug('Model saved as:{}'.format(model_pkl_path))
+        model_pkl_path = os.path.join(self.param.getVal('model_path'),'estimator.pkl')
 
+        with open(model_pkl_path, 'wb') as handle:
+            pickle.dump(dict_estimator, handle, protocol=pickle.HIGHEST_PROTOCOL)
+        
+        LOG.debug('Model saved as:{}'.format(model_pkl_path))
 
         # Add estimator parameters to Conveyor
         params = dict()

@@ -24,12 +24,11 @@
 import os
 import shutil
 import pathlib
-# import json
 
 from flame.util import utils, get_logger
 
 # if the number of models is higher, try to run in multithread
-MAX_MODELS_SINGLE_CPU = 2
+MAX_MODELS_SINGLE_CPU = 4
 
 LOG = get_logger(__name__)
 
@@ -50,13 +49,14 @@ def get_ensemble_input(task, model_names, model_versions, infile):
 
     # add input molecule to the model input definition of every internal model
     model_suc = []  # True / False
-    model_res = []  # conveyor (in JSON format) for every prediction, as produced by odata.run_apply
+    model_res = []  # conveyor or every prediction, as produced by odata.run_apply
 
     model_cmd = []
     for i in range(num_models):
         model_cmd.append({'endpoint': model_names[i],
                           'version': model_versions[i],
                           'infile': infile,
+                          'output_format': 'ghost',
                           'label': f'ensemble{i}'})
 
     # run in multithreading
@@ -71,9 +71,6 @@ def get_ensemble_input(task, model_names, model_versions, infile):
         for iresult in model_tmp:
             model_suc.append(iresult[0])
             model_res.append(iresult[1])
-            # i_result = json.loads(iresult[1])
-            # i_manifest = i_result['manifest']
-            # print (i_result['meta'],)
     
     # run in a single thread
     else:
@@ -81,7 +78,6 @@ def get_ensemble_input(task, model_names, model_versions, infile):
             success, results = predict_cmd(model_cmd[i])
             model_suc.append(success)
             model_res.append(results)
-
 
     if False in model_suc:
         return False, 'Some external input sources failed: '+str(model_suc)
@@ -106,7 +102,6 @@ def predict_cmd(arguments, output_format=None):
     model_list = os.listdir(repo_path)
 
     if arguments['endpoint'] not in model_list:
-        LOG.error('Endpoint name not found in model repository.')
         return False, 'Endpoint name not found in model repository.'
 
     # ** DEPRECATE **
@@ -114,6 +109,9 @@ def predict_cmd(arguments, output_format=None):
     # not supporting the label argument
     if 'label' not in arguments:
         arguments['label'] = 'temp'
+
+    if 'output_format' in arguments:
+        output_format = arguments['output_format']
 
     predict = Predict(arguments['endpoint'], version=arguments['version'],  output_format=output_format, label=arguments['label'])
 
@@ -162,7 +160,6 @@ def build_cmd(arguments, output_format=None):
     model_list = os.listdir(repo_path)
 
     if arguments['endpoint'] not in model_list:
-        LOG.error('Endpoint name not found in model repository.')
         return False, 'Endpoint name not found in model repository.'
 
     if 'param_file' in arguments:
@@ -193,7 +190,10 @@ def build_cmd(arguments, output_format=None):
 
     else:
 
+        #input file provided in the command
         ifile = arguments['infile']
+        
+        #existing training series
         epd = utils.model_path(arguments['endpoint'], 0)
         lfile = os.path.join(epd, 'training_series')
 
@@ -201,19 +201,37 @@ def build_cmd(arguments, output_format=None):
         # try to copy it to the model directory
         if ifile is not None:
             if not os.path.isfile(ifile):
-                LOG.error(f'Wrong training series file {ifile}')
                 return False, f'Wrong training series file {ifile}'
-            try:
-                # print(lfile)
-                # print(ifile)
-                shutil.copy(ifile, lfile)
-            except:
-                LOG.error(f'Unable to copy input file to model directory')
-                return False, 'Unable to copy input file to model directory'
+        
+            if arguments['incremental']:
+                if arguments['incremental'] and os.path.isfile(lfile):
+                    LOG.info(f'Merging file {ifile} with existing training series')
+                    new_training = os.path.join(epd, 'temp_training')
+
+                    with open(new_training, 'w') as outfile:
+                        with open(lfile) as infile:
+                            for line in infile:
+                                outfile.write(line)
+
+                        if line != '$$$$\n':
+                            return False, 'The existing training series does not finish correctly with "$$$$" and a newline. Please correct.'
+
+                        with open(ifile) as infile:
+                            for line in infile:
+                                outfile.write(line)
+
+                    shutil.move(new_training, lfile)
+            else:
+                try:
+                    # print(lfile)
+                    # print(ifile)
+                    shutil.copy(ifile, lfile)
+                except:
+                    return False, 'Unable to copy input file to model directory'
 
         # check that the local copy of the input file exists
+        
         if not os.path.isfile(lfile):
-            LOG.error(f'No training series found')
             return False, 'No training series found'
 
         # remove pre-existing results file
@@ -241,7 +259,6 @@ def sbuild_cmd(arguments, output_format=None):
     space_list = os.listdir(repo_path)
 
     if arguments['space'] not in space_list:
-        LOG.error('Endpoint name not found in space repository.')
         return False, 'Endpoint name not found in space repository.'
 
     if 'param_string' in arguments:
@@ -259,17 +276,14 @@ def sbuild_cmd(arguments, output_format=None):
     # try to copy it to the model directory
     if ifile is not None:
         if not os.path.isfile(ifile):
-            LOG.error(f'Wrong compound database file {ifile}')
             return False, f'Wrong compound database file {ifile}'
         try:
             shutil.copy(ifile, lfile)
         except:
-            LOG.error(f'Unable to copy input file to space directory')
             return False, 'Unable to copy input file to space directory'
 
     # check that the local copy of the input file exists
     if not os.path.isfile(lfile):
-        LOG.error(f'No compound database found')
         return False, 'No compound database found'
 
     # run the space building with the input file
@@ -290,6 +304,12 @@ def search_cmd(model, output_format=None):
     # not supporting the label argument
     if 'label' not in model:
         model['label'] = 'temp'
+
+    # safety check if model exists
+    repo_path = pathlib.Path(utils.space_repository_path())
+    space_list = os.listdir(repo_path)
+    if model['space'] not in space_list:
+        return False, 'Endpoint name not found in space repository.'
 
     search = Search(model['space'], version=model['version'], output_format=output_format, label=model['label'])
 
@@ -336,7 +356,6 @@ def manage_cmd(args):
         import flame.manage as manage
 
         if args.action == 'new':
-            #utils.check_repository_path()
             success, results = manage.action_new(args.endpoint)
         elif args.action == 'kill':
             success, results = manage.action_kill(args.endpoint)
@@ -348,8 +367,6 @@ def manage_cmd(args):
             success, results = manage.action_list(args.endpoint)
         elif args.action == 'export':
             success, results = manage.action_export(args.endpoint)
-        elif args.action == 'refactoring':
-            success, results = manage.action_refactoring(args.file)
         elif args.action == 'info':
             success, results = manage.action_info(args.endpoint, version)
         elif args.action == 'results':
@@ -357,10 +374,11 @@ def manage_cmd(args):
         elif args.action == 'parameters':
             success, results = manage.action_parameters(args.endpoint, version)
         elif args.action == 'documentation':
-                            success, results = manage.action_documentation(args.endpoint,
-                                version, args.documentation_file)
+            success, results = manage.action_documentation(args.endpoint,
+            version, args.documentation_file)
         elif args.action == 'model_template':
-            success, results = manage.action_model_template(args.endpoint, version,  args.documentation_file)
+            success, results = manage.action_model_template(args.endpoint, 
+            version,  args.documentation_file)
         elif args.action == 'prediction_template':
             success, results = manage.action_prediction_template(args.endpoint, version)
         elif args.action == 'import':

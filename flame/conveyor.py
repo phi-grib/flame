@@ -190,7 +190,7 @@ class Conveyor:
                 single_elements.append(i['key'])
         return single_elements
 
-    def getJSON (self):
+    def getJSON (self, xdata=False):
         ''' returns a JSON containing 
             - error/warnings 
             - manifest and meta
@@ -211,6 +211,11 @@ class Conveyor:
         white_keys  = self.objectKeys()
         white_keys += self.singleKeys()
 
+        if xdata:
+            white_keys += ['xmatrix', 'var_nam']
+
+        #print (white_keys)
+
         for key in white_keys:
             value = self.data[key]
 
@@ -226,7 +231,7 @@ class Conveyor:
             else:
                 temp_json[key]=value
 
-        #print (json.dumps(temp_json))
+        # print (json.dumps(temp_json))
 
         return json.dumps(temp_json)
 

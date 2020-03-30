@@ -113,25 +113,26 @@ class Learn:
         # if self.param.getVal('modelAutoscaling') and \
         #                 not isFingerprint:
 
-        if self.param.getVal('modelAutoscaling'):
+        scale_method = self.param.getVal('modelAutoscaling')
+        if scale_method is not None:
             try:
                 scaler = None
-                if self.param.getVal('modelAutoscaling') == 'StandardScaler':
+                if scale_method == 'StandardScaler':
                     scaler = StandardScaler()
-                    LOG.info('Data scaled using StandarScaler')
 
-                elif self.param.getVal('modelAutoscaling') == 'MinMaxScaler':
+                elif scale_method == 'MinMaxScaler':
                     scaler = MinMaxScaler(copy=True, feature_range=(0,1))
-                    LOG.info('Data scaled using MinMaxScaler')
 
-                elif self.param.getVal('modelAutoscaling') == 'RobustScaler':
+                elif scale_method == 'RobustScaler':
                     scaler = RobustScaler()
-                    LOG.info('Data scaled using RobustScaler')
 
                 else:
                     return False, 'Scaler not recognized'
 
                 if scaler is not None:
+
+                    LOG.info(f'Data scaled with method: {scale_method}')
+
                     # The scaler is saved so it can be used later
                     # to prediction instances.
                     self.scaler = scaler.fit(self.X)
@@ -207,6 +208,23 @@ class Learn:
             self.conveyor.setError(message)
             return
 
+        # collect model information from parameters
+        model_type_info = []
+        model_type_info.append(('quantitative', 'True if the endpoint is quantitative', self.param.getVal('quantitative')))
+        model_type_info.append(('conformal', 'True if the endpoint is conformal', self.param.getVal('conformal')))
+        model_type_info.append(('ensemble', 'True if the model is an ensemble of models', self.param.getVal('input_type') == 'model_ensemble'))
+        model_type_info.append(('ensemble_names', 'List of ensemble models', self.param.getVal('ensemble_names')))
+        model_type_info.append(('ensemble_versions', 'List of ensemble versions', self.param.getVal('ensemble_versions')))
+        model_type_info.append(('conformal_significance', 'Significance of the conformal model', self.param.getVal('conformalSignificance')))
+
+        self.conveyor.addVal(
+            model_type_info,
+            'model_type_info',
+            'model type information',
+            'method',
+            'single',
+            'Information about the type of model')
+
         # instantiate an appropriate child of base_model
         model = None
         for imethod in self.registered_methods:
@@ -234,7 +252,7 @@ class Learn:
             return
 
         # build model
-        LOG.info('Starting model building')
+        LOG.debug('Starting model building')
         success, model_building_results = model.build()
         if not success:
             self.conveyor.setError(model_building_results)
@@ -246,10 +264,10 @@ class Learn:
                     'model building information',
                     'method',
                     'single',
-                    'Information about the model')
+                    'Information about the model building')
 
         # validate model
-        LOG.info('Starting model validation')
+        LOG.info(f'Validating the model using method: {self.param.getVal("ModelValidationCV"):}')
         success, model_validation_results = model.validate()
         if not success:
             self.conveyor.setError(model_validation_results)
@@ -325,11 +343,11 @@ class Learn:
         toolkit = self.param.getVal('modelingToolkit')
 
         if toolkit == 'internal':
-            LOG.info('Building model using internal toolkit : Sci-kit learn')
+            LOG.info('Using internal machine learning toolkit')
             self.run_internal()
 
         elif toolkit == 'custom':
-            LOG.info('Building model using custom toolkit')
+            LOG.info('Unsing custom machine learning toolkit')
             self.run_custom()
         else:
             LOG.error("Modeling toolkit is not yet supported")

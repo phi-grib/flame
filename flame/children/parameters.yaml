@@ -38,11 +38,31 @@ normalize_method:
   options:
     - null
     - standardize
+    - chEMBL
   description: Selection of a standardization method
   dependencies: 
     input_type: molecule
   comments: 
   group: data
+
+normalize_settings:
+  advanced: regular
+  object_type: dictionary
+  writable: false
+  value: 
+    score:
+      object_type: int
+      writable: true
+      value: 2
+      options:
+        - null
+      description: Penalty score for serioussness of molecules issues. 0 to 8 from less to more permissive.
+  description: Settings for standardizer
+  dependencies: 
+    - ext_input: false
+    - input_type: molecule
+  comments: 
+  group: data  
 
 ionize_method:
   advanced: regular
@@ -403,7 +423,7 @@ ModelValidationCV:
   advanced: regular
   object_type: string
   writable: false
-  value: loo
+  value: kfold
   options: 
     - loo
     - kfold
@@ -932,7 +952,7 @@ XGBOOST_parameters:
         - null
       description: Number of trees to fit.
     booster:
-      object_type: int
+      object_type: string
       writable: true
       value: gbtree
       options: 
@@ -1097,6 +1117,57 @@ output_md:
     - false
   description: Dump descriptors to a TSV file
   dependencies: null 
+  comments: 
+  group: preferences
+
+output_similar:
+  advanced: advanced
+  object_type: boolean
+  writable: false
+  value: false
+  options:
+    - true
+    - false
+  description: Show compounds similar to the query compounds present in the training series
+  dependencies: null 
+  comments: 
+  group: preferences
+
+similarity_metric:
+  advanced: advanced
+  object_type: string
+  writable: false
+  value: 
+  options:
+    - Euclidean
+    - Tanimoto
+  description: Show compounds similar to the query compounds present in the training series
+  dependencies: 
+    output_similar: true 
+  comments: 
+  group: preferences
+
+similarity_cutoff_num:
+  advanced: advanced
+  object_type: int
+  writable: false
+  value: 5
+  options:
+  description: Integer indicatin maximum number of similar compounds to extract. If not set, all compounds meeting other criteria will be extracted     
+  dependencies: 
+    output_similar: true 
+  comments: 
+  group: preferences
+
+similarity_cutoff_distance:
+  advanced: advanced
+  object_type: float
+  writable: false
+  value: 0.6
+  options:
+  description: Float in the range (0.0 - 1.0) indicating minimum similarity of the compounds to extract. If not set, all compounds meeting other criteria will be extracted 
+  dependencies: 
+    output_similar: true 
   comments: 
   group: preferences
 

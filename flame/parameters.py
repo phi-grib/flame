@@ -70,12 +70,15 @@ class Parameters:
         else:
             parameters_file_path = utils.model_path(model, version)
         
+        if not os.path.isdir (parameters_file_path):
+            return False, f'Model "{model}", version "{version}" not found'
+
         parameters_file_name = os.path.join (parameters_file_path,
                                             'parameters.yaml')
 
         # load the main class dictionary (p) from this yaml file
         if not os.path.isfile(parameters_file_name):
-            return False, 'file not found'
+            return False, 'Parameters file not found'
 
         try:
             with open(parameters_file_name, 'r') as pfile:
@@ -90,6 +93,10 @@ class Parameters:
         else:
             self.extended = False
             self.param_format = 1.0
+
+        # # correct CV to kfold for conformal models
+        # if self.getVal('conformal') is True:
+        #     self.setVal('ModelValidationCV','kfold')
 
         # add keys for the model and a MD5 hash
         self.setVal('endpoint',model)
@@ -170,6 +177,10 @@ class Parameters:
                 yaml.dump (self.p, pfile)
         except Exception as e:
             return False, 'unable to write parameters'
+
+        # # correct CV to kfold for conformal models
+        # if self.getVal('conformal') is True:
+        #     self.setVal('ModelValidationCV','kfold')
 
         # self.setVal('md5',utils.md5sum(parameters_file_name))
         self.setVal('md5',self.idataHash())

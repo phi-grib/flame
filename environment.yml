@@ -2,26 +2,21 @@ name: flame
 channels:
   - default
   - rdkit
-  - anaconda
-  - mordred-descriptor
   - conda-forge 
+  - chembl
+  - anaconda
 dependencies:
-  - keras-gpu
-  - cherrypy=>18
-  - numpy=>1.14.0
-  - matplotlib=>2.1.2
-  - mordred==1.2.0
   - pip
   - python=3.6
-  - scipy=>1.0.0
   - setuptools=>38.4.0
   - scikit-learn=>0.19.1
-  - statsmodels=>0.8.0
-  - rdkit
-  - pyyaml
   - requests
+  - rdkit
+  - keras-gpu
+  - pyyaml
   - pytest
   - psycopg2
+  - chembl_structure_pipeline
   - pip:
      - xgboost
      - django==2.2.8
