@@ -251,6 +251,7 @@ class Odata():
         # Save conveyor from prediction only if confidential is False
         if not self.param.getVal('confidential') and 'ghost' not in self.format:
 
+            # why this???
             if not os.path.isdir(opath):
                 return True, self.conveyor
 

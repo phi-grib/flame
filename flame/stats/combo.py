@@ -162,10 +162,10 @@ class Combo (BaseEstimator):
         return True, results
 
     def save_model(self):
-        return
+        return True, 'OK'
 
     def load_model(self):
-        return
+        return True, 'OK'
 
 
 class median (Combo):
