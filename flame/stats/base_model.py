@@ -35,11 +35,12 @@ from flame.stats.imbalance import *
 
 from flame.stats.crossval import getCrossVal
 from sklearn.model_selection import cross_val_predict
+from sklearn.model_selection import GridSearchCV 
 from sklearn.metrics import mean_squared_error, matthews_corrcoef as mcc
 from sklearn.metrics import f1_score
 from sklearn.metrics import make_scorer
 from sklearn.metrics import confusion_matrix
-from sklearn.preprocessing import MinMaxScaler 
+from sklearn.preprocessing import MinMaxScaler
 
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.tree import DecisionTreeRegressor
