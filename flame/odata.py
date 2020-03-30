@@ -251,10 +251,6 @@ class Odata():
         # Save conveyor from prediction only if confidential is False
         if not self.param.getVal('confidential') and 'ghost' not in self.format:
 
-            # why this???
-            # if not os.path.isdir(opath):
-            #     return True, self.conveyor
-
             results_pkl_path = os.path.join(opath,'prediction-results.pkl')
             meta_pkl_path = os.path.join(opath,'prediction-meta.pkl')
             LOG.info(f'saving model results to: {opath}')
