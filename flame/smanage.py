@@ -24,7 +24,6 @@ import os
 import sys
 import shutil
 import tarfile
-import json
 import pickle
 import pathlib
 import tempfile
@@ -218,7 +217,7 @@ def action_parameters(space, version=None, oformat='text'):
     param.loadYaml(space, version, isSpace=True)
 
     if oformat == 'JSON':
-        return True, param.dumpJSON()
+        return True, param
 
     else:
 
@@ -318,41 +317,65 @@ def action_parameters(space, version=None, oformat='text'):
 ## the following commands are argument-less, intended to be called from a web-service to 
 ## generate JSON output only
 
-def action_info(space, version):
+def action_info(space, version, output='text'):
     '''
     Returns a text or JSON with results info for a given model and version
     '''
 
     if space is None:
+        if output == 'JSON':
+            return False, {'code':1, 'message': 'Empty space label'}
         return False, 'Empty space label'
 
-    rdir = utils.space_path(space, version)
-
-    if not os.path.isfile(os.path.join(rdir, 'results.pkl')):
+    meta_path = utils.space_path(space, version)
+    meta_file = os.path.join(meta_path, 'space-meta.pkl')
+    
+    if not os.path.isfile(meta_file):
+        if output == 'JSON':
+            return False, {'code':0, 'message': 'Info file not found'}
         return False, 'Info file not found'
 
-    # from flame.conveyor import Conveyor
-
-    # conveyor = Conveyor()
-    # with open(os.path.join(rdir, 'results.pkl'), 'rb') as handle:
-    #     conveyor.load(handle)
+    with open(meta_file, 'rb') as handle:
+        modelID = pickle.load(handle)
+        errorMessage = pickle.load(handle)
+        warningMessage = pickle.load(handle)
+        space_info = pickle.load(handle)
     
-    # info =  conveyor.getVal('space_build_info')
-
-    with open(os.path.join(rdir, 'results.pkl'), 'rb') as handle:
-        info = pickle.load(handle)
-    
-    if info == None:
+    if errorMessage is not None:
+        if output == 'JSON':
+            return False, {'code':1, 'message': errorMessage}
         return False, 'No relevant information found'
    
-    # # this code serializes the results in a list and then converts it 
-    # # to a JSON  
-    # json_results = []
-    # for i in info:
-    #     json_results.append(conveyor.modelInfoJSON(i))
+    warning_info = None
+    if warningMessage is not None:
+        warning_info = [('warning', 'runtime warning', warningMessage)]
 
-    print (json.dumps(info))
-    return True, json.dumps(info)
+    info = None
+    
+    for iinfo in (space_info, warning_info, [('modelID','unique model ID', modelID)]):
+        if info == None:
+            info = iinfo
+        else:
+            if iinfo != None:
+                info+=iinfo
+
+    if info == None:
+        if output == 'JSON':
+            return False, {'code':1, 'message': 'No relevant information found'}
+        return False, 'No relevant information found'
+
+    if output == 'text':
+
+        LOG.info (f'informing space {space} version {version}')
+
+        for val in info:
+            if len(val) < 3:
+                LOG.info(val)
+            else:
+                LOG.info(f'{val[0]} ({val[1]}) : {val[2]}')
+        return True, 'space informed OK'
+
+    return True, info
 
 
 def action_dir():
@@ -383,9 +406,9 @@ def action_dir():
         results.append(idict)
 
     # print (json.dumps(results))
-    return True, json.dumps(results)
+    return True, results
 
-def action_searches_result (label):
+def action_searches_result (label, output='text'):
     '''
     try to retrieve the searches result with the label used as argument
     returns 
@@ -394,9 +417,13 @@ def action_searches_result (label):
         
         - (True, JSON) with the results otherwyse
     '''
+
     opath = tempfile.gettempdir()
     if not os.path.isdir(opath):
-        return False, f'directory {opath} not found'
+        if output == 'JSON':
+            return False, {'code':1, 'message': f'directory {opath} not found'}
+        print (f'directory {opath} not found')
+        return False, None
 
     # default in case label was not provided
     if label is None:
@@ -406,16 +433,24 @@ def action_searches_result (label):
 
     search_pkl_path = os.path.join(opath,'similars-'+label+'.pkl')
     if not os.path.isfile(search_pkl_path):
+
+        if output == 'JSON':
+            return False, {'code':0, 'message': f'predictions not found for {label} directory'}
+        print (f'predictions not found for {label} directory')
         return False, f'file {search_pkl_path} not found'
 
     with open(search_pkl_path, 'rb') as handle:
         success, message = iconveyor.load(handle)
 
     if not success:
-        print (f'error reading prediction results with message {message}')
+        if output == 'JSON':
+            return False, {'code':1, 'message': f'error reading search results with message {message}'}
+        print (f'error reading search results with message {message}')
         return False, None
 
     if not iconveyor.isKey('search_results'):
+        if output == 'JSON':
+            return False, {'code':1, 'message': 'search results not found'}
         return False, 'search results not found'
 
     results = iconveyor.getVal('search_results')
@@ -423,6 +458,8 @@ def action_searches_result (label):
     if iconveyor.isKey('SMILES'):
         smiles = iconveyor.getVal('SMILES')
     if len (results) != len (names):
+        if output == 'JSON':
+            return False, {'code':1, 'message': 'results length does not match names'}
         return False, 'results length does not match names'
 
     for i in range (len(results)):
@@ -434,9 +471,28 @@ def action_searches_result (label):
         iresult = results[i]
         for j in range (len(iresult['distances'])):
             dist = iresult['distances'][j]
-            name = iresult['names'][j]
-            smil = iresult['SMILES'][j]
-            print (f'   {dist:.3f} : {name} [{smil}]')
+
+            if 'obj_name' in iresult:
+                name = iresult['obj_nam'][j]
+            else:
+                name = '-'
+            if 'SMILES' in iresult:
+                smil = iresult['SMILES'][j]
+            else:
+                smil = '-'
+            
+            if 'obj_id' in iresult:
+                idv = iresult['obj_id'][j]
+            else:
+                idv ='-'
+            
+            if 'ymatrix' in iresult:
+                act = iresult['ymatrix'][j]
+            else:
+                act = '-'
+
+
+            print (f'   {dist:.3f} : {name} {idv} {act} [{smil}]')
 
     # return a JSON generated by iconveyor
-    return True, iconveyor.getJSON()
+    return True, iconveyor

@@ -188,7 +188,7 @@ class Documentation:
         # obtain the path and the default name of the results file
         results_file_path = utils.model_path(self.model, self.version)
         results_file_name = os.path.join(results_file_path,
-                                         'results.pkl')
+                                         'model-results.pkl')
         self.conveyor = Conveyor()
         # load the main class dictionary (p) from this yaml file
         if not os.path.isfile(results_file_name):

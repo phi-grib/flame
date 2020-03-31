@@ -75,6 +75,7 @@ class Idata:
         # add metainformation
         self.conveyor.addMeta('endpoint',self.param.getVal('endpoint'))
         self.conveyor.addMeta('version',self.param.getVal('version'))
+        
         input_type = self.param.getVal('input_type')
         self.conveyor.addMeta('input_type',input_type)
 
@@ -761,10 +762,17 @@ class Idata:
                 if md5_input != utils.md5sum(self.ifile):
                     return False
 
+                # preserve original origin tag, save it
+                origin = self.conveyor.getOrigin()
+
                 success, message = self.conveyor.load(fi)
+                
                 if not success:
                     LOG.error(f'Failed to load pickle file with error: "{message}"')
                     return False
+
+                # presenve original origin tag, apply it
+                self.conveyor.setOrigin(origin)
 
         except Exception as e:
             self.conveyor.setError('Error loading pickle with exception: {}'.format(e))
@@ -954,7 +962,6 @@ class Idata:
                   'indexes from manifest: {}'.format(remove_index))
         self.conveyor.setVal('obj_num', obj_num)
 
-
         objkeys = self.conveyor.objectKeys()
         for ikey in objkeys: 
             ilist = self.conveyor.getVal(ikey)
@@ -971,12 +978,11 @@ class Idata:
             self.conveyor.setVal(ikey, ilist)
 
         message = 'Failed to process ' + \
-            str(len(warning_list))+' molecules : '+str(warning_list)
-        message += '\nWill show results for the rest of the series...'
+             str(len(warning_list))+' molecules : '+str(warning_list)
+        self.conveyor.setWarning(message)
 
         LOG.warning(message)
-
-        self.conveyor.setWarning(message)
+        LOG.warning('Will show results for the rest of the series...')
 
         return
 

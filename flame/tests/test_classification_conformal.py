@@ -54,7 +54,7 @@ def test_classification_conformal(make_model, build_model, fixed_results):
 
     predictor = predict.Predict(MODEL_NAME, 0, label='temp')
     predictor.param.setVal("quantitative", False)
-    predictor.param.setVal("output_format", "JSON")
+    predictor.param.setVal("output_format", "ghost")
 
     _, results = predictor.run(SDF_FILE_NAME)
     result_values = results.getVal("c0")

@@ -30,7 +30,7 @@ def simple_subsampling(X, Y, random_seed):
     Simple subsampling, adjusts the number of negative 
     samples to the positive one or viceversa.
     """
-
+    np.random.seed(46)
     positives = X[Y==1]
     negatives = X[Y==0]
 

@@ -47,7 +47,16 @@ class Apply:
 
         self.param = parameters
         self.conveyor = conveyor
-        self.conveyor.setOrigin('apply')
+
+        endpoint = self.conveyor.getMeta('endpoint')
+        version  = self.conveyor.getMeta('version')
+        path = utils.model_path(endpoint, version)
+        meta = os.path.join(path,'model-meta.pkl')
+        with open(meta, 'rb') as handle:
+            modelID = pickle.load(handle)
+
+        self.conveyor.addMeta('modelID', modelID)
+        LOG.debug (f'Loaded model with modelID: {modelID}')
 
         # expand with new methods here:
         self.registered_methods = [('RF', RF),
@@ -389,9 +398,9 @@ class Apply:
         success, result = self.preprocess(X)
         if not success:
             self.conveyor.setError(result)
-            return            
-        X = result
+            return          
 
+        X = result
 
         # instantiate an appropriate child of base_model
         model = None
@@ -418,12 +427,11 @@ class Apply:
             return
 
         # try to load model previously built
-        try:
-            model.load_model()
-            LOG.debug(f'Loading model from pickle file')
-        except Exception as e:
-            self.conveyor.setError(f'No valid model estimator found with exception "{e}"')
-            return False, f'Exception ocurred when loading model: {e}'
+        LOG.debug(f'Loading model from pickle file')
+        success, results = model.load_model()
+        if not success:
+            self.conveyor.setError(f'Failed to load model estimator, with error "{result}"')
+            return 
 
         # project the X matrix into the model and save predictions in self.conveyor
         model.project(X)

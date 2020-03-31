@@ -40,6 +40,7 @@ class Build:
         self.model = model
         self.param = Parameters()
         self.conveyor = Conveyor()
+        self.conveyor.setOrigin('learn')
 
         # load parameters
         if param_file is not None:
@@ -112,26 +113,27 @@ class Build:
             if not self.conveyor.isKey ('ymatrix'):
                 self.conveyor.setError(f'No activity data (Y) found in training series')
     
-        # run optional chemical space building for supporting "closest" training series object
-        # if self.param.getVal('buildSimilarity'):
-        if self.param.getVal('output_similar') is True:
+            # run optional chemical space building for supporting "closest" training series object
+            # if self.param.getVal('buildSimilarity'):
+            if self.param.getVal('output_similar') is True:
 
-            from flame.slearn import Slearn
+                from flame.slearn import Slearn
 
-            slearn_child = importlib.import_module(modpath+".slearn_child")
-            
-            if not self.conveyor.getError():
-                # instantiate learn (build a space from idata) and run it
-                try:
-                    slearn = slearn_child.SlearnChild(self.param, self.conveyor)
-                except:
-                    LOG.warning ('Slearn child architecture mismatch, defaulting to Learn parent')
-                    slearn = Slearn(self.param, self.conveyor)
+                slearn_child = importlib.import_module(modpath+".slearn_child")
+                
+                if not self.conveyor.getError():
+                    # instantiate learn (build a space from idata) and run it
+                    try:
+                        slearn = slearn_child.SlearnChild(self.param, self.conveyor)
+                    except:
+                        LOG.warning ('Slearn child architecture mismatch, defaulting to Learn parent')
+                        slearn = Slearn(self.param, self.conveyor)
 
-                slearn.run()
-                LOG.debug(f'slearn child {type(slearn).__name__} completed `run()`')
+                    slearn.run()
+                    LOG.debug(f'slearn child {type(slearn).__name__} completed `run()`')
 
         if not self.conveyor.getError():
+
             # instantiate learn (build a model from idata) and run it
             try:
                 learn = learn_child.LearnChild(self.param, self.conveyor)
@@ -141,7 +143,6 @@ class Build:
             learn.run()
 
             LOG.debug(f'learn child {type(learn).__name__} completed `run()`')
-
 
         # run odata object, in charge of formatting the prediction results
         # note that if any of the above steps failed, an error has been inserted in the

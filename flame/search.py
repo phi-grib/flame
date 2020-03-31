@@ -44,6 +44,8 @@ class Search:
         self.param = Parameters()
         self.conveyor = Conveyor()
 
+        self.conveyor.setOrigin('sapply')
+
         self.conveyor.addVal(label, 'prediction_label', 'prediction label',
             'method', 'single',
             'Label used to identify the prediction')

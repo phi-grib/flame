@@ -56,7 +56,8 @@ def test_classificationl(make_model, build_model, fixed_results):
     predictor.param.setVal("quantitative", False)
     predictor.param.setVal("mol_batch", "objects")
     predictor.param.setVal("conformal", False)
-    predictor.param.setVal("output_format", "JSON")
+    predictor.param.setVal("output_format", "ghost")
+
 
     _, results = predictor.run(SDF_FILE_NAME)
     result_values = results.getVal("values")

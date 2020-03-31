@@ -98,10 +98,8 @@ def predict_cmd(arguments, output_format=None):
     from flame.predict import Predict
 
     # safety check if model exists
-    repo_path = pathlib.Path(utils.model_repository_path())
-    model_list = os.listdir(repo_path)
-
-    if arguments['endpoint'] not in model_list:
+    endpoint_dir = utils.model_path(arguments['endpoint'], 0)
+    if not os.path.isdir(endpoint_dir):
         return False, 'Endpoint name not found in model repository.'
 
     # ** DEPRECATE **
@@ -156,11 +154,18 @@ def build_cmd(arguments, output_format=None):
     from flame.build import Build
 
     # safety check if model exists
-    repo_path = pathlib.Path(utils.model_repository_path())
-    model_list = os.listdir(repo_path)
-
-    if arguments['endpoint'] not in model_list:
+    endpoint_dir = utils.model_path(arguments['endpoint'], 0)
+    if not os.path.isdir(endpoint_dir):
         return False, 'Endpoint name not found in model repository.'
+
+    # remove pre-existing results file
+    results_file = os.path.join(endpoint_dir, 'model-results.pkl')
+    if os.path.isfile(results_file):
+        os.remove(results_file)
+
+    meta_file = os.path.join(endpoint_dir, 'model-meta.pkl')
+    if os.path.isfile(meta_file):
+        os.remove(meta_file)
 
     if 'param_file' in arguments:
         build = Build(arguments['endpoint'], param_file=arguments['param_file'], output_format=output_format)
@@ -234,12 +239,6 @@ def build_cmd(arguments, output_format=None):
         if not os.path.isfile(lfile):
             return False, 'No training series found'
 
-        # remove pre-existing results file
-        epd = utils.model_path(arguments['endpoint'], 0)
-        rfile = os.path.join(epd, 'results.pkl')
-        if os.path.isfile(rfile):
-            os.remove(rfile)
-
         # run the model with the input file
         success, results = build.run(lfile)
 
@@ -255,11 +254,14 @@ def sbuild_cmd(arguments, output_format=None):
     from flame.sbuild import Sbuild
 
     # safety check if model exists
-    repo_path = pathlib.Path(utils.space_repository_path())
-    space_list = os.listdir(repo_path)
-
-    if arguments['space'] not in space_list:
+    space_dir = utils.space_path(arguments['space'], 0)
+    if not os.path.isdir(space_dir):
         return False, 'Endpoint name not found in space repository.'
+
+    # remove pre-existing results file
+    results_file = os.path.join(space_dir, 'results.pkl')
+    if os.path.isfile(results_file):
+        os.remove(results_file)
 
     if 'param_string' in arguments:
         sbuild = Sbuild(arguments['space'], param_string=arguments['param_string'], output_format=output_format)
@@ -306,9 +308,8 @@ def search_cmd(model, output_format=None):
         model['label'] = 'temp'
 
     # safety check if model exists
-    repo_path = pathlib.Path(utils.space_repository_path())
-    space_list = os.listdir(repo_path)
-    if model['space'] not in space_list:
+    space_dir = utils.space_path(model['space'], 0)
+    if not os.path.isdir(space_dir):
         return False, 'Endpoint name not found in space repository.'
 
     search = Search(model['space'], version=model['version'], output_format=output_format, label=model['label'])

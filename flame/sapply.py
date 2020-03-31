@@ -33,7 +33,20 @@ class Sapply:
 
         self.param = parameters
         self.conveyor = conveyor
-        self.conveyor.setOrigin('sapply')
+  
+        # set modelID only for search workflows. Avoid
+        # for similarity implemented in predict
+        if self.conveyor.getOrigin() == 'sapply':
+            endpoint = self.conveyor.getMeta('endpoint')
+            version  = self.conveyor.getMeta('version')
+            path = utils.space_path(endpoint, version)
+            meta = os.path.join(path,'space-meta.pkl')
+            with open(meta, 'rb') as handle:
+                modelID = pickle.load(handle)
+
+            self.conveyor.addMeta('modelID', modelID)
+            LOG.debug (f'Loaded space with modelID: {modelID}')
+
         self.X = self.conveyor.getVal('xmatrix')
 
 
