@@ -12,7 +12,7 @@ dependencies:
   - scikit-learn=>0.19.1
   - requests
   - rdkit
-  - keras-gpu
+  - keras-gpu=>2.3.1
   - pyyaml
   - pytest
   - psycopg2
