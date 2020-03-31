@@ -102,7 +102,7 @@ def getCrossVal(cv, rs, n, p):
 
     if cv == 'kfold':
         from sklearn.model_selection import KFold
-        return KFold(n_splits=n, random_state=rs, shuffle=False)
+        return KFold(n_splits=n, random_state=rs, shuffle=True)
 
     if cv == 'lpo':
         from sklearn.model_selection import LeavePOut 
