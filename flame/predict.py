@@ -22,6 +22,7 @@
 
 import os
 import sys
+import pickle
 import importlib
 
 from flame.util import utils, get_logger
@@ -42,8 +43,24 @@ class Predict:
         self.param = Parameters()
         self.conveyor = Conveyor()
 
+        # identify the workflow type
         self.conveyor.setOrigin('apply')
 
+        # load modelID
+        path = utils.model_path(model, version)
+        meta = os.path.join(path,'model-meta.pkl')
+
+        try:
+            with open(meta, 'rb') as handle:
+                modelID = pickle.load(handle)
+        except:
+            LOG.critical(f'Unable to load modelID from {meta}. Aborting...')
+            sys.exit()
+
+        self.conveyor.addMeta('modelID', modelID)
+        LOG.debug (f'Loaded model with modelID: {modelID}')
+
+        # assign prediction label
         self.conveyor.addVal(label, 'prediction_label', 'prediction label',
                     'method', 'single',
                     'Label used to identify the prediction')

@@ -21,6 +21,7 @@
 # along with Flame. If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import pickle
 import sys
 import yaml
 import importlib
@@ -37,15 +38,30 @@ LOG = get_logger(__name__)
 class Search:
 
     def __init__(self, space, version, output_format=None, label=None):
-        LOG.debug('Starting predict...')
+        LOG.debug('Starting search...')
         self.space = space
         self.version = version
         self.label = label
         self.param = Parameters()
         self.conveyor = Conveyor()
 
+        # identify the workflow type
         self.conveyor.setOrigin('sapply')
 
+        # load modelID
+        path = utils.space_path(space, version)
+        meta = os.path.join(path,'space-meta.pkl')
+        try:
+            with open(meta, 'rb') as handle:
+                modelID = pickle.load(handle)
+        except:
+            LOG.critical(f'Unable to load modelID from {meta}. Aborting...')
+            sys.exit()
+
+        self.conveyor.addMeta('modelID', modelID)
+        LOG.debug (f'Loaded space with modelID: {modelID}')
+
+        # assign prediction (search) label
         self.conveyor.addVal(label, 'prediction_label', 'prediction label',
             'method', 'single',
             'Label used to identify the prediction')

@@ -50,9 +50,6 @@ class Learn:
         self.param = parameters
         self.conveyor = conveyor
 
-        self.conveyor.addMeta('modelID',utils.id_generator())
-        LOG.debug(f'Generated new model with modelID: {self.conveyor.getMeta("modelID")}')
-
         self.X = self.conveyor.getVal('xmatrix')
         self.Y = self.conveyor.getVal('ymatrix')
 

@@ -40,7 +40,13 @@ class Sbuild:
         self.space = space
         self.param = Parameters()
         self.conveyor = Conveyor()
+
+        # identify the workflow type
         self.conveyor.setOrigin('slearn')
+
+        # generate a unique modelID
+        self.conveyor.addMeta('modelID',utils.id_generator())
+        LOG.debug(f'Generated new space with modelID: {self.conveyor.getMeta("modelID")}')
 
         # load parameters
         if param_file is not None:
