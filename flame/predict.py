@@ -47,18 +47,13 @@ class Predict:
         self.conveyor.setOrigin('apply')
 
         # load modelID
-        path = utils.model_path(model, version)
-        meta = os.path.join(path,'model-meta.pkl')
-
-        try:
-            with open(meta, 'rb') as handle:
-                modelID = pickle.load(handle)
-        except:
-            LOG.critical(f'Unable to load modelID from {meta}. Aborting...')
+        success, result = utils.getModelID(model, version, 'model')
+        if not success:
+            LOG.critical(f'{result}. Aborting...')
             sys.exit()
 
-        self.conveyor.addMeta('modelID', modelID)
-        LOG.debug (f'Loaded model with modelID: {modelID}')
+        self.conveyor.addMeta('modelID', result)
+        LOG.debug (f'Loaded model with modelID: {result}')
 
         # assign prediction label
         self.conveyor.addVal(label, 'prediction_label', 'prediction label',

@@ -124,10 +124,22 @@ def predict_cmd(arguments, output_format=None):
         if arguments['infile'] is None:
             return False, 'ensemble models require allways an input file'
 
-        success, model_res = get_ensemble_input(predict, ensemble[1], ensemble[2], arguments['infile'])
+        emodels = ensemble[1]
+        evers   = ensemble[2]
+
+        success, model_res = get_ensemble_input(predict, emodels, evers, arguments['infile'])
 
         if not success:
             return False, model_res
+
+        # check the presence of changes in the inner models
+        modelID = predict.conveyor.getMeta('modelID')
+        for i in range(len (emodels)):
+            success, iID = utils.getModelID(emodels[i], evers[i], 'model')
+            if success:
+                if iID not in modelID:
+                    predict.conveyor.setWarning (f'Inner model {emodels[i]}.{evers[i]} has been updated. Rebuilding of ensemble model is recommended')
+                    LOG.warning (f'Inner model {emodels[i]}.{evers[i]} has been updated. Rebuilding of ensemble model is recommended')
 
         # now run the model using the data from the external sources
         success, results = predict.run(model_res)
@@ -182,13 +194,23 @@ def build_cmd(arguments, output_format=None):
 
     if ensemble[0]:
 
+        emodels = ensemble[1]
+        evers   = ensemble[2]
+
         if arguments['infile'] is None:
             return False, 'ensemble models require allways an input file'
 
-        success, model_res = get_ensemble_input(build, ensemble[1], ensemble[2], arguments['infile'])
+        success, model_res = get_ensemble_input(build, emodels, evers, arguments['infile'])
 
         if not success:
             return False, model_res
+
+        for i in range(len (emodels)):
+            success, iID = utils.getModelID(emodels[i], evers[i], 'model')
+            if success:
+                build.extend_modelID(iID)
+
+        LOG.debug(f'New modelID is: {build.conveyor.getMeta("modelID")}')
 
         # now run the model using the data from the external sources
         success, results = build.run(model_res)
@@ -259,9 +281,13 @@ def sbuild_cmd(arguments, output_format=None):
         return False, 'Endpoint name not found in space repository.'
 
     # remove pre-existing results file
-    results_file = os.path.join(space_dir, 'results.pkl')
+    results_file = os.path.join(space_dir, 'space-results.pkl')
     if os.path.isfile(results_file):
         os.remove(results_file)
+    meta_file = os.path.join(space_dir, 'space-meta.pkl')
+    if os.path.isfile(meta_file):
+        os.remove(meta_file)
+
 
     if 'param_string' in arguments:
         sbuild = Sbuild(arguments['space'], param_string=arguments['param_string'], output_format=output_format)

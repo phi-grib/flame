@@ -79,6 +79,12 @@ class Build:
             sources and a list with these sources '''
         return self.param.getEnsemble()
 
+    def extend_modelID (self, ensembleID):
+        modelID = self.conveyor.getMeta('modelID')
+        modelID = f'{modelID}-{ensembleID}'
+        self.conveyor.addMeta('modelID', modelID)
+        LOG.debug (f'modelID re-defined as {self.conveyor.getVal("modelID")}')
+
     def set_single_CPU(self) -> None:
         ''' Forces the use of a single CPU '''
         LOG.debug('parameter "numCPUs" forced to be 1')
@@ -123,6 +129,7 @@ class Build:
             # run optional chemical space building for supporting "closest" training series object
             # if self.param.getVal('buildSimilarity'):
             if self.param.getVal('output_similar') is True:
+
 
                 from flame.slearn import Slearn
 
