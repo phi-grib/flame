@@ -267,6 +267,30 @@ def action_import(model):
     with tarfile.open(importfile, 'r:gz') as tar:
         tar.extractall(base_path)
 
+    # get libraries
+
+    incompatible = False
+    for x in os.listdir(base_path):
+        model_path = os.path.join(base_path,x)
+        model_pkl  = os.path.join(model_path,'estimator.pkl')
+        try:
+            with open(model_pkl, "rb") as input_file:
+                dict_estimator = pickle.load(input_file)
+        except FileNotFoundError:
+            continue
+
+        # check if the libraries used to build this model are similar to current libraries
+        if 'libraries' in dict_estimator:
+            # print (dict_estimator['libraries'])
+            success, results = utils.compatible_modules(dict_estimator['libraries'])
+            if not success:
+                LOG.warning(f"incompatible libraries detected, {results}. Use at your own risk")
+                incompatible = True
+                break
+
+    if not incompatible:        
+        LOG.info('Libraries used to generate the imported model are compatible with local libraries')
+
     LOG.info(f'Endpoint {endpoint} imported OK')
     return True, 'Endpoint '+endpoint+' imported OK'
 
