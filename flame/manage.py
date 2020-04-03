@@ -415,6 +415,8 @@ def action_results(model, version=None, ouput_variables=False):
     with open(results_file, 'rb') as handle:
         conveyor.load(handle)
 
+    print (conveyor.getJSON())
+
     return True, conveyor
 
 
