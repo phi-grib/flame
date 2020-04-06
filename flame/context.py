@@ -396,6 +396,10 @@ def manage_cmd(args):
             success, results = manage.action_export(args.endpoint)
         elif args.action == 'info':
             success, results = manage.action_info(args.endpoint, version)
+        elif args.action == 'refresh':
+            if args.version == None:
+                version = None
+            success, results = manage.action_refresh(args.endpoint, version)
         elif args.action == 'results':
             success, results = manage.action_results(args.endpoint, version)
         elif args.action == 'parameters':

@@ -29,7 +29,7 @@ import pathlib
 import numpy as np
 from flame.util import utils, get_logger 
 from flame.conveyor import Conveyor
-# from flame.parameters import Parameters
+from flame.parameters import Parameters
 # from flame.conveyor import Conveyor
 
 LOG = get_logger(__name__)
@@ -914,3 +914,82 @@ def action_prediction_template(model, version=None):
     documentation.get_prediction_template()
 
     return True, 'Prediction template created'
+
+
+def action_refresh (model=None, version=None):
+
+    import flame.context as context
+
+    # list endpoints relevant for the arguments
+    if model is not None:
+        model_list = [model]
+    else:
+        model_root = pathlib.Path(utils.model_repository_path())
+        model_list = [x.stem for x in model_root.iterdir() if x.is_dir()]
+
+    print (model_list)
+    # list versions relevant for the arguments
+
+    task_list = []
+    for imodel in model_list:
+        if version is not None:
+            task_list = [ (imodel, version) ]
+        else:
+            model_root = pathlib.Path(utils.model_tree_path(imodel))
+            itask_list = [( imodel, utils.modeldir2ver(x.stem) ) for x in model_root.iterdir() if x.is_dir()]
+            task_list+=itask_list
+
+    # analize task_list and add at the end ensemble models
+    LOG.info ("Analyzing and sorting models...")
+    mol_list = []
+    ens_list = []
+    for itask in task_list:
+        param = Parameters()
+        success, results = param.loadYaml(itask[0], itask[1])
+
+        if param.getVal('input_type') == 'model_ensemble':
+            ens_list.append(itask)
+        else:
+            mol_list.append(itask)
+
+    task_list = mol_list + ens_list
+
+    # show all models before stating
+    LOG.info ("Starting model refreshing task for the following models and versions")
+    for itask in task_list:
+        LOG.info (f'model: {itask[0]}\tversion: {itask[1]}')
+    LOG.info ("this can take some time, please be patient...")
+
+    for itask in task_list:
+
+        if itask[1] != 0:
+            # move version to /dev for building
+            original_path = utils.model_path(itask[0],itask[1]) # veri  
+            destinat_path = utils.model_path(itask[0],0)        # dev
+            security_path = destinat_path+'_security'           # dev_sec
+            shutil.move (destinat_path, security_path)          # dev --> dev_sec
+            shutil.move (original_path, destinat_path)          # veri --> dev
+
+        if itask in ens_list:
+            infile = None
+            # infile = 'mols/caco2.sdf'
+        else:
+            infile = None
+
+        command_build = {'endpoint': itask[0], 
+                         'infile': infile, 
+                         'param_file': None,
+                         'incremental': False}
+
+        success, results = context.build_cmd(command_build)
+
+        if itask[1] != 0:
+            shutil.move (destinat_path, original_path)          # dev --> veri
+            shutil.move (security_path, destinat_path)          # dev_sec --> dev
+
+        if not success:
+            LOG.error(results)
+
+    LOG.info ("... model refreshing task finished!")
+
+    return True, 'OK'
