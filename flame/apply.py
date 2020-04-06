@@ -278,8 +278,8 @@ class Apply:
             else:
 
                 # conformal & quantitative
-                Yp_lower = self.conveyor.getVal('lower_limit')
-                Yp_upper = self.conveyor.getVal('upper_limit')
+                Yp_lower = np.asarray(self.conveyor.getVal('lower_limit'))
+                Yp_upper = np.asarray(self.conveyor.getVal('upper_limit'))
 
                 mean_interval = np.mean(np.abs(Yp_lower) - np.abs(Yp_upper))
                 inside_interval = (Yp_lower.reshape(-1, 1) <
