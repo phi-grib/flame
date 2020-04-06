@@ -169,7 +169,10 @@ class BaseEstimator:
         # Make a copy of original matrices.
         X = self.X.copy()
         Y = self.Y.copy()
-
+        Y_rec = self.estimator_temp.predict(X, self.param.getVal(
+                                            'conformalSignificance'))
+        interval_mean = np.mean(np.abs((Y_rec[:, 0]) - 
+                               (Y_rec[:, 1])))
         info = []
 
         # # conformal models only use kfold for validation
@@ -206,7 +209,7 @@ class BaseEstimator:
             LOG.error(f'Quantitative conformal validation'
                         f' failed with exception: {e}')
             raise e
-
+ 
         Y_pred = np.asarray(Y_pred)
         # Add the n validation interval means
         interval_mean = np.mean(np.abs((Y_pred[:, 0]) - 
@@ -240,8 +243,60 @@ class BaseEstimator:
             ('Conformal_prediction_ranges',
              'Conformal prediction ranges', 
              Y_pred))
+        
+        Ym = np.mean(Y)
+        try:
+            SSY0 = np.sum(np.square(Ym-Y))
+            SSY = np.sum(np.square(Y_rec-Y))
 
+            self.scoringR = np.mean(
+                mean_squared_error(Y, Y_rec)) 
+            self.SDEC = np.sqrt(SSY/self.nobj)
+            if SSY0 == 0.0:
+                self.R2 = 0.0
+            else:
+                self.R2 = 1.00 - (SSY/SSY0)
+
+            info.append(('scoringR', 'Scoring P', self.scoringR))
+            info.append(('R2', 'Determination coefficient', self.R2))
+            info.append(
+                ('SDEC', 'Standard Deviation Error of the Calculations', 
+                    self.SDEC))
+            LOG.debug(f'Goodness of the fit calculated: {self.scoringR}')
+        except Exception as e:
+            LOG.error(f'Error computing goodness of the fit'
+                f'with exception {e}')
+            raise e
+
+        # Compute Cross-validation quality metrics
+        try:
+            SSY0_out = np.sum(np.square(Ym - Y))
+            SSY_out = np.sum(np.square(Y - interval_mean))
+            self.scoringP = mean_squared_error(Y, interval_mean)
+            self.SDEP = np.sqrt(SSY_out/(self.nobj))
+            if SSY0_out == 0.0:
+                self.Q2 = 0.0
+            else:
+                self.Q2 = 1.00 - (SSY_out/SSY0_out)
+
+            info.append(('scoringP', 'Scoring P', self.scoringP))
+            info.append(
+                ('Q2', 'Determination coefficient in cross-validation',
+                     self.Q2))
+            info.append(
+                ('SDEP', 'Standard Deviation Error of the Predictions',
+                     self.SDEP))
+
+            LOG.debug(f'Squared-Q calculated: {self.scoringP}')
+
+        except Exception as e:
+            LOG.error(f'Error cross-validating the estimator'
+                        f' with exception {e}')
+            raise e
+              
         results = {}
+        results ['Y_adj'] = Y_rec
+        results ['Y_pred'] = y_pred
         results ['quality'] = info
         return True, results
 
