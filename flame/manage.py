@@ -970,14 +970,8 @@ def action_refresh (model=None, version=None):
             shutil.move (destinat_path, security_path)          # dev --> dev_sec
             shutil.move (original_path, destinat_path)          # veri --> dev
 
-        if itask in ens_list:
-            infile = None
-            # infile = 'mols/caco2.sdf'
-        else:
-            infile = None
-
         command_build = {'endpoint': itask[0], 
-                         'infile': infile, 
+                         'infile': None, 
                          'param_file': None,
                          'incremental': False}
 
