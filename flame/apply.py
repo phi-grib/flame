@@ -282,19 +282,42 @@ class Apply:
                 Yp_upper = np.asarray(self.conveyor.getVal('upper_limit'))
 
                 mean_interval = np.mean(np.abs(Yp_lower) - np.abs(Yp_upper))
+                interval_means = (Yp_lower + Yp_upper) / 2
                 inside_interval = (Yp_lower.reshape(-1, 1) <
                                    Ye) & (Yp_upper.reshape(-1, 1) > Ye)
                 accuracy = len(inside_interval)/len(Ye)
                 conformal_accuracy = float("{0:.2f}".format(accuracy))
                 conformal_mean_interval = float(
                     "{0:.2f}".format(mean_interval))
-
                 ext_val_results.append(('Conformal_mean_interval',
                                         'Conformal mean interval',
                                         conformal_mean_interval))
                 ext_val_results.append(('Conformal_accuracy',
                                         'Conformal accuracy',
                                         conformal_accuracy))
+                # Compute classic Cross-validation quality metrics using inteval mean
+                try:
+                    nobj = len(Ye)
+                    Ym = np.mean(Ye)
+                    SSY0_out = np.sum(np.square(Ym - Ye))
+                    SSY_out = np.sum(np.square(Ye - interval_means))
+                    scoringP = mean_squared_error(Ye, interval_means)
+                    SDEP = np.sqrt(SSY_out/(nobj))
+                    if SSY0_out == 0.0:
+                        Q2 = 0.0
+                    else:
+                        Q2 = 1.00 - (SSY_out/SSY0_out)
+
+                    ext_val_results.append(('scoringP', 'Scoring P', scoringP))
+                    ext_val_results.append(('Q2', 'Determination coefficient in cross-validation',
+                                           Q2))
+                    ext_val_results.append(('SDEP', 'Standard Deviation Error of the Predictions',
+                                            SDEP))
+
+                except Exception as e:
+                    LOG.error(f'Error in external validation '
+                                f' with exception {e}')
+                    raise e
 
                 self.conveyor.addVal(
                                  ext_val_results,

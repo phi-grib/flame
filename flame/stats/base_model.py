@@ -169,10 +169,10 @@ class BaseEstimator:
         # Make a copy of original matrices.
         X = self.X.copy()
         Y = self.Y.copy()
-        Y_rec = self.estimator_temp.predict(X, self.param.getVal(
-                                            'conformalSignificance'))
-        interval_mean = np.mean(np.abs((Y_rec[:, 0]) - 
-                               (Y_rec[:, 1])))
+
+        # Predict recalculated values for classic R2 
+        Y_rec = self.estimator.predict(X, self.param.getVal('conformalSignificance'))
+        Y_rec = (Y_rec[:, 0] + Y_rec[:, 1])/2
         info = []
 
         # # conformal models only use kfold for validation
@@ -209,7 +209,8 @@ class BaseEstimator:
             LOG.error(f'Quantitative conformal validation'
                         f' failed with exception: {e}')
             raise e
- 
+        
+        # Convert Y_pred to a numpy array
         Y_pred = np.asarray(Y_pred)
         # Add the n validation interval means
         interval_mean = np.mean(np.abs((Y_pred[:, 0]) - 
@@ -244,6 +245,8 @@ class BaseEstimator:
              'Conformal prediction ranges', 
              Y_pred))
         
+        # Compute goodness of the fit statistics using recalculated
+        # predictions
         Ym = np.mean(Y)
         try:
             SSY0 = np.sum(np.square(Ym-Y))
@@ -268,11 +271,11 @@ class BaseEstimator:
                 f'with exception {e}')
             raise e
 
-        # Compute Cross-validation quality metrics
+        # Compute classic Cross-validation quality metrics using inteval mean
         try:
             SSY0_out = np.sum(np.square(Ym - Y))
-            SSY_out = np.sum(np.square(Y - interval_mean))
-            self.scoringP = mean_squared_error(Y, interval_mean)
+            SSY_out = np.sum(np.square(Y - self.conformal_interval_medians))
+            self.scoringP = mean_squared_error(Y, self.conformal_interval_medians)
             self.SDEP = np.sqrt(SSY_out/(self.nobj))
             if SSY0_out == 0.0:
                 self.Q2 = 0.0
@@ -295,8 +298,6 @@ class BaseEstimator:
             raise e
               
         results = {}
-        results ['Y_adj'] = Y_rec
-        results ['Y_pred'] = y_pred
         results ['quality'] = info
         return True, results
 
