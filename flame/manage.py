@@ -29,8 +29,6 @@ import pathlib
 import numpy as np
 from flame.util import utils, get_logger 
 from flame.conveyor import Conveyor
-from flame.parameters import Parameters
-# from flame.conveyor import Conveyor
 
 LOG = get_logger(__name__)
 
@@ -917,8 +915,15 @@ def action_prediction_template(model, version=None):
 
 
 def action_refresh (model=None, version=None):
+    '''
+    Rebuild one or many models making use of existing parameter files and
+    locally stored training series. 
+    '''
 
     import flame.context as context
+    from flame.parameters import Parameters
+    import logging
+
 
     # list endpoints relevant for the arguments
     if model is not None:
@@ -941,6 +946,31 @@ def action_refresh (model=None, version=None):
     # this is needed to have low models refreshed BEFORE refreshing the high models
     # eliminating the need to refresh them recursively 
     LOG.info ("Analyzing and sorting models...")
+
+    # make sure the lower models are in task_list and, if not, force the inclussion
+    for itask in task_list:
+        param = Parameters()
+        success, results = param.loadYaml(itask[0], itask[1])
+
+        if not success:
+            continue
+
+        if param.getVal('input_type') == 'model_ensemble':
+            ens_nams = param.getVal('ensemble_names')
+            ens_vers = param.getVal('ensemble_versions')
+            for i in range(len(ens_nams)):
+                iver = 0
+                inam = ens_nams[i]
+                if (i<len(ens_vers)):
+                    iver = ens_vers[i]
+                if ( (inam,iver) ) not in task_list:
+                    task_list.append( (inam, iver) ) 
+    
+    # create separate lists for regular and ensemble models
+    # and add ensemble models at the end
+    # this needs to be carried out after the previos step because
+    # some of the lower level models could be an ensemble model
+    # itself 
     mol_list = []
     ens_list = []
     for itask in task_list:
@@ -952,7 +982,6 @@ def action_refresh (model=None, version=None):
             continue
 
         if param.getVal('input_type') == 'model_ensemble':
-            # TODO: make sure the lower models are in task_list and, if not, force the inclussion
             ens_list.append(itask)
         else:
             mol_list.append(itask)
@@ -962,8 +991,9 @@ def action_refresh (model=None, version=None):
     # show all models before stating
     LOG.info ("Starting model refreshing task for the following models and versions")
     for itask in task_list:
-        LOG.info (f'model: {itask[0]}\tversion: {itask[1]}')
-    LOG.info ("this can take some time, please be patient...")
+        LOG.info (f'   model: {itask[0]}   version: {itask[1]}')
+    
+    LOG.info ("This can take some time, please be patient...")
 
     # now send the build command for each task
     for itask in task_list:
@@ -976,6 +1006,11 @@ def action_refresh (model=None, version=None):
             shutil.move (destinat_path, security_path)          # dev --> dev_sec
             shutil.move (original_path, destinat_path)          # veri --> dev
 
+        LOG.info (f'   refreshing model: {itask[0]}   version: {itask[1]} ({task_list.index(itask)+1} of {len(task_list)})...')
+
+        # dissable LOG output
+        logging.disable(logging.ERROR)
+
         command_build = {'endpoint': itask[0], 
                          'infile': None, 
                          'param_file': None,
@@ -983,6 +1018,9 @@ def action_refresh (model=None, version=None):
 
         success, results = context.build_cmd(command_build)
 
+        # enable LOG output
+        logging.disable(logging.NOTSET)
+        
         if itask[1] != 0:
             shutil.move (destinat_path, original_path)          # dev --> veri
             shutil.move (security_path, destinat_path)          # dev_sec --> dev
@@ -990,7 +1028,6 @@ def action_refresh (model=None, version=None):
         if not success:
             LOG.error(results)
 
-    # TODO: add some stats
-    LOG.info ("... model refreshing task finished!")
+    LOG.info ("Model refreshing task finished")
 
     return True, 'OK'

@@ -92,7 +92,8 @@ class Odata():
         argument (val) in a human-readable format 
         '''
         if len(val) < 3:
-            print('       ',val)
+            # print('       ',val)
+            LOG.info(f'       {val}')
         else:
             v3 = val[2]
             try:
@@ -102,7 +103,8 @@ class Odata():
             except:
                 pass
 
-            print(f'       {val[0]} ( {val[1]} ) : {v3}')
+            # print(f'       {val[0]} ( {val[1]} ) : {v3}')
+            LOG.info (f'       {val[0]} ( {val[1]} ) : {v3}')
 
     def run_learn(self):
         '''Process the results of learn,
