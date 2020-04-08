@@ -25,24 +25,24 @@ import os
 import pickle
 import numpy as np
 
+from sklearn.preprocessing import MinMaxScaler 
+from sklearn.preprocessing import StandardScaler 
+from sklearn.preprocessing import RobustScaler
+
 from flame.stats.RF import RF
 from flame.stats.SVM import SVM
 from flame.stats.GNB import GNB
 from flame.stats.PLSR import PLSR
 from flame.stats.PLSDA import PLSDA
+from flame.stats import feature_selection
 from flame.stats.XGboost import XGBOOST
 from flame.stats.combo import median, mean, majority, matrix
-from flame.stats.pca import pca
-from sklearn.preprocessing import MinMaxScaler 
-from sklearn.preprocessing import StandardScaler 
-from sklearn.preprocessing import RobustScaler
+from flame.stats.imbalance import run_imbalance  
 
+from flame.graph.graph import generateProjectedSpace
 
-from flame.stats.imbalance import *  
-from flame.stats import feature_selection
 from flame.util import utils, get_logger
 LOG = get_logger(__name__)
-
 
 class Learn:
 
@@ -184,6 +184,32 @@ class Learn:
         LOG.debug('Model saved as:{}'.format(prepro_pkl_path))
         return True, 'OK'
 
+    # def generateProjectedSpace(self):
+    #     # TODO: decide which is the best way to present the training space
+    #     LOG.info('Generating projeced X space...')
+    #     mpca = pca()
+    #     mpca.build(self.X,targetA=2,autoscale=False)
+
+    #     pca_path = os.path.join(self.param.getVal('model_path'),'pca.npy')
+    #     mpca.saveModel(pca_path)
+
+    #     obj_nam = self.conveyor.getVal('obj_nam')
+
+    #     # generate TSV file with PCA scores
+    #     with open('scores.tsv','w') as handler:
+    #         for i in range(mpca.nobj):
+    #             handler.write (f'{obj_nam[i]}\t{mpca.t[0][i]}\t{mpca.t[1][i]}\n')
+
+    #     # dump to conveyor?
+
+    #     # generate png with PCA scores
+    #     import matplotlib.pyplot as plt
+
+    #     scores=plt.figure(figsize=(9,6))
+    #     plt.xlabel('PC 1')
+    #     plt.ylabel('PC 2')
+    #     plt.scatter(mpca.t[0],mpca.t[1], c='red', marker='D', s=40, linewidths=0)
+    #     scores.savefig("pca-scores12.png", format='png')
 
     def run_internal(self):
         '''
@@ -325,32 +351,8 @@ class Learn:
 
         # TODO: compute AD (when applicable)
 
-        LOG.info('Generating projeced X space..')
-
-        # TODO: decide which is the best way to present the training space
-        mpca = pca()
-        mpca.build(self.X,targetA=2,autoscale=False)
-
-        pca_path = os.path.join(self.param.getVal('model_path'),'pca.npy')
-        mpca.saveModel(pca_path)
-
-        obj_nam = self.conveyor.getVal('obj_nam')
-
-        # generate TSV file with PCA scores
-        with open('scores.tsv','w') as handler:
-            for i in range(mpca.nobj):
-                handler.write (f'{obj_nam[i]}\t{mpca.t[0][i]}\t{mpca.t[1][i]}\n')
-
-        # dump to conveyor?
-
-        # generate png with PCA scores
-        import matplotlib.pyplot as plt
-
-        scores=plt.figure(figsize=(9,6))
-        plt.xlabel('PC 1')
-        plt.ylabel('PC 2')
-        plt.scatter(mpca.t[0],mpca.t[1], c='red', marker='D', s=40, linewidths=0)
-        scores.savefig("pca-scores12.png", format='png')
+        # generate a proyected space and use it to generate graphics
+        generateProjectedSpace(self.X, self.param, self.conveyor)
 
         LOG.info('Model finished successfully')
 
