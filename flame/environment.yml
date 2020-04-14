@@ -12,13 +12,13 @@ dependencies:
   - scikit-learn=>0.19.1
   - requests
   - rdkit
-  - keras
+  #- keras
   - pyyaml
   - pytest
   - psycopg2
   - chembl_structure_pipeline
   - pip:
-     #- xgboost
+     - xgboost
      - django==2.2.8
      - djangorestframework
      - django-cors-headers
