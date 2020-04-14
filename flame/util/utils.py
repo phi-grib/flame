@@ -26,6 +26,7 @@ import os
 import sys
 import yaml
 import random
+import pickle
 import string
 import hashlib
 import pathlib
@@ -223,6 +224,17 @@ def model_path(model, version):
     Returns the path to the model and version given as arguments
     '''
     return path_expand (model_tree_path(model), version)
+
+def getModelID (model, version, object_type='model'):
+    path = model_path(model, version)
+    meta = os.path.join(path, object_type+'-meta.pkl')
+
+    try:
+        with open(meta, 'rb') as handle:
+            modelID = pickle.load(handle)
+        return True, modelID
+    except:
+        return False, f'Unable to load modelID from {meta}'
 
 def space_repository_path():
     '''

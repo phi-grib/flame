@@ -48,16 +48,6 @@ class Apply:
         self.param = parameters
         self.conveyor = conveyor
 
-        endpoint = self.conveyor.getMeta('endpoint')
-        version  = self.conveyor.getMeta('version')
-        path = utils.model_path(endpoint, version)
-        meta = os.path.join(path,'model-meta.pkl')
-        with open(meta, 'rb') as handle:
-            modelID = pickle.load(handle)
-
-        self.conveyor.addMeta('modelID', modelID)
-        LOG.debug (f'Loaded model with modelID: {modelID}')
-
         # expand with new methods here:
         self.registered_methods = [('RF', RF),
                               ('SVM', SVM),

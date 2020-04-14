@@ -24,14 +24,11 @@ import os
 import sys
 import shutil
 import tarfile
-import json
 import pickle
 import pathlib
 import numpy as np
 from flame.util import utils, get_logger 
 from flame.conveyor import Conveyor
-# from flame.parameters import Parameters
-# from flame.conveyor import Conveyor
 
 LOG = get_logger(__name__)
 
@@ -268,6 +265,30 @@ def action_import(model):
     with tarfile.open(importfile, 'r:gz') as tar:
         tar.extractall(base_path)
 
+    # get libraries
+
+    incompatible = False
+    for x in os.listdir(base_path):
+        model_path = os.path.join(base_path,x)
+        model_pkl  = os.path.join(model_path,'estimator.pkl')
+        try:
+            with open(model_pkl, "rb") as input_file:
+                dict_estimator = pickle.load(input_file)
+        except FileNotFoundError:
+            continue
+
+        # check if the libraries used to build this model are similar to current libraries
+        if 'libraries' in dict_estimator:
+            # print (dict_estimator['libraries'])
+            success, results = utils.compatible_modules(dict_estimator['libraries'])
+            if not success:
+                LOG.warning(f"incompatible libraries detected, {results}. Use at your own risk")
+                incompatible = True
+                break
+
+    if not incompatible:        
+        LOG.info('Libraries used to generate the imported model are compatible with local libraries')
+
     LOG.info(f'Endpoint {endpoint} imported OK')
     return True, 'Endpoint '+endpoint+' imported OK'
 
@@ -315,14 +336,14 @@ def action_info(model, version, output='text'):
     '''
 
     if model is None:
-        if output == 'JSON':
+        if output != 'text':
             return False, {'code':1, 'message': 'Empty model label'}
         return False, 'Empty model label'
 
     meta_path = utils.model_path(model, version)
     meta_file = os.path.join(meta_path, 'model-meta.pkl')
     if not os.path.isfile(meta_file):
-        if output == 'JSON':
+        if output != 'text':
             return False, {'code':0, 'message': 'Info file not found'}
         return False, 'Info file not found'
 
@@ -335,7 +356,7 @@ def action_info(model, version, output='text'):
         type_info = pickle.load(handle)
 
     if errorMessage is not None:
-        if output == 'JSON':
+        if output != 'text':
             return False, {'code':1, 'message': errorMessage}
         return False, errorMessage        
 
@@ -355,7 +376,7 @@ def action_info(model, version, output='text'):
                 info+=iinfo
 
     if info == None:
-        if output == 'JSON':
+        if output != 'text':
             return False, {'code':1, 'message': 'No relevant information found'}
         return False, 'No relevant information found'
 
@@ -392,7 +413,8 @@ def action_results(model, version=None, ouput_variables=False):
     with open(results_file, 'rb') as handle:
         conveyor.load(handle)
 
-    # return True, conveyor.getJSON()
+    print (conveyor.getJSON())
+
     return True, conveyor
 
 
@@ -411,8 +433,7 @@ def action_parameters(model, version=None, oformat='text'):
         print (f'error obtaining parametes for model {model} : {results}')
         return False, results
 
-    if oformat == 'JSON':
-        # return True, param.dumpJSON()
+    if oformat != 'text':
         return True, param
 
     else:
@@ -514,7 +535,7 @@ def action_parameters(model, version=None, oformat='text'):
 
 
 ## the following commands are argument-less, intended to be called from a web-service to 
-## generate JSON output only
+## generate python output only
 
 def action_documentation(model, version=None, doc_file=None, oformat='text'):
     ''' Returns an object with whole results info for a given model and version '''
@@ -537,8 +558,7 @@ def action_documentation(model, version=None, doc_file=None, oformat='text'):
         success, message = doc.delta(model, 0, doc_file, iformat='YAML')
 
     doc = Documentation(model, version)
-    if oformat == 'JSON':
-        # return True, doc.dumpJSON()
+    if oformat != 'text':
         return True, doc
 
     else:
@@ -687,9 +707,9 @@ def action_report():
 
             iver = utils.modeldir2ver(ivtag)
 
-            # now we have the model name and version, try to get the ijson text
+            # now we have the model name and version, try to get the info
             try:
-                isuccess, iresult=action_info(imodel_name, iver, output='JSON')
+                isuccess, iresult=action_info(imodel_name, iver, output='bin')
             except:
                 continue
 
@@ -702,8 +722,6 @@ def action_report():
         # build a tuple (model_name, [version_info]) for each model and append
         results.append((imodel_name, imodel_vers_info))
         
-    #print (json.dumps(results))
-    # return True, json.dumps(results)
     return True, results
 
 def getdate (element):
@@ -757,7 +775,6 @@ def action_predictions_list ():
 
     [print (i[1]) for i in result]
 
-    # return True, json.dumps(jresult)
     return True, iresult
 
 def print_prediction_result (val):
@@ -790,14 +807,14 @@ def action_predictions_result (label, output='text'):
     label_path = predictions_path.joinpath(label)
 
     if not label_path.is_dir():
-        if output == 'JSON':
+        if output != 'text':
             return False, {'code':0, 'message': f'directory {label_path} not found'}
         print (f'directory {label_path} not found')
         return False, None
 
     result_path = label_path.joinpath('prediction-results.pkl')
     if not result_path.is_file():
-        if output == 'JSON':
+        if output != 'text':
             return False, {'code':0, 'message': f'predictions not found for {label} directory'}
         print (f'predictions not found for {label} directory')
         return False, None
@@ -808,7 +825,7 @@ def action_predictions_result (label, output='text'):
         success, message = iconveyor.load(handle)
 
     if not success:
-        if output == 'JSON':
+        if output != 'text':
             return False, {'code':1, 'message': f'error reading prediction results with message {message}'}
         print (f'error reading prediction results with message {message}')
         return False, None
@@ -826,10 +843,6 @@ def action_predictions_result (label, output='text'):
 
     # return iconveyor
     return True, iconveyor
-
-    # return a JSON generated by iconveyor
-    # input_type = iconveyor.getMeta('input_type')
-    # return True, iconveyor.getJSON(xdata=(input_type == 'model_ensemble'))
 
 def action_predictions_remove (label):
     '''
@@ -899,3 +912,122 @@ def action_prediction_template(model, version=None):
     documentation.get_prediction_template()
 
     return True, 'Prediction template created'
+
+
+def action_refresh (model=None, version=None):
+    '''
+    Rebuild one or many models making use of existing parameter files and
+    locally stored training series. 
+    '''
+
+    import flame.context as context
+    from flame.parameters import Parameters
+    import logging
+
+
+    # list endpoints relevant for the arguments
+    if model is not None:
+        model_list = [model]
+    else:
+        model_root = pathlib.Path(utils.model_repository_path())
+        model_list = [x.stem for x in model_root.iterdir() if x.is_dir()]
+
+    # list versions relevant for the arguments
+    task_list = []
+    for imodel in model_list:
+        if version is not None:
+            task_list.append( (imodel, version) )
+        else:
+            model_root = pathlib.Path(utils.model_tree_path(imodel))
+            itask_list = [( imodel, utils.modeldir2ver(x.stem) ) for x in model_root.iterdir() if x.is_dir()]
+            task_list+=itask_list  # use "+=" and not "append" to merge the new list with the old one
+
+    # analize task_list and add at the end ensemble models
+    # this is needed to have low models refreshed BEFORE refreshing the high models
+    # eliminating the need to refresh them recursively 
+    LOG.info ("Analyzing and sorting models...")
+
+    # make sure the lower models are in task_list and, if not, force the inclussion
+    for itask in task_list:
+        param = Parameters()
+        success, results = param.loadYaml(itask[0], itask[1])
+
+        if not success:
+            continue
+
+        if param.getVal('input_type') == 'model_ensemble':
+            ens_nams = param.getVal('ensemble_names')
+            ens_vers = param.getVal('ensemble_versions')
+            for i in range(len(ens_nams)):
+                iver = 0
+                inam = ens_nams[i]
+                if (i<len(ens_vers)):
+                    iver = ens_vers[i]
+                if ( (inam,iver) ) not in task_list:
+                    task_list.append( (inam, iver) ) 
+    
+    # create separate lists for regular and ensemble models
+    # and add ensemble models at the end
+    # this needs to be carried out after the previos step because
+    # some of the lower level models could be an ensemble model
+    # itself 
+    mol_list = []
+    ens_list = []
+    for itask in task_list:
+        param = Parameters()
+        success, results = param.loadYaml(itask[0], itask[1])
+
+        if not success:
+            mol_list.append(itask)
+            continue
+
+        if param.getVal('input_type') == 'model_ensemble':
+            ens_list.append(itask)
+        else:
+            mol_list.append(itask)
+
+    task_list = mol_list + ens_list
+
+    # show all models before stating
+    LOG.info ("Starting model refreshing task for the following models and versions")
+    for itask in task_list:
+        LOG.info (f'   model: {itask[0]}   version: {itask[1]}')
+    
+    LOG.info ("This can take some time, please be patient...")
+
+    # now send the build command for each task
+    for itask in task_list:
+
+        if itask[1] != 0:
+            # move version to /dev for building
+            original_path = utils.model_path(itask[0],itask[1]) # veri  
+            destinat_path = utils.model_path(itask[0],0)        # dev
+            security_path = destinat_path+'_security'           # dev_sec
+            shutil.move (destinat_path, security_path)          # dev --> dev_sec
+            shutil.move (original_path, destinat_path)          # veri --> dev
+
+        LOG.info (f'   refreshing model: {itask[0]}   version: {itask[1]} ({task_list.index(itask)+1} of {len(task_list)})...')
+
+        # dissable LOG output
+        logging.disable(logging.ERROR)
+
+        command_build = {'endpoint': itask[0], 
+                         'infile': None, 
+                         'param_file': None,
+                         'incremental': False}
+
+        success, results = context.build_cmd(command_build)
+
+        # enable LOG output
+        logging.disable(logging.NOTSET)
+        
+        if itask[1] != 0:
+            shutil.move (destinat_path, original_path)          # dev --> veri
+            shutil.move (security_path, destinat_path)          # dev_sec --> dev
+
+        if not success:
+            LOG.error(results)
+
+    LOG.info ("Model refreshing task finished")
+
+    return True, 'OK'

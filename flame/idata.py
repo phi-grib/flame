@@ -762,8 +762,10 @@ class Idata:
                 if md5_input != utils.md5sum(self.ifile):
                     return False
 
-                # preserve original origin tag, save it
+                # preserve original origin tag and modelID, save it
                 origin = self.conveyor.getOrigin()
+                modelID = self.conveyor.getMeta('modelID')
+                # warning = self.conveyor.getWarningMessage()
 
                 success, message = self.conveyor.load(fi)
                 
@@ -773,6 +775,9 @@ class Idata:
 
                 # presenve original origin tag, apply it
                 self.conveyor.setOrigin(origin)
+                self.conveyor.addMeta('modelID', modelID)
+                # if warning is not None:
+                #     self.conveyor.setWarningMessage(warning)
 
         except Exception as e:
             self.conveyor.setError('Error loading pickle with exception: {}'.format(e))
