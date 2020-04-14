@@ -18,7 +18,7 @@ dependencies:
   - psycopg2
   - chembl_structure_pipeline
   - pip:
-     - xgboost
+     #- xgboost
      - django==2.2.8
      - djangorestframework
      - django-cors-headers
