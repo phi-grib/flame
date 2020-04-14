@@ -1,0 +1,27 @@
+name: flame
+channels:
+  - default
+  - rdkit
+  - conda-forge 
+  - chembl
+  - anaconda
+dependencies:
+  - pip
+  - python=3.6
+  - setuptools=>38.4.0
+  - scikit-learn=>0.19.1
+  - requests
+  - rdkit
+  - keras
+  - pyyaml
+  - pytest
+  - psycopg2
+  - chembl_structure_pipeline
+  - pip:
+     - xgboost
+     - django==2.2.8
+     - djangorestframework
+     - django-cors-headers
+     - djangorestframework-yaml
+     - "https://github.com/phi-grib/standardiser/archive/master.zip"
+     - "https://github.com/josecarlosgomezt/nonconformist/archive/master.zip"
