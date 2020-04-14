@@ -40,6 +40,7 @@ class Sbuild:
         self.space = space
         self.param = Parameters()
         self.conveyor = Conveyor()
+        self.conveyor.setOrigin('slearn')
 
         # load parameters
         if param_file is not None:

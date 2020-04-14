@@ -20,7 +20,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Flame.  If not, see <http://www.gnu.org/licenses/>.
 
-# from flame.stats.model_validation import *
 import pickle
 import numpy as np
 import os
@@ -34,29 +33,14 @@ from flame.stats.scale import center, scale
 from flame.stats.feature_selection import *
 from flame.stats.imbalance import *  
 
+from flame.stats.crossval import getCrossVal
 from sklearn.model_selection import cross_val_predict
-# from sklearn.model_selection import cross_val_score
-# from sklearn.model_selection import LeaveOneOut
-# from sklearn.model_selection import LeaveOneGroupOut
-# from sklearn.model_selection import LeavePOut  
-# from sklearn.model_selection import LeavePGroupsOut
-# from sklearn.model_selection import PredefinedSplit
-# from sklearn.model_selection import TimeSeriesSplit
-# from sklearn.model_selection import ShuffleSplit
-# from sklearn.model_selection import GroupShuffleSplit
-# from sklearn.model_selection import StratifiedShuffleSplit
-from sklearn.model_selection import KFold
-# from sklearn.model_selection import GroupKFold
-# from sklearn.model_selection import StratifiedKFold
-from sklearn.model_selection import GridSearchCV
-# from sklearn.model_selection import train_test_split
-# from sklearn.model_selection import *  # KP
-
+from sklearn.model_selection import GridSearchCV 
 from sklearn.metrics import mean_squared_error, matthews_corrcoef as mcc
 from sklearn.metrics import f1_score
 from sklearn.metrics import make_scorer
 from sklearn.metrics import confusion_matrix
-from sklearn.preprocessing import MinMaxScaler 
+from sklearn.preprocessing import MinMaxScaler
 
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.tree import DecisionTreeRegressor
@@ -72,7 +56,6 @@ from nonconformist.acp import AggregatedCp
 from nonconformist.acp import BootstrapSampler, CrossSampler, RandomSubSampler
 from nonconformist.acp import BootstrapConformalClassifier
 from nonconformist.acp import CrossConformalClassifier
-
 from nonconformist.evaluation import class_mean_errors, class_one_c
 from nonconformist.evaluation import cross_val_score as conformal_cross_val_score
 from nonconformist.evaluation import ClassIcpCvHelper, RegIcpCvHelper
@@ -86,63 +69,6 @@ LOG = get_logger(__name__)
 
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
-
-########################################################################
-#TODO: re-write this. It makes no sense creating so many objects which
-# would not be used at all!!!!
-########################################################################
-
-def getCrossVal(cv, rs, n, p):
-
-    cv = str(cv)
-
-    if cv == 'loo':
-        from sklearn.model_selection import LeaveOneOut
-        return LeaveOneOut()                   
-
-    if cv == 'kfold':
-        from sklearn.model_selection import KFold
-        return KFold(n_splits=n, random_state=rs, shuffle=False)
-
-    if cv == 'lpo':
-        from sklearn.model_selection import LeavePOut 
-        return LeavePOut(int(p))
-
-    # # K-Folds cross-validator
-    # kfold = KFold(n_splits=n, random_state=rs, shuffle=False)
-
-    # # K-fold iterator variant with non-overlapping groups.
-    # gkfold = GroupKFold(n_splits=n)
-
-    # # Stratified K-Folds cross-validator
-    # stkfold = StratifiedKFold(n_splits=n, random_state=rs, shuffle=False)
-    # logo = LeaveOneGroupOut()              # Leave One Group Out cross-validator
-    # lpgo = LeavePGroupsOut(n_groups=n)     # Leave P Group(s) Out cross-validator
-    # loo  = LeaveOneOut()                   # Leave-One-Out cross-validator
-    # lpo  = LeavePOut(int(p))               # Leave-P-Out cross-validator
-
-    # # Random permutation cross-validator
-    # shufsplit = ShuffleSplit(n_splits=n, random_state=rs,
-    #                          test_size=0.25, train_size=None)
-
-    # # Shuffle-Group(s)-Out cross-validation iterator
-    # gshufplit = GroupShuffleSplit(test_size=10, n_splits=n)
-
-    # # Stratified ShuffleSplit cross-validator
-    # stshufsplit = StratifiedShuffleSplit(
-    #     n_splits=n, test_size=0.5, random_state=0)
-
-    # # Predefined split cross-validator
-    # psplit = PredefinedSplit(test_fold=[0,  1, -1,  1])
-    # tssplit = TimeSeriesSplit(n_splits=n)
-
-    # splitClass = {'kfold': kfold, 'gkfold': gkfold, 'stkfold': stkfold, 'logo': logo,
-    #               'lpgo': lpgo, 'loo': loo, 'lpo': lpo, 'shufsplit': shufsplit,
-    #               'gshufplit': gshufplit, 'stshufsplit': stshufsplit,
-    #               'psplit': psplit, 'tssplit': tssplit}
-
-    # return splitClass.get(str(cv))
-
 
 class BaseEstimator:
     """
@@ -338,9 +264,10 @@ class BaseEstimator:
         not_predicted_all = 0
 
         info = []
+        from sklearn.model_selection import KFold
 
         # # conformal models only use kfold for validation
-        # kf = KFold(n_splits=self.param.getVal('ModelValidationN'), shuffle=False, random_state=46)
+        #self.cv = KFold(n_splits=self.param.getVal('ModelValidationN'), shuffle=False, random_state=46)
 
         # Copy Y vector to use it as template to assign predictions
         Y_pred = copy.copy(Y).tolist()
@@ -862,15 +789,16 @@ class BaseEstimator:
 
         # This dictionary contain all the objects which will be needed
         # for prediction
-        dict_estimator = {'estimator' : self.estimator,\
-                            'version' : 1}
+        dict_estimator = {'estimator' : self.estimator,
+             'version': 1,
+             'libraries': utils.module_versions()}
 
-        model_pkl_path = os.path.join(self.param.getVal('model_path'),'estimator.pkl')
+        model_pkl = os.path.join(self.param.getVal('model_path'),'estimator.pkl')
 
-        with open(model_pkl_path, 'wb') as handle:
+        with open(model_pkl, 'wb') as handle:
             pickle.dump(dict_estimator, handle, protocol=pickle.HIGHEST_PROTOCOL)
         
-        LOG.debug('Model saved as:{}'.format(model_pkl_path))
+        LOG.debug('Model saved as:{}'.format(model_pkl))
 
         # Add estimator parameters to Conveyor
         params = dict()
@@ -887,27 +815,28 @@ class BaseEstimator:
     def load_model(self):
         ''' This function loads estimator and scaler in a pickle file '''
 
-        model_file = os.path.join(self.param.getVal('model_path'),'estimator.pkl')
-        LOG.debug(f'Loading model from pickle file, path: {model_file}')
+        model_pkl = os.path.join(self.param.getVal('model_path'),'estimator.pkl')
+        LOG.debug(f'Loading model from pickle file, path: {model_pkl}')
         try:
-            with open(model_file, "rb") as input_file:
+            with open(model_pkl, "rb") as input_file:
                 dict_estimator = pickle.load(input_file)
         except FileNotFoundError:
-            LOG.error(f'No valid model estimator found at: {model_file}')
-            raise FileNotFoundError
+            return False, f'No valid model estimator found at: {model_pkl}'
 
-        # Load model
+        # check if the pickle was created with a compatible version (currently, 1)
         self.version = dict_estimator['version']
-
-        # check if the pickle was created with a compatible version
-        # currently 1
         if self.version is not 1:
-            raise Exception ('Incompatible model version')
+            return False, 'Incompatible model version'
 
+        # check if the libraries used to build this model are similar to current libraries
+        if 'libraries' in dict_estimator:
+            success, results = utils.compatible_modules(dict_estimator['libraries'])
+            if not success:
+                LOG.warning(f"incompatible libraries detected, {results}. Use at your own risk")
+
+        # load the estimator
         self.estimator = dict_estimator['estimator']
         if self.estimator is None:
-            raise Exception('Loaded estimator is None.'
-                            'Probably model building was not successful')
+            return False, 'No valid model estimator found. Try to rebuild the model'
     
-        return
-        
+        return True, 'model loaded'

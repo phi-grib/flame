@@ -40,14 +40,16 @@ class Space:
         self.param = param
         self.Dmax = 1000.0 # an arbitrary value
 
-    def build(self, X, names, ids, SMILES):
+    def build(self, X, objinfo):
+    # def build(self, X, names, ids, SMILES):
         ''' This function pre-process the X matrix, optimizing it for searching in the case
             of fingerprints 
         '''
 
-        self.names = names
-        self.ids = ids
-        self.SMILES = SMILES
+        # self.names = names
+        # self.ids = ids
+        # self.SMILES = SMILES
+        self.objinfo = objinfo
         self.nobj, self.nvarx = np.shape(X)
 
         if len (self.param.getVal('computeMD_method')) > 1:
@@ -156,27 +158,18 @@ class Space:
                         if d_worst == 1.000:
                             break
 
-
-            #print ('completed')
-            results_distances = []
-            results_names = []
-            results_ids = []
-            results_smiles = []
+            # results for molecule i are stored in a dictionary
+            results_info = {}
+            results_info['distances'] = []   # distances are allways stored
+            for oi in self.objinfo:
+                results_info[oi] = []        # all the objects information (name, smiles, ID, activity, etc.)
 
             for sd,si in zip(selected_d, selected_i):
-                results_distances.append(sd)
-                results_names.append(self.names[si])
-                results_ids.append(self.ids[si])
-                results_smiles.append(self.SMILES[si])
-                
-                #print (i, sd, self.names[si], self.SMILES[si])
+                results_info['distances'].append(sd)
+                for oi in self.objinfo:
+                    results_info[oi].append(self.objinfo[oi][si])
 
-            results.append({'distances':results_distances,
-                            'names':results_names,
-                            'ids':results_ids,
-                            'SMILES':results_smiles
-            })
-
+            results.append(results_info)
     
         return True, results
 
@@ -189,10 +182,8 @@ class Space:
         with open(space_pkl, 'wb') as fo:
             pickle.dump(self.nobj, fo)
             pickle.dump(self.X, fo)
-            pickle.dump(self.names, fo)
-            pickle.dump(self.ids, fo)
-            pickle.dump(self.SMILES, fo)
             pickle.dump(self.Dmax, fo)
+            pickle.dump(self.objinfo, fo)
         return
 
 
@@ -205,8 +196,6 @@ class Space:
         with open(space_pkl, 'rb') as fo:
             self.nobj = pickle.load(fo)
             self.X = pickle.load(fo)
-            self.names = pickle.load(fo)
-            self.ids = pickle.load(fo)
-            self.SMILES = pickle.load(fo)
             self.Dmax = pickle.load(fo)
+            self.objinfo = pickle.load(fo)
         return

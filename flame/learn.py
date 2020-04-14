@@ -51,7 +51,9 @@ class Learn:
 
         self.param = parameters
         self.conveyor = conveyor
-        self.conveyor.setOrigin('learn')
+
+        self.conveyor.addMeta('modelID',utils.id_generator())
+        LOG.debug(f'Generated new model with modelID: {self.conveyor.getMeta("modelID")}')
 
         self.X = self.conveyor.getVal('xmatrix')
         self.Y = self.conveyor.getVal('ymatrix')
@@ -114,6 +116,13 @@ class Learn:
         #                 not isFingerprint:
 
         scale_method = self.param.getVal('modelAutoscaling')
+        
+        # prevent the scaling of input which must be binary or with preserved values
+        non_scale_list = ['majority','matrix']
+        if self.param.getVal('model') in non_scale_list and scale_method is not None:
+            LOG.info(f"Method '{self.param.getVal('model')}' is incompatible with '{scale_method}' scaler. Forced to 'None'")
+            scale_method = None
+
         if scale_method is not None:
             try:
                 scaler = None
@@ -324,12 +333,7 @@ class Learn:
         LOG.info('Model finished successfully')
 
         # save model
-        try:
-            model.save_model()
-
-        except Exception as e:
-            LOG.error(f'Error saving model with exception {e}')
-            return False, 'An error ocurred saving the model'
+        model.save_model()
 
         return
 
