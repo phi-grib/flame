@@ -122,8 +122,8 @@ class Keras_nn(BaseEstimator):
                 else:
                     self.estimator = KerasClassifier(
                                         **self.estimator_parameters)
-                    params = self.estimator.get_params()
-                    params['num_class'] = 2
+                    #params = self.estimator.get_params()
+                    #params['num_class'] = 2
                     self.optimize(X, Y, self.estimator,
                                   self.tune_parameters)
                     results.append(('model','model type','KERAS qualitative (optimized)'))
@@ -142,7 +142,7 @@ class Keras_nn(BaseEstimator):
                 else:
 
                     LOG.info("Building Qualitative Keras model")
-                    self.estimator = KerasClassifier(build_fn=self.create_model,
+                    self.estimator = KerasClassifier(build_fn=self.create_model, dim=self.X.shape[1],
                      **self.estimator_parameters, verbose=0)
                     results.append(('model', 'model type', 'Keras qualitative'))
 
@@ -212,18 +212,18 @@ class Keras_nn(BaseEstimator):
         return True, []
 
 # Function to create model, required for KerasClassifier
-    def create_model(self):
+    def create_model(self, dim=20):
         # create model
         model = Sequential()
-        model.add(Dense(10, input_dim=199, activation='relu'))
+        model.add(Dense(10, input_dim=dim, activation='relu'))
         model.add(Dense(20, activation='sigmoid'))
         model.add(Dense(1, activation='sigmoid'))
         # Compile model
         
-        if self.param.getVal('quantitative'):
-            loss = 'mean_squared_error'
-        else:
-            loss = 'binary_crossentropy'
+        #if self.param.getVal('quantitative'):
+            #loss = 'mean_squared_error'
+        #else:
+        loss = 'binary_crossentropy'
         model.compile(loss=loss, optimizer='adam', metrics=['accuracy'])
         return model
 
@@ -233,8 +233,6 @@ class Keras_nn(BaseEstimator):
          for obtaining predictions '''
         Yp = self.estimator.predict(Xb)
         Yp = np.asarray([x[0] for x in Yp])
-        print(Yp)
-
 
         # if conveyor contains experimental values for any of the objects replace the
         # predictions with the experimental results
@@ -279,10 +277,10 @@ class Keras_nn(BaseEstimator):
     #     ''' Validates the model and computes suitable model quality scoring values'''
 
 
-    # def optimize(self, X, Y, estimator, tune_parameters):
-    #     ''' optimizes a model using a grid search over a range of values for diverse parameters'''
-
-
+    def optimize(self, X, Y, estimator, tune_parameters):
+        # TODO Perhaps not suitable
+        ''' optimizes a model using a grid search over a range of values for diverse parameters'''
+        LOG.info('Keras model parameter optimization not implemented. skipping....')
     # def regularProject(self, Xb, results):
     #     ''' projects a collection of query objects in a regular model, for obtaining predictions '''
 

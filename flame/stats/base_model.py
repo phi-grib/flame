@@ -146,6 +146,15 @@ class BaseEstimator:
         self.Y = Y
         self.nobj, self.nvarx = np.shape(X)
 
+        # Check if model is a keras model and
+        # adjust n_jobs=1 if so
+        if self.param.getVal('model') == 'my_keras'\
+         or self.param.getVal('model') == 'Keras':
+            self.n_jobs = 1
+        else:
+            self.n_jobs = -1
+
+
         # Get cross-validator
         # Consider to include a Random Seed for cross-validator
         if self.param.getVal('ModelValidationCV'):
@@ -426,12 +435,13 @@ class BaseEstimator:
             raise e
 
         # Compute Cross-validation quality metrics
+
         try:
             # Get predicted Y
             y_pred = cross_val_predict(copy.copy(self.estimator),
                             copy.copy(X), copy.copy(Y),
                                 cv=self.cv,
-                                    n_jobs=1)
+                                    n_jobs=self.n_jobs)
             SSY0_out = np.sum(np.square(Ym - Y))
             SSY_out = np.sum(np.square(Y - y_pred))
             self.scoringP = mean_squared_error(Y, y_pred)
@@ -512,7 +522,8 @@ class BaseEstimator:
 
         # Get cross-validated Y 
         try:
-            y_pred = cross_val_predict(self.estimator, X, Y, cv=self.cv, n_jobs=-1)
+            y_pred = cross_val_predict(self.estimator, X, Y, cv=self.cv,
+                                       n_jobs=self.n_jobs)
         except Exception as e:
             LOG.error(f'Cross-validation failed with exception' 
                         f'exception {e}')
