@@ -179,6 +179,15 @@ def build_cmd(arguments, output_format=None):
     if os.path.isfile(meta_file):
         os.remove(meta_file)
 
+    # input file provided in the command
+    ifile = arguments['infile']
+    if ifile is not None and not os.path.isfile (ifile):
+        return False, f'Wrong training series file {ifile}'
+
+    # lfile is the "training_series" copied internally to the endpoint folder
+    endpoint_path = utils.model_path(arguments['endpoint'], 0)
+    lfile = os.path.join(endpoint_path, 'training_series')
+
     if 'param_file' in arguments:
         build = Build(arguments['endpoint'], param_file=arguments['param_file'], output_format=output_format)
     elif 'param_string' in arguments:
@@ -197,10 +206,16 @@ def build_cmd(arguments, output_format=None):
         emodels = ensemble[1]
         evers   = ensemble[2]
 
-        if arguments['infile'] is None:
-            return False, 'ensemble models require allways an input file'
-
-        success, model_res = get_ensemble_input(build, emodels, evers, arguments['infile'])
+        if ifile is None:
+            if not os.path.isfile (lfile):
+                return False, 'no training series detected'
+        else:
+            try:
+                shutil.copy(ifile, lfile)
+            except:
+                return False, 'Unable to copy input file to model directory'
+        
+        success, model_res = get_ensemble_input(build, emodels, evers, lfile)
 
         if not success:
             return False, model_res
@@ -217,23 +232,15 @@ def build_cmd(arguments, output_format=None):
 
     else:
 
-        #input file provided in the command
-        ifile = arguments['infile']
-        
-        #existing training series
-        epd = utils.model_path(arguments['endpoint'], 0)
-        lfile = os.path.join(epd, 'training_series')
-
         # when a new training series is provided in the command line
         # try to copy it to the model directory
         if ifile is not None:
-            if not os.path.isfile(ifile):
-                return False, f'Wrong training series file {ifile}'
-        
+
+            # in case of incremental training, add the input file at the end of existing file
             if arguments['incremental']:
                 if arguments['incremental'] and os.path.isfile(lfile):
                     LOG.info(f'Merging file {ifile} with existing training series')
-                    new_training = os.path.join(epd, 'temp_training')
+                    new_training = os.path.join(endpoint_path, 'temp_training')
 
                     with open(new_training, 'w') as outfile:
                         with open(lfile) as infile:
@@ -250,14 +257,11 @@ def build_cmd(arguments, output_format=None):
                     shutil.move(new_training, lfile)
             else:
                 try:
-                    # print(lfile)
-                    # print(ifile)
                     shutil.copy(ifile, lfile)
                 except:
                     return False, 'Unable to copy input file to model directory'
 
         # check that the local copy of the input file exists
-        
         if not os.path.isfile(lfile):
             return False, 'No training series found'
 
@@ -396,6 +400,10 @@ def manage_cmd(args):
             success, results = manage.action_export(args.endpoint)
         elif args.action == 'info':
             success, results = manage.action_info(args.endpoint, version)
+        elif args.action == 'refresh':
+            if args.version == None:
+                version = None
+            success, results = manage.action_refresh(args.endpoint, version)
         elif args.action == 'results':
             success, results = manage.action_results(args.endpoint, version)
         elif args.action == 'parameters':
