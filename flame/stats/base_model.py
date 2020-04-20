@@ -217,7 +217,7 @@ class BaseEstimator:
         # Convert Y_pred to a numpy array
         Y_pred = np.asarray(Y_pred)
         fit = np.asarray(fit).reshape(-1,2)
-        print(fit.shape, Y.shape)
+        # print(fit.shape, Y.shape)
         # Add the n validation interval means
         interval_mean = np.mean(np.abs((Y_pred[:, 0]) - 
                         (Y_pred[:, 1])))
