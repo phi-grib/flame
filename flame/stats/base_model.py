@@ -169,21 +169,18 @@ class BaseEstimator:
         # Make a copy of original matrices.
         X = self.X.copy()
         Y = self.Y.copy()
-        # Predict recalculated values 
-        fit = self.estimator.predict(X,self.param.getVal(
-                        'conformalSignificance'))
 
-
-        # Predict recalculated values for classic R2 
-        Y_rec = self.estimator.predict(X, self.param.getVal('conformalSignificance'))
-        Y_rec = (Y_rec[:, 0] + Y_rec[:, 1])/2
-        info = []
+        # generate recalculate interval, values and mean range 
+        Y_rec_in = self.estimator.predict(X,self.param.getVal('conformalSignificance'))
+        Y_rec = np.mean(Y_rec_in, axis=1)
+        interval_mean_rec = np.mean(np.abs((Y_rec_in[:, 0]) - (Y_rec_in[:, 1])))
 
         # # conformal models only use kfold for validation
         # kf = KFold(n_splits=self.param.getVal('ModelValidationN'), shuffle=True, random_state=46)
 
         # Copy Y vector to use it as template to assign predictions
-        Y_pred = copy.copy(Y).tolist()
+        Y_pred_in = copy.copy(Y).tolist()
+
         try:
             # for train_index, test_index in kf.split(X):
             for train_index, test_index in self.cv.split(X):
@@ -207,7 +204,7 @@ class BaseEstimator:
 
                 # Assign the prediction its original index
                 for index, el in enumerate(test_index):
-                    Y_pred[el] = prediction[index]
+                    Y_pred_in[el] = prediction[index]
 
         except Exception as e:
             LOG.error(f'Quantitative conformal validation'
@@ -215,88 +212,71 @@ class BaseEstimator:
             raise e
         
         # Convert Y_pred to a numpy array
-        Y_pred = np.asarray(Y_pred)
-        fit = np.asarray(fit).reshape(-1,2)
-        # print(fit.shape, Y.shape)
+        Y_pred_in = np.asarray(Y_pred_in)
+
         # Add the n validation interval means
-        interval_mean = np.mean(np.abs((Y_pred[:, 0]) - 
-                        (Y_pred[:, 1])))
-        interval_mean_fit = np.mean(np.abs((fit[:, 0]) - 
-                        (fit[:, 1])))
+        Y_pred = np.mean(Y_pred_in, axis=1)
+        interval_mean_pred = np.mean(np.abs((Y_pred_in[:, 0]) - (Y_pred_in[:, 1])))
+
         # Get boolean mask of instances
         #  within the applicability domain.
-        inside_interval = ((Y_pred[:, 0].reshape(1, -1)
+        inside_interval_pred = ((Y_pred_in[:, 0].reshape(1, -1)
                                 < Y) & 
-                                (Y_pred[:, 1].reshape(1, -1) 
+                                (Y_pred_in[:, 1].reshape(1, -1) 
                                 > Y)).reshape(1, -1)
-        inside_interval_fit = ((fit[:, 0].reshape(1, -1)
+        inside_interval_rec =  ((Y_rec_in[:, 0].reshape(1, -1)
                                 < Y) & 
-                                (fit[:, 1].reshape(1, -1) 
+                                (Y_rec_in[:, 1].reshape(1, -1) 
                                 > Y)).reshape(1, -1)
         # Compute the accuracy (number of instances within the AD).
-        accuracy = np.sum(inside_interval/len(Y))
-        accuracy_fit = np.sum(inside_interval_fit/len(Y))
-
-        # Cut into two decimals.
-        self.conformal_interval_medians = (np.mean(Y_pred, axis=1))
-        self.conformal_interval_medians_fit = (np.mean(fit, axis=1))
-
-        self.conformal_accuracy = float("{0:.2f}".format(accuracy))
-        self.conformal_accuracy_fit = float("{0:.2f}".format(accuracy_fit))
-        self.conformal_mean_interval = float("{0:.2f}".format(interval_mean))
-        self.conformal_mean_interval_fit = float("{0:.2f}".format(interval_mean_fit))
-
+        accuracy_pred = np.sum(inside_interval_pred/len(Y))
+        accuracy_rec  = np.sum(inside_interval_rec /len(Y))
 
         #Add quality metrics to results.
+        info = []
         info.append(('Conformal_mean_interval_fitting',
-                        'Conformal mean interval fitting', 
-                        self.conformal_mean_interval_fit))
+                     'Conformal mean interval fitting', 
+                     interval_mean_rec))
         info.append(('Conformal_mean_interval',
-                        'Conformal mean interval', 
-                        self.conformal_mean_interval))
-        info.append(
-            ('Conformal_accuracy_fitting', 'Conformal accuracy fitting', 
-            self.conformal_accuracy_fit))
-        info.append(
-            ('Conformal_accuracy', 'Conformal accuracy', 
-            self.conformal_accuracy))
-        info.append(
-            ('Conformal_interval_medians_fitting',
-             'Conformal interval medians fitting', 
-            self.conformal_interval_medians_fit))
-        info.append(
-            ('Conformal_interval_medians',
-             'Conformal interval medians', 
-            self.conformal_interval_medians))
-        info.append(
-            ('Conformal_prediction_ranges_fitting',
-             'Conformal prediction ranges fitting', 
-             fit))
-        info.append(
-            ('Conformal_prediction_ranges',
-             'Conformal prediction ranges', 
-             Y_pred))
+                     'Conformal mean interval', 
+                      interval_mean_pred))
+        info.append(('Conformal_accuracy_fitting', 
+                     'Conformal accuracy fitting', 
+                      accuracy_rec))
+        info.append(('Conformal_accuracy', 
+                     'Conformal accuracy', 
+                      accuracy_pred))
+        info.append(('Conformal_interval_medians_fitting',
+                     'Conformal interval medians fitting', 
+                      Y_rec))
+        info.append(('Conformal_interval_medians',
+                     'Conformal interval medians', 
+                      Y_pred))
+        info.append(('Conformal_prediction_ranges_fitting',
+                     'Conformal prediction ranges fitting', 
+                      Y_rec_in))
+        info.append(('Conformal_prediction_ranges',
+                     'Conformal prediction ranges', 
+                     Y_pred_in))
         
         # Compute goodness of the fit statistics using recalculated
         # predictions
         Ym = np.mean(Y)
         try:
             SSY0 = np.sum(np.square(Ym-Y))
-            SSY = np.sum(np.square(Y_rec-Y))
+            SSY_rec = np.sum(np.square(Y_rec-Y))
 
-            self.scoringR = np.mean(
-                mean_squared_error(Y, Y_rec)) 
-            self.SDEC = np.sqrt(SSY/self.nobj)
+            self.scoringR = mean_squared_error(Y, Y_rec) 
+            self.SDEC = np.sqrt(SSY_rec/self.nobj)
             if SSY0 == 0.0:
                 self.R2 = 0.0
             else:
-                self.R2 = 1.00 - (SSY/SSY0)
+                self.R2 = 1.00 - (SSY_rec/SSY0)
 
             info.append(('scoringR', 'Scoring P', self.scoringR))
             info.append(('R2', 'Determination coefficient', self.R2))
-            info.append(
-                ('SDEC', 'Standard Deviation Error of the Calculations', 
-                    self.SDEC))
+            info.append(('SDEC', 'Standard Deviation Error of the Calculations', self.SDEC))
+            
             LOG.debug(f'Goodness of the fit calculated: {self.scoringR}')
         except Exception as e:
             LOG.error(f'Error computing goodness of the fit'
@@ -305,32 +285,30 @@ class BaseEstimator:
 
         # Compute classic Cross-validation quality metrics using inteval mean
         try:
-            SSY0_out = np.sum(np.square(Ym - Y))
-            SSY_out = np.sum(np.square(Y - self.conformal_interval_medians))
-            self.scoringP = mean_squared_error(Y, self.conformal_interval_medians)
-            self.SDEP = np.sqrt(SSY_out/(self.nobj))
-            if SSY0_out == 0.0:
+            # SSY0_out = np.sum(np.square(Ym - Y))
+            SSY_pred = np.sum(np.square(Y_pred - Y))
+            self.scoringP = mean_squared_error(Y, Y_pred)
+            self.SDEP = np.sqrt(SSY_pred/(self.nobj))
+            if SSY0 == 0.0:
                 self.Q2 = 0.0
             else:
-                self.Q2 = 1.00 - (SSY_out/SSY0_out)
+                self.Q2 = 1.00 - (SSY_pred/SSY0)
 
             info.append(('scoringP', 'Scoring P', self.scoringP))
-            info.append(
-                ('Q2', 'Determination coefficient in cross-validation',
-                     self.Q2))
-            info.append(
-                ('SDEP', 'Standard Deviation Error of the Predictions',
-                     self.SDEP))
+            info.append(('Q2', 'Determination coefficient in cross-validation',self.Q2))
+            info.append(('SDEP', 'Standard Deviation Error of the Predictions',self.SDEP))
 
             LOG.debug(f'Squared-Q calculated: {self.scoringP}')
 
         except Exception as e:
             LOG.error(f'Error cross-validating the estimator'
-                        f' with exception {e}')
+                      f' with exception {e}')
             raise e
               
         results = {}
         results ['quality'] = info
+        results ['Y_adj'] = Y_rec
+        results ['Y_pred'] = Y_pred
         return True, results
 
     def CF_qualitative_validation(self):
