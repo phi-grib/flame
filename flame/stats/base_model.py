@@ -276,7 +276,7 @@ class BaseEstimator:
             info.append(('scoringR', 'Scoring P', self.scoringR))
             info.append(('R2', 'Determination coefficient', self.R2))
             info.append(('SDEC', 'Standard Deviation Error of the Calculations', self.SDEC))
-            
+
             LOG.debug(f'Goodness of the fit calculated: {self.scoringR}')
         except Exception as e:
             LOG.error(f'Error computing goodness of the fit'
@@ -345,20 +345,25 @@ class BaseEstimator:
                 # Generate training and test sets
                 X_train, X_test = X[train_index], X[test_index]
                 Y_train, Y_test = Y[train_index], Y[test_index]
+
                 # Create the aggregated conformal classifier.
                 conformal_pred = AggregatedCp(IcpClassifier(
                                             ClassifierNc(ClassifierAdapter(
                                                             self.estimator_temp),
                                                 MarginErrFunc())),
                                             BootstrapSampler())
+                
                 # Fit the conformal classifier to the data
                 conformal_pred.fit(X_train, Y_train)
+                
                 # Perform prediction on test set
                 prediction = conformal_pred.predict(
                             X_test, self.param.getVal('conformalSignificance'))
+                
                 # Assign the prediction the correct index. 
                 for index, el in enumerate(test_index):
                     Y_pred[el] = prediction[index]
+            
             # Iterate over the prediction and check the result
             for i in range(len(Y_pred)):
                 real = float(Y[i])
@@ -374,6 +379,7 @@ class BaseEstimator:
                         c1_incorrect_all += 1
                 else:
                     not_predicted_all += 1
+            
             # Get confusion matrix for Y fitted
             self.TN_f = 0
             self.FP_f = 0
@@ -414,7 +420,6 @@ class BaseEstimator:
         info.append(('TN', 'True negatives in cross-validation', self.TN))
         info.append(('FP', 'False positives in cross-validation', self.FP))
         info.append(('FN', 'False negatives in cross-validation', self.FN))
-        
 
         # Compute sensitivity, specificity and MCC for fitting
         try:
@@ -461,24 +466,14 @@ class BaseEstimator:
             LOG.error(f'Failed to compute Mathews Correlation Coefficient'
                         f'exception {e}')
             self.mcc = '-'
-        info.append(
-            ('Sensitivity_f', 'Sensitivity in fitting', 
-                self.sensitivity_f))
-        info.append(
-            ('Specificity_f', 'Specificity in fitting', 
-                self.specificity_f))
-        info.append(
-            ('MCC_f', 'Matthews Correlation Coefficient in fitting',
-                 self.mcc_f))
-        info.append(
-            ('Sensitivity', 'Sensitivity in cross-validation', 
-                self.sensitivity))
-        info.append(
-            ('Specificity', 'Specificity in cross-validation', 
-                self.specificity))
-        info.append(
-            ('MCC', 'Matthews Correlation Coefficient in cross-validation',
-                 self.mcc))
+        
+        info.append(('Sensitivity_f', 'Sensitivity in fitting', self.sensitivity_f))
+        info.append(('Specificity_f', 'Specificity in fitting', self.specificity_f))
+        info.append(('MCC_f', 'Matthews Correlation Coefficient in fitting', self.mcc_f))
+
+        info.append(('Sensitivity', 'Sensitivity in cross-validation', self.sensitivity))
+        info.append(('Specificity', 'Specificity in cross-validation', self.specificity))
+        info.append(('MCC', 'Matthews Correlation Coefficient in cross-validation', self.mcc))
         
         # Compute coverage (% of compounds inside the applicability domain)
         # for fitting
@@ -524,21 +519,15 @@ class BaseEstimator:
                         f'exception {e}')
             self.conformal_accuracy = '-'
         
-        info.append(
-            ('Conformal_coverage_f', 'Conformal coverage in fitting',
-                 self.conformal_coverage_f))
-        info.append(
-            ('Conformal_accuracy_f', 'Conformal accuracy in fitting', 
-                self.conformal_accuracy_f))                                                    
-        info.append(
-            ('Conformal_coverage', 'Conformal coverage in cross-validation',
-                 self.conformal_coverage))
-        info.append(
-            ('Conformal_accuracy', 'Conformal accuracy in cross-validation', 
-                self.conformal_accuracy))
+        info.append(('Conformal_coverage_f', 'Conformal coverage in fitting', self.conformal_coverage_f))
+        info.append(('Conformal_accuracy_f', 'Conformal accuracy in fitting', self.conformal_accuracy_f))                                                    
+        info.append(('Conformal_coverage', 'Conformal coverage in cross-validation', self.conformal_coverage))
+        info.append(('Conformal_accuracy', 'Conformal accuracy in cross-validation', self.conformal_accuracy))
 
         results = {}
         results ['quality'] = info
+        # results ['Y_adj'] = fit.tolist() <- this produces serialization problems
+        # results ['Y_pred'] = Y_pred
         #results ['classes'] = prediction
         return True, results
 

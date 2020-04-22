@@ -531,10 +531,12 @@ class Idata:
                 # for 2D arrays, shape[0] is the number of objects
                 if (len(ishape) > 1) and ishape[0] != shape[0]:
 
-                    #TODO analyze differences and perform a more smart 
                     # combination
-                    LOG.error(f'Number of objects processed by {method} '
-                              'does not match those computed by other methods')
+                    LOG.warning(f'Number of objects processed by {method} '
+                              'does not match those computed by other methods and will be skipped')
+
+                    self.conveyor.setWarning(f'Number of objects processed by {method} '
+                              'does not match those computed by other methods and will be skipped')          
                     continue
 
                 combined_md = np.hstack((combined_md, results['matrix']))
@@ -547,6 +549,11 @@ class Idata:
                           for i, scc in enumerate(combined_sc)]
                           
                 combined_sc = new_sc
+            
+        #  delete all objects for which success is not true
+        for i, scc in enumerate(combined_sc):
+            if not scc:
+                combined_md = np.delete(combined_md,i,axis=0) 
 
         return True, (combined_md, combined_nm, combined_sc)
 

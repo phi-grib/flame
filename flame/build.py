@@ -130,7 +130,6 @@ class Build:
             # if self.param.getVal('buildSimilarity'):
             if self.param.getVal('output_similar') is True:
 
-
                 from flame.slearn import Slearn
 
                 slearn_child = importlib.import_module(modpath+".slearn_child")

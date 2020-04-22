@@ -90,6 +90,7 @@ def _mordred_descriptors(ifile, **kwargs):
                 LOG.error('Unable to process molecule'
                           f'#{num_obj+1} in {ifile}')
                 success_list.append(False)
+                num_obj += 1
                 continue
 
             mdi = np.asarray(list(calc(mol)), dtype=np.float)
@@ -116,13 +117,14 @@ def _mordred_descriptors(ifile, **kwargs):
     xmatrix = np.asarray(matrix_f)
     success_l1 = np.asarray(success_list)
     success_l2 = np.asarray(success_list2)
+
     # Update success list
     success_list = list(success_l1 & success_l2) 
-    if num_obj < est_obj:
-        # if some molecules failed to compute we will clean xmatrix by 
-        # removing extra rows
-        for i in range (num_obj, est_obj):
-            xmatrix = np.delete(xmatrix,num_obj,axis=0)
+    # if num_obj < est_obj:
+    #     # if some molecules failed to compute we will clean xmatrix by 
+    #     # removing extra rows
+    #     for i in range (num_obj, est_obj):
+    #         xmatrix = np.delete(xmatrix,num_obj,axis=0)
 
     LOG.info(f'computed mordred descriptors matrix with shape {np.shape(xmatrix)}')
     if num_obj == 0:
@@ -178,12 +180,14 @@ def _RDKit_morganFPS(ifile, **kwargs):
                 LOG.error(
                     f'Unable to process molecule #{num_obj+1} in {ifile}')
                 success_list.append(False)
+                num_obj += 1
                 continue
 
             if mol.GetNumHeavyAtoms() == 0:
                 LOG.error('Empty molecule'
                           f'#{num_obj+1} in {ifile}')
                 success_list.append(False)
+                num_obj += 1
                 continue
 
             fp = AllChem.GetMorganFingerprintAsBitVect(mol,
@@ -207,11 +211,11 @@ def _RDKit_morganFPS(ifile, **kwargs):
                   f' with exception: {e}')
         return False, 'Failed computing RDKit Morgan Fingerprints for molecule' + str(num_obj+1) + 'in file ' + ifile
 
-    if num_obj < est_obj:
-        # if some molecules failed to compute we will clean xmatrix by 
-        # removing extra rows
-        for i in range (num_obj, est_obj):
-            xmatrix = np.delete(xmatrix,num_obj,axis=0)
+    # if num_obj < est_obj:
+    #     # if some molecules failed to compute we will clean xmatrix by 
+    #     # removing extra rows
+    #     for i in range (num_obj, est_obj):
+    #         xmatrix = np.delete(xmatrix,num_obj,axis=0)
 
     LOG.debug(f'computed RDKit Morgan Fingerprints matrix with shape {np.shape(xmatrix)}')
     if num_obj == 0:
@@ -270,12 +274,14 @@ def _RDKit_descriptors(ifile, **kwargs):
                 LOG.error('Unable to process molecule'
                           f'#{num_obj+1} in {ifile}')
                 success_list.append(False)
+                num_obj += 1
                 continue
 
             if mol.GetNumHeavyAtoms() == 0:
                 LOG.error('Empty molecule'
                           f'#{num_obj+1} in {ifile}')
                 success_list.append(False)
+                num_obj += 1
                 continue
 
             mdi = md.CalcDescriptors(mol)
@@ -291,11 +297,11 @@ def _RDKit_descriptors(ifile, **kwargs):
     except:  # if any mol fails the whole try except will break
         return False, 'Failed computing RDKit descriptors for molecule' + str(num_obj+1) + 'in file ' + ifile
 
-    if num_obj < est_obj:
-        # if some molecules failed to compute we will clean xmatrix by 
-        # removing extra rows
-        for i in range (num_obj,est_obj):
-            xmatrix = np.delete(xmatrix,num_obj,axis=0)
+    # if num_obj < est_obj:
+    #     # if some molecules failed to compute we will clean xmatrix by 
+    #     # removing extra rows
+    #     for i in range (num_obj,est_obj):
+    #         xmatrix = np.delete(xmatrix,num_obj,axis=0)
 
     LOG.debug(f'computed RDKit descriptors matrix with shape {np.shape(xmatrix)}')
     if num_obj == 0:
@@ -349,12 +355,14 @@ def _RDKit_properties(ifile, **kwargs):
                 LOG.error('Empty molecule'
                           f'#{num_obj+1} in {ifile}')
                 success_list.append(False)
+                num_obj += 1
                 continue
 
             descriptors = properties.ComputeProperties(mol)
 
             if np.isnan(descriptors).any() or np.isinf(descriptors).any():
                 success_list.append(False)
+                num_obj += 1
                 continue
             
             xmatrix [num_obj] = descriptors
@@ -374,11 +382,11 @@ def _RDKit_properties(ifile, **kwargs):
                   f' with exception: {e}')
         return False, 'Failed computing RDKit properties for molecule' + str(num_obj+1) + 'in file ' + ifile
 
-    if num_obj < est_obj:
-        # if some molecules failed to compute we will clean xmatrix by 
-        # removing extra rows
-        for i in range (num_obj,est_obj):
-            xmatrix = np.delete(xmatrix,num_obj,axis=0)
+    # if num_obj < est_obj:
+    #     # if some molecules failed to compute we will clean xmatrix by 
+    #     # removing extra rows
+    #     for i in range (num_obj,est_obj):
+    #         xmatrix = np.delete(xmatrix,num_obj,axis=0)
 
     LOG.debug(f'computed RDKit properties matrix with shape {np.shape(xmatrix)}')
     if num_obj == 0:
