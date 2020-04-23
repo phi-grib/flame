@@ -1118,11 +1118,9 @@ class Idata:
 
         # call extractInformation to obtain names, activities, smiles, id, etc.
         success_inform = self.extractInformation(ifile)
+
         if not success_inform or self.conveyor.getError():
             return
-
-        print (self.conveyor.getVal('obj_num'))
-        print (self.conveyor.getVal('complementary'))
 
         # obj_common = ['label', 'decoration', 'smiles']
         # for item in first_manifest:
@@ -1141,6 +1139,8 @@ class Idata:
         combined_md_names = []
         combined_cf_names = []
 
+        num_obj = self.conveyor.getVal ('obj_num')
+
         for i_result in self.idata:
 
             # predictions
@@ -1148,13 +1148,15 @@ class Idata:
 
             if combined_md is None:  # for first element just copy
                 combined_md = np.array(i_md, dtype=np.float64)
-                num_obj = len(i_md)
+                if len(i_md)!= num_obj:
+                    self.conveyor.setError('the number of results produced by the first model is inconsistent with the number of molecules recognized in the input file')
+                    return
             else:
                 #TODO: so far we discard any situation where the length of the inputs to be merged is
                 # non consistent
                 # We must implement an analysis of the output allowing to discard  
                 if len(i_md)!= num_obj:
-                    self.conveyor.setError('the length of the results produced by some models is inconsistent')
+                    self.conveyor.setError('the number of the results produced by some models is inconsistent')
                     return
                 combined_md = np.c_[combined_md, np.array(i_md, dtype=np.float64)]
 
@@ -1178,8 +1180,8 @@ class Idata:
                 combined_cf_names.append(
                     'upper_limit'+':'+i_result.getMeta('endpoint')+':'+str(i_result.getMeta('version')))
 
-        self.conveyor.addVal( num_obj, 'obj_num', 'Num mol', 
-                         'method', 'single', 'Number of molecules present in the input file')
+        # self.conveyor.addVal( num_obj, 'obj_num', 'Num mol', 
+        #                  'method', 'single', 'Number of molecules present in the input file')
 
         self.conveyor.addVal( combined_md, 'xmatrix', 'X matrix',
                          'results', 'vars', 'Combined output from external sources')
@@ -1199,8 +1201,6 @@ class Idata:
         # print ('combined_md_names', combined_md_names)
         # print ('ensemble_confidence', combined_cf)
         # print ('ensemble_confidence_names', combined_cf_names)
-        print (self.conveyor.getVal('obj_num'))
-        print (self.conveyor.getVal('complementary'))
         return
 
     def run(self):

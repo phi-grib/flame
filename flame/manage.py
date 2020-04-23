@@ -825,10 +825,6 @@ def action_predictions_result (label, output='text'):
 
     iconveyor = Conveyor()
 
-    # print ('*****************************')
-    # print (iconveyor.getJSON(xdata=True))
-    # print ('*****************************')
-
     with open(result_path, 'rb') as handle:
         success, message = iconveyor.load(handle)
 
