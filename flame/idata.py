@@ -210,10 +210,10 @@ class Idata:
                     exp = sdfutils.getVal(mol, self.param.getVal('SDFile_experimental'))
 
             # extracts complementary information, if any.
-            cmp = None    
+            cmp = ''    
             if self.param.getVal('SDFile_complementary') is not None:
                 if isinstance (self.param.getVal('SDFile_complementary'),str):
-                    cmp = sdfutils.getVal(mol, self.param.getVal('SDFile_complementary'))
+                    cmp = sdfutils.getStr(mol, self.param.getVal('SDFile_complementary'))
 
             # generates a SMILES
             sml = None
@@ -251,6 +251,9 @@ class Idata:
         self.conveyor.addVal(obj_sml, 'SMILES', 'SMILES',
                          'smiles', 'objs',
                          'Structure of the molecule in SMILES format')
+        self.conveyor.addVal(obj_cmp, 'complementary', 'Complem.',
+                         'method', 'objs',
+                         'Complementary anotation present in the input file')
 
         if not utils.is_empty(obj_bio):
             self.conveyor.addVal(np.array(obj_bio, dtype=np.float64),
@@ -263,12 +266,6 @@ class Idata:
                              'experim', 'Experim.',
                              'method', 'objs',
                              'Experimental anotation present in the input file')
-
-        if not utils.is_empty(obj_cmp):
-            self.conveyor.addVal(np.array(obj_cmp, dtype=np.float64),
-                             'complementary', 'Complem.',
-                             'method', 'objs',
-                             'Complementary anotation present in the input file')
 
         LOG.debug(f'processed {obj_num} molecules'
                   f' from a supplier of {len(suppl)} without issues')
@@ -557,87 +554,6 @@ class Idata:
 
         return True, (combined_md, combined_nm, combined_sc)
 
-   
-    @staticmethod
-    def _filter_matrix(matrix: np.ndarray, succes_list: list):
-        """Filters matrix via boolean mask.
-
-        The boolean mask is the logical AND combination of all the masks in
-        `succes_list`.
-        This way we get rid of molecules with NaNs or that have failed during
-        supplier reading in any descriptor computation.
-
-        Parameters
-        ----------
-
-        matrix: np.ndarray
-            descriptors matrix that's going to be filtered
-
-        succes_list: list
-            list of array masks that will be used to filter 
-            the descriptors matrix
-
-        Returns
-        -------
-
-        np.ndarray
-            Filtered matrix with the elements that have
-            only `True` in succes_list arrays
-
-        list
-            the resultant succes list. `all()` combination of
-            `succes_list` (param) arrays. The length must be same
-            as the number of molecules.
-
-        """
-        # using all bcause of arbitrary list length
-        filter_mask = np.all(succes_list, axis=0)
-        n_filtered_mols = len(filter_mask) - sum(filter_mask)
-        LOG.info(f'removed {n_filtered_mols} molecules of {len(filter_mask)}'
-                 ' because of malformation or problems computing descriptors')
-
-        if matrix.shape[0] != len(filter_mask):
-            raise ValueError('Matrix and filter mask do not have the'
-                             ' same shape on filter axis')
-
-        filtered_matrix = matrix[filter_mask, :]
-        return filtered_matrix, filter_mask.tolist()
-
-    # @staticmethod
-    # def _concat_descriptors_matrix(matrices: list) -> np.ndarray:
-    #     """ Concatenates horizontaly an arbritary number of matrices.
-
-    #     Used to concat multiple descriptors results into a one array.
-
-    #     Parameters
-    #     ----------
-
-    #     matrices: list
-    #         list of matrices (np.ndarrays) to concat horizontally
-
-    #     Returns
-    #     -------
-
-    #     np.ndarray
-    #         concatenated matrix of input matrices
-    #     """
-    #     # type check input
-    #     if not all(isinstance(m, np.ndarray) for m in matrices):
-    #         raise TypeError('input matrices must be numpy arrays')
-
-    #     try:
-    #         xmatrix = np.concatenate(matrices, axis=1)
-
-    #         LOG.debug('concatenated matrices with shapes: '
-    #                   f'{[m.shape for m in matrices]} into a'
-    #                   f' matrix with shape {xmatrix.shape}')
-
-    #     except ValueError as e:
-    #         LOG.critical('Cannot concatenate matrix with different shapes: '
-    #                      f'{[m.shape[0] for m in matrices]}')
-    #         raise ValueError('Cannot concatenate matrix with different shapes: '
-    #                          f'{[m.shape[0] for m in matrices]}')
-    #     return xmatrix
 
     def consolidate(self, results, nobj):
         '''
@@ -1205,6 +1121,9 @@ class Idata:
         if not success_inform or self.conveyor.getError():
             return
 
+        print (self.conveyor.getVal('obj_num'))
+        print (self.conveyor.getVal('complementary'))
+
         # obj_common = ['label', 'decoration', 'smiles']
         # for item in first_manifest:
         #     if item['type'] in obj_common:  # for elements of type label or decoration
@@ -1280,7 +1199,8 @@ class Idata:
         # print ('combined_md_names', combined_md_names)
         # print ('ensemble_confidence', combined_cf)
         # print ('ensemble_confidence_names', combined_cf_names)
-
+        print (self.conveyor.getVal('obj_num'))
+        print (self.conveyor.getVal('complementary'))
         return
 
     def run(self):

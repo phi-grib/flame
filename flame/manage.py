@@ -810,7 +810,7 @@ def action_predictions_result (label, output='text'):
 
     label_path = predictions_path.joinpath(label)
 
-    if not label_path.is_dir():
+    if not os.path.isdir(label_path):
         if output != 'text':
             return False, {'code':0, 'message': f'directory {label_path} not found'}
         print (f'directory {label_path} not found')
@@ -824,6 +824,10 @@ def action_predictions_result (label, output='text'):
         return False, None
 
     iconveyor = Conveyor()
+
+    # print ('*****************************')
+    # print (iconveyor.getJSON(xdata=True))
+    # print ('*****************************')
 
     with open(result_path, 'rb') as handle:
         success, message = iconveyor.load(handle)
@@ -860,7 +864,7 @@ def action_predictions_remove (label):
 
     label_path = predictions_path.joinpath(label)
 
-    if not label_path.is_dir():
+    if not os.path.isdir(label_path):
         return (False, f'directory {label_path} not found')
 
     try:
