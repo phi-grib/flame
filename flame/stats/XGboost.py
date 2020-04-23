@@ -177,9 +177,9 @@ class XGBOOST(BaseEstimator):
                 LOG.info("Building conformal Quantitative XGBOOST model")
 
                 underlying_model = RegressorAdapter(self.estimator_temp)
-                #normalizing_model = RegressorAdapter(
-                    #KNeighborsRegressor(n_neighbors=5))
-                normalizing_model = RegressorAdapter(self.estimator_temp)
+                normalizing_model = RegressorAdapter(
+                    KNeighborsRegressor(n_neighbors=15))
+                # normalizing_model = RegressorAdapter(self.estimator_temp)
                 normalizer = RegressorNormalizer(
                                 underlying_model,
                                 normalizing_model,
