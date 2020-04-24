@@ -192,11 +192,9 @@ class BaseEstimator:
 
                 underlying_model = RegressorAdapter(self.estimator_temp)
                 # normalizing_model = RegressorAdapter(self.estimator_temp)
-                normalizing_model = RegressorAdapter(
-                    KNeighborsRegressor(n_neighbors=15))
                 normalizer = RegressorNormalizer(
                                 underlying_model,
-                                normalizing_model,
+                                copy(self.normalizing_model),
                                 AbsErrorErrFunc())
                 nc = RegressorNc(underlying_model,
                                     AbsErrorErrFunc(),

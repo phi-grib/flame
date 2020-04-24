@@ -352,7 +352,33 @@ conformal:
     model: RF
   comments: So far it can not be applied to PLSDA
   group: modeling    
-
+  
+conformal_settings:
+  advanced: regular
+  object_type: dictionary
+  writable: false
+  value: 
+    error_model:
+      object_type: string
+      writable: true
+      value: KNN
+      options:
+        - KNN
+      description: Error model type
+    KNN_NN:
+      object_type: int
+      writable: true
+      value: 15
+      options:
+        - null
+      description: Number of nearest neighbors
+  options: null
+  description: conformal predictor settings
+  dependencies: 
+    - conformal: true
+    - input_type: molecule
+  comments: 
+  group: modeling  
 conformalSignificance:
   advanced: regular
   object_type: float
