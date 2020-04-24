@@ -29,7 +29,7 @@ def make_model():
 def build_model():
     builder = build.Build(MODEL_NAME)
     builder.param.setVal("tune", False)
-    builder.setInnerVal("conformal_settings", "KNN_NN", 2)
+    builder.setInnerVal("conformal_settings", "KNN_NN", 1)
     return builder.run(SDF_FILE_NAME)
 
 
