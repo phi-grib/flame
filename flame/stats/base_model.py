@@ -193,7 +193,6 @@ class BaseEstimator:
                                     RegressorNc(RegressorAdapter(
                                         self.estimator_temp))),
                                             BootstrapSampler())
-
                 # Fit conformal regressor to the data
                 conformal_pred.fit(X_train, Y_train)
 
@@ -205,6 +204,7 @@ class BaseEstimator:
                 # Assign the prediction its original index
                 for index, el in enumerate(test_index):
                     Y_pred_in[el] = prediction[index]
+                
 
         except Exception as e:
             LOG.error(f'Quantitative conformal validation'
@@ -653,7 +653,7 @@ class BaseEstimator:
 
         # Get cross-validated Y 
         try:
-            y_pred = cross_val_predict(self.estimator, X, Y, cv=self.cv, n_jobs=-1)
+            y_pred = cross_val_predict(self.estimator, X, Y, cv=self.cv, n_jobs=1)
         except Exception as e:
             LOG.error(f'Cross-validation failed with exception' 
                         f'exception {e}')

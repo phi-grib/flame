@@ -960,6 +960,20 @@ XGBOOST_parameters:
         - gblinear
         - dart
       description: Specify which booster to use
+    tree_method:
+      object_type: string
+      writable: False
+      value: auto
+      options: 
+        - gpu_hist
+      description: Specify which tree method to use
+    gpu_id:
+      object_type: int
+      writable: False
+      value: 0
+      options: 
+        - '0'
+      description: Specify gpu to use
   description: 
   dependencies: 
     model: XGBOOST
