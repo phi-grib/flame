@@ -319,6 +319,7 @@ class BaseEstimator:
         Y = self.Y.copy()
         fit = self.estimator.predict(X, self.param.getVal(
                                     'conformalSignificance'))
+        #del self.estimator
         # Total number of class 0 correct predictions.
         c0_correct_all = 0
         # Total number of class 0 incorrect predictions.
@@ -338,6 +339,8 @@ class BaseEstimator:
 
         # Copy Y vector to use it as template to assign predictions
         Y_pred = copy.copy(Y).tolist()
+        import time
+        import gc
         
         try:
             # for train_index, test_index in kf.split(X):
@@ -352,14 +355,25 @@ class BaseEstimator:
                                                             self.estimator_temp),
                                                 MarginErrFunc())),
                                             BootstrapSampler())
+
+                with open('xgboost_temp.plk', 'wb') as handle:
+                    pickle.dump(conformal_pred, handle, protocol=pickle.HIGHEST_PROTOCOL)
+                del(conformal_pred)
+                gc.collect()
+                with open('xgboost_temp.plk', "rb") as input_file:
+                    conformal_pred = pickle.load(input_file)
                 
                 # Fit the conformal classifier to the data
+                print('fitting')
                 conformal_pred.fit(X_train, Y_train)
                 
                 # Perform prediction on test set
+                print('predicting')
                 prediction = conformal_pred.predict(
                             X_test, self.param.getVal('conformalSignificance'))
-                
+                print('removing')
+                del conformal_pred
+
                 # Assign the prediction the correct index. 
                 for index, el in enumerate(test_index):
                     Y_pred[el] = prediction[index]
