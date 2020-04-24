@@ -547,8 +547,11 @@ class Idata:
                           
                 combined_sc = new_sc
             
-        #  delete all objects for which success is not true
-        for i, scc in enumerate(combined_sc):
+        # delete all objects for which success is not true but 
+        # IN REVERSE order, so the index if the lines to remove
+        # is not affected by the removal
+        
+        for i, scc in reversed(list(enumerate(combined_sc))):
             if not scc:
                 combined_md = np.delete(combined_md,i,axis=0) 
 
