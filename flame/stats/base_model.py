@@ -194,7 +194,7 @@ class BaseEstimator:
                 # normalizing_model = RegressorAdapter(self.estimator_temp)
                 normalizer = RegressorNormalizer(
                                 underlying_model,
-                                copy(self.normalizing_model),
+                                copy.copy(self.normalizing_model),
                                 AbsErrorErrFunc())
                 nc = RegressorNc(underlying_model,
                                     AbsErrorErrFunc(),
