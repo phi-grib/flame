@@ -559,9 +559,7 @@ class BaseEstimator:
 
             info.append(('scoringR', 'Scoring P', self.scoringR))
             info.append(('R2', 'Determination coefficient', self.R2))
-            info.append(
-                ('SDEC', 'Standard Deviation Error of the Calculations', 
-                    self.SDEC))
+            info.append(('SDEC', 'Standard Deviation Error of the Calculations', self.SDEC))
             LOG.debug(f'Goodness of the fit calculated: {self.scoringR}')
         except Exception as e:
             LOG.error(f'Error computing goodness of the fit'
@@ -585,12 +583,8 @@ class BaseEstimator:
                 self.Q2 = 1.00 - (SSY_out/SSY0_out)
 
             info.append(('scoringP', 'Scoring P', self.scoringP))
-            info.append(
-                ('Q2', 'Determination coefficient in cross-validation',
-                     self.Q2))
-            info.append(
-                ('SDEP', 'Standard Deviation Error of the Predictions',
-                     self.SDEP))
+            info.append(('Q2', 'Determination coefficient in cross-validation', self.Q2))
+            info.append(('SDEP', 'Standard Deviation Error of the Predictions', self.SDEP))
 
             # newy.append (
             #     ('Y_adj', 'Recalculated Y values', Yp) )          
@@ -627,24 +621,20 @@ class BaseEstimator:
 
         # Get confusion matrix for predicted Y
         try:
-            self.TNpred, self.FPpred,\
-            self.FNpred, self.TPpred = confusion_matrix(Y, Yp,
-                                                     labels=[0, 1]).ravel()
-            self.sensitivityPred = (self.TPpred / (self.TPpred + self.FNpred))
-            self.specificityPred = (self.TNpred / (self.TNpred + self.FPpred))
-            self.mccp = mcc(Y, Yp)
+            self.TN_f, self.FP_f,\
+            self.FN_f, self.TP_f = confusion_matrix(Y, Yp, labels=[0, 1]).ravel()
+            self.sensitivity_f = (self.TP_f / (self.TP_f + self.FN_f))
+            self.specificity_f = (self.TN_f / (self.TN_f + self.FP_f))
+            self.mcc_f = mcc(Y, Yp)
 
-            info.append(('TPpred', 'True positives', self.TPpred))
-            info.append(('TNpred', 'True negatives', self.TNpred))
-            info.append(('FPpred', 'False positives', self.FPpred))
-            info.append(('FNpred', 'False negatives', self.FNpred))
-            info.append(('SensitivityPed', 'Sensitivity in fitting', 
-                    self.sensitivityPred))
-            info.append(
-                ('SpecificityPred', 'Specificity in fitting', 
-                    self.specificityPred))
-            info.append(('MCCpred', 'Matthews Correlation Coefficient', 
-                    self.mccp))
+            info.append(('TP_f', 'True positives in fitting', self.TP_f))
+            info.append(('TN_f', 'True negatives in fitting', self.TN_f))
+            info.append(('FP_f', 'False positives in fitting', self.FP_f))
+            info.append(('FN_f', 'False negatives in fitting', self.FN_f))
+            info.append(('Sensitivity_f', 'Sensitivity in fitting', self.sensitivity_f))
+            info.append(('Specificity_f', 'Specificity in fitting', self.specificity_f))
+            info.append(('MCC_f', 'Matthews Correlation Coefficient in fitting', self.mcc_f))
+   
             LOG.debug('Computed class prediction for estimator instances')
         except Exception as e:
             LOG.error(f'Error computing class prediction of Yexp'
@@ -689,31 +679,17 @@ class BaseEstimator:
             self.mcc = '-'
 
 
-        info.append(('TP', 'True positives in cross-validation',
-            self.TP))
-        info.append(('TN', 'True negatives in cross-validation',
-            self.TN))
-        info.append(('FP', 'False positives in cross-validation',
-            self.FP))
-        info.append(('FN', 'False negatives in cross-validation',
-            self.FN))
+        info.append(('TP', 'True positives in cross-validation', self.TP))
+        info.append(('TN', 'True negatives in cross-validation', self.TN))
+        info.append(('FP', 'False positives in cross-validation', self.FP))
+        info.append(('FN', 'False negatives in cross-validation', self.FN))
 
-        info.append(
-            ('Sensitivity', 'Sensitivity in cross-validation',
-                self.sensitivity))
-        info.append(
-            ('Specificity', 'Specificity in cross-validation',
-                self.specificity))
-        info.append(
-            ('MCC', 'Matthews Correlation Coefficient in cross-validation',
-                self.mcc))
-        info.append (
-            ('Y_adj', 'Adjusted Y values', Y) ) 
-        info.append (
-            ('Y_adj', 'Adjusted Y values', Yp) )          
-        info.append (
-            ('Y_pred', 'Predicted Y values after cross-validation',
-                y_pred))
+        info.append(('Sensitivity', 'Sensitivity in cross-validation', self.sensitivity))
+        info.append(('Specificity', 'Specificity in cross-validation', self.specificity))
+        info.append(('MCC', 'Matthews Correlation Coefficient in cross-validation', self.mcc))
+        info.append (('Y_adj', 'Adjusted Y values', Y) ) 
+        info.append (('Y_adj', 'Adjusted Y values', Yp) )          
+        info.append (('Y_pred', 'Predicted Y values after cross-validation', y_pred))
         LOG.debug(f'Qualitative crossvalidation performed')
 
 
