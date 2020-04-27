@@ -439,6 +439,10 @@ class BaseEstimator:
             self.mcc_f = (((self.TP_f * self.TN_f) - (self.FP_f * self.FN_f)) /
                         np.sqrt((self.TP_f + self.FP_f) * (self.TP_f + self.FN_f) *
                          (self.TN_f + self.FP_f) * (self.TN_f + self.FN_f)))
+
+            if np.isnan(self.mcc_f):
+                self.mcc_f = 0.000
+                
         except Exception as e:
             LOG.error(f'Failed to compute Mathews Correlation Coefficient'
                         f'exception {e}')
@@ -462,11 +466,15 @@ class BaseEstimator:
             self.mcc = (((self.TP * self.TN) - (self.FP * self.FN)) /
                         np.sqrt((self.TP + self.FP) * (self.TP + self.FN) *
                          (self.TN + self.FP) * (self.TN + self.FN)))
+
+            if np.isnan(self.mcc):
+                self.mcc = 0.000
+        
         except Exception as e:
             LOG.error(f'Failed to compute Mathews Correlation Coefficient'
                         f'exception {e}')
             self.mcc = '-'
-        
+
         info.append(('Sensitivity_f', 'Sensitivity in fitting', self.sensitivity_f))
         info.append(('Specificity_f', 'Specificity in fitting', self.specificity_f))
         info.append(('MCC_f', 'Matthews Correlation Coefficient in fitting', self.mcc_f))
