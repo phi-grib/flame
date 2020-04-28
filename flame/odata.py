@@ -227,8 +227,8 @@ class Odata():
             3. results file in TSV format [optional]
         '''
 
-        if len(self.conveyor.getMain()) == 0:
-            self.conveyor.setError('Unable to find main prediction')
+        # if len(self.conveyor.getMain()) == 0:
+        #     self.conveyor.setError('Unable to find main prediction')
         
         if 'ghost' not in self.format:
             opath = utils.predictions_repository_path()
@@ -262,6 +262,7 @@ class Odata():
                 pickle.dump (datetime.timestamp(now), handle)
                 pickle.dump (self.conveyor.getMeta('modelID'),handle)
                 pickle.dump (self.conveyor.getWarningMessage(), handle)
+                pickle.dump (self.conveyor.getErrorMessage(), handle)
 
         ####
         # !  in case of error, print and return error

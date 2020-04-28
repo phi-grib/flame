@@ -199,6 +199,8 @@ def action_list(model):
     # if no model name is provided, just list the model names
     if not model:
         rdir = utils.model_repository_path()
+        if os.path.isdir(rdir) is False:
+            return False, 'the models repository path does not exist. Please run "flame -c config".'
 
         num_models = 0
         LOG.info('Models found in repository:')
@@ -413,7 +415,7 @@ def action_results(model, version=None, ouput_variables=False):
     with open(results_file, 'rb') as handle:
         conveyor.load(handle)
 
-    print (conveyor.getJSON())
+    # print (conveyor.getJSON())
 
     return True, conveyor
 
@@ -733,6 +735,8 @@ def action_predictions_list ():
     '''
     # get de model repo path
     predictions_path = pathlib.Path(utils.predictions_repository_path())
+    if predictions_path.is_dir() is False:
+        return False, 'the predictions repository path does not exist. Please run "flame -c config".'
 
     # get directories in model repo path
     dirs = [x for x in predictions_path.iterdir() if x.is_dir()]
@@ -806,7 +810,7 @@ def action_predictions_result (label, output='text'):
 
     label_path = predictions_path.joinpath(label)
 
-    if not label_path.is_dir():
+    if not os.path.isdir(label_path):
         if output != 'text':
             return False, {'code':0, 'message': f'directory {label_path} not found'}
         print (f'directory {label_path} not found')
@@ -856,7 +860,7 @@ def action_predictions_remove (label):
 
     label_path = predictions_path.joinpath(label)
 
-    if not label_path.is_dir():
+    if not os.path.isdir(label_path):
         return (False, f'directory {label_path} not found')
 
     try:
