@@ -1045,7 +1045,7 @@ Keras_parameters:
     batch_size:
       object_type: float
       writable: true
-      value: 1
+      value: 36
       options:
         - 1
         - 10
@@ -1054,8 +1054,9 @@ Keras_parameters:
     learning_rate:
       object_type: float
       writable: true
-      value: 0.1
+      value: 1
       options:
+        - 1
         - 0.1
         - 0.01
         - 0.001
