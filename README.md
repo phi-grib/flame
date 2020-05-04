@@ -236,7 +236,7 @@ Management commands deserve further description:
 | list | *flame -c manage -a list* | Lists the models present in the repository and the published version for each one. If the name of a model is provided, lists only the published versions for this model  |
 | info | *flame -c manage -e MODEL -a info* | Shows summary information about the characteristics of model MODEL  |
 | parameters | *flame -c manage -e MODEL -a parameters* | Shows a list of the main modeling parameters used by build to generate model MODEL |
-| documentation | *flame -c manage -e MODEL -a documentation * | Shows a list with the main documentation information of model MODEL. When called with parameter -t, it can be used to add new documentation information  |
+| documentation | *flame -c manage -e MODEL -a documentation* | Shows a list with the main documentation information of model MODEL. When called with parameter -t, it can be used to add new documentation information  |
 | export | *flame -c manage -a export -e NEWMODEL* | Exports the model entry NEWMODE, creating a tar compressed file *NEWMODEL.tgz* which contains all the versions. This file can be imported by another flame instance (installed in a different host or company) with the *-c manage import* command |
 | import | *flame -c manage -a import -f NEWMODEL.tgz* | Imports file *NEWMODEL.tgz*, typically generated using command *-c manage -a export* creating model NEWMODEL in the local model repository |
 
@@ -284,6 +284,28 @@ This command will add all the compounds present in the file 'series.sdf' at the 
 
 In this process no checking for dupplicate molecules or any other test is carried out.
 
+### Documenting models
+
+When a new model is created an empty documentation template is generated in the model folder. All the fields related with the modeling methodology and the model quality evaluation are automatically completed when the model is built, but other fields (e.g. author name, institution, mechanism, result interpretation) require manual user input. The mechanism for completing this template is similar to the method used to complete the parameters. The command 
+
+```sh
+flame -c manage -e MyModel -a documentation > MyModel-documentation.yaml
+```
+
+can be used to dump the half-filled template to a plain text file, which can be edited to complete the missing information. Then, once completed, we can use the command
+
+```sh
+flame -c manage -e MyModel -a documentation -t MyModel-documentation.yaml
+```
+to introduce the existing information in the internal model documentation template. 
+
+The model documentation can be shown in the screen using the first command without output redirectioning
+
+```sh
+flame -c manage -e MyModel -a documentation
+```
+
+Internally, the documentation mimics the fields of the OECD-QMRF reports. 
 
 ### Runnning models
 
