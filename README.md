@@ -218,6 +218,7 @@ The file `query.sdf` can contain the chemical structure of one or many compounds
 | -a/ --action | Management action to be carried out. Acceptable values are *list*, *new*, *kill*, *publish*, *remove*, *export* and *import*. The meaning of these actions and examples of use are provided below   |
 | -f/ --infile | Name of the input file used by the command. This file can correspond to the training data (*build*) or the query compounds (*predict*) |
 | -p/ --parameters | Name of an input file used to pass a set of parameters used to train a model (*build*) or to performa a similarity search (*search*) |
+| -t/ --documentation_file | Name of an input file used to pass documentation information using the command (*manage -a documentation*) |
 | -inc/ --incremental | indicates that the input file must not replace any existing training series and, instead, the compound will be added |
 | -h/ --help | Shows a help message on the screen |
 
@@ -234,7 +235,8 @@ Management commands deserve further description:
 | remove | *flame -c manage -a remove -e NEWMODEL -v 2* | Removes the version specified from the NEWMODEL model repository |
 | list | *flame -c manage -a list* | Lists the models present in the repository and the published version for each one. If the name of a model is provided, lists only the published versions for this model  |
 | info | *flame -c manage -e MODEL -a info* | Shows summary information about the characteristics of model MODEL  |
-| parameters | *flame -c manage -e MODEL -a parameters* | Shows a list of the main modeling parameters usded by build to generate model MODEL  |
+| parameters | *flame -c manage -e MODEL -a parameters* | Shows a list of the main modeling parameters used by build to generate model MODEL |
+| documentation | *flame -c manage -e MODEL -a documentation * | Shows a list with the main documentation information of model MODEL. When called with parameter -t, it can be used to add new documentation information  |
 | export | *flame -c manage -a export -e NEWMODEL* | Exports the model entry NEWMODE, creating a tar compressed file *NEWMODEL.tgz* which contains all the versions. This file can be imported by another flame instance (installed in a different host or company) with the *-c manage import* command |
 | import | *flame -c manage -a import -f NEWMODEL.tgz* | Imports file *NEWMODEL.tgz*, typically generated using command *-c manage -a export* creating model NEWMODEL in the local model repository |
 
