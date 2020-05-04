@@ -24,6 +24,10 @@
 import os
 import shutil
 import pathlib
+import sys
+import codecs
+import string
+import re 
 
 from flame.util import utils, get_logger
 
@@ -86,6 +90,24 @@ def get_ensemble_input(task, model_names, model_versions, infile):
 
     return True, model_res
 
+def safe_copy (inputfile, outputfile):
+    
+    buffer_size = 512*1024 # size in bytes. -1 for loading whole file in 
+    input_encoding = 'utf-8'
+    output_encoding = 'utf-8'
+    characters_to_keep = string.printable #printable us-ascii only
+    replacing_character = '?'
+    search_regex = re.compile("[^%s]" % (re.escape(characters_to_keep)))
+
+    read_stream = codecs.open(inputfile,'r',encoding=input_encoding, errors='ignore') # faster than regular open except
+                                                            # for newline splitting
+    write_stream = codecs.open(outputfile,'w',encoding=output_encoding, errors='ignore')
+    buffer = 'start'                                                        
+    while  buffer: # empty string evaluates as False. Any other string as True.
+        buffer = read_stream.read(buffer_size)
+        write_stream.write(search_regex.sub(replacing_character, buffer))
+    read_stream.close()
+    write_stream.close()
 
 def predict_cmd(arguments, output_format=None):
     '''
@@ -211,7 +233,8 @@ def build_cmd(arguments, output_format=None):
                 return False, 'no training series detected'
         else:
             try:
-                shutil.copy(ifile, lfile)
+                safe_copy(ifile, lfile)
+                # shutil.copy(ifile, lfile)
             except:
                 return False, 'Unable to copy input file to model directory'
         
@@ -243,13 +266,18 @@ def build_cmd(arguments, output_format=None):
                     new_training = os.path.join(endpoint_path, 'temp_training')
 
                     with open(new_training, 'w') as outfile:
+                        # with codecs.open(lfile, 'r', encoding='utf-8', errors='ignore') as infile:
                         with open(lfile) as infile:
                             for line in infile:
                                 outfile.write(line)
 
-                        if line != '$$$$\n':
-                            return False, 'The existing training series does not finish correctly with "$$$$" and a newline. Please correct.'
+                        if line != '$$$$\n' :
+                            if line == '$$$$' :
+                                outfile.write('\n')
+                        else:
+                            return False, 'The existing training series does not finish correctly with "$$$$" and newline. Please correct.'
 
+                        # with codecs.open(ifile, 'r', encoding='utf-8', errors='ignore') as infile:
                         with open(ifile) as infile:
                             for line in infile:
                                 outfile.write(line)
@@ -257,7 +285,8 @@ def build_cmd(arguments, output_format=None):
                     shutil.move(new_training, lfile)
             else:
                 try:
-                    shutil.copy(ifile, lfile)
+                    safe_copy (ifile, lfile)
+                    # shutil.copy(ifile, lfile)
                 except:
                     return False, 'Unable to copy input file to model directory'
 
@@ -310,7 +339,8 @@ def sbuild_cmd(arguments, output_format=None):
         if not os.path.isfile(ifile):
             return False, f'Wrong compound database file {ifile}'
         try:
-            shutil.copy(ifile, lfile)
+            safe_copy(ifile, lfile)
+            # shutil.copy(ifile, lfile)
         except:
             return False, 'Unable to copy input file to space directory'
 
