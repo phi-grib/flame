@@ -266,22 +266,23 @@ def build_cmd(arguments, output_format=None):
                     new_training = os.path.join(endpoint_path, 'temp_training')
 
                     with open(new_training, 'w') as outfile:
-                        # with codecs.open(lfile, 'r', encoding='utf-8', errors='ignore') as infile:
-                        with open(lfile, 'r') as infile:
-                            for line in infile:
-                                outfile.write(line)
 
-                        if line != '$$$$\n' :
-                            if line == '$$$$' :
-                                outfile.write('\n')
-                            else:
-                                print (f'**{line}**')
-                                return False, 'The existing training series does not finish correctly with "$$$$" and newline. Please correct.'
-
-                        # with codecs.open(ifile, 'r', encoding='utf-8', errors='ignore') as infile:
-                        with open(ifile, 'r') as infile:
+                        # handling the extra newline of SDFiles is problematic. We are delaying the
+                        # output of the newline by striping newlines and adding an universal newline
+                        # at the next line for the first block  
+                        first = True
+                        with codecs.open(lfile, 'r', encoding='utf-8', errors='ignore') as infile:
                             for line in infile:
-                                outfile.write(line)
+                                if first:
+                                    outfile.write(f'{line.rstrip()}')
+                                    first = False
+                                else:
+                                    outfile.write(f'\n{line.rstrip()}')
+
+                        # for the second block we add the preceding newline in all lines 
+                        with codecs.open(ifile, 'r', encoding='utf-8', errors='ignore') as infile:
+                            for line in infile:
+                                outfile.write(f'\n{line.rstrip()}')
 
                     shutil.move(new_training, lfile)
             else:
