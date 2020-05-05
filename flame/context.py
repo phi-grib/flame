@@ -267,18 +267,19 @@ def build_cmd(arguments, output_format=None):
 
                     with open(new_training, 'w') as outfile:
                         # with codecs.open(lfile, 'r', encoding='utf-8', errors='ignore') as infile:
-                        with open(lfile) as infile:
+                        with open(lfile, 'r') as infile:
                             for line in infile:
                                 outfile.write(line)
 
                         if line != '$$$$\n' :
                             if line == '$$$$' :
                                 outfile.write('\n')
-                        else:
-                            return False, 'The existing training series does not finish correctly with "$$$$" and newline. Please correct.'
+                            else:
+                                print (f'**{line}**')
+                                return False, 'The existing training series does not finish correctly with "$$$$" and newline. Please correct.'
 
                         # with codecs.open(ifile, 'r', encoding='utf-8', errors='ignore') as infile:
-                        with open(ifile) as infile:
+                        with open(ifile, 'r') as infile:
                             for line in infile:
                                 outfile.write(line)
 
