@@ -91,23 +91,27 @@ def get_ensemble_input(task, model_names, model_versions, infile):
     return True, model_res
 
 def safe_copy (inputfile, outputfile):
-    
-    buffer_size = 512*1024 # size in bytes. -1 for loading whole file in 
-    input_encoding = 'utf-8'
-    output_encoding = 'utf-8'
+    ''' this function makes sure that the input file contains only printable chars
+        RDKit is very sensitive to the presence of non utf-8 chars and for this reason
+        this pre-filter is needed
+    '''
+
     characters_to_keep = string.printable #printable us-ascii only
-    replacing_character = '?'
     search_regex = re.compile("[^%s]" % (re.escape(characters_to_keep)))
 
-    read_stream = codecs.open(inputfile,'r',encoding=input_encoding, errors='ignore') # faster than regular open except
-                                                            # for newline splitting
-    write_stream = codecs.open(outputfile,'w',encoding=output_encoding, errors='ignore')
+    read_stream  = codecs.open(inputfile ,'r',encoding='utf-8', errors='ignore') 
+    write_stream = codecs.open(outputfile,'w',encoding='utf-8', errors='ignore')
+ 
     buffer = 'start'                                                        
+    buffer_size = 512*1024 # size in bytes. -1 for loading whole file in 
+
     while  buffer: # empty string evaluates as False. Any other string as True.
         buffer = read_stream.read(buffer_size)
-        write_stream.write(search_regex.sub(replacing_character, buffer))
+        write_stream.write(search_regex.sub('?', buffer))
+
     read_stream.close()
     write_stream.close()
+
 
 def predict_cmd(arguments, output_format=None):
     '''
