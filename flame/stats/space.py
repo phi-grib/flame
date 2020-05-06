@@ -29,44 +29,62 @@ import os
 from rdkit import Chem
 from rdkit.Chem import AllChem
 from rdkit.Chem import DataStructs
-from flame.util import utils, get_logger, supress_log
+from flame.util import utils, get_logger
 
 LOG = get_logger(__name__)
 
 
 class Space:
-    def __init__(self, param):
+    def __init__(self, param, conveyor):
         '''Initializes the chemical space'''
+        
         self.param = param
+        self.conveyor = conveyor
+
+        self.objinfo = {}
+        itemlist = ['obj_nam', 'obj_id', 'SMILES', 'ymatrix']
+        for item in itemlist:
+            item_val = self.conveyor.getVal(item)
+            if item_val is not None:
+                self.objinfo[item] = item_val
+
+        MDs = self.param.getVal('computeMD_method')
+        self.isFingerprint = ('morganFP' in MDs)
+
+        self.X = None
+
+        if self.isFingerprint and len(MDs)>1:
+            fingerprint_index = self.conveyor.getVal('fingerprint_index')
+        
+            if fingerprint_index is None:
+                return False, 'Only a single type of MD can be used to compute similarity'
+            else:
+                self.X = self.conveyor.getVal('xmatrix')[:,fingerprint_index]
+        else:
+            self.X = self.conveyor.getVal('xmatrix')
+
+        self.Xref = None # metric of reference spaced, loaded in searches only 
         self.Dmax = 1000.0 # an arbitrary value
 
-    def build(self, X, objinfo):
+    def build(self):
     # def build(self, X, names, ids, SMILES):
         ''' This function pre-process the X matrix, optimizing it for searching in the case
             of fingerprints 
         '''
-
-        # self.names = names
-        # self.ids = ids
-        # self.SMILES = SMILES
-        self.objinfo = objinfo
-        self.nobj, self.nvarx = np.shape(X)
-
-        if len (self.param.getVal('computeMD_method')) > 1:
-            return False, 'Only a single type of MD can be used to compute similarity'
+        self.nobj, self.nvarx = np.shape(self.X)
 
         # if X contains fingerprints as numpy, convert to RDKit BitVector to speed-up
         # future similarity searches
-        if self.param.getVal('computeMD_method')[0] in ['morganFP']: # include any RDKit fingerprint here
-            self.X = []
-            for i in X:
-                self.X.append(DataStructs.cDataStructs.CreateFromBitString("".join(i.astype(str))))
+        if self.isFingerprint: # include any RDKit fingerprint here
+            Xbit = []
+            for i in self.X:
+                Xbit.append(DataStructs.cDataStructs.CreateFromBitString("".join(i.astype(str))))
+            self.X = Xbit
             self.Dmax = 1.0
         else:
-            ydist = distance.pdist(X, metric='euclidean')
+            ydist = distance.pdist(self.X, metric='euclidean')
             #print ('min:', np.min(ydist), 'max:', np.max(ydist))
             self.Dmax = np.percentile(ydist,95)
-            self.X = X
 
         results = []
         results.append(('nobj', 'number of objects', self.nobj))
@@ -77,7 +95,7 @@ class Space:
         return True, results
 
 
-    def search (self, X, cutoff, numsel, metric):
+    def search (self, cutoff, numsel, metric):
         ''' This function searches for compounds in the chemical space similar to the compounds of input file
             already characterized by the X matrix
 
@@ -88,9 +106,6 @@ class Space:
         # load pickle with reference space
         self.load_space()
 
-        # True for fingerprint MD
-        isFingerprint = (self.param.getVal('computeMD_method') == ['morganFP'])
-
         # set defaults
         if cutoff is None:
             cutoff = 0.0
@@ -99,18 +114,22 @@ class Space:
             #numsel = len(self.X)
             numsel = 10
 
-        if metric is None:
-            if isFingerprint :
-                metric = 'Tanimoto'
-            else:
-                metric = 'Euclidean'
+        # float variables only can be compared using euclidean
+        if self.isFingerprint is False:
+            metric = 'Euclidean'
+        else:
+            if metric is None:
+                if self.isFingerprint :
+                    metric = 'Tanimoto'
+                else:
+                    metric = 'Euclidean'
 
         results = []
 
         # for each compound in the search set 
-        for i, ivector in enumerate(X):
+        for ivector in self.X:
 
-            if isFingerprint:
+            if self.isFingerprint:
                 bitestring="".join(ivector.astype(str))
                 ifp = DataStructs.cDataStructs.CreateFromBitString(bitestring)
 
@@ -121,9 +140,8 @@ class Space:
             
             d_worst = 0.000
 
-            for j, jvector in enumerate(self.X):
+            for j, jvector in enumerate(self.Xref):
 
-                
                 if metric == 'Tanimoto':
                     d = DataStructs.FingerprintSimilarity(ifp,jvector, metric=DataStructs.TanimotoSimilarity)
                 elif metric == 'Euclidean':
@@ -181,7 +199,7 @@ class Space:
                                       'space.pkl')
         with open(space_pkl, 'wb') as fo:
             pickle.dump(self.nobj, fo)
-            pickle.dump(self.X, fo)
+            pickle.dump(self.X, fo)  #the reference space matrix is self X 
             pickle.dump(self.Dmax, fo)
             pickle.dump(self.objinfo, fo)
         return
@@ -195,7 +213,7 @@ class Space:
 
         with open(space_pkl, 'rb') as fo:
             self.nobj = pickle.load(fo)
-            self.X = pickle.load(fo)
+            self.Xref = pickle.load(fo) 
             self.Dmax = pickle.load(fo)
             self.objinfo = pickle.load(fo)
         return

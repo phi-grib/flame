@@ -97,11 +97,11 @@ class Sapply:
         self.X = result
 
         # instances space object
-        space = Space(self.param)
+        space = Space(self.param, self.conveyor)
 
         # builds space from idata results
         LOG.info('Starting space searching')
-        success, search_results = space.search (self.X, cutoff, numsel, metric)
+        success, search_results = space.search (cutoff, numsel, metric)
         if not success:
             self.conveyor.setError(search_results)
             return

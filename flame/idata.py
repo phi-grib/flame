@@ -460,8 +460,9 @@ class Idata:
         [0] xmatrix (nparray np.float64)
         [1] list of variable names (str)
         [2] list of booleans indicating if the computation succeeded for each molecule
+        [3] list of booleans indicating if the md is a binary (fingerprint) or a float  
 
-        example:    return True, (xmatrix, md_nam, success_list)
+        example:    return True, (xmatrix, md_nam, success_list, combined_fp)
         '''
         return False, 'not implemented'
 
@@ -474,8 +475,11 @@ class Idata:
         of the methods output is boolean anda a tupla of two elements:
         [0] xmatrix (nparray np.float64)
         [1] list of variable names (str)
+        [2] list of booleans indicating if the computation succeeded for each molecule
+        [3] list of booleans indicating if the md is a binary (fingerprint) or a float  
 
-        FIXIT
+        example:    return True, (xmatrix, md_nam, success_list, combined_fp)
+
         '''
 
         LOG.info(f'Computing molecular descriptors with methods: {methods}')
@@ -487,9 +491,9 @@ class Idata:
         registered_methods = dict([('RDKit_properties', computeMD._RDKit_properties),
                                    ('morganFP', computeMD._RDKit_morganFPS),
                                    ('RDKit_md', computeMD._RDKit_descriptors),
-                                #    ('padel', computeMD._padel_descriptors),
-                                #    ('mordred', computeMD._mordred_descriptors),
                                    ('custom', self.computeMD_custom)])
+
+        fingerprint_list = ['morganFP']  # update with any other fingerprint method
 
         # check if input methods are members of registered methods
         if not all(m in registered_methods for m in methods):
@@ -512,11 +516,15 @@ class Idata:
             if not success:  # if computing returns False in status
                 return success, results
 
+            is_fingerprint = method in fingerprint_list
+            nobj, nvarx = np.shape(results['matrix'])
+
             if is_empty:  # first md computed, just copy
 
                 combined_md = results['matrix']  # np.array of values
                 combined_nm = results['names']  # list of variable names
                 combined_sc = results['success_arr'] # list of true/false
+                combined_fp = [is_fingerprint for i in range(nvarx)]
 
                 shape = np.shape(combined_md)
 
@@ -546,6 +554,7 @@ class Idata:
                           for i, scc in enumerate(combined_sc)]
                           
                 combined_sc = new_sc
+                combined_fp += [is_fingerprint for i in range(nvarx)]
             
         # delete all objects for which success is not true but 
         # IN REVERSE order, so the index if the lines to remove
@@ -555,7 +564,7 @@ class Idata:
             if not scc:
                 combined_md = np.delete(combined_md,i,axis=0) 
 
-        return True, (combined_md, combined_nm, combined_sc)
+        return True, (combined_md, combined_nm, combined_sc, combined_fp)
 
 
     def consolidate(self, results, nobj):
@@ -576,8 +585,8 @@ class Idata:
             if iresults[0] == False:
                 return False, iresults[1]
 
-            # internal is a tupla of 3 elements
-            #  (xmatrix, var_nam, success_list)
+            # internal is a tupla of 4 elements
+            #  (xmatrix, var_nam, success_list, fingerprint_index)
             internal = iresults[1]
             ixmatrix = internal[0]
 
@@ -592,6 +601,7 @@ class Idata:
                 xmatrix = ixmatrix
                 var_nam = internal[1]
                 success_list = internal[2]
+                fingerprint_index = internal[3]
 
                 shape = np.shape(ixmatrix)
                 first = False
@@ -617,7 +627,7 @@ class Idata:
                 xmatrix = np.vstack((xmatrix, ixmatrix))
                 success_list += internal[2]
 
-        return True, (xmatrix, var_nam, success_list)
+        return True, (xmatrix, var_nam, success_list, fingerprint_index)
 
     def save(self):
         '''
@@ -761,9 +771,10 @@ class Idata:
                           f' in file {input_file}')
                 continue
 
-            if first_mol:  # first molecule
+            if first_mol:  # we extract common features from first molecule only
                 md_results = results[0]
-                va_results = results[1]
+                va_results = results[1] # variable names
+                fp_results = results[2] # fingerprint index
                 num_var = len(md_results)
                 first_mol = False
             else:
@@ -776,7 +787,7 @@ class Idata:
 
                 md_results = np.vstack((md_results, results[0]))
 
-        return True, (md_results, va_results, success_list)
+        return True, (md_results, va_results, success_list, fp_results)
 
     def updateMolIndex (self, mol_index, success_list):
 
@@ -854,13 +865,14 @@ class Idata:
         if not success:
             return False, results
 
-        x = results [0]
-        xnames = results [1]
-        success_list = results [2]
+        # results [0]     is X
+        # results [1]     is xnames
+        # results [2]     is success_list
+        # results [3]     is fingerprint_index  
 
-        success, mol_index = self.updateMolIndex(mol_index, success_list)
+        success, mol_index = self.updateMolIndex(mol_index, results[2])
         
-        return success, (x, xnames, mol_index)
+        return success, (results[0], results[1], mol_index, results[3])
 
     def ammend_objects(self, inform, workflow) -> None:
         '''
@@ -1022,6 +1034,9 @@ class Idata:
 
         self.conveyor.addVal(results[1], 'var_nam',
             'Var names', 'method', 'vars', 'Names of the X variables')
+
+        self.conveyor.addVal(results[3], 'fingerprint_index',
+            'fingerprint index', 'method', 'vars', 'Index true for fingerprint variables')
 
         return
 
