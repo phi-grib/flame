@@ -59,6 +59,7 @@ class Space:
             if fingerprint_index is None:
                 return False, 'Only a single type of MD can be used to compute similarity'
             else:
+                LOG.warning("Flame cannot combine fingerprints and continuous variables for computing similarity. Only the fingerprints will be used for showing similar compounds.")
                 self.X = self.conveyor.getVal('xmatrix')[:,fingerprint_index]
         else:
             self.X = self.conveyor.getVal('xmatrix')
