@@ -23,7 +23,7 @@ Institution:
   level: 1
   QMRF_field: '2.5'
   description: 'Affiliation details'
-  value: 'UPF'
+  value: null
 
 Date:
   level: 1
@@ -122,7 +122,7 @@ Algorithm:
   value: 
     type:
       value: null
-      description: 'Type of model (QSAR, etc?)'
+      description: 'Type of model (QSAR, RA, etc)'
     algorithm:
       value: null
       description: 'Type of algorithm (Random Forest, SVM, etc)'
@@ -196,25 +196,31 @@ AD_parameters:
 Goodness_of_fit_statistics: 
   level: 2
   QMRF_field: '6.7'
-  description: 'Goodness of the fit statistics'
-  value: null
+  description: 'Goodness of fit statistics'
+  value: 
+    method:
+      value: null
+      description: 'Name of the Goodness of fit method'
+    statistics: 
+      value: null
+      description: 'GOF statistics'
 
 Internal_validation_1: 
   level: 2
   QMRF_field: '6.8'
-  description: 'Internal validation method 1 settings'
+  description: 'Internal validation method and statistics for internal cross-validation'
   value:
     method:
       value: null
-      description: 'Name of the cross-validation 1 method'
+      description: 'Name of the cross-validation method'
     statistics: 
       value: null
-      description: 'statistics'
+      description: 'CV statistics'
 
 Internal_validation_2: 
   level: 2
   QMRF_field: '6.9'
-  description: 'Internal validation settings and statistics for leave-many-out cross-validation'
+  description: 'Additionl validation settings and statistics for internal cross-validation'
   value: null
 
 External_validation: 
@@ -256,13 +262,13 @@ QMRF_updates:
 References:
   level: 3
   QMRF_field: '2.7'
-  description: '2.7. Reference(s) to main scientific papers and/or software package'
+  description: 'Reference(s) to main scientific papers and/or software package'
   value: null
 
 QMRF_same_models:
   level: 3
   QMRF_field: '2.9'
-  description: '2.9. Availability of another QMRF for exactly the same model' 
+  description: 'Availability of another QMRF for exactly the same model' 
   value: null
 
 Comment_on_the_endpoint:

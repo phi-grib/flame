@@ -923,8 +923,7 @@ class Idata:
 
             self.conveyor.setVal(ikey, ilist)
 
-        message = 'Failed to process ' + \
-             str(len(warning_list))+' molecules : '+str(warning_list)
+        message = f'Failed to process {len(warning_list)} molecules : {str(warning_list)}'
         self.conveyor.setWarning(message)
 
         LOG.warning(message)
@@ -971,7 +970,6 @@ class Idata:
             else:
                 results_tuple = pool.map(self.workflow_objects, split_files_names)
 
-
             success, results = self.consolidate(results_tuple, split_files_sizes)
 
         else:
@@ -988,7 +986,6 @@ class Idata:
 
         # check if any molecule failed to complete the workflow and then
         # ammend object annotations in self.conveyor
-
         success_workflow = results['success_arr']
 
         if len(success_inform) != len(success_workflow):
@@ -1000,7 +997,6 @@ class Idata:
 
             self.conveyor.setError('number of molecules informed'
                                    ' and processed does not match')
-
             return
 
         # Check if molecules not informed succeded
@@ -1017,7 +1013,8 @@ class Idata:
                              ' there is a serious workflow issue and the '
                              ' molecule should be cured or eliminated.')
 
-                self.conveyor.setError('Unknown error processing input file. Probably the format is wrong or not supported')
+                self.conveyor.setError('Unknown error processing input file.'
+                                       ' Probably the format is wrong or not supported')
                 return
 
         # check if a molecule informed did not
