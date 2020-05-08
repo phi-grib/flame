@@ -542,6 +542,7 @@ def action_parameters(model, version=None, oformat='text'):
 def action_documentation(model, version=None, doc_file=None, oformat='text'):
     ''' Returns an object with whole results info for a given model and version '''
 
+    print ("*****************************************************************************************************")
     if model is None:
         return False, 'Empty model label'
 
@@ -555,9 +556,17 @@ def action_documentation(model, version=None, doc_file=None, oformat='text'):
     doc = Documentation(model, version)
 
     if doc_file is not None:
+        if oformat == 'JSONS':
+            print ("=============================================================================================================")
+
+            success, message = doc.delta(model, 0, doc_file, iformat='JSONS')
+        else:
         # use the param_file to update existing parameters at the model
         # directory and save changes to make them persistent
-        success, message = doc.delta(model, 0, doc_file, iformat='YAML')
+            success, message = doc.delta(model, 0, doc_file, iformat='YAML')
+
+        if not success:
+            return False, message
 
     doc = Documentation(model, version)
     if oformat != 'text':
