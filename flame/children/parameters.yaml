@@ -1010,7 +1010,7 @@ XGBOOST_optimize:
 
       description: 
     booster:
-      object_type: int
+      object_type: list
       writable: true
       value:
         - gbtree
@@ -1058,7 +1058,7 @@ output_similar:
   advanced: advanced
   object_type: boolean
   writable: false
-  value: false
+  value: true
   options:
     - true
     - false
