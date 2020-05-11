@@ -36,6 +36,9 @@ from sklearn.metrics import mean_squared_error, matthews_corrcoef as mcc
 from sklearn.metrics import f1_score
 from sklearn.metrics import make_scorer
 from sklearn.metrics import confusion_matrix
+
+from flame.graph.graph import projectPredictions
+
 from flame.util import utils, get_logger
 LOG = get_logger(__name__)
 
@@ -452,6 +455,9 @@ class Apply:
         # if the input file contains activity values use them to run external validation 
         if self.conveyor.isKey('ymatrix'):
             self.external_validation()
+
+        # X = self.conveyor.getVal("xmatrix")
+        projectPredictions (X, self.param, self.conveyor)
 
         return
 
