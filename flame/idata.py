@@ -210,10 +210,10 @@ class Idata:
                     exp = sdfutils.getVal(mol, self.param.getVal('SDFile_experimental'))
 
             # extracts complementary information, if any.
-            cmp = None    
+            cmp = ''    
             if self.param.getVal('SDFile_complementary') is not None:
                 if isinstance (self.param.getVal('SDFile_complementary'),str):
-                    cmp = sdfutils.getVal(mol, self.param.getVal('SDFile_complementary'))
+                    cmp = sdfutils.getStr(mol, self.param.getVal('SDFile_complementary'))
 
             # generates a SMILES
             sml = None
@@ -251,6 +251,9 @@ class Idata:
         self.conveyor.addVal(obj_sml, 'SMILES', 'SMILES',
                          'smiles', 'objs',
                          'Structure of the molecule in SMILES format')
+        self.conveyor.addVal(obj_cmp, 'complementary', 'Complem.',
+                         'method', 'objs',
+                         'Complementary anotation present in the input file')
 
         if not utils.is_empty(obj_bio):
             self.conveyor.addVal(np.array(obj_bio, dtype=np.float64),
@@ -263,12 +266,6 @@ class Idata:
                              'experim', 'Experim.',
                              'method', 'objs',
                              'Experimental anotation present in the input file')
-
-        if not utils.is_empty(obj_cmp):
-            self.conveyor.addVal(np.array(obj_cmp, dtype=np.float64),
-                             'complementary', 'Complem.',
-                             'method', 'objs',
-                             'Complementary anotation present in the input file')
 
         LOG.debug(f'processed {obj_num} molecules'
                   f' from a supplier of {len(suppl)} without issues')
@@ -550,94 +547,16 @@ class Idata:
                           
                 combined_sc = new_sc
             
-        #  delete all objects for which success is not true
-        for i, scc in enumerate(combined_sc):
+        # delete all objects for which success is not true but 
+        # IN REVERSE order, so the index if the lines to remove
+        # is not affected by the removal
+        
+        for i, scc in reversed(list(enumerate(combined_sc))):
             if not scc:
                 combined_md = np.delete(combined_md,i,axis=0) 
 
         return True, (combined_md, combined_nm, combined_sc)
 
-   
-    @staticmethod
-    def _filter_matrix(matrix: np.ndarray, succes_list: list):
-        """Filters matrix via boolean mask.
-
-        The boolean mask is the logical AND combination of all the masks in
-        `succes_list`.
-        This way we get rid of molecules with NaNs or that have failed during
-        supplier reading in any descriptor computation.
-
-        Parameters
-        ----------
-
-        matrix: np.ndarray
-            descriptors matrix that's going to be filtered
-
-        succes_list: list
-            list of array masks that will be used to filter 
-            the descriptors matrix
-
-        Returns
-        -------
-
-        np.ndarray
-            Filtered matrix with the elements that have
-            only `True` in succes_list arrays
-
-        list
-            the resultant succes list. `all()` combination of
-            `succes_list` (param) arrays. The length must be same
-            as the number of molecules.
-
-        """
-        # using all bcause of arbitrary list length
-        filter_mask = np.all(succes_list, axis=0)
-        n_filtered_mols = len(filter_mask) - sum(filter_mask)
-        LOG.info(f'removed {n_filtered_mols} molecules of {len(filter_mask)}'
-                 ' because of malformation or problems computing descriptors')
-
-        if matrix.shape[0] != len(filter_mask):
-            raise ValueError('Matrix and filter mask do not have the'
-                             ' same shape on filter axis')
-
-        filtered_matrix = matrix[filter_mask, :]
-        return filtered_matrix, filter_mask.tolist()
-
-    # @staticmethod
-    # def _concat_descriptors_matrix(matrices: list) -> np.ndarray:
-    #     """ Concatenates horizontaly an arbritary number of matrices.
-
-    #     Used to concat multiple descriptors results into a one array.
-
-    #     Parameters
-    #     ----------
-
-    #     matrices: list
-    #         list of matrices (np.ndarrays) to concat horizontally
-
-    #     Returns
-    #     -------
-
-    #     np.ndarray
-    #         concatenated matrix of input matrices
-    #     """
-    #     # type check input
-    #     if not all(isinstance(m, np.ndarray) for m in matrices):
-    #         raise TypeError('input matrices must be numpy arrays')
-
-    #     try:
-    #         xmatrix = np.concatenate(matrices, axis=1)
-
-    #         LOG.debug('concatenated matrices with shapes: '
-    #                   f'{[m.shape for m in matrices]} into a'
-    #                   f' matrix with shape {xmatrix.shape}')
-
-    #     except ValueError as e:
-    #         LOG.critical('Cannot concatenate matrix with different shapes: '
-    #                      f'{[m.shape[0] for m in matrices]}')
-    #         raise ValueError('Cannot concatenate matrix with different shapes: '
-    #                          f'{[m.shape[0] for m in matrices]}')
-    #     return xmatrix
 
     def consolidate(self, results, nobj):
         '''
@@ -1202,6 +1121,7 @@ class Idata:
 
         # call extractInformation to obtain names, activities, smiles, id, etc.
         success_inform = self.extractInformation(ifile)
+
         if not success_inform or self.conveyor.getError():
             return
 
@@ -1222,6 +1142,8 @@ class Idata:
         combined_md_names = []
         combined_cf_names = []
 
+        num_obj = self.conveyor.getVal ('obj_num')
+
         for i_result in self.idata:
 
             # predictions
@@ -1229,13 +1151,15 @@ class Idata:
 
             if combined_md is None:  # for first element just copy
                 combined_md = np.array(i_md, dtype=np.float64)
-                num_obj = len(i_md)
+                if len(i_md)!= num_obj:
+                    self.conveyor.setError('the number of results produced by the first model is inconsistent with the number of molecules recognized in the input file')
+                    return
             else:
                 #TODO: so far we discard any situation where the length of the inputs to be merged is
                 # non consistent
                 # We must implement an analysis of the output allowing to discard  
                 if len(i_md)!= num_obj:
-                    self.conveyor.setError('the length of the results produced by some models is inconsistent')
+                    self.conveyor.setError('the number of the results produced by some models is inconsistent')
                     return
                 combined_md = np.c_[combined_md, np.array(i_md, dtype=np.float64)]
 
@@ -1259,8 +1183,8 @@ class Idata:
                 combined_cf_names.append(
                     'upper_limit'+':'+i_result.getMeta('endpoint')+':'+str(i_result.getMeta('version')))
 
-        self.conveyor.addVal( num_obj, 'obj_num', 'Num mol', 
-                         'method', 'single', 'Number of molecules present in the input file')
+        # self.conveyor.addVal( num_obj, 'obj_num', 'Num mol', 
+        #                  'method', 'single', 'Number of molecules present in the input file')
 
         self.conveyor.addVal( combined_md, 'xmatrix', 'X matrix',
                          'results', 'vars', 'Combined output from external sources')
@@ -1280,7 +1204,6 @@ class Idata:
         # print ('combined_md_names', combined_md_names)
         # print ('ensemble_confidence', combined_cf)
         # print ('ensemble_confidence_names', combined_cf_names)
-
         return
 
     def run(self):
