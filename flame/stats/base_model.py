@@ -532,11 +532,16 @@ class BaseEstimator:
         info.append(('Conformal_coverage', 'Conformal coverage in cross-validation', self.conformal_coverage))
         info.append(('Conformal_accuracy', 'Conformal accuracy in cross-validation', self.conformal_accuracy))
 
+        # convert to plain list to avoid problems with JSON serialization of results
+        adj_list = fit.tolist()
+        pred_list = [x.tolist() for x in Y_pred]
+
         results = {}
         results ['quality'] = info
-        # results ['Y_adj'] = fit.tolist() <- this produces serialization problems
-        # results ['Y_pred'] = Y_pred
-        #results ['classes'] = prediction
+        results ['Y_adj'] = adj_list
+        results ['Y_pred'] = pred_list
+        results ['classes'] = prediction
+
         return True, results
 
     def quantitativeValidation(self):
