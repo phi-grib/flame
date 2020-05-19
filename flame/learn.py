@@ -307,6 +307,24 @@ class Learn:
                 'objs',
                 'Y values of the training series predicted by the model')
 
+        if 'Conformal_prediction_ranges' in model_validation_results:
+            self.conveyor.addVal(
+                model_validation_results['Conformal_prediction_ranges'],
+                'Conformal_prediction_ranges',
+                'Conformal prediction ranges',
+                'method',
+                'objs',
+                'Interval for the cross-validated predictions')
+
+        if 'Conformal_prediction_ranges_fitting' in model_validation_results:
+            self.conveyor.addVal(
+                model_validation_results['Conformal_prediction_ranges_fitting'],
+                'Conformal_prediction_ranges_fitting',
+                'Conformal prediction ranges fitting',
+                'method',
+                'objs',
+                'Interval for the predictions in fitting')             
+
         # conformal qualitative models produce a list of tuples, indicating
         # if the object is predicted to belong to class 0 and 1
         if 'classes' in model_validation_results:

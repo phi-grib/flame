@@ -246,18 +246,18 @@ class BaseEstimator:
         info.append(('Conformal_accuracy', 
                      'Conformal accuracy', 
                       accuracy_pred))
-        info.append(('Conformal_interval_medians_fitting',
-                     'Conformal interval medians fitting', 
-                      Y_rec))
-        info.append(('Conformal_interval_medians',
-                     'Conformal interval medians', 
-                      Y_pred))
-        info.append(('Conformal_prediction_ranges_fitting',
-                     'Conformal prediction ranges fitting', 
-                      Y_rec_in))
-        info.append(('Conformal_prediction_ranges',
-                     'Conformal prediction ranges', 
-                     Y_pred_in))
+        # info.append(('Conformal_interval_medians_fitting',
+        #              'Conformal interval medians fitting', 
+        #               Y_rec))
+        # info.append(('Conformal_interval_medians',
+        #              'Conformal interval medians', 
+        #               Y_pred))
+        # info.append(('Conformal_prediction_ranges_fitting',
+        #              'Conformal prediction ranges fitting', 
+        #               Y_rec_in))
+        # info.append(('Conformal_prediction_ranges',
+        #              'Conformal prediction ranges', 
+        #              Y_pred_in))
         
         # Compute goodness of the fit statistics using recalculated
         # predictions
@@ -309,6 +309,8 @@ class BaseEstimator:
         results ['quality'] = info
         results ['Y_adj'] = Y_rec
         results ['Y_pred'] = Y_pred
+        results ['Conformal_prediction_ranges'] = Y_pred_in
+        results ['Conformal_prediction_ranges_fitting'] = Y_rec_in
         return True, results
 
     def CF_qualitative_validation(self):
@@ -700,9 +702,9 @@ class BaseEstimator:
         info.append(('Sensitivity', 'Sensitivity in cross-validation', self.sensitivity))
         info.append(('Specificity', 'Specificity in cross-validation', self.specificity))
         info.append(('MCC', 'Matthews Correlation Coefficient in cross-validation', self.mcc))
-        info.append (('Y_adj', 'Adjusted Y values', Y) ) 
-        info.append (('Y_adj', 'Adjusted Y values', Yp) )          
-        info.append (('Y_pred', 'Predicted Y values after cross-validation', y_pred))
+        # info.append (('Y_adj', 'Adjusted Y values', Y) ) 
+        # info.append (('Y_adj', 'Adjusted Y values', Yp) )          
+        # info.append (('Y_pred', 'Predicted Y values after cross-validation', y_pred))
         LOG.debug(f'Qualitative crossvalidation performed')
 
 

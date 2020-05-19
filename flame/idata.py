@@ -195,6 +195,12 @@ class Idata:
                 if isinstance (self.param.getVal('SDFile_id'),str):
                     idv = sdfutils.getStr(mol, self.param.getVal('SDFile_id'))
 
+            # extracts complementary information, if any.
+            cmp = ''    
+            if self.param.getVal('SDFile_complementary') is not None:
+                if isinstance (self.param.getVal('SDFile_complementary'),str):
+                    cmp = sdfutils.getStr(mol, self.param.getVal('SDFile_complementary'))
+
             # extracts biological information (activity) which is used as dependent variable
             # for the model training and is provided as a prediction for new compounds
             bio = None
@@ -209,12 +215,6 @@ class Idata:
                 if isinstance (self.param.getVal('SDFile_experimental'),str):
                     exp = sdfutils.getVal(mol, self.param.getVal('SDFile_experimental'))
 
-            # extracts complementary information, if any.
-            cmp = ''    
-            if self.param.getVal('SDFile_complementary') is not None:
-                if isinstance (self.param.getVal('SDFile_complementary'),str):
-                    cmp = sdfutils.getStr(mol, self.param.getVal('SDFile_complementary'))
-
             # generates a SMILES
             sml = None
             try:
@@ -225,11 +225,11 @@ class Idata:
 
             # assigns the information extracted from the SDFile to the corresponding lists
             obj_nam.append(name)
+            obj_sml.append(sml)
             obj_id.append(idv)
+            obj_cmp.append(cmp)
             obj_bio.append(bio)
             obj_exp.append(exp)
-            obj_cmp.append(cmp)
-            obj_sml.append(sml)
 
             success_list.append(True)
             obj_num += 1
@@ -242,18 +242,24 @@ class Idata:
         self.conveyor.addVal(obj_num, 'obj_num', 'Num mol',
                          'method', 'single',
                          'Number of molecules present in the input file')
+
         self.conveyor.addVal(obj_nam, 'obj_nam', 'Mol name',
                          'label', 'objs',
                          'Name of the molecule, as present in the input file')
-        self.conveyor.addVal(obj_id, 'obj_id', 'Mol id',
-                         'label', 'objs',
-                         'ID of the molecule, as present in the input file')
+
         self.conveyor.addVal(obj_sml, 'SMILES', 'SMILES',
                          'smiles', 'objs',
                          'Structure of the molecule in SMILES format')
-        self.conveyor.addVal(obj_cmp, 'complementary', 'Complem.',
-                         'method', 'objs',
-                         'Complementary anotation present in the input file')
+
+        if not utils.is_string_empty(obj_id):
+            self.conveyor.addVal(obj_id, 'obj_id', 'Mol id',
+                            'label', 'objs',
+                            'ID of the molecule, as present in the input file')
+
+        if not utils.is_string_empty(obj_cmp):
+            self.conveyor.addVal(obj_cmp, 'complementary', 'Complem.',
+                            'method', 'objs',
+                            'Complementary anotation present in the input file')
 
         if not utils.is_empty(obj_bio):
             self.conveyor.addVal(np.array(obj_bio, dtype=np.float64),
