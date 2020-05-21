@@ -117,7 +117,12 @@ class Conveyor:
         return self.warning
 
     def setWarning (self, message):
-        self.warning = message
+        if self.warning is None:
+            self.warning = message
+        else:
+            self.warning += '\n'+message
+        
+        print ('warning status:', self.warning)
     
     def getVal(self, key):
         if not key in self.data:

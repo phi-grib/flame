@@ -23,7 +23,6 @@
 import os
 import numpy as np
 from flame.stats.pca import pca    
-# import matplotlib.pyplot as plt
 
 from flame.util import utils, get_logger
 LOG = get_logger(__name__)
@@ -51,13 +50,6 @@ def generateProjectedSpace(X, param, conveyor):
     conveyor.addVal(mpca.t[1], 'PC2',
                         'PCA PC2', 'method', 'objs',
                         'PCA PC2 score for graphic representation')
-
-    # # generate png with PCA scores
-    # scores=plt.figure(figsize=(9,6))
-    # plt.xlabel('PC 1')
-    # plt.ylabel('PC 2')
-    # plt.scatter(mpca.t[0],mpca.t[1], c='red', marker='D', s=40, linewidths=0)
-    # scores.savefig("pca-scores12.png", format='png')
 
 
 def projectPredictions(X, param, conveyor):

@@ -107,6 +107,7 @@ class Combo (BaseEstimator):
                 info.append(('scoringR', 'Scoring P', self.scoringR))
                 info.append(('R2', 'Determination coefficient', self.R2))
                 info.append(('SDEC', 'Standard Deviation Error of the Calculations', self.SDEC))
+
                 LOG.debug(f'Goodness of the fit calculated: {self.scoringR}')
             except Exception as e:
                 LOG.error(f'Error computing goodness of the fit'
@@ -229,7 +230,7 @@ class median (Combo):
                                 break
                         selectedA = sorted_pred[i-1][0]
 
-                    print ('even',j, selectedA, selectedB)
+                    # print ('even',j, selectedA, selectedB)
 
                     xmedian.append(np.mean((X[j,selectedA], X[j,selectedB])))
                     cilow.append(np.mean((CI_vals[j,selectedA*2], CI_vals[j,selectedB*2])))
@@ -245,7 +246,7 @@ class median (Combo):
                         if acc_w >= wcenter:
                             break
 
-                    print ('odd',j, selected)
+                    # print ('odd',j, selected)
 
                     xmedian.append(X[j,selected])
                     cilow.append(CI_vals[j,selected*2])
@@ -541,7 +542,7 @@ class matrix (Combo):
         for i in var_names:
             vname = i.split(':')[1]
             if not vname in mmatrix:
-                return False
+                raise Exception (f'matrix does not indexes model input. {vname} not found.')
             
             self.vloop.append(mmatrix[vname][0]) # inner loop is 0, then 1, 2 etc...
             self.vsize.append(mmatrix[vname][1]) # number of bins in the matrix for this variable
@@ -587,7 +588,7 @@ class matrix (Combo):
 
             confidence_left  = (1.0 - CONFIDENCE)/2.0
             confidence_right = 1.0 - confidence_left
-            print ("confidences: ", CONFIDENCE, confidence_left, confidence_right)
+            LOG.debug ("confidences: ", CONFIDENCE, confidence_left, confidence_right)
 
             z = stats.norm.ppf (conformal_confidence_right)
     
@@ -642,7 +643,7 @@ class matrix (Combo):
                     )
         
             for i in range (len(cival[0])):
-                print (f'{cival[0][i]:.2f} - {cival[2][i]:.2f} - {cival[1][i]:.2f}')
+                LOG.debug (f'{cival[0][i]:.2f} - {cival[2][i]:.2f} - {cival[1][i]:.2f}')
 
             yarray = np.array(cival[2])
 

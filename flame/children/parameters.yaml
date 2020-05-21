@@ -333,7 +333,7 @@ model:
     - median
     - majority
     - matrix
-  description: List of available algorithms
+  description: List of available ML algorithms
   dependencies: 
     input_type: molecule
   comments: 
