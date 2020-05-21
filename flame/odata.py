@@ -454,6 +454,8 @@ class Odata():
 
             if smiles is None:
                 print (f'similars to {names[i]}')
+            elif ids is None:
+                print (f'similars to {names[i] } [{smiles[i]}]')
             else:
                 print (f'similars to {names[i] } id:{ids[i]} [{smiles[i]}]')
 
