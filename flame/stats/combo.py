@@ -104,9 +104,13 @@ class Combo (BaseEstimator):
                 else:
                     self.R2 = 1.00 - (SSY/SSY0)
 
-                info.append(('scoringR', 'Scoring P', self.scoringR))
+                info.append(('scoringR', 'Scoring R', self.scoringR))
                 info.append(('R2', 'Determination coefficient', self.R2))
                 info.append(('SDEC', 'Standard Deviation Error of the Calculations', self.SDEC))
+
+                info.append(('scoringP', 'Scoring P', self.scoringR))
+                info.append(('Q2', 'Determination coefficient in cross-validation', self.R2))
+                info.append(('SDEP', 'Standard Deviation Error of the Predictions', self.SDEC))
 
                 LOG.debug(f'Goodness of the fit calculated: {self.scoringR}')
             except Exception as e:
@@ -132,14 +136,6 @@ class Combo (BaseEstimator):
                 # TODO: it is not too clear if the results of validation in ensemble models is internal or
                 # external. Both sets are added to avoid problems with the GUI but this requires futher
                 # clarification
-                info.append(('TPpred', 'True positives', self.TPpred))
-                info.append(('TNpred', 'True negatives', self.TNpred))
-                info.append(('FPpred', 'False positives', self.FPpred))
-                info.append(('FNpred', 'False negatives', self.FNpred))
-                info.append(('SensitivityPed', 'Sensitivity in fitting', self.sensitivityPred))
-                info.append(('SpecificityPred', 'Specificity in fitting', self.specificityPred))
-                info.append(('MCCpred', 'Matthews Correlation Coefficient', self.mccp))
-
                 info.append(('TP', 'True positives', self.TPpred))
                 info.append(('TN', 'True negatives', self.TNpred))
                 info.append(('FP', 'False positives', self.FPpred))
@@ -148,17 +144,26 @@ class Combo (BaseEstimator):
                 info.append(('Specificity', 'Specificity in fitting', self.specificityPred))
                 info.append(('MCC', 'Matthews Correlation Coefficient', self.mccp))
 
+                info.append(('TP_f', 'True positives', self.TPpred))
+                info.append(('TN_f', 'True negatives', self.TNpred))
+                info.append(('FP_f', 'False positives', self.FPpred))
+                info.append(('FN_f', 'False negatives', self.FNpred))
+                info.append(('Sensitivity_f', 'Sensitivity in fitting', self.sensitivityPred))
+                info.append(('Specificity_f', 'Specificity in fitting', self.specificityPred))
+                info.append(('MCC_f', 'Matthews Correlation Coefficient', self.mccp))
+
                 LOG.debug('Computed class prediction for estimator instances')
             except Exception as e:
                 LOG.error(f'Error computing class prediction of Yexp'
                     f'with exception {e}')
                 raise e
 
-        info.append (('Y_adj', 'Adjusted Y values', Yp) )          
+        # info.append (('Y_adj', 'Adjusted Y values', Yp) )          
 
         results = {}
         results ['quality'] = info
         results ['Y_adj'] = Yp
+        results ['Y_pred'] = Yp
 
         return True, results
 
@@ -524,7 +529,13 @@ class matrix (Combo):
         self.nobj, self.nvarx = np.shape(X)
 
         # apply custom modifications to the input values
+
+        print (X)
+
         X = self.preprocess (X)
+
+        print (X)
+
 
         # load matrix and matrix metadata        
         mmatrix, vmatrix = self.load_data()
@@ -573,6 +584,7 @@ class matrix (Combo):
         # output values and return the mean, the 5% percentil and 95% percentil of the values obtained 
         CI_names = self.conveyor.getVal('ensemble_confidence_names')
         if  CI_names is not None and len(CI_names)==(2 * self.nvarx):
+        # if False:
 
             # get CI values
             CI_vals = self.conveyor.getVal('ensemble_confidence')
@@ -588,7 +600,7 @@ class matrix (Combo):
 
             confidence_left  = (1.0 - CONFIDENCE)/2.0
             confidence_right = 1.0 - confidence_left
-            LOG.debug ("confidences: ", CONFIDENCE, confidence_left, confidence_right)
+            LOG.debug (f"confidences: {CONFIDENCE} {confidence_left} {confidence_right}")
 
             z = stats.norm.ppf (conformal_confidence_right)
     
@@ -624,6 +636,7 @@ class matrix (Combo):
                 # cimean.append(np.median(ymulti_array))
 
             cival = [cilow, ciupp, cimean]
+
             cival = self.postprocess (cival)
 
             self.conveyor.addVal(cival[0], 
@@ -643,7 +656,8 @@ class matrix (Combo):
                     )
         
             for i in range (len(cival[0])):
-                LOG.debug (f'{cival[0][i]:.2f} - {cival[2][i]:.2f} - {cival[1][i]:.2f}')
+                # LOG.debug (f'{cival[0][i]:.2f} - {cival[2][i]:.2f} - {cival[1][i]:.2f}')
+                print (f'{cival[0][i]:.2f} - {cival[2][i]:.2f} - {cival[1][i]:.2f}')
 
             yarray = np.array(cival[2])
 
@@ -654,8 +668,11 @@ class matrix (Combo):
             for j in range (self.nobj):
                 yarray.append (self.lookup (X[j],vmatrix))
 
+            print (yarray)
+
             sval = [np.array(yarray)]
             yarray = self.postprocess(sval)[0] 
+
 
         return yarray
             

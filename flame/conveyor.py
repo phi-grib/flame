@@ -201,6 +201,7 @@ class Conveyor:
             - manifest and meta
             - data (only single and object)
          '''
+
         temp_json = {}
 
         if self.error is not None:
@@ -216,7 +217,7 @@ class Conveyor:
         white_keys  = self.objectKeys()
         white_keys += self.singleKeys()
 
-        if xdata:
+        if xdata or (self.getMeta('input_type') == 'model_ensemble') :
             white_keys += ['xmatrix', 'var_nam']
 
         #print (white_keys)

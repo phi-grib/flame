@@ -22,6 +22,7 @@
 
 import os
 import numpy as np
+import copy
 from flame.stats.pca import pca    
 
 from flame.util import utils, get_logger
@@ -53,6 +54,10 @@ def generateProjectedSpace(X, param, conveyor):
 
 
 def projectPredictions(X, param, conveyor):
+    
+    # PCA is destructive
+    X=copy.copy(X)
+    
     pca_path = os.path.join(param.getVal('model_path'),'pca.npy')
 
     if not os.path.isfile(pca_path):

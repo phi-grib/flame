@@ -1007,7 +1007,6 @@ XGBOOST_optimize:
         - 50
         - 100
         - 150
-
       description: 
     booster:
       object_type: list
