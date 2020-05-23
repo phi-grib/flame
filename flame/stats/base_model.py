@@ -158,9 +158,8 @@ class BaseEstimator:
                 LOG.debug('Cross-validator retrieved')
                 LOG.debug(f'cv is: {self.cv}')
             except Exception as e:
-                LOG.error(f'Error retrieving cross-validator with'
-                        f'exception: {e}')
-                raise e
+                LOG.error(f'Error retrieving cross-validator with exception: {e}')
+                self.conveyor.setError(f'Error retrieving cross-validator with exception: {e}')
 
     # Validation methods section
     def CF_quantitative_validation(self):
@@ -172,6 +171,9 @@ class BaseEstimator:
 
         # generate recalculate interval, values and mean range 
         Y_rec_in = self.estimator.predict(X,self.param.getVal('conformalSignificance'))
+        if Y_rec_in is None:
+            return False, 'prediction error'
+
         Y_rec = np.mean(Y_rec_in, axis=1)
         interval_mean_rec = np.mean(np.abs((Y_rec_in[:, 0]) - (Y_rec_in[:, 1])))
 
@@ -207,9 +209,7 @@ class BaseEstimator:
                     Y_pred_in[el] = prediction[index]
 
         except Exception as e:
-            LOG.error(f'Quantitative conformal validation'
-                        f' failed with exception: {e}')
-            raise e
+            return False, f'Quantitative conformal validation failed with exception: {e}'
         
         # Convert Y_pred to a numpy array
         Y_pred_in = np.asarray(Y_pred_in)
@@ -246,18 +246,7 @@ class BaseEstimator:
         info.append(('Conformal_accuracy', 
                      'Conformal accuracy', 
                       accuracy_pred))
-        # info.append(('Conformal_interval_medians_fitting',
-        #              'Conformal interval medians fitting', 
-        #               Y_rec))
-        # info.append(('Conformal_interval_medians',
-        #              'Conformal interval medians', 
-        #               Y_pred))
-        # info.append(('Conformal_prediction_ranges_fitting',
-        #              'Conformal prediction ranges fitting', 
-        #               Y_rec_in))
-        # info.append(('Conformal_prediction_ranges',
-        #              'Conformal prediction ranges', 
-        #              Y_pred_in))
+
         
         # Compute goodness of the fit statistics using recalculated
         # predictions
@@ -279,9 +268,7 @@ class BaseEstimator:
 
             LOG.debug(f'Goodness of the fit calculated: {self.scoringR}')
         except Exception as e:
-            LOG.error(f'Error computing goodness of the fit'
-                f'with exception {e}')
-            raise e
+            return False, f'Error computing goodness of fit with exception: {e}'
 
         # Compute classic Cross-validation quality metrics using inteval mean
         try:
@@ -301,9 +288,7 @@ class BaseEstimator:
             LOG.debug(f'Squared-Q calculated: {self.scoringP}')
 
         except Exception as e:
-            LOG.error(f'Error cross-validating the estimator'
-                      f' with exception {e}')
-            raise e
+            return False, f'Error cross-validating the estimator with exception {e}'
               
         results = {}
         results ['quality'] = info
@@ -319,8 +304,10 @@ class BaseEstimator:
         # Make a copy of original matrices.
         X = self.X.copy()
         Y = self.Y.copy()
-        fit = self.estimator.predict(X, self.param.getVal(
-                                    'conformalSignificance'))
+        fit = self.estimator.predict(X, self.param.getVal('conformalSignificance'))
+        if fit is None:
+            return False, 'prediction error'
+
         # Total number of class 0 correct predictions.
         c0_correct_all = 0
         # Total number of class 0 incorrect predictions.
@@ -359,9 +346,10 @@ class BaseEstimator:
                 conformal_pred.fit(X_train, Y_train)
                 
                 # Perform prediction on test set
-                prediction = conformal_pred.predict(
-                            X_test, self.param.getVal('conformalSignificance'))
-                
+                prediction = conformal_pred.predict(X_test, self.param.getVal('conformalSignificance'))
+                if prediction is None:
+                    return False, 'prediction error'
+
                 # Assign the prediction the correct index. 
                 for index, el in enumerate(test_index):
                     Y_pred[el] = prediction[index]
@@ -403,9 +391,8 @@ class BaseEstimator:
                 else:
                     self.not_predicted_all_f += 1
         except Exception as e:
-            LOG.error(f'Qualitative conformal validation'
-                        f' failed with exception: {e}')
-            raise e
+            return False, f'Qualitative conformal validation failed with exception: {e}'
+
         # Get the mean confusion matrix.
         self.TN = c0_correct_all
         self.FP = c0_incorrect_all
@@ -555,6 +542,9 @@ class BaseEstimator:
 
         # Get predicted Y
         Yp = self.estimator.predict(X)
+        if Yp is None:
+            return False, 'prediction error'
+
         # Compute  mean of predicted Y
         Ym = np.mean(Y)
         info = []
@@ -577,9 +567,7 @@ class BaseEstimator:
             info.append(('SDEC', 'Standard Deviation Error of the Calculations', self.SDEC))
             LOG.debug(f'Goodness of the fit calculated: {self.scoringR}')
         except Exception as e:
-            LOG.error(f'Error computing goodness of the fit'
-                f'with exception {e}')
-            raise e
+            return False, f'Error computing goodness of fit with exception: {e}'
 
         # Compute Cross-validation quality metrics
         try:
@@ -608,9 +596,7 @@ class BaseEstimator:
             LOG.debug(f'Squared-Q calculated: {self.scoringP}')
 
         except Exception as e:
-            LOG.error(f'Error cross-validating the estimator'
-                        f' with exception {e}')
-            raise e
+            return False, f'Error cross-validating the estimator with exception: {e}'
               
         results = {}
         results ['quality'] = info
@@ -627,10 +613,11 @@ class BaseEstimator:
 
         # Get predicted classes.
         Yp = self.estimator.predict(X)
+        if Yp is None:
+            return False, 'error in qualitative validation'
 
         if len(Yp) != len(Y):
-            raise Exception('Lenght of experimental and predicted Y'
-                            'do not match')
+            return False, 'Lenght of experimental and predicted Y do not match'
 
         info = []
 
@@ -652,25 +639,20 @@ class BaseEstimator:
    
             LOG.debug('Computed class prediction for estimator instances')
         except Exception as e:
-            LOG.error(f'Error computing class prediction of Yexp'
-                f'with exception {e}')
-            raise e
+            return False, f'Error computing class prediction of Yexp with exception: {e}'
 
         # Get cross-validated Y 
         try:
             y_pred = cross_val_predict(self.estimator, X, Y, cv=self.cv, n_jobs=-1)
         except Exception as e:
-            LOG.error(f'Cross-validation failed with exception' 
-                        f'exception {e}')
-            raise e
+            return False, f'Cross-validation failed with exception: {e}'
+
         # Get confusion matrix
         try:
             self.TN, self.FP, self.FN, self.TP = confusion_matrix(
                 Y, y_pred, labels=[0, 1]).ravel()
         except Exception as e:
-            LOG.error(f'Failed to compute confusion matrix with'
-                        f'exception {e}')
-            raise e
+            return False, f'Failed to compute confusion matrix with exception: {e}'
         try:
             self.sensitivity = (self.TP / (self.TP + self.FN))
         except Exception as e:
@@ -689,7 +671,7 @@ class BaseEstimator:
                         np.sqrt((self.TP + self.FP) * (self.TP + self.FN) *
                          (self.TN + self.FP) * (self.TN + self.FN)))
         except Exception as e:
-            LOG.error(f'Failed to compute Mathews Correlation Coefficient'
+            LOG.warning(f'Failed to compute Mathews Correlation Coefficient'
                         f'exception {e}')
             self.mcc = '-'
 
@@ -781,6 +763,8 @@ class BaseEstimator:
          for obtaining predictions '''
 
         Yp = self.estimator.predict(Xb)
+        if Yp is None:
+            return False, 'prediction error'
 
         # if conveyor contains experimental values for any of the objects replace the
         # predictions with the experimental results
@@ -808,8 +792,9 @@ class BaseEstimator:
             self.conveyor.setError('Inconsistence error: non-conformal classifier found. Rebuild the model')
             return
 
-        prediction = self.estimator.predict(
-            Xb, significance=self.param.getVal('conformalSignificance'))
+        prediction = self.estimator.predict(Xb, significance=self.param.getVal('conformalSignificance'))
+        if prediction is None:
+            return False, 'prediction error'
 
         if self.param.getVal('quantitative'):
             Yp = np.mean(prediction, axis=1)

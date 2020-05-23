@@ -456,13 +456,9 @@ class Apply:
         if self.conveyor.isKey('ymatrix'):
             self.external_validation()
 
-        print (X)
         # X = self.conveyor.getVal("xmatrix")
         projectPredictions (X, self.param, self.conveyor)
-
-        X = self.conveyor.getVal("xmatrix")
-
-        print (X)
+        # X = self.conveyor.getVal("xmatrix")
 
         return
 

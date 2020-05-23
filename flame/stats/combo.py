@@ -70,6 +70,9 @@ class Combo (BaseEstimator):
         '''return the median of the input parameters'''
 
         Yp = self.predict(Xb)
+        if Yp is None:
+            self.conveyor.setError('prediction error') 
+            return
 
         self.conveyor.addVal(Yp, 'values', 'Prediction',
                         'result', 'objs',
@@ -84,6 +87,8 @@ class Combo (BaseEstimator):
 
         # Get predicted Y
         Yp = self.predict(X)
+        if Yp is None:
+            return False, 'prediction error'
 
         info = []
 
@@ -114,9 +119,7 @@ class Combo (BaseEstimator):
 
                 LOG.debug(f'Goodness of the fit calculated: {self.scoringR}')
             except Exception as e:
-                LOG.error(f'Error computing goodness of the fit'
-                    f'with exception {e}')
-                raise e
+                return False, f'Error computing goodness of the fit with exception {e}'
                 
         else:
             # Get confusion matrix for predicted Y
@@ -154,9 +157,7 @@ class Combo (BaseEstimator):
 
                 LOG.debug('Computed class prediction for estimator instances')
             except Exception as e:
-                LOG.error(f'Error computing class prediction of Yexp'
-                    f'with exception {e}')
-                raise e
+                return False, f'Error computing class prediction of Yexp with exception: {e}'
 
         # info.append (('Y_adj', 'Adjusted Y values', Yp) )          
 
@@ -529,13 +530,7 @@ class matrix (Combo):
         self.nobj, self.nvarx = np.shape(X)
 
         # apply custom modifications to the input values
-
-        print (X)
-
         X = self.preprocess (X)
-
-        print (X)
-
 
         # load matrix and matrix metadata        
         mmatrix, vmatrix = self.load_data()
@@ -553,8 +548,10 @@ class matrix (Combo):
         for i in var_names:
             vname = i.split(':')[1]
             if not vname in mmatrix:
-                raise Exception (f'matrix does not indexes model input. {vname} not found.')
-            
+                # raise Exception (f'matrix does not indexes model input. {vname} not found.')
+                self.conveyor.setError(f'matrix does not indexes model input. {vname} not found.')
+                return None
+
             self.vloop.append(mmatrix[vname][0]) # inner loop is 0, then 1, 2 etc...
             self.vsize.append(mmatrix[vname][1]) # number of bins in the matrix for this variable
             self.vzero.append(mmatrix[vname][2]) # origin (left side) of the first bin 
@@ -565,7 +562,8 @@ class matrix (Combo):
         for i in self.vsize:
             mlen *= i
         if int(mlen) != len(vmatrix):
-            raise Exception ('vmatrix size does not match metadata')
+            self.conveyor.setError('vmatrix size does not match metadata')
+            return None
 
         # compute offset for each variable in sequential order
         # this means computing the factor for which each

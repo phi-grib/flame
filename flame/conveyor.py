@@ -108,7 +108,10 @@ class Conveyor:
         return self.error 
 
     def setError (self, message):
-        self.error = message
+        if self.error is None:
+            self.error = message
+        else:
+            self.error += '\n'+message
 
     def getWarning (self):
         return self.warning is not None
