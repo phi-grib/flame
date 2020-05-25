@@ -32,8 +32,8 @@ from flame.stats.base_model import BaseEstimator
 from flame.util import get_logger
 
 LOG = get_logger(__name__)
-SIMULATION_SIZE = 500
-CONFIDENCE = 0.95
+SIMULATION_SIZE = 10000
+CONFIDENCE = 0.80
 
 class Combo (BaseEstimator):
     """
@@ -578,14 +578,19 @@ class matrix (Combo):
                     ioffset*=self.vsize[j]
             self.offset.append(int(ioffset))
 
+
         # if all the original methods contain CI run a simulation to compute the CI for the 
         # output values and return the mean, the 5% percentil and 95% percentil of the values obtained 
         CI_names = self.conveyor.getVal('ensemble_confidence_names')
-        if  CI_names is not None and len(CI_names)==(2 * self.nvarx):
-        # if False:
+        if  self.param.getVal('conformal') and CI_names is not None and len(CI_names)==(2 * self.nvarx):
 
-            # get CI values
+            ############################################
+            ##
+            ##  Compute CI
+            ##
+            ############################################
             CI_vals = self.conveyor.getVal('ensemble_confidence')
+            confidence = 1.0 - self.param.getVal('conformalSignificance')
 
             # we read the conformal significance from the top model
             # ideally we must read this from every bottom model and store a list of
@@ -596,9 +601,9 @@ class matrix (Combo):
             conformal_confidence_left  = conformal_significance /2.0
             conformal_confidence_right = 1.0 - conformal_confidence_left
 
-            confidence_left  = (1.0 - CONFIDENCE)/2.0
+            confidence_left  = (1.0 - confidence)/2.0
             confidence_right = 1.0 - confidence_left
-            LOG.debug (f"confidences: {CONFIDENCE} {confidence_left} {confidence_right}")
+            LOG.debug (f"confidences: {confidence} {confidence_left} {confidence_right}")
 
             z = stats.norm.ppf (conformal_confidence_right)
     
@@ -609,33 +614,46 @@ class matrix (Combo):
             # make sure the random numbers are reproducible
             np.random.seed(2324)
 
+            Ylog = []
             for j in range (self.nobj):
                 ymulti = []
                 for m in range (SIMULATION_SIZE):
+                    
+                    # add random noise to the X array, using the CI to 
+                    # estimate how wide is the distribution 
                     x = copy.copy(X[j])
                     for i in range (self.nvarx):
                         #ci range is the width of the CI
                         cirange = CI_vals[j,i*2+1] - CI_vals[j,i*2]
 
-                        # we asume that the CI were estimated as +/- 1.96 * SE
+                        # we asume that the CI were estimated as +/- z * SE
                         sd = cirange/(z*2)
 
                         # now we add normal random noise, with mean 0 and SD = sd
                         x[i]+=np.random.normal(0.0,sd)
 
+                    # compute y using the noisy x
                     ymulti.append (self.lookup (x,vmatrix))
 
                 ymulti_array = np.array(ymulti)
-
+                
+                # debug only
+                Ylog.append(ymulti)
+                
                 # obtain percentiles to estimate the left and right part of the CI 
                 cilow.append (np.percentile(ymulti_array,confidence_left*100 ,interpolation='linear'))
                 ciupp.append (np.percentile(ymulti_array,confidence_right*100 ,interpolation='linear'))
                 cimean.append(np.percentile(ymulti_array,50,interpolation='linear'))
                 # cimean.append(np.median(ymulti_array))
+            
+            np.savetxt("Ylog.tsv", Ylog, delimiter="\t")
 
             cival = [cilow, ciupp, cimean]
 
             cival = self.postprocess (cival)
+
+            for i in range (len(cival[0])):
+                print (f'{cival[0][i]:.2f} - {cival[2][i]:.2f} - {cival[1][i]:.2f}')
 
             self.conveyor.addVal(cival[0], 
                         'lower_limit', 
@@ -652,14 +670,17 @@ class matrix (Combo):
                         'objs',
                         'Upper limit of the conformal prediction'
                     )
-        
-            for i in range (len(cival[0])):
-                # LOG.debug (f'{cival[0][i]:.2f} - {cival[2][i]:.2f} - {cival[1][i]:.2f}')
-                print (f'{cival[0][i]:.2f} - {cival[2][i]:.2f} - {cival[1][i]:.2f}')
 
+            # copy to yarray because this is what is returned in either case
             yarray = np.array(cival[2])
 
         else:
+
+            ############################################
+            ##
+            ##  Compute single predictions
+            ##
+            ############################################
 
             # For each object look up in the vmatrix, by transforming the input X variables
             # into indexes and then extracting the corresponding values

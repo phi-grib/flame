@@ -70,6 +70,24 @@ class Sapply:
         # Load rest of info in an extensible way
         # This allows to add new variables keeping
         # Retro-compatibility
+        self.variable_mask = None
+        if 'variable_mask' in dict_prepro.keys():
+            self.variable_mask = dict_prepro['variable_mask']
+
+        if self.param.getVal('feature_selection') and self.variable_mask is None:
+            return False, 'Inconsistency error. Feature is True in parameter file but no variable mask loaded'
+
+        # apply variable_mask
+        if self.param.getVal("feature_selection"):
+            X = X[:, self.variable_mask]
+
+        if self.param.getVal('modelAutoscaling') is None:
+            return True, X
+
+        # Load rest of info in an extensible way
+        # This allows to add new variables keeping
+        # Retro-compatibility
+        self.scaler = None
         if 'scaler' in dict_prepro.keys():
             self.scaler = dict_prepro['scaler']
 

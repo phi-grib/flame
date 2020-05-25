@@ -357,7 +357,7 @@ class Apply:
         # Load rest of info in an extensible way
         # This allows to add new variables keeping
         # Retro-compatibility
-
+        self.variable_mask = None
         if 'variable_mask' in dict_prepro.keys():
             self.variable_mask = dict_prepro['variable_mask']
 
@@ -371,6 +371,9 @@ class Apply:
         if self.param.getVal('modelAutoscaling') is None:
             return True, X
 
+        # Load rest of info in an extensible way
+        # This allows to add new variables keeping
+        # Retro-compatibility
         self.scaler = None
         if 'scaler' in dict_prepro.keys():
             self.scaler = dict_prepro['scaler']
