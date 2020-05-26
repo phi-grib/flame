@@ -829,6 +829,10 @@ class BaseEstimator:
             self.conveyor.addVal(upper_limit, 'upper_limit',
                              'Upper limit', 'confidence', 'objs',
                               'Upper limit of the conformal prediction')
+            
+            self.conveyor.addVal(self.param.getVal('conformalSignificance'), 'significance',
+                             'Conformal significance', 'confidence', 'single',
+                              'Significance level used in the conformal method')
         else:
             # Returns a dictionary with class
             # predictions

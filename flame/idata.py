@@ -1163,6 +1163,7 @@ class Idata:
         combined_cf = None
         combined_md_names = []
         combined_cf_names = []
+        combined_significance = []
 
         num_obj = self.conveyor.getVal ('obj_num')
 
@@ -1188,6 +1189,8 @@ class Idata:
             #md names
             combined_md_names.append(
                 'values'+':'+i_result.getMeta('endpoint')+':'+str(i_result.getMeta('version')))
+                
+            combined_significance.append(i_result.getVal('significance'))
 
             # confidence values and names
             i_low = i_result.getVal('lower_limit')
@@ -1221,6 +1224,11 @@ class Idata:
         if len(combined_cf_names) > 0:
             self.conveyor.addVal( combined_cf_names, 'ensemble_confidence_names', 'Ensemble Conf. names',
                             'method', 'vars', 'Confidence indexes from external sources')
+
+        if len(combined_significance) > 0:
+            self.conveyor.addVal( combined_significance, 'ensemble_significance', 'Ensemble Significance',
+                            'method', 'vars', 'Significance from external sources')
+        
 
         # print ('combined_md', combined_md)
         # print ('combined_md_names', combined_md_names)

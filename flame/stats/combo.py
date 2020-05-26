@@ -32,8 +32,15 @@ from flame.stats.base_model import BaseEstimator
 from flame.util import get_logger
 
 LOG = get_logger(__name__)
-SIMULATION_SIZE = 10000
+SIMULATION_SIZE = 100
 CONFIDENCE = 0.80
+
+
+
+
+
+
+
 
 class Combo (BaseEstimator):
     """
@@ -174,6 +181,45 @@ class Combo (BaseEstimator):
     def load_model(self):
         return True, 'OK'
 
+
+    def getConfidence (self):
+
+        CI_names = self.conveyor.getVal('ensemble_confidence_names')
+        if  CI_names is not None and len(CI_names)==(2 * self.nvarx):
+
+            CI_vals = self.conveyor.getVal('ensemble_confidence')
+            confidence = 1.0 - self.param.getVal('conformalSignificance')
+
+            # we read the conformal confidence from the top model
+            # ideally we must read this from every bottom model and store a list of
+            # conformal confidences at the conveyor to derive individual z for
+            # each variable
+
+            # conformal confidence of the top model
+            cs_top = self.param.getVal('conformalSignificance') 
+            cs_top_left  = cs_top /2.0
+            cs_top_right = 1.0 - cs_top_left
+
+            # gather array of confidences for low models
+            cs_low = self.conveyor.getVal('ensemble_significance')
+            if cs_low is None:
+                cs_low = [cs_top for i in range(self.nvarx)]
+            elif None in cs_low:
+                cs_low = [cs_top for i in range(self.nvarx)]
+
+            zcoeff = []
+            for iconf in cs_low:
+                cs_low_right = (1.0 - (iconf/2.0) )
+                z = stats.norm.ppf (cs_low_right)
+                zcoeff.append (1.0 / (z*2.0) ) 
+
+            return True, (CI_vals, confidence, zcoeff, cs_top_left, cs_top_right)
+        
+        else:
+
+            return False, None
+
+    
 
 class median (Combo):
     """
@@ -364,19 +410,23 @@ class majority (Combo):
 
         # majority is not compatible with conformal because the prediction results
         # are not stored as c0, c1 but as value, ensemble_c0, ensemble_c1
-        if self.param.getVal('conformal'):
-            self.param.setVal('conformal', False)
+        # if self.param.getVal('conformal'):
+        #     self.param.setVal('conformal', False)
 
     def predict(self, X):
 
         # obtain dimensions of X matrix
         self.nobj, self.nvarx = np.shape(X)
 
-        # check if the underlying models are conformal
-        confidence = self.conveyor.getVal('ensemble_confidence')
 
-        # when not all models are conformal use a simple approach
-        if confidence is None or len(confidence[0]) != (2 * self.nvarx):
+        computeCI, CIparams = self.getConfidence ()
+        if not computeCI:
+
+            ############################################
+            ##
+            ##  Compute single value
+            ##
+            ############################################
             yp = np.zeros(self.nobj, dtype=np.float64)
             for i in range(self.nobj):
                 xline = X[i]
@@ -389,6 +439,24 @@ class majority (Combo):
                     elif temp > 0.5:
                         yp[i] = 1
             return yp
+        
+        ############################################
+        ##
+        ##  Compute CI
+        ##
+        ############################################
+
+        # CI_vals      = CIparams[0]
+        confidence   = CIparams[1]
+        # zcoeff       = CIparams[2]
+        # cs_top_left  = CIparams[3]
+        # cs_top_right = CIparams[3]
+
+        # # check if the underlying models are conformal
+        # confidence = self.conveyor.getVal('ensemble_confidence')
+
+        # # when not all models are conformal use a simple approach
+        # if confidence is None or len(confidence[0]) != (2 * self.nvarx):
         
         # print (confidence)
 
@@ -578,35 +646,57 @@ class matrix (Combo):
                     ioffset*=self.vsize[j]
             self.offset.append(int(ioffset))
 
-
         # if all the original methods contain CI run a simulation to compute the CI for the 
         # output values and return the mean, the 5% percentil and 95% percentil of the values obtained 
-        CI_names = self.conveyor.getVal('ensemble_confidence_names')
-        if  self.param.getVal('conformal') and CI_names is not None and len(CI_names)==(2 * self.nvarx):
 
+
+
+        computeCI, CIparams = self.getConfidence ()
+        if computeCI:
             ############################################
             ##
             ##  Compute CI
             ##
             ############################################
-            CI_vals = self.conveyor.getVal('ensemble_confidence')
-            confidence = 1.0 - self.param.getVal('conformalSignificance')
 
-            # we read the conformal significance from the top model
-            # ideally we must read this from every bottom model and store a list of
-            # conformal significances at the conveyor to derive individual z for
-            # each variable
-            # TODO: implement this
-            conformal_significance = self.param.getVal('conformalSignificance') 
-            conformal_confidence_left  = conformal_significance /2.0
-            conformal_confidence_right = 1.0 - conformal_confidence_left
+            CI_vals      = CIparams[0]
+            confidence   = CIparams[1]
+            zcoeff       = CIparams[2]
+            cs_top_left  = CIparams[3]
+            cs_top_right = CIparams[3]
 
-            confidence_left  = (1.0 - confidence)/2.0
-            confidence_right = 1.0 - confidence_left
-            LOG.debug (f"confidences: {confidence} {confidence_left} {confidence_right}")
 
-            z = stats.norm.ppf (conformal_confidence_right)
-    
+
+        # CI_names = self.conveyor.getVal('ensemble_confidence_names')
+        # if  self.param.getVal('conformal') and CI_names is not None and len(CI_names)==(2 * self.nvarx):
+
+        #     CI_vals = self.conveyor.getVal('ensemble_confidence')
+        #     confidence = 1.0 - self.param.getVal('conformalSignificance')
+
+        #     # we read the conformal confidence from the top model
+        #     # ideally we must read this from every bottom model and store a list of
+        #     # conformal confidences at the conveyor to derive individual z for
+        #     # each variable
+
+        #     # conformal confidence of the top model
+        #     cs_top = self.param.getVal('conformalSignificance') 
+        #     cs_top_left  = cs_top /2.0
+        #     cs_top_right = 1.0 - cs_top_left
+
+        #     # gather array of confidences for low models
+        #     cs_low = self.conveyor.getVal('ensemble_significance')
+        #     if cs_low is None:
+        #         cs_low = [cs_top for i in range(self.nvarx)]
+        #     elif None in cs_low:
+        #         cs_low = [cs_top for i in range(self.nvarx)]
+
+        #     cs_low_right = []
+        #     for iconf in cs_low:
+        #         # cs_low_left.append(iconf/2.0)
+        #         cs_low_right.append(1.0 - (iconf/2.0) )
+
+        #     LOG.debug (f"confidence model top: {cs_top} {cs_top_left} {cs_top_right}")
+
             cilow = []
             ciupp = []
             cimean = []
@@ -614,7 +704,7 @@ class matrix (Combo):
             # make sure the random numbers are reproducible
             np.random.seed(2324)
 
-            Ylog = []
+            # Ylog = []
             for j in range (self.nobj):
                 ymulti = []
                 for m in range (SIMULATION_SIZE):
@@ -627,33 +717,44 @@ class matrix (Combo):
                         cirange = CI_vals[j,i*2+1] - CI_vals[j,i*2]
 
                         # we asume that the CI were estimated as +/- z * SE
-                        sd = cirange/(z*2)
+                        # z = stats.norm.ppf (cs_low_right[i])
+                        # sd = cirange/(z*2)
+
+                        sd = cirange * zcoeff[i]
 
                         # now we add normal random noise, with mean 0 and SD = sd
                         x[i]+=np.random.normal(0.0,sd)
 
                     # compute y using the noisy x
-                    ymulti.append (self.lookup (x,vmatrix))
+                    yy = self.lookup (x,vmatrix)
+                    ymulti.append (yy)
+
+                    # just for debug. this can help understand distribution of Y and relationships with 
+                    # print (m, x, yy )
 
                 ymulti_array = np.array(ymulti)
                 
                 # debug only
-                Ylog.append(ymulti)
+                # Ylog.append(ymulti)
                 
                 # obtain percentiles to estimate the left and right part of the CI 
-                cilow.append (np.percentile(ymulti_array,confidence_left*100 ,interpolation='linear'))
-                ciupp.append (np.percentile(ymulti_array,confidence_right*100 ,interpolation='linear'))
+                #
+                # We make no assumptions about the distribution shape, but if it is skewed
+                # the CI can be assymetric
+                # TODO: check the distribution and apply log or other transforms when appropriate
+
+                cilow.append (np.percentile(ymulti_array,cs_top_left*100 ,interpolation='linear'))
+                ciupp.append (np.percentile(ymulti_array,cs_top_right*100 ,interpolation='linear'))
                 cimean.append(np.percentile(ymulti_array,50,interpolation='linear'))
-                # cimean.append(np.median(ymulti_array))
             
-            np.savetxt("Ylog.tsv", Ylog, delimiter="\t")
+            # np.savetxt("Ylog.tsv", Ylog, delimiter="\t")
 
             cival = [cilow, ciupp, cimean]
 
             cival = self.postprocess (cival)
 
-            for i in range (len(cival[0])):
-                print (f'{cival[0][i]:.2f} - {cival[2][i]:.2f} - {cival[1][i]:.2f}')
+            # for i in range (len(cival[0])):
+            #     print (f'{cival[0][i]:.2f} - {cival[2][i]:.2f} - {cival[1][i]:.2f}')
 
             self.conveyor.addVal(cival[0], 
                         'lower_limit', 
@@ -687,7 +788,7 @@ class matrix (Combo):
             for j in range (self.nobj):
                 yarray.append (self.lookup (X[j],vmatrix))
 
-            print (yarray)
+            # print (yarray)
 
             sval = [np.array(yarray)]
             yarray = self.postprocess(sval)[0] 
