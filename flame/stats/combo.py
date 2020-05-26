@@ -410,8 +410,8 @@ class majority (Combo):
 
         # majority is not compatible with conformal because the prediction results
         # are not stored as c0, c1 but as value, ensemble_c0, ensemble_c1
-        # if self.param.getVal('conformal'):
-        #     self.param.setVal('conformal', False)
+        if self.param.getVal('conformal'):
+            self.param.setVal('conformal', False)
 
     def predict(self, X):
 
