@@ -663,7 +663,7 @@ class matrix (Combo):
             confidence   = CIparams[1]
             zcoeff       = CIparams[2]
             cs_top_left  = CIparams[3]
-            cs_top_right = CIparams[3]
+            cs_top_right = CIparams[4]
 
 
 
