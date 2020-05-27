@@ -1135,6 +1135,8 @@ class Idata:
         (calling another model to obtain input)
         '''
 
+        self.param.setVal('computeMD_method', [])
+        
         # idata is a list of conveyor from n sources
         # the data usable for input must be listed in the ['meta']['main'] key
 
@@ -1193,20 +1195,37 @@ class Idata:
             combined_significance.append(i_result.getVal('significance'))
 
             # confidence values and names
-            i_low = i_result.getVal('lower_limit')
-            i_up  = i_result.getVal('upper_limit')
-            if i_up is not None and i_low is not None:
-                if combined_cf is None:  # for first element just copy
-                    combined_cf = np.array(i_low, dtype=np.float64)
-                    combined_cf = np.column_stack((combined_cf, i_up))
-                else:  # append laterally
-                    combined_cf = np.column_stack((combined_cf, i_low))
-                    combined_cf = np.column_stack((combined_cf, i_up))
+            if self.param.getVal('quantitative'):
+                i_low = i_result.getVal('lower_limit')
+                i_up  = i_result.getVal('upper_limit')
+                if i_up is not None and i_low is not None:
+                    if combined_cf is None:  # for first element just copy
+                        combined_cf = np.array(i_low, dtype=np.float64)
+                        combined_cf = np.column_stack((combined_cf, i_up))
+                    else:  # append laterally
+                        combined_cf = np.column_stack((combined_cf, i_low))
+                        combined_cf = np.column_stack((combined_cf, i_up))
 
-                combined_cf_names.append(
-                    'lower_limit'+':'+i_result.getMeta('endpoint')+':'+str(i_result.getMeta('version')))
-                combined_cf_names.append(
-                    'upper_limit'+':'+i_result.getMeta('endpoint')+':'+str(i_result.getMeta('version')))
+                    combined_cf_names.append(
+                        'lower_limit'+':'+i_result.getMeta('endpoint')+':'+str(i_result.getMeta('version')))
+                    combined_cf_names.append(
+                        'upper_limit'+':'+i_result.getMeta('endpoint')+':'+str(i_result.getMeta('version')))
+            else:
+                # confidence values and names
+                i_c0 = i_result.getVal('c0')
+                i_c1 = i_result.getVal('c1')
+                if i_c0 is not None and i_c1 is not None:
+                    if combined_cf is None:  # for first element just copy
+                        combined_cf = np.array(i_c0, dtype=np.float64)
+                        combined_cf = np.column_stack((combined_cf, i_c1))
+                    else:  # append laterally
+                        combined_cf = np.column_stack((combined_cf, i_c0))
+                        combined_cf = np.column_stack((combined_cf, i_c1))
+
+                    combined_cf_names.append(
+                        'c0'+':'+i_result.getMeta('endpoint')+':'+str(i_result.getMeta('version')))
+                    combined_cf_names.append(
+                        'c1'+':'+i_result.getMeta('endpoint')+':'+str(i_result.getMeta('version')))
 
         # self.conveyor.addVal( num_obj, 'obj_num', 'Num mol', 
         #                  'method', 'single', 'Number of molecules present in the input file')

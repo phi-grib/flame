@@ -309,8 +309,12 @@ class Documentation:
         # self.fields['Algorithm']['subfields']['algorithm']['value'] = \
         #     self.parameters.getVal('model')
         self.setInnerVal('Algorithm', 'algorithm', self.parameters.getVal('model'))
-        self.setInnerVal('Algorithm','descriptors', 
-                self.parameters.getVal('computeMD_method'))
+        
+        if self.parameters.getVal('input_type')=='molecule':
+            self.setInnerVal('Algorithm','descriptors', self.parameters.getVal('computeMD_method'))
+        elif self.parameters.getVal('input_type')=='model_ensemble':
+            self.setInnerVal('Algorithm','descriptors', 'ensemble models')
+
         if self.parameters.getVal('conformal'):
             self.setInnerVal('AD_method', 'name', 'conformal prediction')
             self.setVal('AD_parameters', f'Conformal Significance '
