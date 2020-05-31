@@ -181,17 +181,12 @@ class Combo (BaseEstimator):
 
             CI_vals = self.conveyor.getVal('ensemble_confidence')
 
-            # we read the conformal confidence from the top model
-            # ideally we must read this from every bottom model and store a list of
-            # conformal confidences at the conveyor to derive individual z for
-            # each variable
-
             # conformal confidence of the top model
             cs_top = self.param.getVal('conformalSignificance') 
             
             # conformal confidence default is 0.8
             if cs_top is None:
-                cs_top = 0.2
+                cs_top = 0.2  # fallback!!! we asume a default confidence of 80%
 
             cs_top_left  = cs_top /2.0
             cs_top_right = 1.0 - cs_top_left
@@ -243,17 +238,6 @@ class median (Combo):
             # cs_top_left  = CIparams[2]
             # cs_top_right = CIparams[3]
 
-            # CI_names = self.conveyor.getVal('ensemble_confidence_names')
-
-            # if  CI_names is not None and len(CI_names)==(2 * self.nvarx):
-
-            #     # get values
-            #     CI_vals = self.conveyor.getVal('ensemble_confidence')
-
-            #     # assume that the CI represent 95% CI and normal distribution        
-            #     z = 1.96 
-    
-            # compute weighted average 
             w = np.zeros(self.nvarx, dtype = np.float64 )
             xmedian = []
             cilow = []
@@ -301,6 +285,9 @@ class median (Combo):
                     # print ('even',j, selectedA, selectedB)
 
                     xmedian.append(np.mean((X[j,selectedA], X[j,selectedB])))
+
+                    # this provides the CI at the original confidence level of the lower model
+                    # TODO: use the confidence of the top model to recompute these CIs
                     cilow.append(np.mean((CI_vals[j,selectedA*2], CI_vals[j,selectedB*2])))
                     ciupp.append(np.mean((CI_vals[j,(selectedA*2)+1], CI_vals[j,(selectedB*2)+1])))
 
@@ -378,23 +365,12 @@ class mean (Combo):
             # cs_top_left  = CIparams[2]
             cs_top_right = CIparams[3]
 
-            # CI_names = self.conveyor.getVal('ensemble_confidence_names')
-
-            # if  CI_names is not None and len(CI_names)==(2 * self.nvarx):
-
             # compute weigthed mean and CI for the estimator
             # as described here
             #
             #   https://en.wikipedia.org/wiki/Weighted_arithmetic_mean#Weighted_sample_variance
             #
 
-            # # get values
-            # CI_vals = self.conveyor.getVal('ensemble_confidence')
-
-            # # assume that the CI represent 95% CI and normal distribution        
-            # z = 1.96 
-    
-            # compute weighted average 
             xmean = []
             cilow = []
             ciupp = []
@@ -403,14 +379,17 @@ class mean (Combo):
             # print ("z is:", z)
 
             for j in range (self.nobj):
+
+                # weigths are assigned to every input variable x based on 1/var(x)
                 w = np.zeros(self.nvarx, dtype = np.float64 )
                 for i in range (self.nvarx):
                     cirange = CI_vals[j,i*2+1] - CI_vals[j,i*2]
                     sd = cirange * zcoeff[i]
-                    # sd = r/(z*2)
                     w[i] = 1.0/np.square(sd)
 
                 ws = np.sum(w)
+
+                #s describes the SEM and will be used latter for obtaining the CI
                 s = 1.0/np.sqrt(ws)
 
                 xm = 0.0
@@ -441,6 +420,11 @@ class mean (Combo):
             
             return np.array(xmean)
         else:
+            ############################################
+            ##
+            ##  Compute single value
+            ##
+            ############################################
             return np.mean (X,1)
 
 class majority (Combo):
@@ -695,36 +679,6 @@ class matrix (Combo):
             cs_top_left  = CIparams[2]
             cs_top_right = CIparams[3]
 
-            # CI_names = self.conveyor.getVal('ensemble_confidence_names')
-            # if  self.param.getVal('conformal') and CI_names is not None and len(CI_names)==(2 * self.nvarx):
-
-            #     CI_vals = self.conveyor.getVal('ensemble_confidence')
-            #     confidence = 1.0 - self.param.getVal('conformalSignificance')
-
-            #     # we read the conformal confidence from the top model
-            #     # ideally we must read this from every bottom model and store a list of
-            #     # conformal confidences at the conveyor to derive individual z for
-            #     # each variable
-
-            #     # conformal confidence of the top model
-            #     cs_top = self.param.getVal('conformalSignificance') 
-            #     cs_top_left  = cs_top /2.0
-            #     cs_top_right = 1.0 - cs_top_left
-
-            #     # gather array of confidences for low models
-            #     cs_low = self.conveyor.getVal('ensemble_significance')
-            #     if cs_low is None:
-            #         cs_low = [cs_top for i in range(self.nvarx)]
-            #     elif None in cs_low:
-            #         cs_low = [cs_top for i in range(self.nvarx)]
-
-            #     cs_low_right = []
-            #     for iconf in cs_low:
-            #         # cs_low_left.append(iconf/2.0)
-            #         cs_low_right.append(1.0 - (iconf/2.0) )
-
-            #     LOG.debug (f"confidence model top: {cs_top} {cs_top_left} {cs_top_right}")
-
             cilow = []
             ciupp = []
             cimean = []
@@ -744,10 +698,7 @@ class matrix (Combo):
                         #ci range is the width of the CI
                         cirange = CI_vals[j,i*2+1] - CI_vals[j,i*2]
 
-                        # we asume that the CI were estimated as +/- z * SE
-                        # z = stats.norm.ppf (cs_low_right[i])
-                        # sd = cirange/(z*2)
-
+                        # the CI were estimated as +/- z * SE
                         sd = cirange * zcoeff[i]
 
                         # now we add normal random noise, with mean 0 and SD = sd
