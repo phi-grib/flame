@@ -97,6 +97,8 @@ class Parameters:
         # # correct CV to kfold for conformal models
         # if self.getVal('conformal') is True:
         #     self.setVal('ModelValidationCV','kfold')
+        if self.getVal('model') == 'majority':
+            self.setVal('conformal',False)
 
         # add keys for the model and a MD5 hash
         self.setVal('endpoint',model)
@@ -181,6 +183,8 @@ class Parameters:
         # # correct CV to kfold for conformal models
         # if self.getVal('conformal') is True:
         #     self.setVal('ModelValidationCV','kfold')
+        if self.getVal('model') == 'majority':
+            self.setVal('conformal',False)
 
         # self.setVal('md5',utils.md5sum(parameters_file_name))
         self.setVal('md5',self.idataHash())
