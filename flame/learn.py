@@ -184,32 +184,6 @@ class Learn:
         LOG.debug('Model saved as:{}'.format(prepro_pkl_path))
         return True, 'OK'
 
-    # def generateProjectedSpace(self):
-    #     # TODO: decide which is the best way to present the training space
-    #     LOG.info('Generating projeced X space...')
-    #     mpca = pca()
-    #     mpca.build(self.X,targetA=2,autoscale=False)
-
-    #     pca_path = os.path.join(self.param.getVal('model_path'),'pca.npy')
-    #     mpca.saveModel(pca_path)
-
-    #     obj_nam = self.conveyor.getVal('obj_nam')
-
-    #     # generate TSV file with PCA scores
-    #     with open('scores.tsv','w') as handler:
-    #         for i in range(mpca.nobj):
-    #             handler.write (f'{obj_nam[i]}\t{mpca.t[0][i]}\t{mpca.t[1][i]}\n')
-
-    #     # dump to conveyor?
-
-    #     # generate png with PCA scores
-    #     import matplotlib.pyplot as plt
-
-    #     scores=plt.figure(figsize=(9,6))
-    #     plt.xlabel('PC 1')
-    #     plt.ylabel('PC 2')
-    #     plt.scatter(mpca.t[0],mpca.t[1], c='red', marker='D', s=40, linewidths=0)
-    #     scores.savefig("pca-scores12.png", format='png')
 
     def run_internal(self):
         '''
@@ -332,6 +306,24 @@ class Learn:
                 'result',
                 'objs',
                 'Y values of the training series predicted by the model')
+
+        if 'Conformal_prediction_ranges' in model_validation_results:
+            self.conveyor.addVal(
+                model_validation_results['Conformal_prediction_ranges'],
+                'Conformal_prediction_ranges',
+                'Conformal prediction ranges',
+                'method',
+                'objs',
+                'Interval for the cross-validated predictions')
+
+        if 'Conformal_prediction_ranges_fitting' in model_validation_results:
+            self.conveyor.addVal(
+                model_validation_results['Conformal_prediction_ranges_fitting'],
+                'Conformal_prediction_ranges_fitting',
+                'Conformal prediction ranges fitting',
+                'method',
+                'objs',
+                'Interval for the predictions in fitting')             
 
         # conformal qualitative models produce a list of tuples, indicating
         # if the object is predicted to belong to class 0 and 1

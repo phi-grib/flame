@@ -159,10 +159,9 @@ class XGBOOST(BaseEstimator):
                     results.append(('model', 'model type', 'XGBOOST qualitative'))
 
                 self.estimator.fit(X, Y)
-                print(self.estimator)
+                LOG.debug (self.estimator)
 
             except Exception as e:
-                raise e
                 return False, f'Exception building XGBOOST estimator with exception {e}'
 
         self.estimator_temp = copy(self.estimator)
@@ -217,7 +216,6 @@ class XGBOOST(BaseEstimator):
                 results.append(('model', 'model type', 'conformal XGBOOST qualitative'))
 
         except Exception as e:
-            raise e
             return False, f'Exception building conformal XGBOOST estimator with exception {e}'
 
         return True, results

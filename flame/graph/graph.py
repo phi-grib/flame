@@ -22,8 +22,8 @@
 
 import os
 import numpy as np
+import copy
 from flame.stats.pca import pca    
-import matplotlib.pyplot as plt
 
 from flame.util import utils, get_logger
 LOG = get_logger(__name__)
@@ -38,21 +38,51 @@ def generateProjectedSpace(X, param, conveyor):
     pca_path = os.path.join(param.getVal('model_path'),'pca.npy')
     mpca.saveModel(pca_path)
 
-    obj_nam = conveyor.getVal('obj_nam')
+    # obj_nam = conveyor.getVal('obj_nam')
 
-    # generate TSV file with PCA scores
-    with open('scores.tsv','w') as handler:
-        for i in range(mpca.nobj):
-            handler.write (f'{obj_nam[i]}\t{mpca.t[0][i]}\t{mpca.t[1][i]}\n')
+    # # generate TSV file with PCA scores
+    # with open('scores.tsv','w') as handler:
+    #     for i in range(mpca.nobj):
+    #         handler.write (f'{obj_nam[i]}\t{mpca.t[0][i]}\t{mpca.t[1][i]}\n')
 
-    # dump to conveyor?
+    conveyor.addVal(mpca.t[0], 'PC1',
+                        'PCA PC1', 'method', 'objs',
+                        'PCA PC1 score for graphic representation')
+    conveyor.addVal(mpca.t[1], 'PC2',
+                        'PCA PC2', 'method', 'objs',
+                        'PCA PC2 score for graphic representation')
 
-    # generate png with PCA scores
-    scores=plt.figure(figsize=(9,6))
-    plt.xlabel('PC 1')
-    plt.ylabel('PC 2')
-    plt.scatter(mpca.t[0],mpca.t[1], c='red', marker='D', s=40, linewidths=0)
-    scores.savefig("pca-scores12.png", format='png')
 
-def projectPredictions(X, conveyor):
+def projectPredictions(X, param, conveyor):
+    
+    # PCA is destructive
+    X=copy.copy(X)
+    
+    pca_path = os.path.join(param.getVal('model_path'),'pca.npy')
+
+    if not os.path.isfile(pca_path):
+        return
+
+    LOG.info('Projecting in X space...')
+
+    mpca = pca()
+    mpca.loadModel(pca_path)
+
+    if not 'numpy.float' in str(type (X[0,0])):
+        X = X.astype(np.float64)
+
+    success, result = mpca.projectPC(X,0)
+    if success:
+        X, t, dmodx = result
+        conveyor.addVal(t, 'PC1proj',
+                       'PCA projected PC1', 'method', 'objs',
+                       'PCA projected scores PC1 for graphic representation')
+
+    success, result = mpca.projectPC(X,1)
+    if success:
+        X, t, dmodx = result
+        conveyor.addVal(t, 'PC2proj',
+                       'PCA projected PC1', 'method', 'objs',
+                       'PCA projected scores PC1 for graphic representation')
+
     return

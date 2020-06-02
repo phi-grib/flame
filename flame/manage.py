@@ -555,9 +555,18 @@ def action_documentation(model, version=None, doc_file=None, oformat='text'):
     doc = Documentation(model, version)
 
     if doc_file is not None:
-        # use the param_file to update existing parameters at the model
-        # directory and save changes to make them persistent
-        success, message = doc.delta(model, 0, doc_file, iformat='YAML')
+        if oformat == 'JSONS':
+            # use the param string to update existing parameters at the model
+            # directory and save changes to make them persistent
+            success, message = doc.delta(model, 0, doc_file, iformat='JSONS')
+            return True, 'OK'
+        else:
+            # use the param_file to update existing parameters at the model
+            # directory and save changes to make them persistent
+            success, message = doc.delta(model, 0, doc_file, iformat='YAML')
+
+        if not success:
+            return False, message
 
     doc = Documentation(model, version)
     if oformat != 'text':

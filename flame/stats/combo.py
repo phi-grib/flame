@@ -32,8 +32,8 @@ from flame.stats.base_model import BaseEstimator
 from flame.util import get_logger
 
 LOG = get_logger(__name__)
-SIMULATION_SIZE = 500
-CONFIDENCE = 0.95
+SIMULATION_SIZE = 10000
+CONFIDENCE = 0.80
 
 class Combo (BaseEstimator):
     """
@@ -70,6 +70,9 @@ class Combo (BaseEstimator):
         '''return the median of the input parameters'''
 
         Yp = self.predict(Xb)
+        if Yp is None:
+            self.conveyor.setError('prediction error') 
+            return
 
         self.conveyor.addVal(Yp, 'values', 'Prediction',
                         'result', 'objs',
@@ -84,6 +87,8 @@ class Combo (BaseEstimator):
 
         # Get predicted Y
         Yp = self.predict(X)
+        if Yp is None:
+            return False, 'prediction error'
 
         info = []
 
@@ -104,14 +109,17 @@ class Combo (BaseEstimator):
                 else:
                     self.R2 = 1.00 - (SSY/SSY0)
 
-                info.append(('scoringR', 'Scoring P', self.scoringR))
+                info.append(('scoringR', 'Scoring R', self.scoringR))
                 info.append(('R2', 'Determination coefficient', self.R2))
                 info.append(('SDEC', 'Standard Deviation Error of the Calculations', self.SDEC))
+
+                info.append(('scoringP', 'Scoring P', self.scoringR))
+                info.append(('Q2', 'Determination coefficient in cross-validation', self.R2))
+                info.append(('SDEP', 'Standard Deviation Error of the Predictions', self.SDEC))
+
                 LOG.debug(f'Goodness of the fit calculated: {self.scoringR}')
             except Exception as e:
-                LOG.error(f'Error computing goodness of the fit'
-                    f'with exception {e}')
-                raise e
+                return False, f'Error computing goodness of the fit with exception {e}'
                 
         else:
             # Get confusion matrix for predicted Y
@@ -131,14 +139,6 @@ class Combo (BaseEstimator):
                 # TODO: it is not too clear if the results of validation in ensemble models is internal or
                 # external. Both sets are added to avoid problems with the GUI but this requires futher
                 # clarification
-                info.append(('TPpred', 'True positives', self.TPpred))
-                info.append(('TNpred', 'True negatives', self.TNpred))
-                info.append(('FPpred', 'False positives', self.FPpred))
-                info.append(('FNpred', 'False negatives', self.FNpred))
-                info.append(('SensitivityPed', 'Sensitivity in fitting', self.sensitivityPred))
-                info.append(('SpecificityPred', 'Specificity in fitting', self.specificityPred))
-                info.append(('MCCpred', 'Matthews Correlation Coefficient', self.mccp))
-
                 info.append(('TP', 'True positives', self.TPpred))
                 info.append(('TN', 'True negatives', self.TNpred))
                 info.append(('FP', 'False positives', self.FPpred))
@@ -147,17 +147,24 @@ class Combo (BaseEstimator):
                 info.append(('Specificity', 'Specificity in fitting', self.specificityPred))
                 info.append(('MCC', 'Matthews Correlation Coefficient', self.mccp))
 
+                info.append(('TP_f', 'True positives', self.TPpred))
+                info.append(('TN_f', 'True negatives', self.TNpred))
+                info.append(('FP_f', 'False positives', self.FPpred))
+                info.append(('FN_f', 'False negatives', self.FNpred))
+                info.append(('Sensitivity_f', 'Sensitivity in fitting', self.sensitivityPred))
+                info.append(('Specificity_f', 'Specificity in fitting', self.specificityPred))
+                info.append(('MCC_f', 'Matthews Correlation Coefficient', self.mccp))
+
                 LOG.debug('Computed class prediction for estimator instances')
             except Exception as e:
-                LOG.error(f'Error computing class prediction of Yexp'
-                    f'with exception {e}')
-                raise e
+                return False, f'Error computing class prediction of Yexp with exception: {e}'
 
-        info.append (('Y_adj', 'Adjusted Y values', Yp) )          
+        # info.append (('Y_adj', 'Adjusted Y values', Yp) )          
 
         results = {}
         results ['quality'] = info
         results ['Y_adj'] = Yp
+        results ['Y_pred'] = Yp
 
         return True, results
 
@@ -229,7 +236,7 @@ class median (Combo):
                                 break
                         selectedA = sorted_pred[i-1][0]
 
-                    print ('even',j, selectedA, selectedB)
+                    # print ('even',j, selectedA, selectedB)
 
                     xmedian.append(np.mean((X[j,selectedA], X[j,selectedB])))
                     cilow.append(np.mean((CI_vals[j,selectedA*2], CI_vals[j,selectedB*2])))
@@ -245,7 +252,7 @@ class median (Combo):
                         if acc_w >= wcenter:
                             break
 
-                    print ('odd',j, selected)
+                    # print ('odd',j, selected)
 
                     xmedian.append(X[j,selected])
                     cilow.append(CI_vals[j,selected*2])
@@ -541,8 +548,10 @@ class matrix (Combo):
         for i in var_names:
             vname = i.split(':')[1]
             if not vname in mmatrix:
-                return False
-            
+                # raise Exception (f'matrix does not indexes model input. {vname} not found.')
+                self.conveyor.setError(f'matrix does not indexes model input. {vname} not found.')
+                return None
+
             self.vloop.append(mmatrix[vname][0]) # inner loop is 0, then 1, 2 etc...
             self.vsize.append(mmatrix[vname][1]) # number of bins in the matrix for this variable
             self.vzero.append(mmatrix[vname][2]) # origin (left side) of the first bin 
@@ -553,7 +562,8 @@ class matrix (Combo):
         for i in self.vsize:
             mlen *= i
         if int(mlen) != len(vmatrix):
-            raise Exception ('vmatrix size does not match metadata')
+            self.conveyor.setError('vmatrix size does not match metadata')
+            return None
 
         # compute offset for each variable in sequential order
         # this means computing the factor for which each
@@ -568,13 +578,19 @@ class matrix (Combo):
                     ioffset*=self.vsize[j]
             self.offset.append(int(ioffset))
 
+
         # if all the original methods contain CI run a simulation to compute the CI for the 
         # output values and return the mean, the 5% percentil and 95% percentil of the values obtained 
         CI_names = self.conveyor.getVal('ensemble_confidence_names')
-        if  CI_names is not None and len(CI_names)==(2 * self.nvarx):
+        if  self.param.getVal('conformal') and CI_names is not None and len(CI_names)==(2 * self.nvarx):
 
-            # get CI values
+            ############################################
+            ##
+            ##  Compute CI
+            ##
+            ############################################
             CI_vals = self.conveyor.getVal('ensemble_confidence')
+            confidence = 1.0 - self.param.getVal('conformalSignificance')
 
             # we read the conformal significance from the top model
             # ideally we must read this from every bottom model and store a list of
@@ -585,9 +601,9 @@ class matrix (Combo):
             conformal_confidence_left  = conformal_significance /2.0
             conformal_confidence_right = 1.0 - conformal_confidence_left
 
-            confidence_left  = (1.0 - CONFIDENCE)/2.0
+            confidence_left  = (1.0 - confidence)/2.0
             confidence_right = 1.0 - confidence_left
-            print ("confidences: ", CONFIDENCE, confidence_left, confidence_right)
+            LOG.debug (f"confidences: {confidence} {confidence_left} {confidence_right}")
 
             z = stats.norm.ppf (conformal_confidence_right)
     
@@ -598,32 +614,46 @@ class matrix (Combo):
             # make sure the random numbers are reproducible
             np.random.seed(2324)
 
+            Ylog = []
             for j in range (self.nobj):
                 ymulti = []
                 for m in range (SIMULATION_SIZE):
+                    
+                    # add random noise to the X array, using the CI to 
+                    # estimate how wide is the distribution 
                     x = copy.copy(X[j])
                     for i in range (self.nvarx):
                         #ci range is the width of the CI
                         cirange = CI_vals[j,i*2+1] - CI_vals[j,i*2]
 
-                        # we asume that the CI were estimated as +/- 1.96 * SE
+                        # we asume that the CI were estimated as +/- z * SE
                         sd = cirange/(z*2)
 
                         # now we add normal random noise, with mean 0 and SD = sd
                         x[i]+=np.random.normal(0.0,sd)
 
+                    # compute y using the noisy x
                     ymulti.append (self.lookup (x,vmatrix))
 
                 ymulti_array = np.array(ymulti)
-
+                
+                # debug only
+                Ylog.append(ymulti)
+                
                 # obtain percentiles to estimate the left and right part of the CI 
                 cilow.append (np.percentile(ymulti_array,confidence_left*100 ,interpolation='linear'))
                 ciupp.append (np.percentile(ymulti_array,confidence_right*100 ,interpolation='linear'))
                 cimean.append(np.percentile(ymulti_array,50,interpolation='linear'))
                 # cimean.append(np.median(ymulti_array))
+            
+            np.savetxt("Ylog.tsv", Ylog, delimiter="\t")
 
             cival = [cilow, ciupp, cimean]
+
             cival = self.postprocess (cival)
+
+            for i in range (len(cival[0])):
+                print (f'{cival[0][i]:.2f} - {cival[2][i]:.2f} - {cival[1][i]:.2f}')
 
             self.conveyor.addVal(cival[0], 
                         'lower_limit', 
@@ -640,21 +670,28 @@ class matrix (Combo):
                         'objs',
                         'Upper limit of the conformal prediction'
                     )
-        
-            for i in range (len(cival[0])):
-                print (f'{cival[0][i]:.2f} - {cival[2][i]:.2f} - {cival[1][i]:.2f}')
 
+            # copy to yarray because this is what is returned in either case
             yarray = np.array(cival[2])
 
         else:
+
+            ############################################
+            ##
+            ##  Compute single predictions
+            ##
+            ############################################
 
             # For each object look up in the vmatrix, by transforming the input X variables
             # into indexes and then extracting the corresponding values
             for j in range (self.nobj):
                 yarray.append (self.lookup (X[j],vmatrix))
 
+            print (yarray)
+
             sval = [np.array(yarray)]
             yarray = self.postprocess(sval)[0] 
+
 
         return yarray
             

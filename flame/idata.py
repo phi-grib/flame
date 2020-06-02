@@ -195,6 +195,12 @@ class Idata:
                 if isinstance (self.param.getVal('SDFile_id'),str):
                     idv = sdfutils.getStr(mol, self.param.getVal('SDFile_id'))
 
+            # extracts complementary information, if any.
+            cmp = ''    
+            if self.param.getVal('SDFile_complementary') is not None:
+                if isinstance (self.param.getVal('SDFile_complementary'),str):
+                    cmp = sdfutils.getStr(mol, self.param.getVal('SDFile_complementary'))
+
             # extracts biological information (activity) which is used as dependent variable
             # for the model training and is provided as a prediction for new compounds
             bio = None
@@ -209,12 +215,6 @@ class Idata:
                 if isinstance (self.param.getVal('SDFile_experimental'),str):
                     exp = sdfutils.getVal(mol, self.param.getVal('SDFile_experimental'))
 
-            # extracts complementary information, if any.
-            cmp = ''    
-            if self.param.getVal('SDFile_complementary') is not None:
-                if isinstance (self.param.getVal('SDFile_complementary'),str):
-                    cmp = sdfutils.getStr(mol, self.param.getVal('SDFile_complementary'))
-
             # generates a SMILES
             sml = None
             try:
@@ -225,11 +225,11 @@ class Idata:
 
             # assigns the information extracted from the SDFile to the corresponding lists
             obj_nam.append(name)
+            obj_sml.append(sml)
             obj_id.append(idv)
+            obj_cmp.append(cmp)
             obj_bio.append(bio)
             obj_exp.append(exp)
-            obj_cmp.append(cmp)
-            obj_sml.append(sml)
 
             success_list.append(True)
             obj_num += 1
@@ -242,18 +242,24 @@ class Idata:
         self.conveyor.addVal(obj_num, 'obj_num', 'Num mol',
                          'method', 'single',
                          'Number of molecules present in the input file')
+
         self.conveyor.addVal(obj_nam, 'obj_nam', 'Mol name',
                          'label', 'objs',
                          'Name of the molecule, as present in the input file')
-        self.conveyor.addVal(obj_id, 'obj_id', 'Mol id',
-                         'label', 'objs',
-                         'ID of the molecule, as present in the input file')
+
         self.conveyor.addVal(obj_sml, 'SMILES', 'SMILES',
                          'smiles', 'objs',
                          'Structure of the molecule in SMILES format')
-        self.conveyor.addVal(obj_cmp, 'complementary', 'Complem.',
-                         'method', 'objs',
-                         'Complementary anotation present in the input file')
+
+        if not utils.is_string_empty(obj_id):
+            self.conveyor.addVal(obj_id, 'obj_id', 'Mol id',
+                            'label', 'objs',
+                            'ID of the molecule, as present in the input file')
+
+        if not utils.is_string_empty(obj_cmp):
+            self.conveyor.addVal(obj_cmp, 'complementary', 'Complem.',
+                            'method', 'objs',
+                            'Complementary anotation present in the input file')
 
         if not utils.is_empty(obj_bio):
             self.conveyor.addVal(np.array(obj_bio, dtype=np.float64),
@@ -456,12 +462,13 @@ class Idata:
 
         ifile is a molecular file in SDFile format.
 
-        returns a boolean anda a tupla of two elements:
-        [0] xmatrix (nparray np.float64)
-        [1] list of variable names (str)
-        [2] list of booleans indicating if the computation succeeded for each molecule
+        output is boolean and a dictionary of:
+            - matrix: xmatrix (nparray np.float64)
+            - names:  list of variable names (str)
+            - success_arr: list of booleans indicating if the computation succeeded for each molecule
+            - fingerprint_index: list of booleans indicating if the md is a binary (fingerprint) or a float  
 
-        example:    return True, (xmatrix, md_nam, success_list)
+        example:    return True, combined
         '''
         return False, 'not implemented'
 
@@ -471,11 +478,16 @@ class Idata:
         of values (int or float).
 
         input is the name of a molecule or a series of molecules and a label
-        of the methods output is boolean anda a tupla of two elements:
-        [0] xmatrix (nparray np.float64)
-        [1] list of variable names (str)
+        of the methods 
+        
+        output is boolean and a dictionary of:
+            - matrix: xmatrix (nparray np.float64)
+            - names:  list of variable names (str)
+            - success_arr: list of booleans indicating if the computation succeeded for each molecule
+            - fingerprint_index: list of booleans indicating if the md is a binary (fingerprint) or a float  
 
-        FIXIT
+        example:    return True, combined
+
         '''
 
         LOG.info(f'Computing molecular descriptors with methods: {methods}')
@@ -487,9 +499,9 @@ class Idata:
         registered_methods = dict([('RDKit_properties', computeMD._RDKit_properties),
                                    ('morganFP', computeMD._RDKit_morganFPS),
                                    ('RDKit_md', computeMD._RDKit_descriptors),
-                                #    ('padel', computeMD._padel_descriptors),
-                                #    ('mordred', computeMD._mordred_descriptors),
                                    ('custom', self.computeMD_custom)])
+
+        fingerprint_list = ['morganFP']  # update with any other fingerprint method
 
         # check if input methods are members of registered methods
         if not all(m in registered_methods for m in methods):
@@ -505,6 +517,7 @@ class Idata:
 
         is_empty = True
 
+        combined = {}
         for method in methods:
             # success, results = registered_methods[method](ifile)
             success, results = registered_methods[method](ifile, **md_settings)
@@ -512,13 +525,17 @@ class Idata:
             if not success:  # if computing returns False in status
                 return success, results
 
+            is_fingerprint = method in fingerprint_list
+            nobj, nvarx = np.shape(results['matrix'])
+
             if is_empty:  # first md computed, just copy
 
-                combined_md = results['matrix']  # np.array of values
-                combined_nm = results['names']  # list of variable names
-                combined_sc = results['success_arr'] # list of true/false
+                combined['matrix'] = results['matrix']  # np.array of values
+                combined['names'] = results['names']  # list of variable names
+                combined['success_arr'] = results['success_arr'] # list of true/false
+                combined['fingerprint_index'] = [is_fingerprint for i in range(nvarx)]
 
-                shape = np.shape(combined_md)
+                shape = np.shape(combined['matrix'])
 
                 is_empty = False
 
@@ -536,29 +553,29 @@ class Idata:
                               'does not match those computed by other methods and will be skipped')          
                     continue
 
-                combined_md = np.hstack((combined_md, results['matrix']))
-                combined_nm.extend(results['names'])
+                combined['matrix'] = np.hstack((combined['matrix'], results['matrix']))
+                combined['names'].extend(results['names'])
 
                 # combine sucess results into one list with AND
                 # All results must be True to get True
                 # scc stands for success
-                new_sc = [scc and results['success_arr'][i]
-                          for i, scc in enumerate(combined_sc)]
+                new_sc = [scc and results['success_arr'][i]for i, scc in enumerate(combined['success_arr'])]
                           
-                combined_sc = new_sc
+                combined['success_arr'] = new_sc
+                combined['fingerprint_index'] += [is_fingerprint for i in range(nvarx)]
             
         # delete all objects for which success is not true but 
         # IN REVERSE order, so the index if the lines to remove
         # is not affected by the removal
         
-        for i, scc in reversed(list(enumerate(combined_sc))):
+        for i, scc in reversed(list(enumerate(combined['success_arr']))):
             if not scc:
-                combined_md = np.delete(combined_md,i,axis=0) 
+                combined['matrix'] = np.delete(combined['matrix'],i,axis=0) 
 
-        return True, (combined_md, combined_nm, combined_sc)
+        return True, combined
 
 
-    def consolidate(self, results, nobj):
+    def consolidate(self, results_tuple, nobj):
         '''
         Mix the results obtained by multiple CPUs into a single result file.
         '''
@@ -566,20 +583,21 @@ class Idata:
                  f'{len(nobj)} jobs with shapes {nobj}')
 
         first = True
-        xmatrix = None
-        var_nam = None
+        combined = {}
 
-        for iresults in results:
+        for iresults in results_tuple:
 
-            # iresults is a tupla of Boolean (iresults[0])
+            # iresults_tuple is a tupla of Boolean (iresults[0])
             #  and results (iresults[1])
             if iresults[0] == False:
                 return False, iresults[1]
 
-            # internal is a tupla of 3 elements
-            #  (xmatrix, var_nam, success_list)
+            # internal is a tupla of 4 elements
+            #  (xmatrix, var_nam, success_list, fingerprint_index)
             internal = iresults[1]
-            ixmatrix = internal[0]
+
+            # copy X matrix to imatrix because it is referenced a lot
+            ixmatrix = internal['matrix']
 
             # check that the type of ixmatrix is correct (np.ndarray)
             if not isinstance(ixmatrix, np.ndarray):
@@ -587,11 +605,11 @@ class Idata:
                           f' Found: {type(ixmatrix)}')
                 return False, "unknown results type in consolidate"
 
-
             if first: # only for the first element of the loop
-                xmatrix = ixmatrix
-                var_nam = internal[1]
-                success_list = internal[2]
+                combined['matrix'] = ixmatrix
+                combined['names'] = internal['names']
+                combined['success_arr'] = internal['success_arr']
+                combined['fingerprint_index'] = internal['fingerprint_index']
 
                 shape = np.shape(ixmatrix)
                 first = False
@@ -614,10 +632,10 @@ class Idata:
 
                         return False, "inconsistent number of variables"
 
-                xmatrix = np.vstack((xmatrix, ixmatrix))
-                success_list += internal[2]
+                combined['matrix'] = np.vstack((combined['matrix'], ixmatrix))
+                combined['success_arr'] += internal['success_arr']
 
-        return True, (xmatrix, var_nam, success_list)
+        return True, combined
 
     def save(self):
         '''
@@ -725,8 +743,6 @@ class Idata:
         '''
 
         success_list = []
-        md_results = []
-        va_results = []
 
         # split in single molecule pieces
         num_mol = sdfutils.count_mols(input_file)
@@ -742,6 +758,7 @@ class Idata:
         for fsize in file_size:
             success_list.append(fsize == 1)
 
+        combined = {}
         first_mol = True
 
         for i, ifile in enumerate(file_list):
@@ -761,22 +778,28 @@ class Idata:
                           f' in file {input_file}')
                 continue
 
-            if first_mol:  # first molecule
-                md_results = results[0]
-                va_results = results[1]
-                num_var = len(md_results)
+            if first_mol:  # we extract common features from first molecule only
+                combined['matrix']  = results['matrix']
+                combined['names']   = results['names'] # variable names
+                combined['fingerprint_index'] = results['fingerprint_index'] # fingerprint index
                 first_mol = False
-            else:
-                if len(results[0]) != num_var:
+                
+                shape = np.shape(combined['matrix'])
+            else:  # append laterally
+                ishape = np.shape(results['matrix'])
+
+                # for 2D arrays, shape[0] is the number of objects
+                if (len(ishape) > 1) and ishape[0] != shape[0]:
                     LOG.warning(f'MD length for molecule #{str(i+1)} in file'
-                                f' {input_file} does not match the MD length'
-                                'of the first molecule')
+                                f' {input_file} does not match the MD length of the first molecule')
                     success_list[i] = False
                     continue
 
-                md_results = np.vstack((md_results, results[0]))
+                combined['matrix'] = np.vstack((combined['matrix'], results['matrix']))
 
-        return True, (md_results, va_results, success_list)
+        combined['success_arr'] = success_list
+        return True, combined
+
 
     def updateMolIndex (self, mol_index, success_list):
 
@@ -805,11 +828,13 @@ class Idata:
         starting from a single molecular file
 
         input : ifile, a molecular file in SDFile format
-        output: results contains the following  lists
-                results[0] a numpy bidimensional array containing MD
-                results[1] a list of strings containing the names of the MD vars
-                results[2] a list of booleans indicating for which objects the 
-                           MD computations succeeded    
+        output is boolean and a dictionary of:
+            - matrix: xmatrix (nparray np.float64)
+            - names:  list of variable names (str)
+            - success_arr: list of booleans indicating if the computation succeeded for each molecule
+            - fingerprint_index: list of booleans indicating if the md is a binary (fingerprint) or a float  
+
+        example:    return True, combined
 
         '''
 
@@ -848,19 +873,15 @@ class Idata:
         ###
         # 4. compute MD
         ###
-        success, results = self.computeMD(
-            output_convert3D_file, self.param.getVal('computeMD_method'))
+        success, results = self.computeMD(output_convert3D_file, self.param.getVal('computeMD_method'))
 
         if not success:
             return False, results
 
-        x = results [0]
-        xnames = results [1]
-        success_list = results [2]
-
-        success, mol_index = self.updateMolIndex(mol_index, success_list)
+        # update success results using updateMolIndex function
+        success, results['success_arr'] = self.updateMolIndex(mol_index, results['success_arr'])
         
-        return success, (x, xnames, mol_index)
+        return success, results
 
     def ammend_objects(self, inform, workflow) -> None:
         '''
@@ -908,8 +929,7 @@ class Idata:
 
             self.conveyor.setVal(ikey, ilist)
 
-        message = 'Failed to process ' + \
-             str(len(warning_list))+' molecules : '+str(warning_list)
+        message = f'Failed to process {len(warning_list)} molecules : {str(warning_list)}'
         self.conveyor.setWarning(message)
 
         LOG.warning(message)
@@ -952,11 +972,11 @@ class Idata:
             pool = mp.Pool(ncpu)
 
             if self.param.getVal('mol_batch') == 'series':
-                results = pool.map(self.workflow_series, split_files_names)
+                results_tuple = pool.map(self.workflow_series, split_files_names)
             else:
-                results = pool.map(self.workflow_objects, split_files_names)
+                results_tuple = pool.map(self.workflow_objects, split_files_names)
 
-            success, results = self.consolidate(results, split_files_sizes)
+            success, results = self.consolidate(results_tuple, split_files_sizes)
 
         else:
 
@@ -972,8 +992,7 @@ class Idata:
 
         # check if any molecule failed to complete the workflow and then
         # ammend object annotations in self.conveyor
-
-        success_workflow = results[2]
+        success_workflow = results['success_arr']
 
         if len(success_inform) != len(success_workflow):
 
@@ -984,7 +1003,6 @@ class Idata:
 
             self.conveyor.setError('number of molecules informed'
                                    ' and processed does not match')
-
             return
 
         # Check if molecules not informed succeded
@@ -1001,7 +1019,8 @@ class Idata:
                              ' there is a serious workflow issue and the '
                              ' molecule should be cured or eliminated.')
 
-                self.conveyor.setError('Unknown error processing input file. Probably the format is wrong or not supported')
+                self.conveyor.setError('Unknown error processing input file.'
+                                       ' Probably the format is wrong or not supported')
                 return
 
         # check if a molecule informed did not
@@ -1017,11 +1036,14 @@ class Idata:
         #TODO: optional sanitization step, to check if the X matrix contains extreme values or variables
         # with unreasonable variances
 
-        self.conveyor.addVal(results[0], 'xmatrix', 'X matrix',
+        self.conveyor.addVal(results['matrix'], 'xmatrix', 'X matrix',
             'method', 'vars', 'Molecular descriptors')
 
-        self.conveyor.addVal(results[1], 'var_nam',
+        self.conveyor.addVal(results['names'], 'var_nam',
             'Var names', 'method', 'vars', 'Names of the X variables')
+
+        self.conveyor.addVal(results['fingerprint_index'], 'fingerprint_index',
+            'fingerprint index', 'method', 'vars', 'Index true for fingerprint variables')
 
         return
 

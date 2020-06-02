@@ -24,6 +24,10 @@
 import os
 import shutil
 import pathlib
+import sys
+import codecs
+import string
+import re 
 
 from flame.util import utils, get_logger
 
@@ -85,6 +89,28 @@ def get_ensemble_input(task, model_names, model_versions, infile):
     LOG.info('External input computed')
 
     return True, model_res
+
+def safe_copy (inputfile, outputfile):
+    ''' this function makes sure that the input file contains only printable chars
+        RDKit is very sensitive to the presence of non utf-8 chars and for this reason
+        this pre-filter is needed
+    '''
+
+    characters_to_keep = string.printable #printable us-ascii only
+    search_regex = re.compile("[^%s]" % (re.escape(characters_to_keep)))
+
+    read_stream  = codecs.open(inputfile ,'r',encoding='utf-8', errors='ignore') 
+    write_stream = codecs.open(outputfile,'w',encoding='utf-8', errors='ignore')
+ 
+    buffer = 'start'                                                        
+    buffer_size = 512*1024 # size in bytes. -1 for loading whole file in 
+
+    while  buffer: # empty string evaluates as False. Any other string as True.
+        buffer = read_stream.read(buffer_size)
+        write_stream.write(search_regex.sub('?', buffer))
+
+    read_stream.close()
+    write_stream.close()
 
 
 def predict_cmd(arguments, output_format=None):
@@ -211,7 +237,8 @@ def build_cmd(arguments, output_format=None):
                 return False, 'no training series detected'
         else:
             try:
-                shutil.copy(ifile, lfile)
+                safe_copy(ifile, lfile)
+                # shutil.copy(ifile, lfile)
             except:
                 return False, 'Unable to copy input file to model directory'
         
@@ -243,21 +270,29 @@ def build_cmd(arguments, output_format=None):
                     new_training = os.path.join(endpoint_path, 'temp_training')
 
                     with open(new_training, 'w') as outfile:
-                        with open(lfile) as infile:
-                            for line in infile:
-                                outfile.write(line)
 
-                        if line != '$$$$\n':
-                            return False, 'The existing training series does not finish correctly with "$$$$" and a newline. Please correct.'
-
-                        with open(ifile) as infile:
+                        # handling the extra newline of SDFiles is problematic. We are delaying the
+                        # output of the newline by striping newlines and adding an universal newline
+                        # at the next line for the first block  
+                        first = True
+                        with codecs.open(lfile, 'r', encoding='utf-8', errors='ignore') as infile:
                             for line in infile:
-                                outfile.write(line)
+                                if first:
+                                    outfile.write(f'{line.rstrip()}')
+                                    first = False
+                                else:
+                                    outfile.write(f'\n{line.rstrip()}')
+
+                        # for the second block we add the preceding newline in all lines 
+                        with codecs.open(ifile, 'r', encoding='utf-8', errors='ignore') as infile:
+                            for line in infile:
+                                outfile.write(f'\n{line.rstrip()}')
 
                     shutil.move(new_training, lfile)
             else:
                 try:
-                    shutil.copy(ifile, lfile)
+                    safe_copy (ifile, lfile)
+                    # shutil.copy(ifile, lfile)
                 except:
                     return False, 'Unable to copy input file to model directory'
 
@@ -310,7 +345,8 @@ def sbuild_cmd(arguments, output_format=None):
         if not os.path.isfile(ifile):
             return False, f'Wrong compound database file {ifile}'
         try:
-            shutil.copy(ifile, lfile)
+            safe_copy(ifile, lfile)
+            # shutil.copy(ifile, lfile)
         except:
             return False, 'Unable to copy input file to space directory'
 

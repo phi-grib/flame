@@ -333,7 +333,7 @@ model:
     - median
     - majority
     - matrix
-  description: List of available algorithms
+  description: List of available ML algorithms
   dependencies: 
     input_type: molecule
   comments: 
@@ -1033,10 +1033,9 @@ XGBOOST_optimize:
         - 50
         - 100
         - 150
-
       description: 
     booster:
-      object_type: int
+      object_type: list
       writable: true
       value:
         - gbtree
@@ -1084,7 +1083,7 @@ output_similar:
   advanced: advanced
   object_type: boolean
   writable: false
-  value: false
+  value: true
   options:
     - true
     - false
