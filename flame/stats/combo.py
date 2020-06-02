@@ -32,8 +32,7 @@ from flame.stats.base_model import BaseEstimator
 from flame.util import get_logger
 
 LOG = get_logger(__name__)
-SIMULATION_SIZE = 10000
-CONFIDENCE = 0.80
+SIMULATION_SIZE = 500
 
 class Combo (BaseEstimator):
     """
@@ -175,6 +174,44 @@ class Combo (BaseEstimator):
         return True, 'OK'
 
 
+    def getConfidence (self):
+
+        CI_names = self.conveyor.getVal('ensemble_confidence_names')
+        if  CI_names is not None and len(CI_names)==(2 * self.nvarx):
+
+            CI_vals = self.conveyor.getVal('ensemble_confidence')
+
+            # conformal confidence of the top model
+            cs_top = self.param.getVal('conformalSignificance') 
+            
+            # conformal confidence default is 0.8
+            if cs_top is None:
+                cs_top = 0.2  # fallback!!! we asume a default confidence of 80%
+
+            cs_top_left  = cs_top /2.0
+            cs_top_right = 1.0 - cs_top_left
+
+            # gather array of confidences for low models
+            cs_low = self.conveyor.getVal('ensemble_significance')
+            if cs_low is None:
+                cs_low = [cs_top for i in range(self.nvarx)]
+            elif None in cs_low:
+                cs_low = [cs_top for i in range(self.nvarx)]
+
+            zcoeff = []
+            for iconf in cs_low:
+                cs_low_right = (1.0 - (iconf/2.0) )
+                z = stats.norm.ppf (cs_low_right)
+                zcoeff.append (1.0 / (z*2.0) ) 
+
+            return True, (CI_vals, zcoeff, cs_top_left, cs_top_right)
+        
+        else:
+
+            return False, None
+
+    
+
 class median (Combo):
     """
        Simple median calculator used to combine the results of multiple models
@@ -188,17 +225,19 @@ class median (Combo):
        # obtain dimensions of X matrix
         self.nobj, self.nvarx = np.shape(X)
 
-        CI_names = self.conveyor.getVal('ensemble_confidence_names')
+        computeCI, CIparams = self.getConfidence ()
+        if computeCI:
+            ############################################
+            ##
+            ##  Compute CI
+            ##
+            ############################################
 
-        if  CI_names is not None and len(CI_names)==(2 * self.nvarx):
+            CI_vals      = CIparams[0]
+            zcoeff       = CIparams[1]
+            # cs_top_left  = CIparams[2]
+            # cs_top_right = CIparams[3]
 
-            # get values
-            CI_vals = self.conveyor.getVal('ensemble_confidence')
-
-            # assume that the CI represent 95% CI and normal distribution        
-            z = 1.96 
-    
-            # compute weighted average 
             w = np.zeros(self.nvarx, dtype = np.float64 )
             xmedian = []
             cilow = []
@@ -207,13 +246,17 @@ class median (Combo):
             for j in range (self.nobj):
                 pred = []
                 for i in range (self.nvarx):
-                    r = CI_vals[j,i*2+1] - CI_vals[j,i*2]
-                    sd = r/(z*2)
+                    cirange = CI_vals[j,i*2+1] - CI_vals[j,i*2]
+
+                    # sd = r/(z*2)
+                    sd = cirange * zcoeff[i]
                     w[i] = 1.0/np.square(sd)
 
                     # create a tupla with prediction ID, value and weight
                     pred.append ( (i, X[j,i], w[i]) )
                     
+                # w center is the mean of all weights, it is used to 
+                # find the center of the distibution
                 wcenter = np.sum(w)/2.00
 
                 # sort pred
@@ -222,9 +265,12 @@ class median (Combo):
                 # fpr even number of predictions
                 if self.nvarx % 2 == 0:
 
+                    # trivial situation
                     if self.nvarx == 2:
                         selectedA = 0
                         selectedB = 1
+
+                    # non-trivial, sort and iterate until we overpass wcenter
                     else:
                         acc_w = 0.00
                         selectedA = sorted_pred[0][0]
@@ -239,6 +285,9 @@ class median (Combo):
                     # print ('even',j, selectedA, selectedB)
 
                     xmedian.append(np.mean((X[j,selectedA], X[j,selectedB])))
+
+                    # this provides the CI at the original confidence level of the lower model
+                    # TODO: use the confidence of the top model to recompute these CIs
                     cilow.append(np.mean((CI_vals[j,selectedA*2], CI_vals[j,selectedB*2])))
                     ciupp.append(np.mean((CI_vals[j,(selectedA*2)+1], CI_vals[j,(selectedB*2)+1])))
 
@@ -255,6 +304,9 @@ class median (Combo):
                     # print ('odd',j, selected)
 
                     xmedian.append(X[j,selected])
+
+                    # this provides the CI at the original confidence level of the lower model
+                    # TODO: use the confidence of the top model to recompute these CIs
                     cilow.append(CI_vals[j,selected*2])
                     ciupp.append(CI_vals[j,(selected*2)+1])
 
@@ -279,6 +331,11 @@ class median (Combo):
             return np.array(xmedian)
 
         else:
+            ############################################
+            ##
+            ##  Compute single value
+            ##
+            ############################################
 
             return np.median (X,1)
 
@@ -295,9 +352,18 @@ class mean (Combo):
         # obtain dimensions of X matrix
         self.nobj, self.nvarx = np.shape(X)
 
-        CI_names = self.conveyor.getVal('ensemble_confidence_names')
+        computeCI, CIparams = self.getConfidence ()
+        if computeCI:
+            ############################################
+            ##
+            ##  Compute CI
+            ##
+            ############################################
 
-        if  CI_names is not None and len(CI_names)==(2 * self.nvarx):
+            CI_vals      = CIparams[0]
+            zcoeff       = CIparams[1]
+            # cs_top_left  = CIparams[2]
+            cs_top_right = CIparams[3]
 
             # compute weigthed mean and CI for the estimator
             # as described here
@@ -305,25 +371,25 @@ class mean (Combo):
             #   https://en.wikipedia.org/wiki/Weighted_arithmetic_mean#Weighted_sample_variance
             #
 
-            # get values
-            CI_vals = self.conveyor.getVal('ensemble_confidence')
-
-            # assume that the CI represent 95% CI and normal distribution        
-            z = 1.96 
-    
-            # compute weighted average 
             xmean = []
             cilow = []
             ciupp = []
 
+            z = stats.norm.ppf (cs_top_right)
+            # print ("z is:", z)
+
             for j in range (self.nobj):
+
+                # weigths are assigned to every input variable x based on 1/var(x)
                 w = np.zeros(self.nvarx, dtype = np.float64 )
                 for i in range (self.nvarx):
-                    r = CI_vals[j,i*2+1] - CI_vals[j,i*2]
-                    sd = r/(z*2)
+                    cirange = CI_vals[j,i*2+1] - CI_vals[j,i*2]
+                    sd = cirange * zcoeff[i]
                     w[i] = 1.0/np.square(sd)
 
                 ws = np.sum(w)
+
+                #s describes the SEM and will be used latter for obtaining the CI
                 s = 1.0/np.sqrt(ws)
 
                 xm = 0.0
@@ -331,8 +397,10 @@ class mean (Combo):
                     xm += X[j,i]*w[i]
                 xmean.append(xm/ws) 
 
-                cilow.append(xm-z*s)
-                ciupp.append(xm+z*s)
+                # print (xm, ws, xm/ws, z, s)
+
+                cilow.append((xm/ws) -z*s)
+                ciupp.append((xm/ws) +z*s)
 
             self.conveyor.addVal(np.array(cilow), 
                         'lower_limit', 
@@ -352,6 +420,11 @@ class mean (Combo):
             
             return np.array(xmean)
         else:
+            ############################################
+            ##
+            ##  Compute single value
+            ##
+            ############################################
             return np.mean (X,1)
 
 class majority (Combo):
@@ -373,10 +446,18 @@ class majority (Combo):
         self.nobj, self.nvarx = np.shape(X)
 
         # check if the underlying models are conformal
-        confidence = self.conveyor.getVal('ensemble_confidence')
+        CI_vals = self.conveyor.getVal('ensemble_confidence')
+
+        # print ('confidence: ', confidence)
 
         # when not all models are conformal use a simple approach
-        if confidence is None or len(confidence[0]) != (2 * self.nvarx):
+        if CI_vals is None or len(CI_vals[0]) != (2 * self.nvarx):
+
+            ############################################
+            ##
+            ##  Compute single value
+            ##
+            ############################################
             yp = np.zeros(self.nobj, dtype=np.float64)
             for i in range(self.nobj):
                 xline = X[i]
@@ -388,43 +469,46 @@ class majority (Combo):
                         yp[i] = -1
                     elif temp > 0.5:
                         yp[i] = 1
-            return yp
+        else:
         
-        # print (confidence)
+            ############################################
+            ##
+            ##  Compute CI
+            ##
+            ############################################
 
-        # if all models are conformal, simply add the classes
-        # and return 0 if majority is class 0, 1 if majority is class 1
-        # and -1 if there is a tie
-        yp = np.zeros(self.nobj, dtype=np.float64)
-        c0 = np.zeros(self.nobj, dtype=np.float64)
-        c1 = np.zeros(self.nobj, dtype=np.float64)
+            # if all models are conformal, simply add the classes
+            # and return 0 if majority is class 0, 1 if majority is class 1
+            # and -1 if there is a tie
+            yp = np.zeros(self.nobj, dtype=np.float64)
+            c0 = np.zeros(self.nobj, dtype=np.float64)
+            c1 = np.zeros(self.nobj, dtype=np.float64)
 
-        for i,iobj in enumerate(confidence):
-            for j in range(self.nvarx):
-                c0[i] += iobj[j*2]
-                c1[i] += iobj[(j*2)+1] 
-            if c1[i] > c0[i]:
-                yp[i] = 1
-            elif c0[i] == c1[i]:
-                yp[i] = -1
+            for i,iobj in enumerate(CI_vals):
+                for j in range(self.nvarx):
+                    c0[i] += iobj[j*2]
+                    c1[i] += iobj[(j*2)+1] 
+                if c1[i] > c0[i]:
+                    yp[i] = 1
+                elif c0[i] == c1[i]:
+                    yp[i] = -1
 
-        # add the sum of classes for evaluating the result
-        self.conveyor.addVal(c0, 
-                    'ensemble_c0', 
-                    'Ensemble Class 0', 
-                    'confidence',
-                    'objs',
-                    'Conformal class assignment'
-                )
+            # add the sum of classes for evaluating the result
+            self.conveyor.addVal(c0, 
+                        'ensemble_c0', 
+                        'Ensemble Class 0', 
+                        'confidence',
+                        'objs',
+                        'Conformal class assignment'
+                    )
 
-        self.conveyor.addVal(c1, 
-                    'ensemble_c1', 
-                    'Ensemble Class 1', 
-                    'confidence',
-                    'objs',
-                    'Conformal class assignment'
-                )
-        
+            self.conveyor.addVal(c1, 
+                        'ensemble_c1', 
+                        'Ensemble Class 1', 
+                        'confidence',
+                        'objs',
+                        'Conformal class assignment'
+                    )
         return yp
 
 class matrix (Combo):
@@ -578,35 +662,23 @@ class matrix (Combo):
                     ioffset*=self.vsize[j]
             self.offset.append(int(ioffset))
 
-
         # if all the original methods contain CI run a simulation to compute the CI for the 
         # output values and return the mean, the 5% percentil and 95% percentil of the values obtained 
-        CI_names = self.conveyor.getVal('ensemble_confidence_names')
-        if  self.param.getVal('conformal') and CI_names is not None and len(CI_names)==(2 * self.nvarx):
 
+
+        computeCI, CIparams = self.getConfidence ()
+        if computeCI:
             ############################################
             ##
             ##  Compute CI
             ##
             ############################################
-            CI_vals = self.conveyor.getVal('ensemble_confidence')
-            confidence = 1.0 - self.param.getVal('conformalSignificance')
 
-            # we read the conformal significance from the top model
-            # ideally we must read this from every bottom model and store a list of
-            # conformal significances at the conveyor to derive individual z for
-            # each variable
-            # TODO: implement this
-            conformal_significance = self.param.getVal('conformalSignificance') 
-            conformal_confidence_left  = conformal_significance /2.0
-            conformal_confidence_right = 1.0 - conformal_confidence_left
+            CI_vals      = CIparams[0]
+            zcoeff       = CIparams[1]
+            cs_top_left  = CIparams[2]
+            cs_top_right = CIparams[3]
 
-            confidence_left  = (1.0 - confidence)/2.0
-            confidence_right = 1.0 - confidence_left
-            LOG.debug (f"confidences: {confidence} {confidence_left} {confidence_right}")
-
-            z = stats.norm.ppf (conformal_confidence_right)
-    
             cilow = []
             ciupp = []
             cimean = []
@@ -614,7 +686,7 @@ class matrix (Combo):
             # make sure the random numbers are reproducible
             np.random.seed(2324)
 
-            Ylog = []
+            # Ylog = []
             for j in range (self.nobj):
                 ymulti = []
                 for m in range (SIMULATION_SIZE):
@@ -626,34 +698,42 @@ class matrix (Combo):
                         #ci range is the width of the CI
                         cirange = CI_vals[j,i*2+1] - CI_vals[j,i*2]
 
-                        # we asume that the CI were estimated as +/- z * SE
-                        sd = cirange/(z*2)
+                        # the CI were estimated as +/- z * SE
+                        sd = cirange * zcoeff[i]
 
                         # now we add normal random noise, with mean 0 and SD = sd
                         x[i]+=np.random.normal(0.0,sd)
 
                     # compute y using the noisy x
-                    ymulti.append (self.lookup (x,vmatrix))
+                    yy = self.lookup (x,vmatrix)
+                    ymulti.append (yy)
+
+                    # just for debug. this can help understand distribution of Y and relationships with 
+                    # print (m, x, yy )
 
                 ymulti_array = np.array(ymulti)
                 
                 # debug only
-                Ylog.append(ymulti)
+                # Ylog.append(ymulti)
                 
                 # obtain percentiles to estimate the left and right part of the CI 
-                cilow.append (np.percentile(ymulti_array,confidence_left*100 ,interpolation='linear'))
-                ciupp.append (np.percentile(ymulti_array,confidence_right*100 ,interpolation='linear'))
+                #
+                # We make no assumptions about the distribution shape, but if it is skewed
+                # the CI can be assymetric
+                # TODO: check the distribution and apply log or other transforms when appropriate
+
+                cilow.append (np.percentile(ymulti_array,cs_top_left*100 ,interpolation='linear'))
+                ciupp.append (np.percentile(ymulti_array,cs_top_right*100 ,interpolation='linear'))
                 cimean.append(np.percentile(ymulti_array,50,interpolation='linear'))
-                # cimean.append(np.median(ymulti_array))
             
-            np.savetxt("Ylog.tsv", Ylog, delimiter="\t")
+            # np.savetxt("Ylog.tsv", Ylog, delimiter="\t")
 
             cival = [cilow, ciupp, cimean]
 
             cival = self.postprocess (cival)
 
-            for i in range (len(cival[0])):
-                print (f'{cival[0][i]:.2f} - {cival[2][i]:.2f} - {cival[1][i]:.2f}')
+            # for i in range (len(cival[0])):
+            #     print (f'{cival[0][i]:.2f} - {cival[2][i]:.2f} - {cival[1][i]:.2f}')
 
             self.conveyor.addVal(cival[0], 
                         'lower_limit', 
@@ -687,7 +767,7 @@ class matrix (Combo):
             for j in range (self.nobj):
                 yarray.append (self.lookup (X[j],vmatrix))
 
-            print (yarray)
+            # print (yarray)
 
             sval = [np.array(yarray)]
             yarray = self.postprocess(sval)[0] 

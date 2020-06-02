@@ -271,7 +271,11 @@ class Learn:
                     'Information about the model building')
 
         # validate model
-        LOG.info(f'Validating the model using method: {self.param.getVal("ModelValidationCV"):}')
+        if self.param.getVal('input_type') == 'model_ensemble':
+            validation_method = 'ensemble validation'
+        else:
+            validation_method = self.param.getVal("ModelValidationCV")
+        LOG.info(f'Validating the model using method: {validation_method}')
         success, model_validation_results = model.validate()
         if not success:
             self.conveyor.setError(model_validation_results)
