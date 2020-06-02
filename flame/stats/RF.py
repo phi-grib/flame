@@ -155,7 +155,7 @@ class RF(BaseEstimator):
             # Conformal regressor
             if self.param.getVal('quantitative'):
                 conformal_settings = self.param.getDict('conformal_settings')
-                LOG.info("Building conformal Quantitative XGBOOST model")
+                LOG.info("Building conformal Quantitative RF model")
 
                 underlying_model = RegressorAdapter(self.estimator_temp)
                 self.normalizing_model = RegressorAdapter(
