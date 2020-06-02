@@ -204,9 +204,9 @@ class PLSR(BaseEstimator):
             LOG.info('Building PLSR aggregated conformal predictor')
 
             underlying_model = RegressorAdapter(self.estimator_temp)
-            # normalizing_model = RegressorAdapter(
-            #     KNeighborsRegressor(n_neighbors=1))
-            normalizing_model = RegressorAdapter(self.estimator_temp)
+            normalizing_model = RegressorAdapter(
+                KNeighborsRegressor(n_neighbors=15))
+            # normalizing_model = RegressorAdapter(self.estimator_temp)
             normalizer = RegressorNormalizer(underlying_model, normalizing_model, AbsErrorErrFunc())
 
             nc = RegressorNc(underlying_model, AbsErrorErrFunc(), normalizer)

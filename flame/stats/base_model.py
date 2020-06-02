@@ -182,7 +182,7 @@ class BaseEstimator:
 
         # Copy Y vector to use it as template to assign predictions
         Y_pred_in = copy.copy(Y).tolist()
-
+        from sklearn.neighbors import KNeighborsRegressor
         try:
             # for train_index, test_index in kf.split(X):
             for train_index, test_index in self.cv.split(X):
@@ -191,10 +191,19 @@ class BaseEstimator:
                 Y_train, Y_test = Y[train_index], Y[test_index]
                 
                 # Create the aggregated conformal regressor.
-                conformal_pred = AggregatedCp(IcpRegressor(
-                                    RegressorNc(RegressorAdapter(
-                                        self.estimator_temp))),
-                                            BootstrapSampler())
+
+                underlying_model = RegressorAdapter(self.estimator_temp)
+                # normalizing_model = RegressorAdapter(self.estimator_temp)
+                normalizer = RegressorNormalizer(
+                                underlying_model,
+                                copy.copy(self.normalizing_model),
+                                AbsErrorErrFunc())
+                nc = RegressorNc(underlying_model,
+                                    AbsErrorErrFunc(),
+                                    normalizer)
+
+                conformal_pred = AggregatedCp(IcpRegressor(nc),
+                                                BootstrapSampler())
 
                 # Fit conformal regressor to the data
                 conformal_pred.fit(X_train, Y_train)
