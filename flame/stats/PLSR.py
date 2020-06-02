@@ -205,7 +205,7 @@ class PLSR(BaseEstimator):
 
             underlying_model = RegressorAdapter(self.estimator_temp)
             self.normalizing_model = RegressorAdapter(
-                KNeighborsRegressor(n_neighbors=15))
+                                     KNeighborsRegressor(n_neighbors=15))
             # normalizing_model = RegressorAdapter(self.estimator_temp)
             normalizer = RegressorNormalizer(underlying_model, self.normalizing_model,
                                              AbsErrorErrFunc())
