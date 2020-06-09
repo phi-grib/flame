@@ -13,7 +13,7 @@ from flame import predict
 
 from repo_config import MODEL_REPOSITORY
 
-MODEL_NAME = "REGRCONF"
+MODEL_NAME = "REGRESCONF"
 current = Path(__file__).parent.resolve()
 SDF_FILE_NAME = str(current / "data/minicaco.sdf")
 FIXED_RESULTS = current / "data/regression_res_conf.json"
