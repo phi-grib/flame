@@ -25,45 +25,51 @@ from flame.util import utils, get_logger
 
 LOG = get_logger(__name__)
 
-def simple_subsampling(X, Y, random_seed):
+def simple_subsampling (Y):
     """
     Simple subsampling, adjusts the number of negative 
     samples to the positive one or viceversa.
     """
     np.random.seed(46)
-    positives = X[Y==1]
-    negatives = X[Y==0]
+    nobj = len(Y)
+    mask = np.zeros(nobj, dtype=int)
+
+    positives = Y[Y==1]
+    negatives = Y[Y==0]
 
     # Perform subsampling of negative instances
     if len(negatives) > len(positives):
-        LOG.info('Subsampling of negative instances')
-        size = positives.shape[0]
-        negatives_sub = negatives[np.random.choice(
-                        negatives.shape[0],
-                        size=size,
-                        replace=False)]
-        Y = np.concatenate((np.ones(size), np.zeros(size)))
-        X = np.concatenate((positives, negatives_sub), axis=0)
+        size = len(positives)
+        negatives_sub = np.random.choice(len(negatives),size=size,replace=False)
+
+        j = 0
+        for i in range(nobj):
+            if Y[i]==1:
+                mask[i] = 1
+            else:
+                if j in negatives_sub:
+                    mask[i] = 1
+                j=j+1
+
     # Perform subsampling of positive instances
     else:
-        size = negatives.shape[0]
-        positives_sub = positives[np.random.choice(
-                        positives.shape[0],
-                        size=size,
-                        replace=False)]
-        Y = np.concatenate((np.ones(size), np.zeros(size)))
-        X = np.concatenate((positives_sub, negatives), axis=0)
+        size = len(negatives)
+        positives_sub = np.random.choice(len(positives), size=size, replace=False)
 
-    if Y.size == 0  or X.size == 0:
-        raise ValueError("Error creating subsampled matrices")
-    return X, Y
+        j = 0
+        for i in range(nobj):
+            if Y[i]==0:
+                mask[i] = 1
+            else:
+                if j in positives_sub:
+                    mask[i] = 1
+                j=j+1
 
-def run_imbalance(method, X, Y, random_seed=46):
-    X_s = []
-    Y_s = []
+    return True, mask
+
+def run_imbalance(method, Y):
     if method == "simple_subsampling":
-        X_s, Y_s = simple_subsampling(X, Y, random_seed)
-    else:
-        raise ValueError("Imbalance data method not recognized")
-    return X_s, Y_s
+        return simple_subsampling(Y)
+
+    return False, "Imbalance data method not recognized"
             
