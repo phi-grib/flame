@@ -89,44 +89,53 @@ class Learn:
         # Only for qualitative endpoints.
         if self.param.getVal("imbalance") is not None and not self.param.getVal("quantitative"):
             success, mask = run_imbalance(self.param.getVal('imbalance'), self.Y)
-            if success:
-                LOG.info(f'{self.param.getVal("imbalance")} performed')
-
-                # ammend object already copied in the object
-                self.X = self.X[mask==1]
-                self.Y = self.Y[mask==1]
-
-                # ammend conveyor elements representing arrays of objects
-                # as well as obj_num and xmatrix
-                objnum = len(mask[mask==1])
-                self.conveyor.setVal('obj_num', objnum)
-                LOG.info(f'Number of objects after sampling: {objnum}')
-
-                # arrays of objects in conveyor
-                objkeys = self.conveyor.objectKeys()
-                
-                for ikey in objkeys: 
-                    ilist = self.conveyor.getVal(ikey)
-
-                    # keys are experim or ymatrix are numpy arrays
-                    # if 'numpy.ndarray' in str(type(ilist)):
-                    if isinstance(ilist, np.ndarray):
-                        ilist = ilist[mask==1]
-
-                    # other keys are regular list
-                    else:
-                        for i in range(objnum):
-                            ireverse = objnum-1-i
-                            if mask[ireverse] == 0:
-                                del ilist[ireverse]
-
-                    self.conveyor.setVal(ikey, ilist)
-                
-                self.conveyor.addVal(self.X, 'xmatrix', 'X matrix',
-                    'method', 'vars', 'Molecular descriptors')
-
-            else:
+            if not success:
                 return False, mask
+
+            LOG.info(f'{self.param.getVal("imbalance")} performed')
+
+            # print (mask)
+
+            # ammend object already copied in the object
+            self.X = self.X[mask==1]
+            self.Y = self.Y[mask==1]
+
+            # ammend conveyor elements representing arrays of objects
+            # as well as obj_num and xmatrix
+            objnum = len(mask[mask==1])
+            self.conveyor.setVal('obj_num', objnum)
+            LOG.info(f'Number of objects after sampling: {objnum}')
+
+            # arrays of objects in conveyor
+            objkeys = self.conveyor.objectKeys()
+            
+            for ikey in objkeys: 
+                ilist = self.conveyor.getVal(ikey)
+
+                # keys are experim or ymatrix are numpy arrays
+                # if 'numpy.ndarray' in str(type(ilist)):
+                if isinstance(ilist, np.ndarray):
+                    ilist = ilist[mask==1]
+
+                # other keys are regular list
+                else:
+                    len_list = len(ilist)
+                    red_len_list = len_list-1
+
+                    # elements are removed in reverse order, so the removed
+                    # elements do not change the indexes of the remaining 
+                    # items to be deleted
+                    for i in range(len_list):
+                        ireverse = red_len_list-i
+                        if mask[ireverse] == 0:
+                            del ilist[ireverse]
+
+                self.conveyor.setVal(ikey, ilist)
+            
+            # update also xmatrix, since it is labeled as vars
+            self.conveyor.addVal(self.X, 'xmatrix', 'X matrix',
+                'method', 'vars', 'Molecular descriptors')
+
 
         # Run scaling.
         self.scaler = None

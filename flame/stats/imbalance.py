@@ -31,21 +31,24 @@ def simple_subsampling (Y):
     samples to the positive one or viceversa.
     """
     np.random.seed(46)
+
     nobj = len(Y)
     mask = np.zeros(nobj, dtype=int)
 
-    positives = Y[Y==1]
-    negatives = Y[Y==0]
+    num_positives = len(Y[Y==1])
+    num_negatives = len(Y[Y==0])
 
     # Perform subsampling of negative instances
-    if len(negatives) > len(positives):
-        size = len(positives)
-        negatives_sub = np.random.choice(len(negatives),size=size,replace=False)
+    if num_negatives > num_positives:
+        negatives_sub = np.random.choice(num_negatives,size=num_positives,replace=False)
 
         j = 0
         for i in range(nobj):
+            # select all positives
             if Y[i]==1:
                 mask[i] = 1
+            # select only the negatives in the negative subsample
+            # use j as sequential counter of negatives
             else:
                 if j in negatives_sub:
                     mask[i] = 1
@@ -53,13 +56,15 @@ def simple_subsampling (Y):
 
     # Perform subsampling of positive instances
     else:
-        size = len(negatives)
-        positives_sub = np.random.choice(len(positives), size=size, replace=False)
+        positives_sub = np.random.choice(num_positives, size=num_negatives, replace=False)
 
         j = 0
         for i in range(nobj):
+            # select all negatives
             if Y[i]==0:
                 mask[i] = 1
+            # select only the positives in the positive subsample
+            # use j as sequential counter of positives
             else:
                 if j in positives_sub:
                     mask[i] = 1
