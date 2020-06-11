@@ -123,6 +123,20 @@ class Combo (BaseEstimator):
         else:
             # Get confusion matrix for predicted Y
             try:
+                if len(Yp[Yp==-1]) > 0:
+                    pseudo_conformal = True
+                    
+                    nobj = len(Y)
+                    Y  = Y[Yp!=-1]
+                    Yp = Yp[Yp!=-1]
+
+                    coverage = len(Y)/nobj
+
+                    info.append(('Conformal_coverage_f', 'Conformal coverage in fitting', coverage))
+                    info.append(('Conformal_coverage', 'Conformal coverage in cross-validation', coverage))
+                else:
+                    pseudo_conformal=False
+
                 self.TNpred, self.FPpred,self.FNpred, self.TPpred = confusion_matrix(Y, Yp, labels=[0, 1]).ravel()
 
                 self.sensitivityPred = 0.000
@@ -153,6 +167,19 @@ class Combo (BaseEstimator):
                 info.append(('Sensitivity_f', 'Sensitivity in fitting', self.sensitivityPred))
                 info.append(('Specificity_f', 'Specificity in fitting', self.specificityPred))
                 info.append(('MCC_f', 'Matthews Correlation Coefficient', self.mccp))
+
+                if pseudo_conformal:
+                    try:
+                        conformal_accuracy = (float(self.TNpred + self.TPpred) /
+                                              float(self.FPpred + self.FNpred + 
+                                              self.TNpred + self.TPpred))
+                    except Exception as e:
+                        LOG.error(f'Failed to compute conformal accuracy with'
+                                    f'exception {e}')
+                        conformal_accuracy = '-'
+
+                    info.append(('Conformal_accuracy_f', 'Conformal accuracy in fitting', conformal_accuracy))                                                    
+                    info.append(('Conformal_accuracy', 'Conformal accuracy in cross-validation', conformal_accuracy))
 
                 LOG.debug('Computed class prediction for estimator instances')
             except Exception as e:
