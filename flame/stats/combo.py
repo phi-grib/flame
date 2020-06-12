@@ -29,7 +29,7 @@ from sklearn.metrics import confusion_matrix
 from sklearn.metrics import matthews_corrcoef
 from scipy import stats
 from flame.stats.base_model import BaseEstimator
-from flame.util import get_logger
+from flame.util import utils, get_logger
 
 LOG = get_logger(__name__)
 SIMULATION_SIZE = 500
@@ -193,6 +193,121 @@ class Combo (BaseEstimator):
         results ['Y_pred'] = Yp
 
         return True, results
+
+    # External validation
+    def external_validation(self):
+        ''' when experimental values are available for the predicted compounds,
+        run external validation '''
+
+        ext_val_results = []
+        
+        # Ye are the y values present in the input file
+        Ye = np.asarray(self.conveyor.getVal("ymatrix"))
+
+        # For qualitative models, make sure the Y is qualitative as well
+        if not self.param.getVal("quantitative"):
+            qy, message = utils.qualitative_Y(Ye)
+            if not qy:
+                self.conveyor.setWarning(f'No qualitative activity suitable for external validation "{message}". Skipping.')
+                LOG.warning(f'No qualitative activity suitable for external validation "{message}". Skipping.')
+                return
+
+        # there are four variants of external validation, depending if the variable is qualitative or quantitative
+        if not self.param.getVal("quantitative"):
+            
+            # qualitative
+            Yp = np.asarray(self.conveyor.getVal("values"))
+
+            if len(Yp[Yp==-1]) > 0:
+                pseudo_conformal = True
+                
+                nobj = len(Ye)
+                Ye = Ye[Yp!=-1]
+                Yp = Yp[Yp!=-1]
+
+                coverage = len(Ye)/nobj
+
+                ext_val_results.append(('Conformal_coverage', 'Conformal coverage in external-validation', coverage))
+            else:
+                pseudo_conformal=False
+
+            if Ye.size == 0:
+                LOG.error ("Experimental activity vector is empty")
+                return
+            if Yp.size == 0:
+                LOG.error ("Predicted activity vector is empty")
+                return
+
+            # the use of labels is compulsory to inform the confusion matrix that
+            # it must return a 2x2 confussion matrix. Otherwise it will fail when
+            # a single class is represented (all TP, for example)
+            TN, FP, FN, TP = confusion_matrix(Ye, Yp, labels=[0, 1]).ravel()
+
+            # protect to avoid warnings in special cases (div by zero)
+            MCC =  matthews_corrcoef(Ye, Yp)
+
+            if (TP+FN) > 0:
+                sensitivity = (TP / (TP + FN))
+            else:
+                sensitivity = 0.0
+
+            if (TN+FP) > 0:
+                specificity = (TN / (TN + FP))
+            else:
+                specificity = 0.0
+
+            ext_val_results.append(('TP','True positives in external-validation', float(TP)))
+            ext_val_results.append(('TN','True negatives in external-validation', float(TN)))
+            ext_val_results.append(('FP','False positives in external-validation', float(FP)))
+            ext_val_results.append(('FN','False negatives in external-validation', float(FN)))
+            ext_val_results.append(('Sensitivity', 'Sensitivity in external-validation', float(sensitivity)))
+            ext_val_results.append(('Specificity', 'Specificity in external-validation', float(specificity)))
+            ext_val_results.append(('MCC', 'Mattews Correlation Coefficient in external-validation', float(MCC)))
+
+            if pseudo_conformal:
+                try:
+                    conformal_accuracy = (float(TN + TP) / float(FP + FN + TN + TP))
+                except Exception as e:
+                    LOG.error(f'Failed to compute conformal accuracy with'
+                                f'exception {e}')
+                    conformal_accuracy = '-'
+        
+                ext_val_results.append(('Conformal_accuracy', 'Conformal accuracy in external-validation', conformal_accuracy))
+        
+        else:
+
+            # quantitative
+            Yp = np.asarray(self.conveyor.getVal("values"))
+
+            if Ye.size == 0:
+                LOG.error ("Experimental activity vector is empty")
+                return
+            if Yp.size == 0:
+                LOG.error ("Predicted activity vector is empty")
+                return
+
+            Ym = np.mean(Ye)
+            nobj = len(Yp)
+
+            SSY0_out = np.sum(np.square(Ym - Ye))
+            SSY_out = np.sum(np.square(Ye - Yp))
+            scoringP = mean_squared_error(Ye, Yp)
+            SDEP = np.sqrt(SSY_out / (nobj))
+            if SSY0_out == 0:
+                Q2 = 0.0
+            else:
+                Q2 = 1.00 - (SSY_out / SSY0_out)
+
+            ext_val_results.append(('scoringP', 'Scoring P', scoringP))
+            ext_val_results.append(('Q2', 'Determination coefficient in cross-validation', Q2))
+            ext_val_results.append(('SDEP', 'Standard Deviation Error of the Predictions', SDEP))
+
+        self.conveyor.addVal( ext_val_results,
+                                'external-validation',
+                                'external validation',
+                                'method',
+                                'single',
+                                'External validation results')
 
     def save_model(self):
         return True, 'OK'

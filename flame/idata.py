@@ -1174,6 +1174,8 @@ class Idata:
             # predictions
             i_md = i_result.getVal('values')
 
+            # print(i_result.meta)
+
             if combined_md is None:  # for first element just copy
                 combined_md = np.array(i_md, dtype=np.float64)
                 if len(i_md)!= num_obj:
