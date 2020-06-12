@@ -361,6 +361,13 @@ def is_empty(mylist):
             return False
     return True
 
+def is_string_empty(mylist):
+    ''' returns True if every element in the list is None '''
+    for i in mylist:
+        if i != '':
+            return False
+    return True
+
 def qualitative_Y (Y):
     ''' Checks if the Y nparray provided as an argument contains only 1 and 0 values and 
         is therefore suitable for being used in qualitative models

@@ -108,7 +108,10 @@ class Conveyor:
         return self.error 
 
     def setError (self, message):
-        self.error = message
+        if self.error is None:
+            self.error = message
+        else:
+            self.error += '\n'+message
 
     def getWarning (self):
         return self.warning is not None
@@ -117,7 +120,12 @@ class Conveyor:
         return self.warning
 
     def setWarning (self, message):
-        self.warning = message
+        if self.warning is None:
+            self.warning = message
+        else:
+            self.warning += '\n'+message
+        
+        print ('warning status:', self.warning)
     
     def getVal(self, key):
         if not key in self.data:
@@ -196,6 +204,7 @@ class Conveyor:
             - manifest and meta
             - data (only single and object)
          '''
+
         temp_json = {}
 
         if self.error is not None:
@@ -211,7 +220,7 @@ class Conveyor:
         white_keys  = self.objectKeys()
         white_keys += self.singleKeys()
 
-        if xdata:
+        if xdata or (self.getMeta('input_type') == 'model_ensemble') :
             white_keys += ['xmatrix', 'var_nam']
 
         #print (white_keys)

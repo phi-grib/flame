@@ -262,14 +262,15 @@ def action_import(model):
     try:
         os.mkdir(base_path)
     except Exception as e:
-        return False, f'error creating directory {base_path}: {e}'
+        return False, f'Error creating directory {base_path}: {e}'
 
     with tarfile.open(importfile, 'r:gz') as tar:
         tar.extractall(base_path)
 
     # get libraries
 
-    incompatible = False
+    message = f'Endpoint {endpoint} imported OK'
+    compatible = True
     for x in os.listdir(base_path):
         model_path = os.path.join(base_path,x)
         model_pkl  = os.path.join(model_path,'estimator.pkl')
@@ -284,15 +285,12 @@ def action_import(model):
             # print (dict_estimator['libraries'])
             success, results = utils.compatible_modules(dict_estimator['libraries'])
             if not success:
-                LOG.warning(f"incompatible libraries detected, {results}. Use at your own risk")
-                incompatible = True
-                break
+                message = f"WARNING: Incompatible libraries detected, {results}. Use at your own risk"
+                return False, message
 
-    if not incompatible:        
-        LOG.info('Libraries used to generate the imported model are compatible with local libraries')
-
-    LOG.info(f'Endpoint {endpoint} imported OK')
-    return True, 'Endpoint '+endpoint+' imported OK'
+    LOG.info('Libraries used to generate the imported model are compatible with local libraries')
+    LOG.info(message)
+    return True, message
 
 
 def action_export(model):
@@ -555,9 +553,18 @@ def action_documentation(model, version=None, doc_file=None, oformat='text'):
     doc = Documentation(model, version)
 
     if doc_file is not None:
-        # use the param_file to update existing parameters at the model
-        # directory and save changes to make them persistent
-        success, message = doc.delta(model, 0, doc_file, iformat='YAML')
+        if oformat == 'JSONS':
+            # use the param string to update existing parameters at the model
+            # directory and save changes to make them persistent
+            success, message = doc.delta(model, 0, doc_file, iformat='JSONS')
+            return True, 'OK'
+        else:
+            # use the param_file to update existing parameters at the model
+            # directory and save changes to make them persistent
+            success, message = doc.delta(model, 0, doc_file, iformat='YAML')
+
+        if not success:
+            return False, message
 
     doc = Documentation(model, version)
     if oformat != 'text':

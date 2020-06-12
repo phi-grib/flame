@@ -309,8 +309,12 @@ class Documentation:
         # self.fields['Algorithm']['subfields']['algorithm']['value'] = \
         #     self.parameters.getVal('model')
         self.setInnerVal('Algorithm', 'algorithm', self.parameters.getVal('model'))
-        self.setInnerVal('Algorithm','descriptors', 
-                self.parameters.getVal('computeMD_method'))
+        
+        if self.parameters.getVal('input_type')=='molecule':
+            self.setInnerVal('Algorithm','descriptors', self.parameters.getVal('computeMD_method'))
+        elif self.parameters.getVal('input_type')=='model_ensemble':
+            self.setInnerVal('Algorithm','descriptors', 'ensemble models')
+
         if self.parameters.getVal('conformal'):
             self.setInnerVal('AD_method', 'name', 'conformal prediction')
             self.setVal('AD_parameters', f'Conformal Significance '
@@ -323,10 +327,11 @@ class Documentation:
         '''
         # Accepted validation keys
         allowed = ['Conformal_accuracy', 'Conformal_mean_interval',
-                   'Sensitivity', 'Specificity', 'MCC',
                    'Conformal_coverage', 'Conformal_accuracy',
-                   'Q2', 'SDEP', 'SensitivityPed', 'SpecificityPred',
-                   'SpecificityPred', 'MCCpred', 'scoringR', 'R2', 'SDEC' ]
+                   'Q2', 'SDEP', 
+                   'SensitivityPred', 'SpecificityPred', 'MCCpred']
+        gof_allowed = ['R2', 'SDEC', 'scoringR'
+                       'Sensitivity', 'Specificity', 'MCC']
         model_info = self.conveyor.getVal('model_build_info')
         validation = self.conveyor.getVal('model_valid_info')
 
@@ -370,6 +375,15 @@ class Documentation:
         if internal_val:
             self.fields['Internal_validation_1']\
                 ['value'] = internal_val
+
+        gof = dict()
+        for stat in validation:
+            if stat[0] in gof_allowed:
+                gof[stat[0]] = float("{0:.2f}".format(stat[2]))
+        if gof:
+            self.fields['Goodness_of_fit_statistics']\
+                ['value'] = gof
+
 
     def get_string(self, dictionary):
         '''

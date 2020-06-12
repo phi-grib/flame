@@ -107,7 +107,7 @@ ENV/
 .vscode/
 
 # Molecules
-#*.sdf
+*.sdf
 mols
 
 # Pickle files and models
@@ -136,3 +136,8 @@ flame/*.yaml
 flame/config.yaml
 flame/config.yml
 
+flame/pca-scores12.png
+flame/models/CACO2/dev/parameters.yaml
+flame/stats/modelPCA.npy
+flame/config.yaml
+flame/config.yaml

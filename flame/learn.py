@@ -90,19 +90,55 @@ class Learn:
 
         # Perform subsampling on the majority class. Consider to move.
         # Only for qualitative endpoints.
-        if self.param.getVal("imbalance") is not None and \
-                        not self.param.getVal("quantitative"):
-            try:
-                self.X, self.Y = run_imbalance(
-                    self.param.getVal('imbalance'), self.X, self.Y, 46)
-                # This is necessary to avoid inconsistences in methods
-                # using self.nobj
-                LOG.info(f'{self.param.getVal("imbalance")}'
-                            f' performed')
-                LOG.info(f'Number of objects after sampling: {self.X.shape[0]}')
-            except Exception as e:
-                return False, (f'Unable to perform sampling'
-                               f' method with exception: {e}')
+        if self.param.getVal("imbalance") is not None and not self.param.getVal("quantitative"):
+            success, mask = run_imbalance(self.param.getVal('imbalance'), self.Y)
+            if not success:
+                return False, mask
+
+            LOG.info(f'{self.param.getVal("imbalance")} performed')
+
+            # print (mask)
+
+            # ammend object already copied in the object
+            self.X = self.X[mask==1]
+            self.Y = self.Y[mask==1]
+
+            # ammend conveyor elements representing arrays of objects
+            # as well as obj_num and xmatrix
+            objnum = len(mask[mask==1])
+            self.conveyor.setVal('obj_num', objnum)
+            LOG.info(f'Number of objects after sampling: {objnum}')
+
+            # arrays of objects in conveyor
+            objkeys = self.conveyor.objectKeys()
+            
+            for ikey in objkeys: 
+                ilist = self.conveyor.getVal(ikey)
+
+                # keys are experim or ymatrix are numpy arrays
+                # if 'numpy.ndarray' in str(type(ilist)):
+                if isinstance(ilist, np.ndarray):
+                    ilist = ilist[mask==1]
+
+                # other keys are regular list
+                else:
+                    len_list = len(ilist)
+                    red_len_list = len_list-1
+
+                    # elements are removed in reverse order, so the removed
+                    # elements do not change the indexes of the remaining 
+                    # items to be deleted
+                    for i in range(len_list):
+                        ireverse = red_len_list-i
+                        if mask[ireverse] == 0:
+                            del ilist[ireverse]
+
+                self.conveyor.setVal(ikey, ilist)
+            
+            # update also xmatrix, since it is labeled as vars
+            self.conveyor.addVal(self.X, 'xmatrix', 'X matrix',
+                'method', 'vars', 'Molecular descriptors')
+
 
         # Run scaling.
         self.scaler = None
@@ -187,32 +223,6 @@ class Learn:
         LOG.debug('Model saved as:{}'.format(prepro_pkl_path))
         return True, 'OK'
 
-    # def generateProjectedSpace(self):
-    #     # TODO: decide which is the best way to present the training space
-    #     LOG.info('Generating projeced X space...')
-    #     mpca = pca()
-    #     mpca.build(self.X,targetA=2,autoscale=False)
-
-    #     pca_path = os.path.join(self.param.getVal('model_path'),'pca.npy')
-    #     mpca.saveModel(pca_path)
-
-    #     obj_nam = self.conveyor.getVal('obj_nam')
-
-    #     # generate TSV file with PCA scores
-    #     with open('scores.tsv','w') as handler:
-    #         for i in range(mpca.nobj):
-    #             handler.write (f'{obj_nam[i]}\t{mpca.t[0][i]}\t{mpca.t[1][i]}\n')
-
-    #     # dump to conveyor?
-
-    #     # generate png with PCA scores
-    #     import matplotlib.pyplot as plt
-
-    #     scores=plt.figure(figsize=(9,6))
-    #     plt.xlabel('PC 1')
-    #     plt.ylabel('PC 2')
-    #     plt.scatter(mpca.t[0],mpca.t[1], c='red', marker='D', s=40, linewidths=0)
-    #     scores.savefig("pca-scores12.png", format='png')
 
     def run_internal(self):
         '''
@@ -300,7 +310,11 @@ class Learn:
                     'Information about the model building')
 
         # validate model
-        LOG.info(f'Validating the model using method: {self.param.getVal("ModelValidationCV"):}')
+        if self.param.getVal('input_type') == 'model_ensemble':
+            validation_method = 'ensemble validation'
+        else:
+            validation_method = self.param.getVal("ModelValidationCV")
+        LOG.info(f'Validating the model using method: {validation_method}')
         success, model_validation_results = model.validate()
         if not success:
             self.conveyor.setError(model_validation_results)
@@ -335,6 +349,24 @@ class Learn:
                 'result',
                 'objs',
                 'Y values of the training series predicted by the model')
+
+        if 'Conformal_prediction_ranges' in model_validation_results:
+            self.conveyor.addVal(
+                model_validation_results['Conformal_prediction_ranges'],
+                'Conformal_prediction_ranges',
+                'Conformal prediction ranges',
+                'method',
+                'objs',
+                'Interval for the cross-validated predictions')
+
+        if 'Conformal_prediction_ranges_fitting' in model_validation_results:
+            self.conveyor.addVal(
+                model_validation_results['Conformal_prediction_ranges_fitting'],
+                'Conformal_prediction_ranges_fitting',
+                'Conformal prediction ranges fitting',
+                'method',
+                'objs',
+                'Interval for the predictions in fitting')             
 
         # conformal qualitative models produce a list of tuples, indicating
         # if the object is predicted to belong to class 0 and 1

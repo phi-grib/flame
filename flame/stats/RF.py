@@ -154,17 +154,16 @@ class RF(BaseEstimator):
         try:
             # Conformal regressor
             if self.param.getVal('quantitative'):
-
+                conformal_settings = self.param.getDict('conformal_settings')
                 LOG.info("Building conformal Quantitative RF model")
 
                 underlying_model = RegressorAdapter(self.estimator_temp)
-                #normalizing_model = RegressorAdapter(
-                    #KNeighborsRegressor(n_neighbors=5))
-
-                normalizing_model = RegressorAdapter(self.estimator_temp)
+                self.normalizing_model = RegressorAdapter(
+                    KNeighborsRegressor(n_neighbors=conformal_settings['KNN_NN']))
+                # normalizing_model = RegressorAdapter(self.estimator_temp)
                 normalizer = RegressorNormalizer(
                                 underlying_model,
-                                normalizing_model,
+                                copy(self.normalizing_model),
                                 AbsErrorErrFunc())
                 nc = RegressorNc(underlying_model,
                                     AbsErrorErrFunc(),

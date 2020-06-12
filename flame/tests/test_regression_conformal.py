@@ -13,7 +13,7 @@ from flame import predict
 
 from repo_config import MODEL_REPOSITORY
 
-MODEL_NAME = "REGRCONF"
+MODEL_NAME = "REGRESCONF"
 current = Path(__file__).parent.resolve()
 SDF_FILE_NAME = str(current / "data/minicaco.sdf")
 FIXED_RESULTS = current / "data/regression_res_conf.json"
@@ -29,6 +29,7 @@ def make_model():
 def build_model():
     builder = build.Build(MODEL_NAME)
     builder.param.setVal("tune", False)
+    builder.param.setInnerVal("conformal_settings", "KNN_NN", 1)
     return builder.run(SDF_FILE_NAME)
 
 

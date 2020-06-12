@@ -204,10 +204,11 @@ class PLSR(BaseEstimator):
             LOG.info('Building PLSR aggregated conformal predictor')
 
             underlying_model = RegressorAdapter(self.estimator_temp)
-            # normalizing_model = RegressorAdapter(
-            #     KNeighborsRegressor(n_neighbors=1))
-            normalizing_model = RegressorAdapter(self.estimator_temp)
-            normalizer = RegressorNormalizer(underlying_model, normalizing_model, AbsErrorErrFunc())
+            self.normalizing_model = RegressorAdapter(
+                                     KNeighborsRegressor(n_neighbors=15))
+            # normalizing_model = RegressorAdapter(self.estimator_temp)
+            normalizer = RegressorNormalizer(underlying_model, self.normalizing_model,
+                                             AbsErrorErrFunc())
 
             nc = RegressorNc(underlying_model, AbsErrorErrFunc(), normalizer)
             self.estimator = AggregatedCp(IcpRegressor(nc), BootstrapSampler())

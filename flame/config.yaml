@@ -2,7 +2,14 @@ admin_email: manuel.pastor@upf.edu
 admin_name: Manuel Pastor
 config_status: true
 homepage: http://phi.upf.edu
+<<<<<<< HEAD
 model_repository_path: E:\synced\internals\flame\eye_irritation\models
 predictions_repository_path: E:\synced\internals\flame\eye_irritation\predictions
 provider: UPF (Pompeu Fabra University)
 space_repository_path: E:\synced\internals\flame\eye_irritation\spaces
+=======
+model_repository_path: E:\synced\collaborations\eTransafe\cholestasis_CS\models
+predictions_repository_path: E:\synced\collaborations\eTransafe\cholestasis_CS\predictions
+provider: UPF (Pompeu Fabra University)
+space_repository_path: E:\synced\collaborations\eTransafe\cholestasis_CS\spaces
+>>>>>>> master

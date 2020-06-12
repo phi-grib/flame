@@ -159,10 +159,9 @@ class XGBOOST(BaseEstimator):
                     results.append(('model', 'model type', 'XGBOOST qualitative'))
 
                 self.estimator.fit(X, Y)
-                print(self.estimator)
+                LOG.debug (self.estimator)
 
             except Exception as e:
-                raise e
                 return False, f'Exception building XGBOOST estimator with exception {e}'
 
         self.estimator_temp = copy(self.estimator)
@@ -173,16 +172,16 @@ class XGBOOST(BaseEstimator):
         try:
             # Conformal regressor
             if self.param.getVal('quantitative'):
-
+                conformal_settings = self.param.getDict('conformal_settings')
                 LOG.info("Building conformal Quantitative XGBOOST model")
 
                 underlying_model = RegressorAdapter(self.estimator_temp)
-                #normalizing_model = RegressorAdapter(
-                    #KNeighborsRegressor(n_neighbors=5))
-                normalizing_model = RegressorAdapter(self.estimator_temp)
+                self.normalizing_model = RegressorAdapter(
+                    KNeighborsRegressor(n_neighbors=conformal_settings['KNN_NN']))
+                # normalizing_model = RegressorAdapter(self.estimator_temp)
                 normalizer = RegressorNormalizer(
                                 underlying_model,
-                                normalizing_model,
+                                copy(self.normalizing_model),
                                 AbsErrorErrFunc())
                 nc = RegressorNc(underlying_model,
                                     AbsErrorErrFunc(),
@@ -217,7 +216,6 @@ class XGBOOST(BaseEstimator):
                 results.append(('model', 'model type', 'conformal XGBOOST qualitative'))
 
         except Exception as e:
-            raise e
             return False, f'Exception building conformal XGBOOST estimator with exception {e}'
 
         return True, results
