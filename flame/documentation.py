@@ -296,7 +296,7 @@ class Documentation:
                 self.fields[key]['value']=[vt, value]
 
     def dumpJSON (self):
-        return json.dumps(self.fields)
+        return json.dumps(self.fields, allow_nan=True)
 
     def assign_parameters(self):
         '''

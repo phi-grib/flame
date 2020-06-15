@@ -75,6 +75,7 @@ class Idata:
         # add metainformation
         self.conveyor.addMeta('endpoint',self.param.getVal('endpoint'))
         self.conveyor.addMeta('version',self.param.getVal('version'))
+        self.conveyor.addMeta('quantitative',self.param.getVal('quantitative'))
         
         input_type = self.param.getVal('input_type')
         self.conveyor.addMeta('input_type',input_type)
@@ -1143,6 +1144,8 @@ class Idata:
         # get input file name from conveyor, as defined in the constructor
         ifile = self.conveyor.getMeta('input_file')
 
+
+
         # call extractInformation to obtain names, activities, smiles, id, etc.
         success_inform = self.extractInformation(ifile)
 
@@ -1168,32 +1171,34 @@ class Idata:
         combined_significance = []
 
         num_obj = self.conveyor.getVal ('obj_num')
+        num_conformal = 0
 
         for i_result in self.idata:
 
             # predictions
             i_md = i_result.getVal('values')
+            i_md_size = len(i_md)
+            if i_md_size != num_obj:
+                self.conveyor.setError('the number of results produced by the first model is inconsistent with the number of molecules recognized in the input file')
+                return
 
-            # print(i_result.meta)
-
+            # re-scale quantitatives as -1 for negative and 0 for uncertains
+            # this facilitates the use of cualitative input by methods like RF, PLSDA, SVM without
+            # discarding objects containing a few uncertain values
+            if not i_result.getMeta('quantitative'):
+                for i in range(i_md_size):
+                    ival = i_md[i]
+                    if ival == 0:
+                        i_md[i] = -1
+                    elif ival == -1:
+                        i_md[i] = 0
+            
             if combined_md is None:  # for first element just copy
                 combined_md = np.array(i_md, dtype=np.float64)
-                if len(i_md)!= num_obj:
-                    self.conveyor.setError('the number of results produced by the first model is inconsistent with the number of molecules recognized in the input file')
-                    return
             else:
-                #TODO: so far we discard any situation where the length of the inputs to be merged is
-                # non consistent
-                # We must implement an analysis of the output allowing to discard  
-                if len(i_md)!= num_obj:
-                    self.conveyor.setError('the number of the results produced by some models is inconsistent')
-                    return
                 combined_md = np.c_[combined_md, np.array(i_md, dtype=np.float64)]
 
-            #md names
-            combined_md_names.append(
-                'values'+':'+i_result.getMeta('endpoint')+':'+str(i_result.getMeta('version')))
-                
+            combined_md_names.append('values'+':'+i_result.getMeta('endpoint')+':'+str(i_result.getMeta('version')))
             combined_significance.append(i_result.getVal('significance'))
 
             # confidence values and names
@@ -1217,6 +1222,9 @@ class Idata:
                 i_c0 = i_result.getVal('c0')
                 i_c1 = i_result.getVal('c1')
                 if i_c0 is not None and i_c1 is not None:
+
+                    num_conformal += 1
+
                     if combined_cf is None:  # for first element just copy
                         combined_cf = np.array(i_c0, dtype=np.float64)
                         combined_cf = np.column_stack((combined_cf, i_c1))
@@ -1229,26 +1237,24 @@ class Idata:
                     combined_cf_names.append(
                         'c1'+':'+i_result.getMeta('endpoint')+':'+str(i_result.getMeta('version')))
 
-        # self.conveyor.addVal( num_obj, 'obj_num', 'Num mol', 
-        #                  'method', 'single', 'Number of molecules present in the input file')
-
         self.conveyor.addVal( combined_md, 'xmatrix', 'X matrix',
                          'results', 'vars', 'Combined output from external sources')
 
         self.conveyor.addVal( combined_md_names, 'var_nam', 'Var. names',
                          'method', 'vars', 'Variable names from external sources')
 
-        if combined_cf is not None:
-            self.conveyor.addVal( combined_cf, 'ensemble_confidence', 'Ensemble Confidence',
-                            'method', 'objs', 'Combined confidence from external sources')
+        if num_conformal == len (self.idata):  # add this info only if ALL inputs are conformal
+            if combined_cf is not None:
+                self.conveyor.addVal( combined_cf, 'ensemble_confidence', 'Ensemble Confidence',
+                                'method', 'objs', 'Combined confidence from external sources')
 
-        if len(combined_cf_names) > 0:
-            self.conveyor.addVal( combined_cf_names, 'ensemble_confidence_names', 'Ensemble Conf. names',
-                            'method', 'vars', 'Confidence indexes from external sources')
+            if len(combined_cf_names) > 0:
+                self.conveyor.addVal( combined_cf_names, 'ensemble_confidence_names', 'Ensemble Conf. names',
+                                'method', 'vars', 'Confidence indexes from external sources')
 
-        if len(combined_significance) > 0:
-            self.conveyor.addVal( combined_significance, 'ensemble_significance', 'Ensemble Significance',
-                            'method', 'vars', 'Significance from external sources')
+            if len(combined_significance) > 0:
+                self.conveyor.addVal( combined_significance, 'ensemble_significance', 'Ensemble Significance',
+                                'method', 'vars', 'Significance from external sources')
         
 
         # print ('combined_md', combined_md)

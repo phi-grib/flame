@@ -414,12 +414,17 @@ class Apply:
         # project the X matrix into the model and save predictions in self.conveyor
         model.project(X)
         
+        # if this prediction is only generating input for an ensemble model skip validation
+        # and projection on the chemical space
+        if 'ghost' in self.param.getVal('output_format'):
+            return
+
         # if the input file contains activity values use them to run external validation 
         if self.conveyor.isKey('ymatrix'):
             model.external_validation()
 
-        if not 'ghost' in self.param.getVal('output_format'):
-            projectPredictions (X, self.param, self.conveyor)
+        # project on the chemical space built using the training series    
+        projectPredictions (X, self.param, self.conveyor)
 
         return
 

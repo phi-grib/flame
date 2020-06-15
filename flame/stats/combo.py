@@ -572,6 +572,8 @@ class mean (Combo):
 class majority (Combo):
     """
        Simple majority voting calculator used to combine the results of multiple models
+
+       IMPORTANT!! note that, from version 15/6/2020, the qualitative input has been scaled as negative (-1) | uncertain (0) | positive (+1)
     """
     def __init__(self, X, Y, parameters, conveyor):
         Combo.__init__(self, X, Y, parameters, conveyor)
@@ -600,17 +602,17 @@ class majority (Combo):
             ##  Compute single value
             ##
             ############################################
-            yp = np.zeros(self.nobj, dtype=np.float64)
+            yp = np.ones(self.nobj, dtype=np.float64) # default is positive
             for i in range(self.nobj):
                 xline = X[i]
-                if xline[xline>=0].size == 0:  # all uncertains
-                    yp[i] = -1
+                if xline[xline!=0].size == 0:  # all uncertains
+                    yp[i] = -1 # uncertain
                 else:
-                    temp = np.mean(xline[xline>=0])
-                    if temp == 0.5: # equal number of positive and negatives
-                        yp[i] = -1
-                    elif temp > 0.5:
-                        yp[i] = 1
+                    temp = np.mean(xline[xline!=0])
+                    if temp == 0.0: # equal number of positive and negatives
+                        yp[i] = -1  # uncertain
+                    elif temp < 0.0:
+                        yp[i] = 0   # negative
         else:
         
             ############################################
