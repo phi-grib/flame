@@ -797,10 +797,8 @@ class BaseEstimator:
         # Compute Cross-validation quality metrics
         try:
             # Get predicted Y
-            y_pred = cross_val_predict(copy.copy(self.estimator),
-                            copy.copy(X), copy.copy(Y),
-                                cv=self.cv,
-                                    n_jobs=1)
+            # y_pred = cross_val_predict(copy.copy(self.estimator), copy.copy(X), copy.copy(Y), cv=self.cv, n_jobs=1)
+            y_pred = cross_val_predict(self.estimator, X, Y, cv=self.cv, n_jobs=-1)
             SSY0_out = np.sum(np.square(Ym - Y))
             SSY_out = np.sum(np.square(Y - y_pred))
             self.scoringP = mean_squared_error(Y, y_pred)
@@ -966,7 +964,7 @@ class BaseEstimator:
         # constant.
         try:
             tclf = GridSearchCV(estimator, tune_parameters,
-                                scoring=metric, cv=3, n_jobs=4)
+                                scoring=metric, cv=3, n_jobs=-1)
             tclf.fit(X, Y)
             self.estimator = copy.copy(tclf.best_estimator_)
         except Exception as e:
