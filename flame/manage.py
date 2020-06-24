@@ -25,6 +25,7 @@ import sys
 import shutil
 import tarfile
 import pickle
+import yaml
 import pathlib
 import numpy as np
 from flame.util import utils, get_logger 
@@ -651,10 +652,46 @@ def action_documentation(model, version=None, doc_file=None, oformat='text'):
 
         return True, 'parameters listed'
 
+def action_label(model, version=None, labels_file=None, oformat='text'):
+    ''' Returns / sets the model labels '''
+
+    if model is None:
+        return False, 'Empty model label'
+
+    # get de model repo path
+    rdir = utils.model_path(model, version)
+
+    if labels_file is not None:
+        # if input labels then save labels
+        try:
+            with open(labels_file, 'r') as fi:
+                p = yaml.safe_load(fi)
+        except Exception as e:
+            return False, e
+
+        try:
+            with open(os.path.join(rdir, 'model-labels.pkl'), 'wb') as fo:
+                pickle.dump(p, fo)
+        except Exception as e:
+            return False, e
+
+    # open labels 
+    try:
+        with open(os.path.join(rdir, 'model-labels.pkl'), 'rb') as fi:
+            p = pickle.load(fi)
+    except Exception as e:
+        return False, e
+
+    if oformat == 'text':
+        for ikey in p:
+            LOG.info(f'{ikey}\t{p[ikey]}')
+        return True, 'success'
+
+    return True, p
+
 def action_dir():
     '''
     Returns a list of models and versions
-    TODO: add action_info for each model
     '''
     # get de model repo path
     models_path = pathlib.Path(utils.model_repository_path())
@@ -666,12 +703,23 @@ def action_dir():
     # get last dir name [-1]: model name
     model_dirs = [d.parts[-1] for d in dirs if list(d.glob('dev'))]
 
+    label_defaults = {  'maturity' : 'dev',
+                        'type' : 'unk',
+                        'subtype' : 'unk',
+                        'endpoint' : 'unk',
+                        'species' : 'unk' }
     results = []
     for imodel in model_dirs:
         idict = {}
         idict ["modelname"] = imodel
         idict ["version"] = 0
         idict ["info"] = action_info(imodel, 0, output=None)[1]
+        success, label = action_label(imodel, 0, oformat='object')
+        if success:
+            idict ["label"] = label
+        else:
+            idict ["label"] = label_defaults
+
         results.append(idict)
 
         for iversion in os.listdir(utils.model_tree_path(imodel)):
@@ -680,6 +728,11 @@ def action_dir():
                 idict ["modelname"] = imodel
                 idict ["version"] = utils.modeldir2ver(iversion)
                 idict ["info"] = action_info(imodel, idict ["version"], output=None)[1]
+                success, label = action_label(imodel, idict ["version"], oformat='object')
+                if success:
+                    idict ["label"] = label 
+                else:
+                    idict ["label"] = label_defaults
                 results.append(idict)
 
     print (results)

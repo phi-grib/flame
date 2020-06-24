@@ -296,8 +296,7 @@ class Apply:
         ''' This function loads the scaler and variable mask from a pickle file 
         and apply them to the X matrix passed as an argument'''
 
-        prepro_file = os.path.join(self.param.getVal('model_path'),
-                                    'preprocessing.pkl')
+        prepro_file = os.path.join(self.param.getVal('model_path'), 'preprocessing.pkl')
 
         LOG.debug(f'Loading model from pickle file, path: {prepro_file}')
         try:

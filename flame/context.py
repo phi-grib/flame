@@ -466,6 +466,8 @@ def manage_cmd(args):
             success, results = manage.action_predictions_result(args.label)
         elif args.action == 'predictions_remove':
             success, results = manage.action_predictions_remove(args.label)
+        elif args.action == 'label':
+            success, results = manage.action_label(args.endpoint, version, args.label)
         else: 
             success = False
             results = "Specified manage action is not defined"
