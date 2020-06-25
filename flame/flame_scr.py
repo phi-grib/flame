@@ -209,7 +209,10 @@ def main():
             LOG.error(results)
 
     elif args.command == 'config':
-        success = config(args.directory)
+        silent = False
+        if args.action is not None:
+            silent = (args.action == 'silent')
+        success = config(args.directory, silent)
         if not success:
             LOG.error('configuration unchanged')
         

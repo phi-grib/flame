@@ -52,7 +52,7 @@ def ask_user ():
     return False
 
 
-def config(path: str=None) -> bool:
+def config(path: None, silent: False) -> bool:
     """Configures model repository.
 
     Loads config.yaml and writes a correct model repository path
@@ -60,12 +60,42 @@ def config(path: str=None) -> bool:
     if the path is not provided.
     """
 
-    # ---- CLI interface -----
+    if silent:
+        if path is not None:  
+            source_dir = os.path.abspath(path)
+        else:
+            source_dir = os.path.dirname(os.path.dirname(__file__)) 
+
+        models_path = os.path.join (source_dir,'models')
+        predictions_path = os.path.join (source_dir,'predictions')
+        spaces_path = os.path.join (source_dir,'spaces')
+
+        if not os.path.isdir(models_path):
+            os.mkdir(models_path)
+        if not os.path.isdir(spaces_path):
+            os.mkdir(spaces_path)
+        if not os.path.isdir(predictions_path):
+            os.mkdir(predictions_path)
+        
+        utils.set_repositories(models_path, spaces_path, predictions_path)
+        
+        print(f'model repository set to {models_path}')
+        print(f'space repository set to {spaces_path}')
+        print(f'predictions repository set to {predictions_path}')
+
+        return True
 
     if path is None:  # set default
-        default_models_path = Path(appdirs.user_data_dir('models', 'flame'))
-        default_spaces_path = Path(appdirs.user_data_dir('spaces', 'flame'))
-        default_predictions_path = Path(appdirs.user_data_dir('predictions', 'flame'))
+        source_dir = os.path.realpath(__file__) 
+        default_models_path = os.path.join (source_dir,'models')
+        default_predictions_path = os.path.join (source_dir,'predictions')
+        default_spaces_path = os.path.join (source_dir,'spaces')
+
+        # default_models_path = Path(appdirs.user_data_dir('models', 'flame'))
+        # default_spaces_path = Path(appdirs.user_data_dir('spaces', 'flame'))
+        # default_predictions_path = Path(appdirs.user_data_dir('predictions', 'flame'))
+
+
 
         print(f'Setting model, space and predictions repositories (default) to {default_models_path}, {default_spaces_path} and {default_predictions_path}'
               '\nWould you like to continue?(y/n)')
