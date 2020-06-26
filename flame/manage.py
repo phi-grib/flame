@@ -26,6 +26,7 @@ import shutil
 import tarfile
 import pickle
 import yaml
+import json
 import pathlib
 import numpy as np
 from flame.util import utils, get_logger 
@@ -661,14 +662,28 @@ def action_label(model, version=None, labels_file=None, oformat='text'):
     # get de model repo path
     rdir = utils.model_path(model, version)
 
-    if labels_file is not None:
-        # if input labels then save labels
-        try:
-            with open(labels_file, 'r') as fi:
-                p = yaml.safe_load(fi)
-        except Exception as e:
-            return False, e
+    if not os.path.isdir(rdir):
+        return False, f'Model {model} not found'
 
+    if labels_file is not None:
+
+        if oformat == 'JSONS' :
+            try:
+                p = json.loads(labels_file)
+            except Exception as e:
+                return False, e
+
+        else:
+            # if input labels then save labels
+            try:
+                with open(labels_file, 'r') as fi:
+                    p = yaml.safe_load(fi)
+            except Exception as e:
+                return False, e
+
+        for ikey in p:
+            if len(p[ikey]) > 20:
+                return False, f'labels should be shorter than 20 chars. Label "{ikey} : {p[ikey]}" is {len(p[ikey])} chars long'
         try:
             with open(os.path.join(rdir, 'model-labels.pkl'), 'wb') as fo:
                 pickle.dump(p, fo)
