@@ -26,6 +26,7 @@ import shutil
 import tarfile
 import pickle
 import yaml
+import json
 import pathlib
 import numpy as np
 from flame.util import utils, get_logger 
@@ -652,7 +653,7 @@ def action_documentation(model, version=None, doc_file=None, oformat='text'):
 
         return True, 'parameters listed'
 
-def action_label(model, version=None, labels_file=None, oformat='text'):
+def action_label(model, version=None, labels=None, oformat='text'):
     ''' Returns / sets the model labels '''
 
     if model is None:
@@ -661,13 +662,18 @@ def action_label(model, version=None, labels_file=None, oformat='text'):
     # get de model repo path
     rdir = utils.model_path(model, version)
 
-    if labels_file is not None:
-        # if input labels then save labels
-        try:
-            with open(labels_file, 'r') as fi:
-                p = yaml.safe_load(fi)
-        except Exception as e:
-            return False, e
+    if labels is not None:
+        if oformat == 'JSONS':
+            try:
+                p = json.loads(labels)
+            except Exception as e:
+                return False, str(e)
+        else:
+            try:
+                with open(labels, 'r') as fi:
+                    p = yaml.safe_load(fi)
+            except Exception as e:
+                return False, e
 
         try:
             with open(os.path.join(rdir, 'model-labels.pkl'), 'wb') as fo:
@@ -684,7 +690,7 @@ def action_label(model, version=None, labels_file=None, oformat='text'):
 
     if oformat == 'text':
         for ikey in p:
-            LOG.info(f'{ikey}\t{p[ikey]}')
+            print(f'{ikey}\t{p[ikey]}')
         return True, 'success'
 
     return True, p
