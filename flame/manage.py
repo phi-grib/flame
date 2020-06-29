@@ -101,6 +101,12 @@ def action_new(model):
     documentation_path = wkd / 'children/documentation.yaml'
     shutil.copy(documentation_path, ndir)
   
+    # create default labels
+    p = { 'maturity' : 'dev', 'type' : 'unk',
+          'subtype' : 'unk', 'endpoint' : 'unk', 'species' : 'unk' }
+          
+    with open(os.path.join(ndir, 'model-labels.pkl'), 'wb') as fo:
+        pickle.dump(p, fo)
 
     LOG.info(f'New endpoint {model} created')
     #print(f'New endpoint {model} created')
