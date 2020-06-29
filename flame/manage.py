@@ -679,8 +679,10 @@ def action_label(model, version=None, labels=None, oformat='text'):
                 return False, e
 
         for ikey in p:
-            if len(p[ikey]) > 20:
-                return False, f'labels should be shorter than 20 chars. Label "{ikey} : {p[ikey]}" is {len(p[ikey])} chars long'
+            if len(p[ikey]) > 15:
+                return False, f'labels should be shorter than 15 chars. Label "{ikey} : {p[ikey]}" is {len(p[ikey])} chars long'
+            elif len(p[ikey]) < 3:
+                return False, f'labels should be longer than 3 chars. Label "{ikey} : {p[ikey]}" is {len(p[ikey])} chars long'
         try:
             with open(os.path.join(rdir, 'model-labels.pkl'), 'wb') as fo:
                 pickle.dump(p, fo)
