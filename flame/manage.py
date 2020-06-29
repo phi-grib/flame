@@ -653,7 +653,7 @@ def action_documentation(model, version=None, doc_file=None, oformat='text'):
 
         return True, 'parameters listed'
 
-def action_label(model, version=None, labels_file=None, oformat='text'):
+def action_label(model, version=None, labels=None, oformat='text'):
     ''' Returns / sets the model labels '''
 
     if model is None:
@@ -665,18 +665,15 @@ def action_label(model, version=None, labels_file=None, oformat='text'):
     if not os.path.isdir(rdir):
         return False, f'Model {model} not found'
 
-    if labels_file is not None:
-
-        if oformat == 'JSONS' :
+    if labels is not None:
+        if oformat == 'JSONS':
             try:
-                p = json.loads(labels_file)
+                p = json.loads(labels)
             except Exception as e:
-                return False, e
-
+                return False, str(e)
         else:
-            # if input labels then save labels
             try:
-                with open(labels_file, 'r') as fi:
+                with open(labels, 'r') as fi:
                     p = yaml.safe_load(fi)
             except Exception as e:
                 return False, e
@@ -699,7 +696,7 @@ def action_label(model, version=None, labels_file=None, oformat='text'):
 
     if oformat == 'text':
         for ikey in p:
-            LOG.info(f'{ikey}\t{p[ikey]}')
+            print(f'{ikey}\t{p[ikey]}')
         return True, 'success'
 
     return True, p
