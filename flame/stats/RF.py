@@ -97,6 +97,7 @@ class RF(BaseEstimator):
         results = []
         results.append(('nobj', 'number of objects', self.nobj))
         results.append(('nvarx', 'number of predictor variables', self.nvarx))
+        results.append(('model','model type','RF'))
 
         conformal = self.param.getVal('conformal')
         # If tune then call gridsearch to optimize the estimator
@@ -110,13 +111,13 @@ class RF(BaseEstimator):
                     self.estimator = RandomForestRegressor(
                                         **self.estimator_parameters)
                     self.optimize(X, Y, self.estimator, self.tune_parameters)
-                    results.append(('model','model type','RF quantitative (optimized)'))
+                    # results.append(('model','model type','RF quantitative (optimized)'))
                 else:
                     self.estimator = RandomForestClassifier(
                                         **self.estimator_parameters)
                     self.optimize(X, Y, self.estimator,
                                   self.tune_parameters)
-                    results.append(('model','model type','RF qualitative (optimized)'))
+                    # results.append(('model','model type','RF qualitative (optimized)'))
 
             except Exception as e:
                 return False, f'Exception optimizing RF estimator with exception {e}'
@@ -130,7 +131,7 @@ class RF(BaseEstimator):
 
                     if not conformal:
                         LOG.info("Building Quantitative RF model")
-                        results.append(('model', 'model type', 'RF quantitative'))
+                        # results.append(('model', 'model type', 'RF quantitative'))
                 else:
 
                     self.estimator = RandomForestClassifier(
@@ -138,12 +139,13 @@ class RF(BaseEstimator):
                     
                     if not conformal:
                         LOG.info("Building Qualitative RF model")
-                        results.append(('model', 'model type', 'RF qualitative'))
+                        # results.append(('model', 'model type', 'RF qualitative'))
 
                 self.estimator.fit(X, Y)
 
             except Exception as e:
                 return False, f'Exception building RF estimator with exception {e}'
+
 
         if not conformal:
             return True, results
@@ -177,7 +179,7 @@ class RF(BaseEstimator):
                                                 BootstrapSampler())
 
                 self.estimator.fit(X, Y)
-                results.append(('model', 'model type', 'conformal RF quantitative'))
+                # results.append(('model', 'model type', 'conformal RF quantitative'))
 
             # Conformal classifier
             else:
@@ -195,7 +197,7 @@ class RF(BaseEstimator):
 
                 # Fit estimator to the data
                 self.estimator.fit(X, Y)
-                results.append(('model', 'model type', 'conformal RF qualitative'))
+                # results.append(('model', 'model type', 'conformal RF qualitative'))
 
         except Exception as e:
             return False, f'Exception building conformal RF estimator with exception {e}'

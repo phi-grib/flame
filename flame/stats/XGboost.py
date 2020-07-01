@@ -104,6 +104,8 @@ class XGBOOST(BaseEstimator):
         results = []
         results.append(('nobj', 'number of objects', self.nobj))
         results.append(('nvarx', 'number of predictor variables', self.nvarx))
+        results.append(('model','model type','XGBOOST'))
+
 
         # If tune then call gridsearch to optimize the estimator
         if self.param.getVal('tune'):
@@ -116,7 +118,7 @@ class XGBOOST(BaseEstimator):
                     self.estimator = XGBRegressor(
                                         **self.estimator_parameters)
                     self.optimize(X, Y, self.estimator, self.tune_parameters)
-                    results.append(('model','model type','XGBOOST quantitative (optimized)'))
+                    # results.append(('model','model type','XGBOOST quantitative (optimized)'))
                 else:
                     self.estimator = XGBClassifier(
                                         **self.estimator_parameters)
@@ -124,7 +126,7 @@ class XGBOOST(BaseEstimator):
                     params['num_class'] = 2
                     self.optimize(X, Y, self.estimator,
                                   self.tune_parameters)
-                    results.append(('model','model type','XGBOOST qualitative (optimized)'))
+                    # results.append(('model','model type','XGBOOST qualitative (optimized)'))
 
             except Exception as e:
                 return False, f'Exception optimizing XGBOOST estimator with exception {e}'
@@ -144,7 +146,7 @@ class XGBOOST(BaseEstimator):
                     #     }
                     # self.estimator = XGBRegressor(**params)
                     self.estimator = XGBRegressor(**self.estimator_parameters)
-                    results.append(('model', 'model type', 'XGBOOST quantitative'))
+                    # results.append(('model', 'model type', 'XGBOOST quantitative'))
                 else:
 
                     LOG.info("Building Qualitative XGBOOST model")
@@ -156,7 +158,7 @@ class XGBOOST(BaseEstimator):
                     #      'n_estimators': 100
                     #     }
                     self.estimator = XGBClassifier(**self.estimator_parameters)
-                    results.append(('model', 'model type', 'XGBOOST qualitative'))
+                    # results.append(('model', 'model type', 'XGBOOST qualitative'))
 
                 self.estimator.fit(X, Y)
                 LOG.debug (self.estimator)
@@ -195,7 +197,7 @@ class XGBOOST(BaseEstimator):
                                                 BootstrapSampler())
 
                 self.estimator.fit(X, Y)
-                results.append(('model', 'model type', 'conformal XGBOOST quantitative'))
+                # results.append(('model', 'model type', 'conformal XGBOOST quantitative'))
 
             # Conformal classifier
             else:
@@ -213,7 +215,7 @@ class XGBOOST(BaseEstimator):
 
                 # Fit estimator to the data
                 self.estimator.fit(X, Y)
-                results.append(('model', 'model type', 'conformal XGBOOST qualitative'))
+                # results.append(('model', 'model type', 'conformal XGBOOST qualitative'))
 
         except Exception as e:
             return False, f'Exception building conformal XGBOOST estimator with exception {e}'

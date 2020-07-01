@@ -2,7 +2,7 @@ admin_email: manuel.pastor@upf.edu
 admin_name: Manuel Pastor
 config_status: true
 homepage: http://phi.upf.edu
-model_repository_path: E:\synced\collaborations\eTransafe\cholestasis_CS\models
-predictions_repository_path: E:\synced\collaborations\eTransafe\cholestasis_CS\predictions
+model_repository_path: X:\soft\flame\flame\models
+predictions_repository_path: X:\soft\flame\flame\predictions
 provider: UPF (Pompeu Fabra University)
-space_repository_path: E:\synced\collaborations\eTransafe\cholestasis_CS\spaces
+space_repository_path: X:\soft\flame\flame\spaces

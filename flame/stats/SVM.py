@@ -107,6 +107,8 @@ class SVM(BaseEstimator):
         results = []
         results.append(('nobj', 'number of objects', self.nobj))
         results.append(('nvarx', 'number of predictor variables', self.nvarx))
+        results.append(('model', 'model type', 'SVM'))
+
         
         # If tune then call gridsearch to optimize the estimator
         if self.param.getVal('tune'):
@@ -119,13 +121,13 @@ class SVM(BaseEstimator):
                     self.estimator = svm.SVR(**self.estimator_parameters)
                     self.optimize(X, Y, self.estimator,
                                  self.tune_parameters)
-                    results.append(('model', 'model type', 'SVM quantitative (optimized)'))
+                    # results.append(('model', 'model type', 'SVM quantitative (optimized)'))
 
                 else:
                     self.estimator = svm.SVC(**self.estimator_parameters)
                     self.optimize(X, Y, self.estimator,
                                   self.tune_parameters)
-                    results.append(('model', 'model type', 'SVM qualitative (optimized)'))
+                    # results.append(('model', 'model type', 'SVM qualitative (optimized)'))
                 LOG.debug('SVM estimator optimized')
                 self.estimator.fit(X, Y)
             except Exception as e:
@@ -138,13 +140,13 @@ class SVM(BaseEstimator):
                     LOG.info("Building Quantitative SVM-R model")
 
                     self.estimator = svm.SVR(**self.estimator_parameters)
-                    results.append(('model', 'model type', 'SVM quantitative'))
+                    # results.append(('model', 'model type', 'SVM quantitative'))
                 else:
 
                     LOG.info("Building Qualitative SVM-C model")
 
                     self.estimator = svm.SVC(**self.estimator_parameters)
-                    results.append(('model', 'model type', 'SVM qualitative'))
+                    # results.append(('model', 'model type', 'SVM qualitative'))
 
                 self.estimator.fit(X, Y)
 
@@ -182,7 +184,7 @@ class SVM(BaseEstimator):
                 self.estimator.fit(X, Y)
 
                 # overrides non-conformal
-                results.append(('model', 'model type', 'conformal SVM quantitative'))
+                # results.append(('model', 'model type', 'conformal SVM quantitative'))
 
             else:
 
@@ -199,7 +201,7 @@ class SVM(BaseEstimator):
                 self.estimator.fit(X, Y)
 
                 # overrides non-conformal
-                results.append(('model', 'model type', 'conformal SVM qualitative'))
+                # results.append(('model', 'model type', 'conformal SVM qualitative'))
 
         except Exception as e:
             return False, f'Exception building aggregated conformal SVM estimator with exception {e}'

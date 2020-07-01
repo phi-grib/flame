@@ -133,6 +133,7 @@ class PLSR(BaseEstimator):
         results = []
         results.append(('nobj', 'number of objects', self.nobj))
         results.append(('nvarx', 'number of predictor variables', self.nvarx))
+        results.append(('model', 'model type', 'PLSR'))
 
         if self.param.getVal('tune'):
 
@@ -175,7 +176,7 @@ class PLSR(BaseEstimator):
                 LOG.error('Type of tune not recognized, check the input')
                 return False, 'Type of tune not recognized, check the input'    
 
-            results.append(('model', 'model type', 'PLSR quantitative (optimized)'))
+            # results.append(('model', 'model type', 'PLSR quantitative (optimized)'))
 
         else:
             LOG.info('Building Quantitative PLSR with no optimization')
@@ -190,7 +191,7 @@ class PLSR(BaseEstimator):
                           f'exception {e}')
                 return False, f'Error at PLS_da instantiation with exception {e}'
 
-            results.append(('model', 'model type', 'PLSR quantitative'))
+            # results.append(('model', 'model type', 'PLSR quantitative'))
         
         # Fit estimator to the data
         self.estimator.fit(X, Y)
@@ -226,7 +227,7 @@ class PLSR(BaseEstimator):
         self.estimator.fit(X, Y)
 
         # overrides non-conformal
-        results.append(('model', 'model type', 'conformal PLSR quantitative'))
+        # results.append(('model', 'model type', 'conformal PLSR quantitative'))
 
         return True, results
 
