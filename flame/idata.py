@@ -1165,10 +1165,10 @@ class Idata:
 
         # extract usable data from every source and add to 'combo' np.array
         combined_md = None
-        combined_cf = None
+        combined_ci = None
         combined_md_names = []
-        combined_cf_names = []
-        combined_significance = []
+        combined_ci_names = []
+        combined_confidence = []
 
         num_obj = self.conveyor.getVal ('obj_num')
         num_conformal = 0
@@ -1199,23 +1199,23 @@ class Idata:
                 combined_md = np.c_[combined_md, np.array(i_md, dtype=np.float64)]
 
             combined_md_names.append('values'+':'+i_result.getMeta('endpoint')+':'+str(i_result.getMeta('version')))
-            combined_significance.append(i_result.getVal('significance'))
+            combined_confidence.append(i_result.getVal('confidence'))
 
             # confidence values and names
             if self.param.getVal('quantitative'):
                 i_low = i_result.getVal('lower_limit')
                 i_up  = i_result.getVal('upper_limit')
                 if i_up is not None and i_low is not None:
-                    if combined_cf is None:  # for first element just copy
-                        combined_cf = np.array(i_low, dtype=np.float64)
-                        combined_cf = np.column_stack((combined_cf, i_up))
+                    if combined_ci is None:  # for first element just copy
+                        combined_ci = np.array(i_low, dtype=np.float64)
+                        combined_ci = np.column_stack((combined_ci, i_up))
                     else:  # append laterally
-                        combined_cf = np.column_stack((combined_cf, i_low))
-                        combined_cf = np.column_stack((combined_cf, i_up))
+                        combined_ci = np.column_stack((combined_ci, i_low))
+                        combined_ci = np.column_stack((combined_ci, i_up))
 
-                    combined_cf_names.append(
+                    combined_ci_names.append(
                         'lower_limit'+':'+i_result.getMeta('endpoint')+':'+str(i_result.getMeta('version')))
-                    combined_cf_names.append(
+                    combined_ci_names.append(
                         'upper_limit'+':'+i_result.getMeta('endpoint')+':'+str(i_result.getMeta('version')))
             else:
                 # confidence values and names
@@ -1225,16 +1225,16 @@ class Idata:
 
                     num_conformal += 1
 
-                    if combined_cf is None:  # for first element just copy
-                        combined_cf = np.array(i_c0, dtype=np.float64)
-                        combined_cf = np.column_stack((combined_cf, i_c1))
+                    if combined_ci is None:  # for first element just copy
+                        combined_ci = np.array(i_c0, dtype=np.float64)
+                        combined_ci = np.column_stack((combined_ci, i_c1))
                     else:  # append laterally
-                        combined_cf = np.column_stack((combined_cf, i_c0))
-                        combined_cf = np.column_stack((combined_cf, i_c1))
+                        combined_ci = np.column_stack((combined_ci, i_c0))
+                        combined_ci = np.column_stack((combined_ci, i_c1))
 
-                    combined_cf_names.append(
+                    combined_ci_names.append(
                         'c0'+':'+i_result.getMeta('endpoint')+':'+str(i_result.getMeta('version')))
-                    combined_cf_names.append(
+                    combined_ci_names.append(
                         'c1'+':'+i_result.getMeta('endpoint')+':'+str(i_result.getMeta('version')))
 
         self.conveyor.addVal( combined_md, 'xmatrix', 'X matrix',
@@ -1244,23 +1244,18 @@ class Idata:
                          'method', 'vars', 'Variable names from external sources')
 
         if num_conformal == len (self.idata):  # add this info only if ALL inputs are conformal
-            if combined_cf is not None:
-                self.conveyor.addVal( combined_cf, 'ensemble_confidence', 'Ensemble Confidence',
+            if combined_ci is not None:
+                self.conveyor.addVal( combined_ci, 'ensemble_ci', 'Ensemble Confidence',
                                 'method', 'objs', 'Combined confidence from external sources')
 
-            if len(combined_cf_names) > 0:
-                self.conveyor.addVal( combined_cf_names, 'ensemble_confidence_names', 'Ensemble Conf. names',
+            if len(combined_ci_names) > 0:
+                self.conveyor.addVal( combined_ci_names, 'ensemble_ci_names', 'Ensemble Conf. names',
                                 'method', 'vars', 'Confidence indexes from external sources')
 
-            if len(combined_significance) > 0:
-                self.conveyor.addVal( combined_significance, 'ensemble_significance', 'Ensemble Significance',
-                                'method', 'vars', 'Significance from external sources')
+            if len(combined_confidence) > 0:
+                self.conveyor.addVal( combined_confidence, 'ensemble_confidence', 'Ensemble Confidence',
+                                'method', 'vars', 'Confidence from external sources')
         
-
-        # print ('combined_md', combined_md)
-        # print ('combined_md_names', combined_md_names)
-        # print ('ensemble_confidence', combined_cf)
-        # print ('ensemble_confidence_names', combined_cf_names)
         return
 
     def run(self):

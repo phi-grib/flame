@@ -449,7 +449,7 @@ def action_parameters(model, version=None, oformat='text'):
         order = ['input_type', 'quantitative', 'SDFile_activity', 'SDFile_name', 'SDFile_id',
         'SDFile_experimental', 'SDFile_complementary', 'normalize_method', 'ionize_method', 'convert3D_method', 
         'computeMD_method', 'model', 'modelAutoscaling', 'tune', 'conformal', 
-        'conformalSignificance', 'ModelValidationCV', 'ModelValidationLC', 
+        'conformalConfidence', 'ModelValidationCV', 'ModelValidationLC', 
         'ModelValidationN', 'ModelValidationP', 'output_format', 'output_md', 'output_similar',
         'TSV_activity', 'TSV_objnames', 'TSV_varnames', 'imbalance', 
         'feature_selection', 'feature_number', 'mol_batch',  

@@ -228,12 +228,22 @@ class Parameters:
             not found in the parameters dictionary
         ''' 
         if not key in self.p:
+
+            ## legacy models use conformalSignificance instead
+            ## of confidence
+            if key == 'conformalConfidence':
+                temp = self.getVal('conformalSignificance')
+                if temp is None:
+                    return None
+                else:
+                    return 1.0 - temp
             return None
 
         ## compatibility with version 1 (remove)
         if not self.extended:
             return self.p[key]
         ## ---------------------------------------
+
 
         if 'value' in self.p[key]:
             return self.p[key]['value']

@@ -318,35 +318,36 @@ class Combo (BaseEstimator):
 
     def getConfidence (self):
 
-        CI_names = self.conveyor.getVal('ensemble_confidence_names')
+        CI_names = self.conveyor.getVal('ensemble_ci_names')
         if  CI_names is not None and len(CI_names)==(2 * self.nvarx):
 
-            CI_vals = self.conveyor.getVal('ensemble_confidence')
+            CI_vals = self.conveyor.getVal('ensemble_ci')
 
-            # conformal confidence of the top model
-            cs_top = self.param.getVal('conformalSignificance') 
+            # conformal error of the top model
+
+            error_top = 1.0 - self.param.getVal('conformalConfidence') 
             
             # conformal confidence default is 0.8
-            if cs_top is None:
-                cs_top = 0.2  # fallback!!! we asume a default confidence of 80%
+            if error_top is None:
+                error_top = 0.2  # fallback!!! we asume a default confidence of 80%
 
-            cs_top_left  = cs_top /2.0
-            cs_top_right = 1.0 - cs_top_left
+            error_top_left  = error_top /2.0
+            error_top_right = 1.0 - error_top_left
 
             # gather array of confidences for low models
-            cs_low = self.conveyor.getVal('ensemble_significance')
-            if cs_low is None:
-                cs_low = [cs_top for i in range(self.nvarx)]
-            elif None in cs_low:
-                cs_low = [cs_top for i in range(self.nvarx)]
+            error_low = 1.0 - self.conveyor.getVal('ensemble_confidence')
+            if error_low is None:
+                error_low = [error_top for i in range(self.nvarx)]
+            elif None in error_low:
+                error_low = [error_top for i in range(self.nvarx)]
 
             zcoeff = []
-            for iconf in cs_low:
-                cs_low_right = (1.0 - (iconf/2.0) )
-                z = stats.norm.ppf (cs_low_right)
+            for iconf in error_low:
+                error_low_right = (1.0 - (iconf/2.0) )
+                z = stats.norm.ppf (error_low_right)
                 zcoeff.append (1.0 / (z*2.0) ) 
 
-            return True, (CI_vals, zcoeff, cs_top_left, cs_top_right)
+            return True, (CI_vals, zcoeff, error_top_left, error_top_right)
         
         else:
 
@@ -377,8 +378,8 @@ class median (Combo):
 
             CI_vals      = CIparams[0]
             zcoeff       = CIparams[1]
-            # cs_top_left  = CIparams[2]
-            # cs_top_right = CIparams[3]
+            # error_top_left  = CIparams[2]
+            # error_top_right = CIparams[3]
 
             w = np.zeros(self.nvarx, dtype = np.float64 )
             xmedian = []
@@ -504,8 +505,8 @@ class mean (Combo):
 
             CI_vals      = CIparams[0]
             zcoeff       = CIparams[1]
-            # cs_top_left  = CIparams[2]
-            cs_top_right = CIparams[3]
+            # error_top_left  = CIparams[2]
+            error_top_right = CIparams[3]
 
             # compute weigthed mean and CI for the estimator
             # as described here
@@ -517,7 +518,7 @@ class mean (Combo):
             cilow = []
             ciupp = []
 
-            z = stats.norm.ppf (cs_top_right)
+            z = stats.norm.ppf (error_top_right)
             # print ("z is:", z)
 
             for j in range (self.nobj):
@@ -590,7 +591,7 @@ class majority (Combo):
         self.nobj, self.nvarx = np.shape(X)
 
         # check if the underlying models are conformal
-        CI_vals = self.conveyor.getVal('ensemble_confidence')
+        CI_vals = self.conveyor.getVal('ensemble_ci')
 
         # print ('confidence: ', confidence)
 
@@ -820,8 +821,8 @@ class matrix (Combo):
 
             CI_vals      = CIparams[0]
             zcoeff       = CIparams[1]
-            cs_top_left  = CIparams[2]
-            cs_top_right = CIparams[3]
+            error_top_left  = CIparams[2]
+            error_top_right = CIparams[3]
 
             cilow = []
             ciupp = []
@@ -866,8 +867,8 @@ class matrix (Combo):
                 # the CI can be assymetric
                 # TODO: check the distribution and apply log or other transforms when appropriate
 
-                cilow.append (np.percentile(ymulti_array,cs_top_left*100 ,interpolation='linear'))
-                ciupp.append (np.percentile(ymulti_array,cs_top_right*100 ,interpolation='linear'))
+                cilow.append (np.percentile(ymulti_array,error_top_left*100 ,interpolation='linear'))
+                ciupp.append (np.percentile(ymulti_array,error_top_right*100 ,interpolation='linear'))
                 cimean.append(np.percentile(ymulti_array,50,interpolation='linear'))
             
             # np.savetxt("Ylog.tsv", Ylog, delimiter="\t")

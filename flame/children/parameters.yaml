@@ -379,6 +379,7 @@ conformal_settings:
     - input_type: molecule
   comments: 
   group: modeling  
+
 conformalSignificance:
   advanced: regular
   object_type: float
@@ -387,7 +388,21 @@ conformalSignificance:
   options: null
   min: 0
   max: 1
-  description: Conformal estimator significance (from 0 to 1)
+  description: DEPRECATED. please use conformalConfidence instead
+  dependencies: 
+    conformal: true
+  comments: DEPRECATED
+  group: modeling
+
+conformalConfidence:
+  advanced: regular
+  object_type: float
+  writable: true
+  value: 0.8
+  options: null
+  min: 0
+  max: 1
+  description: Conformal estimator confidence (from 0 to 1)
   dependencies: 
     conformal: true
   comments: So far it can not be applied to PLSDA

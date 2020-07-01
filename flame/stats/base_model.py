@@ -386,7 +386,7 @@ class BaseEstimator:
         Y = self.Y.copy()
 
         # generate recalculate interval, values and mean range 
-        Y_rec_in = self.estimator.predict(X,self.param.getVal('conformalSignificance'))
+        Y_rec_in = self.estimator.predict(X, significance = 1.0 - self.param.getVal('conformalConfidence'))
         if Y_rec_in is None:
             return False, 'prediction error'
 
@@ -425,9 +425,7 @@ class BaseEstimator:
                 conformal_pred.fit(X_train, Y_train)
 
                 # Perform prediction on test set
-                prediction = conformal_pred.predict(
-                                X_test, self.param.getVal(
-                                    'conformalSignificance'))
+                prediction = conformal_pred.predict(X_test, 1.0 - self.param.getVal('conformalConfidence'))
 
                 # Assign the prediction its original index
                 for index, el in enumerate(test_index):
@@ -529,7 +527,7 @@ class BaseEstimator:
         # Make a copy of original matrices.
         X = self.X.copy()
         Y = self.Y.copy()
-        fit = self.estimator.predict(X, self.param.getVal('conformalSignificance'))
+        fit = self.estimator.predict(X, significance = 1.0 - self.param.getVal('conformalConfidence'))
         if fit is None:
             return False, 'prediction error'
 
@@ -571,7 +569,7 @@ class BaseEstimator:
                 conformal_pred.fit(X_train, Y_train)
                 
                 # Perform prediction on test set
-                prediction = conformal_pred.predict(X_test, self.param.getVal('conformalSignificance'))
+                prediction = conformal_pred.predict(X_test, 1.0 - self.param.getVal('conformalConfidence'))
                 if prediction is None:
                     return False, 'prediction error'
 
@@ -1014,7 +1012,7 @@ class BaseEstimator:
             self.conveyor.setError('Inconsistence error: non-conformal classifier found. Rebuild the model')
             return
 
-        prediction = self.estimator.predict(Xb, significance=self.param.getVal('conformalSignificance'))
+        prediction = self.estimator.predict(Xb, significance = 1.0 - self.param.getVal('conformalConfidence'))
         if prediction is None:
             return False, 'prediction error'
 
@@ -1052,9 +1050,9 @@ class BaseEstimator:
                              'Upper limit', 'confidence', 'objs',
                               'Upper limit of the conformal prediction')
             
-            self.conveyor.addVal(self.param.getVal('conformalSignificance'), 'significance',
-                             'Conformal significance', 'confidence', 'single',
-                              'Significance level used in the conformal method')
+            self.conveyor.addVal(self.param.getVal('conformalConfidence'), 'confidence',
+                             'Conformal confidence', 'confidence', 'single',
+                              'Confidence level used in the conformal method')
         else:
             # Returns a dictionary with class
             # predictions
