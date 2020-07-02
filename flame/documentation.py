@@ -317,7 +317,7 @@ class Documentation:
 
         if self.parameters.getVal('conformal'):
             self.setInnerVal('AD_method', 'name', 'conformal prediction')
-            self.setVal('AD_parameters', f'Conformal Confidence {self.parameters.getVal("conformalConfidence")}')
+            self.setInnerVal('AD_parameters', 'confidence',  f'{self.parameters.getVal("conformalConfidence")}')
 
     def assign_results(self):
         '''
