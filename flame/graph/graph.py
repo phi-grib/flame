@@ -31,7 +31,7 @@ LOG = get_logger(__name__)
     
 def generateProjectedSpace(X, param, conveyor):
     # TODO: decide which is the best way to present the training space
-    LOG.info('Generating projeced X space...')
+    LOG.info('Generating projected X space...')
     mpca = pca()
     mpca.build(X,targetA=2,autoscale=False)
 
