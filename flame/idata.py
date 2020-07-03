@@ -1145,7 +1145,6 @@ class Idata:
         ifile = self.conveyor.getMeta('input_file')
 
 
-
         # call extractInformation to obtain names, activities, smiles, id, etc.
         success_inform = self.extractInformation(ifile)
 
@@ -1206,6 +1205,9 @@ class Idata:
                 i_low = i_result.getVal('lower_limit')
                 i_up  = i_result.getVal('upper_limit')
                 if i_up is not None and i_low is not None:
+
+                    num_conformal += 1
+
                     if combined_ci is None:  # for first element just copy
                         combined_ci = np.array(i_low, dtype=np.float64)
                         combined_ci = np.column_stack((combined_ci, i_up))

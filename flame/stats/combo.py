@@ -315,9 +315,7 @@ class Combo (BaseEstimator):
     def load_model(self):
         return True, 'OK'
 
-
     def getConfidence (self):
-
         CI_names = self.conveyor.getVal('ensemble_ci_names')
         if  CI_names is not None and len(CI_names)==(2 * self.nvarx):
 
@@ -335,16 +333,16 @@ class Combo (BaseEstimator):
             error_top_right = 1.0 - error_top_left
 
             # gather array of confidences for low models
-            error_low = 1.0 - self.conveyor.getVal('ensemble_confidence')
+            error_low = [(1.0 - i) for i in self.conveyor.getVal('ensemble_confidence')]
             if error_low is None:
                 error_low = [error_top for i in range(self.nvarx)]
             elif None in error_low:
                 error_low = [error_top for i in range(self.nvarx)]
 
             zcoeff = []
-            for iconf in error_low:
-                error_low_right = (1.0 - (iconf/2.0) )
-                z = stats.norm.ppf (error_low_right)
+            for ierror in error_low:
+                conf_low_right = (1.0 - (ierror/2.0)) # if error is 0.05 we obtain 0.975
+                z = stats.norm.ppf (conf_low_right) # we obtain 1.965
                 zcoeff.append (1.0 / (z*2.0) ) 
 
             return True, (CI_vals, zcoeff, error_top_left, error_top_right)
@@ -369,6 +367,7 @@ class median (Combo):
         self.nobj, self.nvarx = np.shape(X)
 
         computeCI, CIparams = self.getConfidence ()
+        print (computeCI, CIparams)
         if computeCI:
             ############################################
             ##
