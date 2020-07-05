@@ -24,6 +24,7 @@ import argparse
 import pathlib
 import os
 from flame.util import utils, get_logger, config
+from flame import __version__
 import flame.context as context
 
 LOG = get_logger(__name__)
@@ -43,7 +44,7 @@ def main():
 
     LOG.debug('-------------NEW RUN-------------\n')
     parser = argparse.ArgumentParser(
-        description='Use Flame to either build a model from or apply a model to the input file.')
+        description=f'Flame version {__version__}. Use Flame to build and manage predictive models or to predict using them.')
 
     parser.add_argument('-f', '--infile',
                         help='Input file.',
@@ -209,7 +210,10 @@ def main():
             LOG.error(results)
 
     elif args.command == 'config':
-        success = config(args.directory)
+        silent = False
+        if args.action is not None:
+            silent = (args.action == 'silent')
+        success = config(args.directory, silent)
         if not success:
             LOG.error('configuration unchanged')
         

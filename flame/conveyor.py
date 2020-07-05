@@ -241,8 +241,9 @@ class Conveyor:
                 temp_json[key]=value
 
         # print (json.dumps(temp_json))
-
-        return json.dumps(temp_json)
+        json_result = json.dumps(temp_json, allow_nan=True)
+        
+        return json_result
 
     def modelInfoJSON (self,i):
         ''' Results describing the model quality and characteristics are tuples 

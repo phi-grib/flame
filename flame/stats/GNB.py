@@ -90,11 +90,12 @@ class GNB(BaseEstimator):
         results = []
         results.append(('nobj', 'number of objects', self.nobj))
         results.append(('nvarx', 'number of predictor variables', self.nvarx))
+        results.append(('model', 'model type', 'GNB'))
 
         # Build estimator
         LOG.info('Building GaussianNB model')
         self.estimator = GaussianNB(**self.estimator_parameters)
-        results.append(('model', 'model type', 'GNB qualitative'))
+        # results.append(('model', 'model type', 'GNB qualitative'))
 
         self.estimator.fit(X, Y)
 
@@ -114,6 +115,6 @@ class GNB(BaseEstimator):
         
         # Fit estimator to the data
         self.estimator.fit(X, Y)
-        results.append(('model', 'model type', 'conformal GNB qualitative'))
+        # results.append(('model', 'model type', 'conformal GNB qualitative'))
         
         return True, results

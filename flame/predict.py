@@ -72,6 +72,9 @@ class Predict:
             if output_format not in self.param.getVal('output_format'):
                 self.param.appVal('output_format',output_format)
  
+            if 'ghost' in output_format:
+                self.param.setVal('output_similar', False)
+
         return
 
     def get_ensemble(self):

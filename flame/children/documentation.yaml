@@ -191,7 +191,10 @@ AD_parameters:
   level: 2
   QMRF_field: '5.2'
   description: 'Parameters of the applicability domain technique'
-  value: null
+  value:
+      confidence:
+        value: null
+        description: 'Conformal confidence (from 0 to 1)'
 
 Goodness_of_fit_statistics: 
   level: 2

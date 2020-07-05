@@ -150,6 +150,7 @@ class pca:
         t = np.zeros(nobj, dtype=np.float64)
         
         ttmax = 0.00
+        tti = 0 # default in case of no convergence
         for k in range(nvar):
             obj = X[:,k]
             tt = np.dot(obj.T,obj)

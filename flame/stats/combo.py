@@ -29,7 +29,7 @@ from sklearn.metrics import confusion_matrix
 from sklearn.metrics import matthews_corrcoef
 from scipy import stats
 from flame.stats.base_model import BaseEstimator
-from flame.util import get_logger
+from flame.util import utils, get_logger
 
 LOG = get_logger(__name__)
 SIMULATION_SIZE = 500
@@ -194,44 +194,158 @@ class Combo (BaseEstimator):
 
         return True, results
 
+    # External validation
+    def external_validation(self):
+        ''' when experimental values are available for the predicted compounds,
+        run external validation '''
+
+        ext_val_results = []
+        
+        # Ye are the y values present in the input file
+        Ye = np.asarray(self.conveyor.getVal("ymatrix"))
+
+        # For qualitative models, make sure the Y is qualitative as well
+        if not self.param.getVal("quantitative"):
+            qy, message = utils.qualitative_Y(Ye)
+            if not qy:
+                self.conveyor.setWarning(f'No qualitative activity suitable for external validation "{message}". Skipping.')
+                LOG.warning(f'No qualitative activity suitable for external validation "{message}". Skipping.')
+                return
+
+        # there are four variants of external validation, depending if the variable is qualitative or quantitative
+        if not self.param.getVal("quantitative"):
+            
+            # qualitative
+            Yp = np.asarray(self.conveyor.getVal("values"))
+
+            if len(Yp[Yp==-1]) > 0:
+                pseudo_conformal = True
+                
+                nobj = len(Ye)
+                Ye = Ye[Yp!=-1]
+                Yp = Yp[Yp!=-1]
+
+                coverage = len(Ye)/nobj
+
+                ext_val_results.append(('Conformal_coverage', 'Conformal coverage in external-validation', coverage))
+            else:
+                pseudo_conformal=False
+
+            if Ye.size == 0:
+                LOG.error ("Experimental activity vector is empty")
+                return
+            if Yp.size == 0:
+                LOG.error ("Predicted activity vector is empty")
+                return
+
+            # the use of labels is compulsory to inform the confusion matrix that
+            # it must return a 2x2 confussion matrix. Otherwise it will fail when
+            # a single class is represented (all TP, for example)
+            TN, FP, FN, TP = confusion_matrix(Ye, Yp, labels=[0, 1]).ravel()
+
+            # protect to avoid warnings in special cases (div by zero)
+            MCC =  matthews_corrcoef(Ye, Yp)
+
+            if (TP+FN) > 0:
+                sensitivity = (TP / (TP + FN))
+            else:
+                sensitivity = 0.0
+
+            if (TN+FP) > 0:
+                specificity = (TN / (TN + FP))
+            else:
+                specificity = 0.0
+
+            ext_val_results.append(('TP','True positives in external-validation', float(TP)))
+            ext_val_results.append(('TN','True negatives in external-validation', float(TN)))
+            ext_val_results.append(('FP','False positives in external-validation', float(FP)))
+            ext_val_results.append(('FN','False negatives in external-validation', float(FN)))
+            ext_val_results.append(('Sensitivity', 'Sensitivity in external-validation', float(sensitivity)))
+            ext_val_results.append(('Specificity', 'Specificity in external-validation', float(specificity)))
+            ext_val_results.append(('MCC', 'Mattews Correlation Coefficient in external-validation', float(MCC)))
+
+            if pseudo_conformal:
+                try:
+                    conformal_accuracy = (float(TN + TP) / float(FP + FN + TN + TP))
+                except Exception as e:
+                    LOG.error(f'Failed to compute conformal accuracy with'
+                                f'exception {e}')
+                    conformal_accuracy = '-'
+        
+                ext_val_results.append(('Conformal_accuracy', 'Conformal accuracy in external-validation', conformal_accuracy))
+        
+        else:
+
+            # quantitative
+            Yp = np.asarray(self.conveyor.getVal("values"))
+
+            if Ye.size == 0:
+                LOG.error ("Experimental activity vector is empty")
+                return
+            if Yp.size == 0:
+                LOG.error ("Predicted activity vector is empty")
+                return
+
+            Ym = np.mean(Ye)
+            nobj = len(Yp)
+
+            SSY0_out = np.sum(np.square(Ym - Ye))
+            SSY_out = np.sum(np.square(Ye - Yp))
+            scoringP = mean_squared_error(Ye, Yp)
+            SDEP = np.sqrt(SSY_out / (nobj))
+            if SSY0_out == 0:
+                Q2 = 0.0
+            else:
+                Q2 = 1.00 - (SSY_out / SSY0_out)
+
+            ext_val_results.append(('scoringP', 'Scoring P', scoringP))
+            ext_val_results.append(('Q2', 'Determination coefficient in cross-validation', Q2))
+            ext_val_results.append(('SDEP', 'Standard Deviation Error of the Predictions', SDEP))
+
+        self.conveyor.addVal( ext_val_results,
+                                'external-validation',
+                                'external validation',
+                                'method',
+                                'single',
+                                'External validation results')
+
     def save_model(self):
         return True, 'OK'
 
     def load_model(self):
         return True, 'OK'
 
-
     def getConfidence (self):
-
-        CI_names = self.conveyor.getVal('ensemble_confidence_names')
+        CI_names = self.conveyor.getVal('ensemble_ci_names')
         if  CI_names is not None and len(CI_names)==(2 * self.nvarx):
 
-            CI_vals = self.conveyor.getVal('ensemble_confidence')
+            CI_vals = self.conveyor.getVal('ensemble_ci')
 
-            # conformal confidence of the top model
-            cs_top = self.param.getVal('conformalSignificance') 
+            # conformal error of the top model
+
+            error_top = 1.0 - self.param.getVal('conformalConfidence') 
             
             # conformal confidence default is 0.8
-            if cs_top is None:
-                cs_top = 0.2  # fallback!!! we asume a default confidence of 80%
+            if error_top is None:
+                error_top = 0.2  # fallback!!! we asume a default confidence of 80%
 
-            cs_top_left  = cs_top /2.0
-            cs_top_right = 1.0 - cs_top_left
+            error_top_left  = error_top /2.0
+            error_top_right = 1.0 - error_top_left
 
             # gather array of confidences for low models
-            cs_low = self.conveyor.getVal('ensemble_significance')
-            if cs_low is None:
-                cs_low = [cs_top for i in range(self.nvarx)]
-            elif None in cs_low:
-                cs_low = [cs_top for i in range(self.nvarx)]
+            error_low = [(1.0 - i) for i in self.conveyor.getVal('ensemble_confidence')]
+            if error_low is None:
+                error_low = [error_top for i in range(self.nvarx)]
+            elif None in error_low:
+                error_low = [error_top for i in range(self.nvarx)]
 
             zcoeff = []
-            for iconf in cs_low:
-                cs_low_right = (1.0 - (iconf/2.0) )
-                z = stats.norm.ppf (cs_low_right)
+            for ierror in error_low:
+                conf_low_right = (1.0 - (ierror/2.0)) # if error is 0.05 we obtain 0.975
+                z = stats.norm.ppf (conf_low_right) # we obtain 1.965
                 zcoeff.append (1.0 / (z*2.0) ) 
 
-            return True, (CI_vals, zcoeff, cs_top_left, cs_top_right)
+            return True, (CI_vals, zcoeff, error_top_left, error_top_right)
         
         else:
 
@@ -253,6 +367,7 @@ class median (Combo):
         self.nobj, self.nvarx = np.shape(X)
 
         computeCI, CIparams = self.getConfidence ()
+        print (computeCI, CIparams)
         if computeCI:
             ############################################
             ##
@@ -262,8 +377,8 @@ class median (Combo):
 
             CI_vals      = CIparams[0]
             zcoeff       = CIparams[1]
-            # cs_top_left  = CIparams[2]
-            # cs_top_right = CIparams[3]
+            # error_top_left  = CIparams[2]
+            # error_top_right = CIparams[3]
 
             w = np.zeros(self.nvarx, dtype = np.float64 )
             xmedian = []
@@ -389,8 +504,8 @@ class mean (Combo):
 
             CI_vals      = CIparams[0]
             zcoeff       = CIparams[1]
-            # cs_top_left  = CIparams[2]
-            cs_top_right = CIparams[3]
+            # error_top_left  = CIparams[2]
+            error_top_right = CIparams[3]
 
             # compute weigthed mean and CI for the estimator
             # as described here
@@ -402,7 +517,7 @@ class mean (Combo):
             cilow = []
             ciupp = []
 
-            z = stats.norm.ppf (cs_top_right)
+            z = stats.norm.ppf (error_top_right)
             # print ("z is:", z)
 
             for j in range (self.nobj):
@@ -457,6 +572,8 @@ class mean (Combo):
 class majority (Combo):
     """
        Simple majority voting calculator used to combine the results of multiple models
+
+       IMPORTANT!! note that, from version 15/6/2020, the qualitative input has been scaled as negative (-1) | uncertain (0) | positive (+1)
     """
     def __init__(self, X, Y, parameters, conveyor):
         Combo.__init__(self, X, Y, parameters, conveyor)
@@ -473,7 +590,7 @@ class majority (Combo):
         self.nobj, self.nvarx = np.shape(X)
 
         # check if the underlying models are conformal
-        CI_vals = self.conveyor.getVal('ensemble_confidence')
+        CI_vals = self.conveyor.getVal('ensemble_ci')
 
         # print ('confidence: ', confidence)
 
@@ -485,17 +602,17 @@ class majority (Combo):
             ##  Compute single value
             ##
             ############################################
-            yp = np.zeros(self.nobj, dtype=np.float64)
+            yp = np.ones(self.nobj, dtype=np.float64) # default is positive
             for i in range(self.nobj):
                 xline = X[i]
-                if xline[xline>=0].size == 0:  # all uncertains
-                    yp[i] = -1
+                if xline[xline!=0].size == 0:  # all uncertains
+                    yp[i] = -1 # uncertain
                 else:
-                    temp = np.mean(xline[xline>=0])
-                    if temp == 0.5: # equal number of positive and negatives
-                        yp[i] = -1
-                    elif temp > 0.5:
-                        yp[i] = 1
+                    temp = np.mean(xline[xline!=0])
+                    if temp == 0.0: # equal number of positive and negatives
+                        yp[i] = -1  # uncertain
+                    elif temp < 0.0:
+                        yp[i] = 0   # negative
         else:
         
             ############################################
@@ -703,8 +820,8 @@ class matrix (Combo):
 
             CI_vals      = CIparams[0]
             zcoeff       = CIparams[1]
-            cs_top_left  = CIparams[2]
-            cs_top_right = CIparams[3]
+            error_top_left  = CIparams[2]
+            error_top_right = CIparams[3]
 
             cilow = []
             ciupp = []
@@ -749,8 +866,8 @@ class matrix (Combo):
                 # the CI can be assymetric
                 # TODO: check the distribution and apply log or other transforms when appropriate
 
-                cilow.append (np.percentile(ymulti_array,cs_top_left*100 ,interpolation='linear'))
-                ciupp.append (np.percentile(ymulti_array,cs_top_right*100 ,interpolation='linear'))
+                cilow.append (np.percentile(ymulti_array,error_top_left*100 ,interpolation='linear'))
+                ciupp.append (np.percentile(ymulti_array,error_top_right*100 ,interpolation='linear'))
                 cimean.append(np.percentile(ymulti_array,50,interpolation='linear'))
             
             # np.savetxt("Ylog.tsv", Ylog, delimiter="\t")

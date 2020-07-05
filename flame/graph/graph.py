@@ -31,24 +31,28 @@ LOG = get_logger(__name__)
     
 def generateProjectedSpace(X, param, conveyor):
     # TODO: decide which is the best way to present the training space
-    LOG.info('Generating projeced X space...')
+    LOG.info('Generating projected X space...')
     mpca = pca()
     mpca.build(X,targetA=2,autoscale=False)
 
     pca_path = os.path.join(param.getVal('model_path'),'pca.npy')
     mpca.saveModel(pca_path)
 
-    # obj_nam = conveyor.getVal('obj_nam')
+    if np.isnan (np.sum(mpca.t[0])):
+        t = np.zeros(len(mpca.t[0]))
+    else:
+        t = mpca.t[0]
 
-    # # generate TSV file with PCA scores
-    # with open('scores.tsv','w') as handler:
-    #     for i in range(mpca.nobj):
-    #         handler.write (f'{obj_nam[i]}\t{mpca.t[0][i]}\t{mpca.t[1][i]}\n')
-
-    conveyor.addVal(mpca.t[0], 'PC1',
+    conveyor.addVal(t, 'PC1',
                         'PCA PC1', 'method', 'objs',
                         'PCA PC1 score for graphic representation')
-    conveyor.addVal(mpca.t[1], 'PC2',
+
+    if np.isnan (np.sum(mpca.t[1])):
+        t = np.zeros(len(mpca.t[1]))
+    else:
+        t = mpca.t[1]
+
+    conveyor.addVal(t, 'PC2',
                         'PCA PC2', 'method', 'objs',
                         'PCA PC2 score for graphic representation')
 
@@ -74,6 +78,8 @@ def projectPredictions(X, param, conveyor):
     success, result = mpca.projectPC(X,0)
     if success:
         X, t, dmodx = result
+        if np.isnan (np.sum(t)):
+            t = np.zeros(len(t))
         conveyor.addVal(t, 'PC1proj',
                        'PCA projected PC1', 'method', 'objs',
                        'PCA projected scores PC1 for graphic representation')
@@ -81,6 +87,8 @@ def projectPredictions(X, param, conveyor):
     success, result = mpca.projectPC(X,1)
     if success:
         X, t, dmodx = result
+        if np.isnan (np.sum(t)):
+            t = np.zeros(len(t))
         conveyor.addVal(t, 'PC2proj',
                        'PCA projected PC1', 'method', 'objs',
                        'PCA projected scores PC1 for graphic representation')

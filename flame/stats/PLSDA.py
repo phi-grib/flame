@@ -172,6 +172,8 @@ class PLSDA(BaseEstimator):
         results = []
         results.append(('nobj', 'number of objects', self.nobj))
         results.append(('nvarx', 'number of predictor variables', self.nvarx))
+        results.append(('model', 'model type', 'PLSDA'))
+
 
         if self.param.getVal('tune'):
 
@@ -219,7 +221,7 @@ class PLSDA(BaseEstimator):
                 
                 return False, 'Type of tune not recognized, check the input'
 
-            results.append(('model', 'model type', 'PLSDA qualitative (optimized)'))
+            # results.append(('model', 'model type', 'PLSDA qualitative (optimized)'))
 
         else:
             LOG.info('Building Qualitative PLSDA with no optimization')
@@ -234,7 +236,7 @@ class PLSDA(BaseEstimator):
                           f'exception {e}')
                 return False, f'Error at PLS_da instantiation with exception {e}'
 
-            results.append(('model', 'model type', 'PLSDA qualitative'))
+            # results.append(('model', 'model type', 'PLSDA qualitative'))
 
         # Fit estimator to the data
         self.estimator.fit(X, Y)
@@ -259,8 +261,7 @@ class PLSDA(BaseEstimator):
             for n_comp in latent_variables:
                 mcc0 = 0
                 estimator.set_params(**{"n_components": n_comp})
-                y_pred = cross_val_predict(estimator, X, Y, 
-                                            cv=self.cv, n_jobs=1)
+                y_pred = cross_val_predict(estimator, X, Y, cv=self.cv, n_jobs=-1)
                 estimator1 = ""
                 threshold_1 = 0
                 # Get optimum threshold

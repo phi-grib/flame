@@ -258,7 +258,7 @@ class Learn:
         model_type_info.append(('ensemble', 'True if the model is an ensemble of models', self.param.getVal('input_type') == 'model_ensemble'))
         model_type_info.append(('ensemble_names', 'List of ensemble models', self.param.getVal('ensemble_names')))
         model_type_info.append(('ensemble_versions', 'List of ensemble versions', self.param.getVal('ensemble_versions')))
-        model_type_info.append(('conformal_significance', 'Significance of the conformal model', self.param.getVal('conformalSignificance')))
+        model_type_info.append(('conformal_confidence', 'Confidence of the conformal model', self.param.getVal('conformalConfidence')))
 
         self.conveyor.addVal(
             model_type_info,

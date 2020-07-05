@@ -25,6 +25,8 @@ import sys
 import shutil
 import tarfile
 import pickle
+import yaml
+import json
 import pathlib
 import numpy as np
 from flame.util import utils, get_logger 
@@ -99,6 +101,12 @@ def action_new(model):
     documentation_path = wkd / 'children/documentation.yaml'
     shutil.copy(documentation_path, ndir)
   
+    # create default labels
+    p = { 'maturity' : 'dev', 'type' : 'unk',
+          'subtype' : 'unk', 'endpoint' : 'unk', 'species' : 'unk' }
+          
+    with open(os.path.join(ndir, 'model-labels.pkl'), 'wb') as fo:
+        pickle.dump(p, fo)
 
     LOG.info(f'New endpoint {model} created')
     #print(f'New endpoint {model} created')
@@ -441,7 +449,7 @@ def action_parameters(model, version=None, oformat='text'):
         order = ['input_type', 'quantitative', 'SDFile_activity', 'SDFile_name', 'SDFile_id',
         'SDFile_experimental', 'SDFile_complementary', 'normalize_method', 'ionize_method', 'convert3D_method', 
         'computeMD_method', 'model', 'modelAutoscaling', 'tune', 'conformal', 
-        'conformalSignificance', 'ModelValidationCV', 'ModelValidationLC', 
+        'conformalConfidence', 'ModelValidationCV', 'ModelValidationLC', 
         'ModelValidationN', 'ModelValidationP', 'output_format', 'output_md', 'output_similar',
         'TSV_activity', 'TSV_objnames', 'TSV_varnames', 'imbalance', 
         'feature_selection', 'feature_number', 'mol_batch',  
@@ -651,10 +659,59 @@ def action_documentation(model, version=None, doc_file=None, oformat='text'):
 
         return True, 'parameters listed'
 
+def action_label(model, version=None, labels=None, oformat='text'):
+    ''' Returns / sets the model labels '''
+
+    if model is None:
+        return False, 'Empty model label'
+
+    # get de model repo path
+    rdir = utils.model_path(model, version)
+
+    if not os.path.isdir(rdir):
+        return False, f'Model {model} not found'
+
+    if labels is not None:
+        if oformat == 'JSONS':
+            try:
+                p = json.loads(labels)
+            except Exception as e:
+                return False, str(e)
+        else:
+            try:
+                with open(labels, 'r') as fi:
+                    p = yaml.safe_load(fi)
+            except Exception as e:
+                return False, e
+
+        for ikey in p:
+            if len(p[ikey]) > 15:
+                return False, f'labels should be shorter than 15 chars. Label "{ikey} : {p[ikey]}" is {len(p[ikey])} chars long'
+            elif len(p[ikey]) < 3:
+                return False, f'labels should be longer than 3 chars. Label "{ikey} : {p[ikey]}" is {len(p[ikey])} chars long'
+        try:
+            with open(os.path.join(rdir, 'model-labels.pkl'), 'wb') as fo:
+                pickle.dump(p, fo)
+        except Exception as e:
+            return False, e
+
+    # open labels 
+    try:
+        with open(os.path.join(rdir, 'model-labels.pkl'), 'rb') as fi:
+            p = pickle.load(fi)
+    except Exception as e:
+        return False, e
+
+    if oformat == 'text':
+        for ikey in p:
+            print(f'{ikey}\t{p[ikey]}')
+        return True, 'success'
+
+    return True, p
+
 def action_dir():
     '''
     Returns a list of models and versions
-    TODO: add action_info for each model
     '''
     # get de model repo path
     models_path = pathlib.Path(utils.model_repository_path())
@@ -666,12 +723,23 @@ def action_dir():
     # get last dir name [-1]: model name
     model_dirs = [d.parts[-1] for d in dirs if list(d.glob('dev'))]
 
+    label_defaults = {  'maturity' : 'dev',
+                        'type' : 'unk',
+                        'subtype' : 'unk',
+                        'endpoint' : 'unk',
+                        'species' : 'unk' }
     results = []
     for imodel in model_dirs:
         idict = {}
         idict ["modelname"] = imodel
         idict ["version"] = 0
         idict ["info"] = action_info(imodel, 0, output=None)[1]
+        success, label = action_label(imodel, 0, oformat='object')
+        if success:
+            idict ["label"] = label
+        else:
+            idict ["label"] = label_defaults
+
         results.append(idict)
 
         for iversion in os.listdir(utils.model_tree_path(imodel)):
@@ -680,6 +748,11 @@ def action_dir():
                 idict ["modelname"] = imodel
                 idict ["version"] = utils.modeldir2ver(iversion)
                 idict ["info"] = action_info(imodel, idict ["version"], output=None)[1]
+                success, label = action_label(imodel, idict ["version"], oformat='object')
+                if success:
+                    idict ["label"] = label 
+                else:
+                    idict ["label"] = label_defaults
                 results.append(idict)
 
     print (results)

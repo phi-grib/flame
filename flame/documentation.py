@@ -296,7 +296,7 @@ class Documentation:
                 self.fields[key]['value']=[vt, value]
 
     def dumpJSON (self):
-        return json.dumps(self.fields)
+        return json.dumps(self.fields, allow_nan=True)
 
     def assign_parameters(self):
         '''
@@ -317,9 +317,7 @@ class Documentation:
 
         if self.parameters.getVal('conformal'):
             self.setInnerVal('AD_method', 'name', 'conformal prediction')
-            self.setVal('AD_parameters', f'Conformal Significance '
-                     f'{self.parameters.getVal("conformalSignificance")}')
-
+            self.setInnerVal('AD_parameters', 'confidence',  f'{self.parameters.getVal("conformalConfidence")}')
 
     def assign_results(self):
         '''
