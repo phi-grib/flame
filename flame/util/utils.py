@@ -68,18 +68,14 @@ def read_config() -> dict:
     except:
         return False
 
-    model_path = pathlib.Path(conf['model_repository_path'])
-    model_abs_path = pathlib.Path(model_path).resolve()
-    conf['model_repository_path'] = str(model_abs_path)
-
-    space_path = pathlib.Path(conf['space_repository_path'])
-    space_abs_path = pathlib.Path(space_path).resolve()
-    conf['space_repository_path'] = str(space_abs_path)
-
-    predictions_path = pathlib.Path(conf['predictions_repository_path'])
-    predictions_abs_path = pathlib.Path(predictions_path).resolve()
-    conf['predictions_repository_path'] = str(predictions_abs_path)
-
+    items = ['model_repository_path', 'space_repository_path', 'predictions_repository_path']
+    for i in items:
+        try:
+            conf[i] = os.path.abspath(conf[i])
+        except:
+            LOG.error (f'Unable to convert {conf[i]} to a valid path.')
+            conf[i] = None
+    
     # LOG.info('Configuration loaded')
 
     return conf

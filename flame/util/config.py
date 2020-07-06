@@ -83,19 +83,26 @@ def config(path: None, silent: False) -> bool:
         print(f'space repository set to {spaces_path}')
         print(f'predictions repository set to {predictions_path}')
 
-        return True
+        config = utils.read_config()
+        return True, config
 
     if path is None:  # set default
+
+        config = utils.read_config()
+
+        # If flame has been already configured, just show values in screen and return values
+        if config['config_status'] == True:
+            print(f'model repository is {config["model_repository_path"]}')
+            print(f'space repository is {config["space_repository_path"]}')
+            print(f'predictions repository is {config["predictions_repository_path"]}')
+
+            return True, config
+
+        # If flame has not been already configured
         source_dir = os.path.realpath(__file__) 
         default_models_path = os.path.join (source_dir,'models')
         default_predictions_path = os.path.join (source_dir,'predictions')
         default_spaces_path = os.path.join (source_dir,'spaces')
-
-        # default_models_path = Path(appdirs.user_data_dir('models', 'flame'))
-        # default_spaces_path = Path(appdirs.user_data_dir('spaces', 'flame'))
-        # default_predictions_path = Path(appdirs.user_data_dir('predictions', 'flame'))
-
-
 
         print(f'Setting model, space and predictions repositories (default) to {default_models_path}, {default_spaces_path} and {default_predictions_path}'
               '\nWould you like to continue?(y/n)')
