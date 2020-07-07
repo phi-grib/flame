@@ -68,15 +68,16 @@ def read_config() -> dict:
     except:
         return False
 
-    items = ['model_repository_path', 'space_repository_path', 'predictions_repository_path']
-    for i in items:
-        try:
-            conf[i] = os.path.abspath(conf[i])
-        except:
-            LOG.error (f'Unable to convert {conf[i]} to a valid path.')
-            conf[i] = None
-    
-    # LOG.info('Configuration loaded')
+    if conf['config_status']:
+        items = ['model_repository_path', 'space_repository_path', 'predictions_repository_path']
+        for i in items:
+            try:
+                conf[i] = os.path.abspath(conf[i])
+            except:
+                LOG.error (f'Configuration file incorrect. Unable to convert "{conf[i]}" to a valid path.')
+                conf[i] = None
+        
+        # LOG.info('Configuration loaded')
 
     return conf
 

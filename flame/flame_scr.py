@@ -210,12 +210,9 @@ def main():
             LOG.error(results)
 
     elif args.command == 'config':
-        silent = False
-        if args.action is not None:
-            silent = (args.action == 'silent')
-        success = config(args.directory, silent)
+        success, results = config(args.directory, (args.action == 'silent'))
         if not success:
-            LOG.error('configuration unchanged')
+            LOG.error(f'{results}, configuration unchanged')
         
 
 # import multiprocessing
