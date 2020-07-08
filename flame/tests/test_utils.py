@@ -12,7 +12,7 @@ MODEL_NAME = "TESTMODEL"
 
 
 def test_read_congiguration():
-    assert isinstance(utils.read_config(), dict)
+    assert isinstance(utils.read_config()[1], dict)
 
 
 # Must rethink the following test

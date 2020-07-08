@@ -52,13 +52,17 @@ def ask_user ():
     return False
 
 
-def config(path: None, silent: False) -> bool:
+def configure(path: None, silent: False):
     """Configures model repository.
 
     Loads config.yaml and writes a correct model repository path
     with the path provided by the user or a default from appdirs
     if the path is not provided.
     """
+    
+    success, config = utils.read_config()
+    if not success:
+        return False, config
 
     if silent:
         if path is not None:  
@@ -70,12 +74,15 @@ def config(path: None, silent: False) -> bool:
         predictions_path = os.path.join (source_dir,'predictions')
         spaces_path = os.path.join (source_dir,'spaces')
 
-        if not os.path.isdir(models_path):
-            os.mkdir(models_path)
-        if not os.path.isdir(spaces_path):
-            os.mkdir(spaces_path)
-        if not os.path.isdir(predictions_path):
-            os.mkdir(predictions_path)
+        try:
+            if not os.path.isdir(models_path):
+                os.mkdir(models_path)
+            if not os.path.isdir(spaces_path):
+                os.mkdir(spaces_path)
+            if not os.path.isdir(predictions_path):
+                os.mkdir(predictions_path)
+        except Exception as e:
+            return False, e
         
         utils.set_repositories(models_path, spaces_path, predictions_path)
         
@@ -83,82 +90,58 @@ def config(path: None, silent: False) -> bool:
         print(f'space repository set to {spaces_path}')
         print(f'predictions repository set to {predictions_path}')
 
-        return True
+        return True, config
 
     if path is None:  # set default
-        source_dir = os.path.realpath(__file__) 
-        default_models_path = os.path.join (source_dir,'models')
-        default_predictions_path = os.path.join (source_dir,'predictions')
-        default_spaces_path = os.path.join (source_dir,'spaces')
 
-        # default_models_path = Path(appdirs.user_data_dir('models', 'flame'))
-        # default_spaces_path = Path(appdirs.user_data_dir('spaces', 'flame'))
-        # default_predictions_path = Path(appdirs.user_data_dir('predictions', 'flame'))
+        # If flame has been already configured, just show values in screen and return values
+        if config['config_status'] == True:
+            print(f'current model repository is {config["model_repository_path"]}')
+            print(f'current space repository is {config["space_repository_path"]}')
+            print(f'current predictions repository is {config["predictions_repository_path"]}')
 
+            return True, config
 
+        # If flame has not been already configured assign defaults
+        models_path = appdirs.user_data_dir('models', 'flame')
+        spaces_path = appdirs.user_data_dir('spaces', 'flame')
+        predictions_path = appdirs.user_data_dir('predictions', 'flame')
+    else :
 
-        print(f'Setting model, space and predictions repositories (default) to {default_models_path}, {default_spaces_path} and {default_predictions_path}'
-              '\nWould you like to continue?(y/n)')
+        try:
+            source_dir = os.path.realpath(path)
+        except:
+            return False, f'input path {path} is not recognized as a valid path'
 
-        if ask_user():
-            if default_models_path.exists() or default_spaces_path.exists() or default_predictions_path.exists():
-                print(f'These paths already exists. '
-                      'Would you like to set them anyway?(y/n)')
-                if ask_user():
-                    utils.set_repositories(default_models_path, default_spaces_path, default_predictions_path)
-                else:
-                    print('aborting...')
-                    return False
+        models_path = os.path.join (source_dir,'models')
+        predictions_path = os.path.join (source_dir,'predictions')
+        spaces_path = os.path.join (source_dir,'spaces')
 
-            else:  # models_path doesn't exists
-                default_models_path.mkdir(parents=True)
-                default_spaces_path.mkdir(parents=True)
-                default_predictions_path.mkdir(parents=True)
-                utils.set_repositories(default_models_path, default_spaces_path, default_predictions_path)
+    # at this point, paths must has been assigned
+    print(f'model repository will be set to {models_path}')
+    print(f'space repository will be set to {spaces_path}')
+    print(f'predictions repository will be set to {predictions_path}')
+    print('continue?(y/n)')
 
-            print(f'model repository set to {default_models_path}')
-            print(f'space repository set to {default_spaces_path}')
-            print(f'predictions repository set to {default_predictions_path}')
-            return True
+    if ask_user():
 
-        else:
-            print('aborting...')
-            return False
+        try:
+            if not os.path.isdir(models_path):
+                os.mkdir(models_path)
+            if not os.path.isdir(spaces_path):
+                os.mkdir(spaces_path)
+            if not os.path.isdir(predictions_path):
+                os.mkdir(predictions_path)
+        except Exception as e:
+            return False, e
+        
+        utils.set_repositories(models_path, spaces_path, predictions_path)
 
-    else:  # path input by user
-        in_path = Path(path).expanduser()
-        in_path_models = Path.joinpath(in_path,'models')
-        in_path_spaces = Path.joinpath(in_path,'spaces')
-        in_path_predictions = Path.joinpath(in_path,'predictions')
-        current_models_path = Path(utils.model_repository_path())
-        current_spaces_path = Path(utils.space_repository_path())
-        current_predictions_path = Path(utils.predictions_repository_path())
+        print(f'model repository set to {models_path}')
+        print(f'space repository set to {spaces_path}')
+        print(f'predictions repository set to {predictions_path}')
+        return True, config
 
-        if in_path_models == current_models_path and in_path_spaces == current_spaces_path and in_path_predictions == current_predictions_path:
-            print(f'{in_path_models} already is model repository path')
-            print(f'{in_path_spaces} already is space repository path')
-            print(f'{in_path_predictions} already is predictions repository path')
-            return False
-
-        elif not (in_path_models.exists() and in_path_spaces.exists() and in_path_predictions.exists()):
-            print("paths doesn't exists. Would you like to create it?(y/n)")
-
-            if ask_user():
-                if not in_path_models.exists():
-                    in_path_models.mkdir(parents=True)
-                if not in_path_spaces.exists():                
-                    in_path_spaces.mkdir(parents=True)
-                if not in_path_predictions.exists():                
-                    in_path_predictions.mkdir(parents=True)
-                utils.set_repositories(in_path_models, in_path_spaces, in_path_predictions)
-            else:
-                print('aborting...')
-                return False
-
-        else:  # in_path exists
-            utils.set_repositories(in_path_models, in_path_spaces, in_path_predictions)
-
-        print(f'space repository set to {in_path_spaces}')
-        print(f'model repository set to {in_path_models}')
-        print(f'predictions repository set to {in_path_predictions}')
-        return True
+    else:
+        print('aborting...')
+        return False, 'configuration aborted'

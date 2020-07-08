@@ -36,61 +36,45 @@ from flame.util import get_logger
 
 LOG = get_logger(__name__)
 
-def get_conf_yml_path() -> str:
-    '''
-    recovers the path of the configuration yml file
-
-    Returns:
-    --------
-    str, path where conf.yaml is
-
-    TODO: be sure that the conf.yaml exists and raise
-    err if doesn't
-    '''
-    # jump two parents back with .parents[1]
-    source_dir = pathlib.Path(__file__).resolve().parents[1]
-    return os.path.join(source_dir, 'config.yaml')
-
-
-def read_config() -> dict:
+def read_config():
     '''
     Reads configuration file "config.yaml" and checks
     sanity of model repository path.
 
     Returns:
     --------
-    dict
+    Boolean, dict
     '''
-    #LOG.info('reading configuration')
     try:
-        with open(get_conf_yml_path(), 'r') as config_file:
-            conf = yaml.safe_load(config_file)
-    except:
-        return False
+        source_dir = os.path.dirname(os.path.dirname(__file__)) 
+        config_nam = os.path.join(source_dir,'config.yaml')
+        with open(config_nam,'r') as f:
+            conf = yaml.safe_load(f)
+    except Exception as e:
+        return False, e
 
-    model_path = pathlib.Path(conf['model_repository_path'])
-    model_abs_path = pathlib.Path(model_path).resolve()
-    conf['model_repository_path'] = str(model_abs_path)
+    if conf is None:
+        return False, 'unable to obtain configuration file'
 
-    space_path = pathlib.Path(conf['space_repository_path'])
-    space_abs_path = pathlib.Path(space_path).resolve()
-    conf['space_repository_path'] = str(space_abs_path)
+    if not conf['config_status']:
+        return False,  'wrong configuration file'
 
-    predictions_path = pathlib.Path(conf['predictions_repository_path'])
-    predictions_abs_path = pathlib.Path(predictions_path).resolve()
-    conf['predictions_repository_path'] = str(predictions_abs_path)
-
-    # LOG.info('Configuration loaded')
-
-    return conf
+    items = ['model_repository_path', 'space_repository_path', 'predictions_repository_path']
+    for i in items:
+        try:
+            conf[i] = os.path.abspath(conf[i])
+        except:
+            return False, f'Configuration file incorrect. Unable to convert "{conf[i]}" to a valid path.'
+        
+    return True, conf
 
 def config_test() -> None:
     """ Checks if flame has been configured
      reading the config.yml and checking the config_status flag
     """
-    config = read_config()
+    success, config = read_config()
 
-    if config != False:
+    if success:
         if isinstance(config['config_status'], bool):
             if config['config_status']:
                 if os.path.isdir(config['model_repository_path']):
@@ -146,7 +130,9 @@ def config_test() -> None:
 def write_config(config: dict) -> None:
     """Writes the configuration to disk"""
     config['config_status'] = True
-    with open(get_conf_yml_path(), 'w') as f:
+    source_dir = os.path.dirname(os.path.dirname(__file__)) 
+    with open(os.path.join(source_dir,'config.yaml'), 'w') as f:
+    # with open(get_conf_yml_path(), 'w') as f:
         yaml.dump(config, f, default_flow_style=False)
 
 def set_model_repository(path=None):
@@ -161,7 +147,8 @@ def set_model_repository(path=None):
     --------
     None
     """
-    with open(get_conf_yml_path(), 'r') as f:
+    source_dir = os.path.dirname(os.path.dirname(__file__)) 
+    with open(os.path.join(source_dir,'config.yaml'),'r') as f:
         configuration = yaml.safe_load(f)
 
     if path is None:  # set to default path
@@ -183,7 +170,9 @@ def set_repositories(model_path, space_path, predictions_path):
     --------
     None
     """
-    with open(get_conf_yml_path(), 'r') as f:
+    # with open(get_conf_yml_path(), 'r') as f:
+    source_dir = os.path.dirname(os.path.dirname(__file__)) 
+    with open(os.path.join(source_dir,'config.yaml'), 'r') as f:
         configuration = yaml.safe_load(f)
 
     new_model_path = pathlib.Path(model_path)
@@ -210,8 +199,8 @@ def model_repository_path():
     Returns the path to the root of the model repository,
     containing all models and versions
     '''
-    configuration = read_config()
-    return configuration['model_repository_path']
+    success, config = read_config()
+    return config['model_repository_path']
 
 def model_tree_path(model):
     '''
@@ -241,8 +230,8 @@ def space_repository_path():
     Returns the path to the root of the spaces repository,
     containing all models and versions
     '''
-    configuration = read_config()
-    return configuration['space_repository_path']
+    success, config = read_config()
+    return config['space_repository_path']
 
 def space_tree_path(space):
     '''
@@ -304,8 +293,8 @@ def predictions_repository_path():
     Returns the path to the root of the predictions repository,
     containing all predictions
     '''
-    configuration = read_config()
-    return configuration['predictions_repository_path']
+    success, config = read_config()
+    return config['predictions_repository_path']
 
 def md5sum(filename, blocksize=65536):
     '''
