@@ -52,7 +52,7 @@ def ask_user ():
     return False
 
 
-def config(path: None, silent: False) -> bool:
+def configure(path: None, silent: False):
     """Configures model repository.
 
     Loads config.yaml and writes a correct model repository path
@@ -60,7 +60,9 @@ def config(path: None, silent: False) -> bool:
     if the path is not provided.
     """
     
-    config = utils.read_config()
+    success, config = utils.read_config()
+    if not success:
+        return False, config
 
     if silent:
         if path is not None:  

@@ -210,7 +210,7 @@ def main():
             LOG.error(results)
 
     elif args.command == 'config':
-        success, results = config(args.directory, (args.action == 'silent'))
+        success, results = config.configure(args.directory, (args.action == 'silent'))
         if not success:
             LOG.error(f'{results}, configuration unchanged')
         
