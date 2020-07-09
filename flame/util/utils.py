@@ -56,15 +56,13 @@ def read_config():
     if conf is None:
         return False, 'unable to obtain configuration file'
 
-    if not conf['config_status']:
-        return False,  'wrong configuration file'
-
-    items = ['model_repository_path', 'space_repository_path', 'predictions_repository_path']
-    for i in items:
-        try:
-            conf[i] = os.path.abspath(conf[i])
-        except:
-            return False, f'Configuration file incorrect. Unable to convert "{conf[i]}" to a valid path.'
+    if conf['config_status']:
+        items = ['model_repository_path', 'space_repository_path', 'predictions_repository_path']
+        for i in items:
+            try:
+                conf[i] = os.path.abspath(conf[i])
+            except:
+                return False, f'Configuration file incorrect. Unable to convert "{conf[i]}" to a valid path.'
         
     return True, conf
 
