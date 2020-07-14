@@ -35,6 +35,7 @@ os.environ["CUDA_VISIBLE_DEVICES"]="0"
 from keras.models import Sequential
 from keras.layers import Dense
 from sklearn.base import clone
+import keras
 
 import numpy as np
 
@@ -140,7 +141,7 @@ class Keras_nn(BaseEstimator):
                     **self.estimator_parameters, verbose=0)
                     results.append(('model', 'model type', 'Keras quantitative'))
                 else:
-
+                    print(self.estimator_parameters)
                     LOG.info("Building Qualitative Keras model")
                     self.estimator = KerasClassifier(build_fn=self.create_model, dim=self.X.shape[1],
                      **self.estimator_parameters, verbose=0)
@@ -212,10 +213,10 @@ class Keras_nn(BaseEstimator):
         return True, []
 
 # Function to create model, required for KerasClassifier
-    def create_model(self, dim=20):
+    def create_model(self, dim=568):
         # create model
         model = Sequential()
-        model.add(Dense(10, input_dim=dim, activation='relu'))
+        model.add(Dense(50, input_dim=dim, activation='relu'))
         model.add(Dense(20, activation='sigmoid'))
         model.add(Dense(1, activation='sigmoid'))
         # Compile model
@@ -224,7 +225,15 @@ class Keras_nn(BaseEstimator):
             #loss = 'mean_squared_error'
         #else:
         loss = 'binary_crossentropy'
-        model.compile(loss=loss, optimizer='adam', metrics=['accuracy'])
+        optimizer = keras.optimizers.Adam(lr=0.1)
+        model.compile(loss=loss, optimizer=optimizer, metrics=['accuracy'])
+        # model.compile(
+        #             optimizer=keras.optimizers.Adam(
+        #                 hp.Choice('learning_rate',
+        #                 values=[1e-2, 1e-3, 1e-4])),
+        #             loss='sparse_categorical_crossentropy',
+        #             metrics=['accuracy'])
+        
         return model
 
     # Overrides regular project to single class prediction

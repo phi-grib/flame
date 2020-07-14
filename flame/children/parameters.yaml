@@ -1091,16 +1091,6 @@ Keras_parameters:
         - 10
         - 30
       description:  Batch size for model Keras batch learning
-    learning_rate:
-      object_type: float
-      writable: true
-      value: 1
-      options:
-        - 1
-        - 0.1
-        - 0.01
-        - 0.001
-      description: Learning rate value
   description: 
   dependencies: 
     model: SKLEARN
