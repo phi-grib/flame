@@ -204,15 +204,25 @@ class PLSR(BaseEstimator):
             
             LOG.info('Building PLSR aggregated conformal predictor')
 
-            underlying_model = RegressorAdapter(self.estimator_temp)
-            self.normalizing_model = RegressorAdapter(
-                                     KNeighborsRegressor(n_neighbors=15))
-            # normalizing_model = RegressorAdapter(self.estimator_temp)
-            normalizer = RegressorNormalizer(underlying_model, self.normalizing_model,
-                                             AbsErrorErrFunc())
+                underlying_model = RegressorAdapter(self.estimator_temp)
+                self.normalizing_model = RegressorAdapter(
+                    KNeighborsRegressor(n_neighbors=conformal_settings['KNN_NN']))
+                normalizer = RegressorNormalizer(
+                                underlying_model,
+                                copy(self.normalizing_model),
+                                AbsErrorErrFunc())
+                nc = RegressorNc(underlying_model,
+                                    AbsErrorErrFunc(),
+                                    normalizer)
 
-            nc = RegressorNc(underlying_model, AbsErrorErrFunc(), normalizer)
-            self.estimator = AggregatedCp(IcpRegressor(nc), BootstrapSampler())
+                # self.conformal_pred = AggregatedCp(IcpRegressor
+                # (RegressorNc(RegressorAdapter(self.estimator))),
+                #                                   BootstrapSampler())
+
+                self.estimator = AggregatedCp(IcpRegressor(nc),
+                                                BootstrapSampler())
+
+                self.estimator.fit(X, Y)
 
         except Exception as e:
             LOG.error(f'Error building aggregated PLSR conformal'

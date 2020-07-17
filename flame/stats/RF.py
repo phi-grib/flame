@@ -28,7 +28,7 @@ from sklearn.neighbors import KNeighborsRegressor
 
 from nonconformist.base import ClassifierAdapter, RegressorAdapter
 from nonconformist.acp import AggregatedCp
-from nonconformist.acp import BootstrapSampler
+from nonconformist.acp import BootstrapSampler, RandomSubsampler, CrossSampler
 from nonconformist.icp import IcpClassifier, IcpRegressor
 from nonconformist.nc import ClassifierNc, MarginErrFunc, RegressorNc
 from nonconformist.nc import AbsErrorErrFunc, RegressorNormalizer
@@ -154,9 +154,22 @@ class RF(BaseEstimator):
 
         # Create the conformal estimator
         try:
+            # set parameters
+            conformal_settings = self.param.getDict('conformal_settings')
+
+            samplers = {"BootstrapSampler" : BootstrapSampler(), "RandomSubSampler" : RandomSubsampler()
+                        "CrossSampler" : CrossSampler()}
+            try:
+                sampler = samplers[conformal_settings['ACP_sampler']
+                n_predictors = conformal_settings['conformal_predictors']
+
+            except:
+                # For previous models
+                sampler = BootstrapSampler()
+                n_predictors = 10
+
             # Conformal regressor
             if self.param.getVal('quantitative'):
-                conformal_settings = self.param.getDict('conformal_settings')
                 LOG.info("Building conformal Quantitative RF model")
 
                 underlying_model = RegressorAdapter(self.estimator_temp)
@@ -175,8 +188,8 @@ class RF(BaseEstimator):
                 # (RegressorNc(RegressorAdapter(self.estimator))),
                 #                                   BootstrapSampler())
 
-                self.estimator = AggregatedCp(IcpRegressor(nc),
-                                                BootstrapSampler())
+                self.estimator = AggregatedCp(n_models=n_predictors,IcpRegressor(nc),
+                                                sampler)
 
                 self.estimator.fit(X, Y)
                 # results.append(('model', 'model type', 'conformal RF quantitative'))
@@ -193,7 +206,7 @@ class RF(BaseEstimator):
                                             MarginErrFunc()
                                         )
                                     ),
-                                    BootstrapSampler())
+                                    sampler
 
                 # Fit estimator to the data
                 self.estimator.fit(X, Y)
