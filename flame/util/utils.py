@@ -57,7 +57,6 @@ def read_config():
         return False, 'unable to obtain configuration file'
 
     if conf['config_status']:
-
         items = ['model_repository_path', 'space_repository_path', 'predictions_repository_path']
         for i in items:
             try:

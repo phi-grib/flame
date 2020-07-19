@@ -67,13 +67,13 @@ pip install -e .
 
 ## Configuration
 
-After installation is completed, run the configuration command to configure the directory where flame will place the models and chemical spaces.
+After installation is completed, you must run the configuration command to configure the directory where flame will place the models and chemical spaces. If Flame has not been configured previously the following command
 
 ```bash
 flame -c config
 ```
 
-will use a default directory structure following the XDG specification in GNU/Linux, %APPDATA% in windows and `~/Library/Application Support/flame_models` in Mac OS X.
+will suggest a default directory structure following the XDG specification in GNU/Linux, %APPDATA% in windows and `~/Library/Application Support/flame_models` in Mac OS X.
 
 To specify a custom path use the `-d` parameter to enter the root folder where the models and chemical spaces will be placed:
 
@@ -81,7 +81,22 @@ To specify a custom path use the `-d` parameter to enter the root folder where t
 flame -c config -d /my/custom/path
 ```
 
-will set up the model repository to `/my/custom/path/models` and the chemical spaces repository to `/my/custom/path/spaces`
+will set up the model repository to `/my/custom/path/models`, the chemical spaces repository to `/my/custom/path/spaces` and the predictions to `/my/custom/path/predictions`. 
+
+Once Flame has been configured, the current setting can be displayed using again the command 
+
+```bash
+flame -c config
+```
+
+As a fallback, Flame can also be configured using the following command
+
+```bash
+flame -c config -a silent
+```
+
+This option sets up the models, spaces and predictions repositories within the Flame installation directory (`flame\flame\models`, `flame\flame\spaces`, `flame\flame\predictions`). Unlike other options, this command does not ask permision to the end-user to create the directories or set up the repositories and is used internally by automatic installers and for software development. 
+
 
 ## Main features
 
