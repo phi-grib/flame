@@ -56,6 +56,11 @@ def generateProjectedSpace(X, param, conveyor):
                         'PCA PC2', 'method', 'objs',
                         'PCA PC2 score for graphic representation')
 
+    VarX = mpca.SSXex/mpca.SSX
+    conveyor.addVal(VarX, 'VarX',
+                    'X var explained', 'method', 'single',
+                    'X variance explained for each PC dimension')
+
 
 def projectPredictions(X, param, conveyor):
     
@@ -89,8 +94,13 @@ def projectPredictions(X, param, conveyor):
         X, t, dmodx = result
         if np.isnan (np.sum(t)):
             t = np.zeros(len(t))
+            
         conveyor.addVal(t, 'PC2proj',
                        'PCA projected PC1', 'method', 'objs',
                        'PCA projected scores PC1 for graphic representation')
+        
+        conveyor.addVal(dmodx, 'PCDMODX',
+                       'DModX', 'method', 'objs',
+                       'Distance of object to a 2PC PCA model')
 
     return

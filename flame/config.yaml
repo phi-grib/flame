@@ -1,8 +1,8 @@
 admin_email: admin@domain.org
 admin_name: Admin Name
-homepage: homepage@domain.org
-provider: My Organization
 config_status: false
-model_repository_path: c:\user\myname\models
-predictions_repository_path: c:\user\myname\predictions
-space_repository_path: c:\user\myname\spaces
+homepage: homepage@domain.org
+model_repository_path: C:\Users\myname\models
+predictions_repository_path: C:\Users\myname\predictions
+provider: My Organization
+space_repository_path: C:\Users\myname\spaces
