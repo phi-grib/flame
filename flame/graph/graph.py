@@ -30,7 +30,13 @@ LOG = get_logger(__name__)
 
     
 def generateProjectedSpace(X, param, conveyor):
-    # TODO: decide which is the best way to present the training space
+    ''' This function uses the scaled X matrix of the model to build a 2 PCs PCA model
+        
+        This model is saved and the scores are dumped to the conveyor, allowing to show
+        the training series in Flame GUI. We also save the %SSX explained by each variable 
+
+        Also, the model is saved as pca.npy and can be used to project predictions on top
+    '''
     LOG.info('Generating projected X space...')
     mpca = pca()
     mpca.build(X,targetA=2,autoscale=False)
@@ -56,13 +62,30 @@ def generateProjectedSpace(X, param, conveyor):
                         'PCA PC2', 'method', 'objs',
                         'PCA PC2 score for graphic representation')
 
-    VarX = mpca.SSXex/mpca.SSX
-    conveyor.addVal(VarX, 'VarX',
-                    'X var explained', 'method', 'single',
-                    'X variance explained for each PC dimension')
+    modelSSX = mpca.SSXex/mpca.SSX
+    conveyor.addVal(modelSSX, 'SSX',
+                    'X Sum of Squares explained', 'method', 'single',
+                    'X Sum of Squares explained by each PC dimension')
 
+    return
 
 def projectPredictions(X, param, conveyor):
+    '''
+        This method projects X vectors into the existing PCA space generated for the
+        current model (from param.getVal('model_path'))
+
+        We assume a two dimension model
+
+        The method returs scores for dimensions 1 and 2, as well as the distance to model (DModX)
+        for a model of dimensionality 2
+
+        The values of the Distance to Model (DModX in SIMCA) provided in the vector dmod 
+        is the  normalized value (si/s0), where s0 was estimated directly using all the compounds in 
+        the training set. It was suggested that s0 computed this way leads to too narrow CI.
+        A much better estimation would be obtained using jackknifing (see Flaten et al. Chem 
+        Intell Lab Sys 2004: 72, 101-9) and this method must be considered in future versions
+
+    '''
     
     # PCA is destructive
     X=copy.copy(X)
