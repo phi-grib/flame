@@ -1160,6 +1160,8 @@ class BaseEstimator:
             params = self.estimator_temp.get_params()
         else:
             params = self.estimator.get_params()
+        if self.param.getVal('model') == "Keras":
+            params = ["Keras sequential model"]
 
         self.conveyor.addVal(params, 'estimator_parameters',
                             'estimator parameters', 'method', 'single',

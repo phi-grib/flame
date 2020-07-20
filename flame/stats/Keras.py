@@ -210,13 +210,13 @@ class Keras_nn(BaseEstimator):
             raise e
             return False, f'Exception building conformal Keras estimator with exception {e}'
 
-        return True, []
+        return True, results
 
 # Function to create model, required for KerasClassifier
-    def create_model(self, dim=568):
+    def create_model(self, dim=25):
         # create model
         model = Sequential()
-        model.add(Dense(50, input_dim=dim, activation='relu'))
+        model.add(Dense(30, input_dim=dim, activation='relu'))
         model.add(Dense(20, activation='sigmoid'))
         model.add(Dense(1, activation='sigmoid'))
         # Compile model
