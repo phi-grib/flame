@@ -28,7 +28,7 @@ from sklearn.neighbors import KNeighborsRegressor
 
 from nonconformist.base import ClassifierAdapter, RegressorAdapter
 from nonconformist.acp import AggregatedCp
-from nonconformist.acp import BootstrapSampler, RandomSubsampler, CrossSampler
+from nonconformist.acp import BootstrapSampler, RandomSubSampler, CrossSampler
 from nonconformist.icp import IcpClassifier, IcpRegressor
 from nonconformist.nc import ClassifierNc, MarginErrFunc, RegressorNc
 from nonconformist.nc import AbsErrorErrFunc, RegressorNormalizer
@@ -157,10 +157,10 @@ class RF(BaseEstimator):
             # set parameters
             conformal_settings = self.param.getDict('conformal_settings')
 
-            samplers = {"BootstrapSampler" : BootstrapSampler(), "RandomSubSampler" : RandomSubsampler()
+            samplers = {"BootstrapSampler" : BootstrapSampler(), "RandomSubSampler" : RandomSubsampler(),
                         "CrossSampler" : CrossSampler()}
             try:
-                sampler = samplers[conformal_settings['ACP_sampler']
+                sampler = samplers[conformal_settings['ACP_sampler']]
                 n_predictors = conformal_settings['conformal_predictors']
 
             except:
@@ -188,8 +188,8 @@ class RF(BaseEstimator):
                 # (RegressorNc(RegressorAdapter(self.estimator))),
                 #                                   BootstrapSampler())
 
-                self.estimator = AggregatedCp(n_models=n_predictors,IcpRegressor(nc),
-                                                sampler)
+                self.estimator = AggregatedCp(IcpRegressor(nc),
+                                            sampler, n_models=n_predictors)
 
                 self.estimator.fit(X, Y)
                 # results.append(('model', 'model type', 'conformal RF quantitative'))
@@ -206,7 +206,7 @@ class RF(BaseEstimator):
                                             MarginErrFunc()
                                         )
                                     ),
-                                    sampler
+                                    sampler)
 
                 # Fit estimator to the data
                 self.estimator.fit(X, Y)
