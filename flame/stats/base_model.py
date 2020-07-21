@@ -407,19 +407,19 @@ class BaseEstimator:
                 Y_train, Y_test = Y[train_index], Y[test_index]
                 
                 # Create the aggregated conformal regressor.
+                conformal_pred = copy.copy(self.estimator)
+                # underlying_model = RegressorAdapter(self.estimator_temp)
+                # # normalizing_model = RegressorAdapter(self.estimator_temp)
+                # normalizer = RegressorNormalizer(
+                #                 underlying_model,
+                #                 copy.copy(self.normalizing_model),
+                #                 AbsErrorErrFunc())
+                # nc = RegressorNc(underlying_model,
+                #                     AbsErrorErrFunc(),
+                #                     normalizer)
 
-                underlying_model = RegressorAdapter(self.estimator_temp)
-                # normalizing_model = RegressorAdapter(self.estimator_temp)
-                normalizer = RegressorNormalizer(
-                                underlying_model,
-                                copy.copy(self.normalizing_model),
-                                AbsErrorErrFunc())
-                nc = RegressorNc(underlying_model,
-                                    AbsErrorErrFunc(),
-                                    normalizer)
-
-                conformal_pred = AggregatedCp(IcpRegressor(nc),
-                                                BootstrapSampler())
+                # conformal_pred = AggregatedCp(IcpRegressor(nc),
+                #                                 BootstrapSampler())
 
                 # Fit conformal regressor to the data
                 conformal_pred.fit(X_train, Y_train)
@@ -559,12 +559,12 @@ class BaseEstimator:
                 Y_train, Y_test = Y[train_index], Y[test_index]
 
                 # Create the aggregated conformal classifier.
-                conformal_pred = AggregatedCp(IcpClassifier(
-                                            ClassifierNc(ClassifierAdapter(
-                                                            self.estimator_temp),
-                                                MarginErrFunc())),
-                                            BootstrapSampler())
-                
+                # conformal_pred = AggregatedCp(IcpClassifier(
+                #                             ClassifierNc(ClassifierAdapter(
+                #                                             self.estimator_temp),
+                #                                 MarginErrFunc())),
+                #                             BootstrapSampler())
+                conformal_pred = copy.copy(self.estimator)
                 # Fit the conformal classifier to the data
                 conformal_pred.fit(X_train, Y_train)
                 

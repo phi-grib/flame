@@ -385,8 +385,8 @@ conformal_settings:
       writable: true
       value: Bootstrap_subsampler
       options:
-        - Bootstrap_subsampler
-        - Randomsubsampler
+        - BootstrapSampler
+        - RandomSubSampler
         - CrossSampler
       description: Sampling strategies.
     aggregation_function:

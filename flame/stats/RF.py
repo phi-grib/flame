@@ -157,39 +157,42 @@ class RF(BaseEstimator):
             # set parameters
             conformal_settings = self.param.getDict('conformal_settings')
 
-            samplers = {"BootstrapSampler" : BootstrapSampler(), "RandomSubSampler" : RandomSubsampler(),
+            samplers = {"BootstrapSampler" : BootstrapSampler(), "RandomSubSampler" : RandomSubSampler(),
                         "CrossSampler" : CrossSampler()}
+            aggregation_f = conformal_settings['aggregation_function']
+            print(aggregation_f)
             try:
                 sampler = samplers[conformal_settings['ACP_sampler']]
                 n_predictors = conformal_settings['conformal_predictors']
 
-            except:
+            except Exception as e:
                 # For previous models
                 sampler = BootstrapSampler()
                 n_predictors = 10
-
+            
             # Conformal regressor
             if self.param.getVal('quantitative'):
                 LOG.info("Building conformal Quantitative RF model")
-
+                normalizers = {'KNN' : RegressorAdapter(KNeighborsRegressor(
+                                       n_neighbors=conformal_settings['KNN_NN'])),
+                                'Underlying' : RegressorAdapter(self.estimator_temp),
+                                'None' : None}
                 underlying_model = RegressorAdapter(self.estimator_temp)
-                self.normalizing_model = RegressorAdapter(
-                    KNeighborsRegressor(n_neighbors=conformal_settings['KNN_NN']))
-                # normalizing_model = RegressorAdapter(self.estimator_temp)
-                normalizer = RegressorNormalizer(
-                                underlying_model,
-                                copy(self.normalizing_model),
-                                AbsErrorErrFunc())
+                self.normalizing_model = normalizers[conformal_settings['error_model']]
+                if self.normalizing_model is not None:
+                    normalizer = RegressorNormalizer(
+                                    underlying_model,
+                                    copy(self.normalizing_model),
+                                    AbsErrorErrFunc())
+                else:
+                    normalizer = None
                 nc = RegressorNc(underlying_model,
                                     AbsErrorErrFunc(),
                                     normalizer)
 
-                # self.conformal_pred = AggregatedCp(IcpRegressor
-                # (RegressorNc(RegressorAdapter(self.estimator))),
-                #                                   BootstrapSampler())
-
                 self.estimator = AggregatedCp(IcpRegressor(nc),
-                                            sampler, n_models=n_predictors)
+                                            sampler=sampler, aggregation_func=aggregation_f,
+                                            n_models=n_predictors)
 
                 self.estimator.fit(X, Y)
                 # results.append(('model', 'model type', 'conformal RF quantitative'))
@@ -206,8 +209,8 @@ class RF(BaseEstimator):
                                             MarginErrFunc()
                                         )
                                     ),
-                                    sampler)
-
+                                    sampler=sampler, aggregation_func=aggregation_f,
+                                            n_models=n_predictors)
                 # Fit estimator to the data
                 self.estimator.fit(X, Y)
                 # results.append(('model', 'model type', 'conformal RF qualitative'))
