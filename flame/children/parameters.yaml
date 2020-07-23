@@ -396,6 +396,8 @@ conformal_settings:
       options:
         - median
         - mean
+        - max
+        - min
       description: P-value aggregation function in ACP
   options: null
   description: conformal predictor settings
