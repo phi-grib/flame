@@ -339,7 +339,7 @@ Flame was produced at the PharmacoInformatics lab (http://phi.upf.edu), in the f
 
 ![Alt text](images/eTRANSAFE-logo-git.png?raw=true "eTRANSAFE-logo") ![Alt text](images/imi-logo.png?raw=true "IMI logo")
 
-Copyright 2018 Manuel Pastor (manuel.pastor@upf.edu)
+Copyright 2020 Manuel Pastor (manuel.pastor@upf.edu)
 
 Flame is free software: you can redistribute it and/or modify it under the terms of the **GNU General Public License as published by the Free Software Foundation version 3**.
 
