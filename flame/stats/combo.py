@@ -282,7 +282,7 @@ class Combo (BaseEstimator):
             if Ye.size == 0:
                 LOG.error ("Experimental activity vector is empty")
                 return
-            if Yp.size == 0:
+            if Yp == None or Yp.size == 0:
                 LOG.error ("Predicted activity vector is empty")
                 return
 
@@ -367,7 +367,6 @@ class median (Combo):
         self.nobj, self.nvarx = np.shape(X)
 
         computeCI, CIparams = self.getConfidence ()
-        print (computeCI, CIparams)
         if computeCI:
             ############################################
             ##
