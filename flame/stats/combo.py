@@ -199,6 +199,14 @@ class Combo (BaseEstimator):
         ''' when experimental values are available for the predicted compounds,
         run external validation '''
 
+        if self.conveyor.getVal("values") is None:
+            LOG.error ("Predicted activity vector is empty")
+            return
+
+        if self.conveyor.getVal("ymatrix") is None:
+            LOG.error ("External activity vector is empty")
+            return
+
         ext_val_results = []
         
         # Ye are the y values present in the input file
@@ -211,6 +219,7 @@ class Combo (BaseEstimator):
                 self.conveyor.setWarning(f'No qualitative activity suitable for external validation "{message}". Skipping.')
                 LOG.warning(f'No qualitative activity suitable for external validation "{message}". Skipping.')
                 return
+
 
         # there are four variants of external validation, depending if the variable is qualitative or quantitative
         if not self.param.getVal("quantitative"):
@@ -279,11 +288,12 @@ class Combo (BaseEstimator):
             # quantitative
             Yp = np.asarray(self.conveyor.getVal("values"))
 
+            if Yp.size == 0:
+                LOG.error ("Predicted activity vector is empty")
+                return
+
             if Ye.size == 0:
                 LOG.error ("Experimental activity vector is empty")
-                return
-            if Yp == None or Yp.size == 0:
-                LOG.error ("Predicted activity vector is empty")
                 return
 
             Ym = np.mean(Ye)
