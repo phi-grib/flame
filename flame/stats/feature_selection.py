@@ -84,10 +84,14 @@ def run_feature_selection(X, Y, scaler, param):
         
         # The scaler has to be fitted to the reduced matrix
         # in order to be applied in prediction.
-        X = scaler.inverse_transform(X)
-        X = X[:, variable_mask]
-        scaler = scaler.fit(X)
-        X = scaler.transform(X)
+        if param.getVal('modelAutoscaling') is not None:
+            X = scaler.inverse_transform(X)
+            X = X[:, variable_mask]
+            scaler = scaler.fit(X)
+            X = scaler.transform(X)
+        else:
+            pass
+
         LOG.info(f'Variable selection applied, number of final variables:'
                     f'{n_features}')
     except Exception as e:

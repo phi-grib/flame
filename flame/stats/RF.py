@@ -160,7 +160,6 @@ class RF(BaseEstimator):
             samplers = {"BootstrapSampler" : BootstrapSampler(), "RandomSubSampler" : RandomSubSampler(),
                         "CrossSampler" : CrossSampler()}
             aggregation_f = conformal_settings['aggregation_function']
-            print(aggregation_f)
             try:
                 sampler = samplers[conformal_settings['ACP_sampler']]
                 n_predictors = conformal_settings['conformal_predictors']
@@ -179,6 +178,8 @@ class RF(BaseEstimator):
                                 'None' : None}
                 underlying_model = RegressorAdapter(self.estimator_temp)
                 self.normalizing_model = normalizers[conformal_settings['error_model']]
+                print(conformal_settings)
+                print(self.normalizing_model)
                 if self.normalizing_model is not None:
                     normalizer = RegressorNormalizer(
                                     underlying_model,

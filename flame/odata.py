@@ -286,9 +286,9 @@ class Odata():
             if self.conveyor.isKey('values'):
                 nams = self.conveyor.getVal('obj_nam')
                 vals = self.conveyor.getVal('values')
-                for i in range (self.conveyor.getVal('obj_num')):
+                #for i in range (self.conveyor.getVal('obj_num')):
                     # print (self.conveyor.getVal('obj_nam')[i], '\t' , float("{0:.4f}".format(self.conveyor.getVal('values')[i])))
-                    print (f'{nams[i]}\t{vals[i]:.4f}')
+                   # print (f'{nams[i]}\t{vals[i]:.4f}')
 
         ###
         # 3. molecular descriptors file in TSV format [optional]
