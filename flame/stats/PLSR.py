@@ -203,7 +203,7 @@ class PLSR(BaseEstimator):
         try:
             
             LOG.info('Building PLSR aggregated conformal predictor')
-
+            conformal_settings = self.param.getDict('conformal_settings')
             underlying_model = RegressorAdapter(self.estimator_temp)
             self.normalizing_model = RegressorAdapter(
                 KNeighborsRegressor(n_neighbors=conformal_settings['KNN_NN']))
