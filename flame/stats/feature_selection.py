@@ -90,7 +90,7 @@ def run_feature_selection(X, Y, scaler, param):
             scaler = scaler.fit(X)
             X = scaler.transform(X)
         else:
-            pass
+            X = X[:, variable_mask]
 
         LOG.info(f'Variable selection applied, number of final variables:'
                     f'{n_features}')
