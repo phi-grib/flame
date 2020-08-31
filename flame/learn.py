@@ -88,7 +88,7 @@ class Learn:
         # Perform subsampling on the majority class. Consider to move.
         # Only for qualitative endpoints.
         if self.param.getVal("imbalance") is not None and not self.param.getVal("quantitative"):
-            success, mask = run_imbalance(self.param.getVal('imbalance'), self.Y)
+            success, mask = run_imbalance(self.param.getVal('imbalance'), self.X, self.Y)
             if not success:
                 return False, mask
 
