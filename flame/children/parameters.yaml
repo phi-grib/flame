@@ -429,7 +429,15 @@ imbalance:
   options: 
     - null
     - simple_subsampling
-  description: Whether to perform or not sub/over sampling strategies
+    - near_miss1
+    - near_miss2
+    - near_miss3
+    - edited_KNN
+    - rep_edited_KNN
+    - all_KNN
+    - iht
+  description: "Whether to perform or not sub/over sampling strategies. Imbalance
+  strategies adapted from https://imbalanced-learn.readthedocs.io/en/stable/"
   dependencies: null
   comments: 
   group: modeling
