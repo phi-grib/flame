@@ -585,7 +585,7 @@ def action_documentation(model, version=None, doc_file=None, oformat='text'):
         'Data_info', 'Algorithm', 'Software', 'Descriptors', 'Algorithm_settings',
         'AD_method', 'AD_parameters', 'Goodness_of_fit_statistics', 
         'Internal_validation_1', 'Internal_validation_2', 'External_validation',
-        'Comments', 'Other_related_models', 'Date_of_QMRF', 'Data_of_QMRF_updates',
+        'Comments', 'Other_related_models', 'Date_of_QMRF', 'Date_of_QMRF_updates',
         'QMRF_updates', 'References', 'QMRF_same_models', 'Comment_on_the_endpoint',
         'Endpoint_data_quality_and_variability', 'Descriptor_selection'
         ]
