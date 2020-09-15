@@ -566,6 +566,11 @@ def action_documentation(model, version=None, doc_file=None, oformat='text'):
             # directory and save changes to make them persistent
             success, message = doc.delta(model, version, doc_file, iformat='JSONS')
             return True, 'OK'
+        elif oformat == 'YAML':
+            # use the param string to update existing parameters at the model
+            # directory and save changes to make them persistent
+            success, message = doc.delta(model, version, doc_file, iformat='YAML')
+            return True, 'OK'
         else:
             # use the param_file to update existing parameters at the model
             # directory and save changes to make them persistent
