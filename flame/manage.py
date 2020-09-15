@@ -574,7 +574,7 @@ def action_documentation(model, version=None, doc_file=None, oformat='text'):
         else:
             # use the param_file to update existing parameters at the model
             # directory and save changes to make them persistent
-            success, message = doc.delta(model, version, doc_file, iformat='YAML')
+            success, message = doc.delta(model, version, doc_file, iformat='text')
 
         if not success:
             return False, message
