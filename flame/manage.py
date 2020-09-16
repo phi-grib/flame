@@ -588,6 +588,8 @@ def action_documentation(model, version=None, doc_file=None, oformat='text'):
     # CONSOLE PRINTING
     yaml = doc.dumpYAML ()
     for line in yaml:
+        line = line.encode("ascii", "ignore")
+        line = line.decode("ascii", "ignore")
         print (line)
 
 
