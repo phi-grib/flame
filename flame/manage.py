@@ -560,12 +560,12 @@ def action_documentation(model, version=None, doc_file=None, oformat='text'):
 
     doc = Documentation(model, version)
 
+    # INPUT, the doc_file will be applied to doc as a delta
     if doc_file is not None:
         if oformat == 'JSONS':
             # use the param string to update existing parameters at the model
             # directory and save changes to make them persistent
             success, message = doc.delta(model, version, doc_file, iformat='JSONS')
-            return True, 'OK'
         else:
             # use the param_file to update existing parameters at the model
             # directory and save changes to make them persistent
@@ -574,90 +574,99 @@ def action_documentation(model, version=None, doc_file=None, oformat='text'):
         if not success:
             return False, message
 
+        return True, 'success'
+
+    # OUTPUT, the doc will be returened as a documentation object
     doc = Documentation(model, version)
+    
     if oformat != 'text':
         return True, doc
 
-    else:
-        order = ['ID', 'Version', 'Contact', 'Institution', 'Date', 'Endpoint',
-         'Endpoint_units', 'Interpretation', 'Dependent_variable', 'Species',
-        'Limits_applicability', 'Experimental_protocol', 'Model_availability',
-        'Data_info', 'Algorithm', 'Software', 'Descriptors', 'Algorithm_settings',
-        'AD_method', 'AD_parameters', 'Goodness_of_fit_statistics', 
-        'Internal_validation_1', 'Internal_validation_2', 'External_validation',
-        'Comments', 'Other_related_models', 'Date_of_QMRF', 'Date_of_QMRF_updates',
-        'QMRF_updates', 'References', 'QMRF_same_models', 'Comment_on_the_endpoint',
-        'Endpoint_data_quality_and_variability', 'Descriptor_selection'
-        ]
+    # CONSOLE PRINTING
+    yaml = doc.dumpYAML ()
+    for line in yaml:
+        print (line)
 
 
-        for ik in order:
-            if ik in doc.fields:
-                k = ik
-                v = doc.fields[k]
+    # order = ['ID', 'Version', 'Contact', 'Institution', 'Date', 'Endpoint',
+    #     'Endpoint_units', 'Interpretation', 'Dependent_variable', 'Species',
+    # 'Limits_applicability', 'Experimental_protocol', 'Model_availability',
+    # 'Data_info', 'Algorithm', 'Software', 'Descriptors', 'Algorithm_settings',
+    # 'AD_method', 'AD_parameters', 'Goodness_of_fit_statistics', 
+    # 'Internal_validation_1', 'Internal_validation_2', 'External_validation',
+    # 'Comments', 'Other_related_models', 'Date_of_QMRF', 'Date_of_QMRF_updates',
+    # 'QMRF_updates', 'References', 'QMRF_same_models', 'Comment_on_the_endpoint',
+    # 'Endpoint_data_quality_and_variability', 'Descriptor_selection'
+    # ]
 
-                ivalue = ''
-                idescr = ''
-                ioptio = ''
 
-                ## newest parameter formats are extended and contain
-                ## rich metainformation for each entry
-                if 'value' in v:
-                    if not isinstance(v['value'] ,dict):
-                        ivalue = v['value']
-                    else:
-                        # print header of dictionary
-                        print (f'{k} :')
+    # for ik in order:
+    #     if ik in doc.fields:
+    #         k = ik
+    #         v = doc.fields[k]
 
-                        # iterate keys assuming existence of value and description
-                        for intk in v['value']:
-                            intv = v['value'][intk]
-                            if not isinstance(intv, dict):
-                                print (f'   {intk:27} : {str(intv):30}')  #{iioptio} {iidescr}')
-                            
-                            else:
-                                #print(intk)
-                                intv = v['value'][intk]
+    #         ivalue = ''
+    #         idescr = ''
+    #         ioptio = ''
 
-                                iivalue = ''
-                                if "value" in intv:                                
-                                    iivalue = intv["value"]
-                                # else: 
-                                #     iivalue = intv
+    #         ## newest parameter formats are extended and contain
+    #         ## rich metainformation for each entry
+    #         if 'value' in v:
+    #             if not isinstance(v['value'] ,dict):
+    #                 ivalue = v['value']
+    #             else:
+    #                 # print header of dictionary
+    #                 print (f'{k} :')
 
-                                iidescr = ''
-                                if "description" in intv and intv["description"] is not None:
-                                    iidescr = intv["description"]
+    #                 # iterate keys assuming existence of value and description
+    #                 for intk in v['value']:
+    #                     intv = v['value'][intk]
+    #                     if not isinstance(intv, dict):
+    #                         print (f'   {intk:27} : {str(intv):30}')  #{iioptio} {iidescr}')
+                        
+    #                     else:
+    #                         #print(intk)
+    #                         intv = v['value'][intk]
 
-                                iioptio = ''
-                                if 'options' in intv:
-                                    toptio = intv['options']
+    #                         iivalue = ''
+    #                         if "value" in intv:                                
+    #                             iivalue = intv["value"]
+    #                         # else: 
+    #                         #     iivalue = intv
 
-                                    if isinstance(toptio, list):
-                                        if toptio != [None]:
-                                            iioptio = f' {toptio}'
+    #                         iidescr = ''
+    #                         if "description" in intv and intv["description"] is not None:
+    #                             iidescr = intv["description"]
 
-                                if isinstance (iivalue, float):
-                                    iivalue =  f'{iivalue:f}'
-                                elif iivalue is None:
-                                    iivalue = ''
+    #                         iioptio = ''
+    #                         if 'options' in intv:
+    #                             toptio = intv['options']
 
-                                print (f'   {intk:27} : {str(iivalue):30} #{iioptio} {iidescr}')
+    #                             if isinstance(toptio, list):
+    #                                 if toptio != [None]:
+    #                                     iioptio = f' {toptio}'
 
-                        continue
+    #                         if isinstance (iivalue, float):
+    #                             iivalue =  f'{iivalue:f}'
+    #                         elif iivalue is None:
+    #                             iivalue = ''
 
-                    if 'description' in v:
-                        idescr = v['description'] 
+    #                         print (f'   {intk:27} : {str(iivalue):30} #{iioptio} {iidescr}')
 
-                    if 'options' in v:
-                        toptio = v['options']
+    #                 continue
 
-                        if isinstance(toptio, list):
-                            ioptio = f' {toptio}'
+    #             if 'description' in v:
+    #                 idescr = v['description'] 
 
-                print (f'{k:30} : {str(ivalue):30} #{ioptio} {idescr}')
+    #             if 'options' in v:
+    #                 toptio = v['options']
 
-        return True, 'parameters listed'
+    #                 if isinstance(toptio, list):
+    #                     ioptio = f' {toptio}'
+
+    #         print (f'{k:30} : {str(ivalue):30} #{ioptio} {idescr}')
+
+    return True, 'parameters listed'
 
 def action_label(model, version=None, labels=None, oformat='text'):
     ''' Returns / sets the model labels '''
