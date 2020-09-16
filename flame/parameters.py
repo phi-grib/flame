@@ -381,6 +381,105 @@ class Parameters:
     def dumpJSON (self):
         return json.dumps(self.p)
 
+    def dumpYAML (self):
+        yaml_out = []
+
+        order = ['input_type', 'quantitative', 'SDFile_activity', 'SDFile_name', 'SDFile_id',
+        'SDFile_experimental', 'SDFile_complementary', 'normalize_method', 'ionize_method', 'convert3D_method', 
+        'computeMD_method', 'model', 'modelAutoscaling', 'tune', 'conformal', 
+        'conformalConfidence', 'ModelValidationCV', 'ModelValidationLC', 
+        'ModelValidationN', 'ModelValidationP', 'output_format', 'output_md', 'output_similar',
+        'TSV_activity', 'TSV_objnames', 'TSV_varnames', 'imbalance', 
+        'feature_selection', 'feature_number', 'mol_batch',  
+        'ensemble_names','ensemble_versions', 
+        'similarity_metric', 'similarity_cutoff_num', 'similarity_cutoff_distance',
+        'numCPUs', 'verbose_error', 'modelingToolkit', 
+        'endpoint', 'model_path', 
+        #'md5', 
+        'version']
+
+        order += ['MD_settings', 'RF_parameters','RF_optimize',
+        'SVM_parameters','SVM_optimize',
+        'PLSDA_parameters','PLSDA_optimize',
+        'PLSR_parameters','PLSR_optimize',
+        'GNB_parameters']
+
+
+        for ik in order:
+            if ik in self.p:
+                k = ik
+                v = self.p[k]
+
+                ivalue = ''
+                idescr = ''
+                ioptio = ''
+
+                ## newest parameter formats are extended and contain
+                ## rich metainformation for each entry
+                if self.extended:
+                    if 'value' in v:
+                        if not isinstance(v['value'] ,dict):
+                            ivalue = v['value']
+                        else:
+                            # print header of dictionaty
+                            yaml_out.append (f'{k} :')
+
+                            # iterate keys assuming existence of value and description
+                            for intk in v['value']:
+                                intv = v['value'][intk]
+
+                                iivalue = ''
+                                if "value" in intv:                                
+                                    iivalue = intv["value"]
+
+                                iidescr = ''
+                                if "description" in intv and intv["description"] is not None:
+                                    iidescr = intv["description"]
+
+                                iioptio = ''
+                                if 'options' in intv:
+                                    toptio = intv['options']
+
+                                    if isinstance(toptio, list):
+                                        if toptio != [None]:
+                                            iioptio = f' {toptio}'
+
+                                if isinstance (iivalue, float):
+                                    iivalue =  f'{iivalue:f}'
+                                elif iivalue is None:
+                                    iivalue = ''
+
+                                yaml_out.append (f'   {intk:27} : {str(iivalue):30} #{iioptio} {iidescr}')
+
+                            continue
+
+                    if 'description' in v:
+                        idescr = v['description'] 
+
+                    if 'options' in v:
+                        toptio = v['options']
+
+                        if isinstance(toptio, list):
+                            ioptio = f' {toptio}'
+
+                ### compatibility: old stile parameters
+                else:
+                    if not isinstance(v ,dict):
+                        ivalue = v
+                    else:
+                        ivalue = '*dictionary*'
+                ### end compatibility
+
+                if isinstance (ivalue, float):
+                    ivalue =  f'{ivalue:f}'
+                elif ivalue is None:
+                    ivalue = ''
+
+                yaml_out.append (f'{k:30} : {str(ivalue):30} #{ioptio} {idescr}')
+
+        return (yaml_out)
+
+
     def idataHash (self):
         ''' Create a md5 hash for a number of keys describing parameters
             relevant for idata
