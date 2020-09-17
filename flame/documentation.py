@@ -123,16 +123,24 @@ class Documentation:
             hash of the configuration file 
         '''
 
-        # if not self.loadYaml(model, version, isSpace):
-        #     return False, 'file not found'
-        
-        # parse parameter file assuning it will be in
-        # a YAML-compatible format
+        # input is a string, either in JSON or YAML format
+        # this is the typical input sent by 
+
+        if iformat not in ['JSON','JSONS','YAML','YAMLS']:
+            return False, 'input format not recognized'
+
         if iformat == 'JSONS':
             try:
                 newp = json.loads(doc)
             except Exception as e:
                 return False, e
+        elif iformat == 'YAMLS':
+            try:
+                newp = yaml.load(doc)
+            except Exception as e:
+                return False, e
+
+        # input is a file, either in YAML or JSON format
         else:
             try:
                 with open(doc, 'r') as pfile:
@@ -311,7 +319,6 @@ class Documentation:
         'QMRF_updates', 'References', 'QMRF_same_models', 'Comment_on_the_endpoint',
         'Endpoint_data_quality_and_variability', 'Descriptor_selection'
         ]
-
 
         for ik in order:
             if ik in self.fields:
