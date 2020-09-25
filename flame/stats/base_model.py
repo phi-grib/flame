@@ -1013,6 +1013,8 @@ class BaseEstimator:
             return
 
         prediction = self.estimator.predict(Xb, significance = 1.0 - self.param.getVal('conformalConfidence'))
+        pvals = self.estimator.predict(Xb)
+        
         if prediction is None:
             return False, 'prediction error'
 
@@ -1061,11 +1063,19 @@ class BaseEstimator:
             # This is also converted to a binary 1/0 results
             for i in range(len(prediction[0])):
                 class_key = 'c' + str(i)
+                class_key2 = "p" + str(i)
                 class_label = 'Class ' + str(i)
+                class_label2 = "p-value " + str(i)
                 class_list = prediction[:, i].tolist()
+                p_values = pvals[:, i].tolist()
                 self.conveyor.addVal(class_list, 
                                 class_key, 
                                 class_label,
+                                'confidence', 'objs', 
+                                'Conformal class assignment')
+                self.conveyor.addVal(p_values, 
+                                class_key2, 
+                                class_label2,
                                 'confidence', 'objs', 
                                 'Conformal class assignment')
 

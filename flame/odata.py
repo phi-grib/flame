@@ -275,7 +275,8 @@ class Odata():
         # 2. console output
         ####
         #print (self.results)
-
+        output_predictions = open("predictions_pvalues.tsv", "w")
+        output_predictions.write("name\tprediction\tp-value0\tpvalue1\n")
         if 'ghost' not in self.format:
             self.print_result(('obj_num','number of objects',self.conveyor.getVal('obj_num')))
 
@@ -286,9 +287,16 @@ class Odata():
             if self.conveyor.isKey('values'):
                 nams = self.conveyor.getVal('obj_nam')
                 vals = self.conveyor.getVal('values')
+                pval1 = self.conveyor.getVal('p0')
+                pval2 = self.conveyor.getVal('p1')
+
                 for i in range (self.conveyor.getVal('obj_num')):
                     # print (self.conveyor.getVal('obj_nam')[i], '\t' , float("{0:.4f}".format(self.conveyor.getVal('values')[i])))
-                    print (f'{nams[i]}\t{vals[i]:.4f}')
+                    output =  f'{nams[i]}\t{vals[i]:.4f}\t{pval1[i]:.4f}\t{pval2[i]:.4f}\n'
+                    print(output)
+                    output_predictions.write(output)
+        output_predictions.close()
+
 
         ###
         # 3. molecular descriptors file in TSV format [optional]
