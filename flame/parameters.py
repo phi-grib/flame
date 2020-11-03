@@ -109,6 +109,32 @@ class Parameters:
 
         return True, 'OK'
 
+    def applyDelta (self, newp):
+        # update interna dict with keys in the input file (delta)
+        black_list = ['param_format','version','model_path','endpoint','md5']
+        for key in newp:
+            if key not in black_list:
+
+                val = newp[key]
+
+                # YAML define null values as 'None, which are interpreted 
+                # as strings
+                if val == 'None':
+                    val = None
+
+                if isinstance(val ,dict):
+                    for inner_key in val:
+                        inner_val = val[inner_key]
+
+                        if inner_val == 'None':
+                            inner_val = None
+
+                        self.setInnerVal(key, inner_key, inner_val)
+                        #print ('@delta: adding',key, inner_key, inner_val)
+                else:
+                    self.setVal(key,val)
+
+
     def delta(self, model, version, param, iformat='YAML', isSpace=False):
         ''' load a set of parameters from the configuration file present 
             at the model directory
@@ -141,30 +167,32 @@ class Parameters:
             except Exception as e:
                 return False, e
         
-        # update interna dict with keys in the input file (delta)
-        black_list = ['param_format','version','model_path','endpoint','md5']
-        for key in newp:
-            if key not in black_list:
+        self.applyDelta(newp)
 
-                val = newp[key]
+        # # update interna dict with keys in the input file (delta)
+        # black_list = ['param_format','version','model_path','endpoint','md5']
+        # for key in newp:
+        #     if key not in black_list:
 
-                # YAML define null values as 'None, which are interpreted 
-                # as strings
-                if val == 'None':
-                    val = None
+        #         val = newp[key]
 
-                if isinstance(val ,dict):
-                    for inner_key in val:
-                        inner_val = val[inner_key]
+        #         # YAML define null values as 'None, which are interpreted 
+        #         # as strings
+        #         if val == 'None':
+        #             val = None
 
-                        if inner_val == 'None':
-                            inner_val = None
+        #         if isinstance(val ,dict):
+        #             for inner_key in val:
+        #                 inner_val = val[inner_key]
 
-                        self.setInnerVal(key, inner_key, inner_val)
-                        #print ('@delta: adding',key, inner_key, inner_val)
-                else:
-                    self.setVal(key,val)
-                    #print ('@delta: adding',key,val,type(val))
+        #                 if inner_val == 'None':
+        #                     inner_val = None
+
+        #                 self.setInnerVal(key, inner_key, inner_val)
+        #                 #print ('@delta: adding',key, inner_key, inner_val)
+        #         else:
+        #             self.setVal(key,val)
+        #             #print ('@delta: adding',key,val,type(val))
 
         # dump internal dict to the parameters file
         if isSpace:
