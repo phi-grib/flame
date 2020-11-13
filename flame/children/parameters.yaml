@@ -1067,6 +1067,59 @@ XGBOOST_optimize:
   comments: 
   group: modeling
 
+Keras_parameters:
+  advanced: advanced
+  object_type: dictionary
+  writable: false
+  options: null
+  value:
+    epochs:
+      object_type: list
+      writable: false
+      value: 100
+      options:
+        - 100
+        - 200
+        - 250
+      description:  Number of epochs
+    batch_size:
+      object_type: float
+      writable: true
+      value: 36
+      options:
+        - 1
+        - 10
+        - 30
+      description:  Batch size for model Keras batch learning
+  description: 
+  dependencies: 
+    model: SKLEARN
+  comments: 
+  group: modeling
+
+Keras_optimize:
+  advanced: advanced
+  object_type: dictionary
+  writable: false
+  options: null
+  value:
+    epoch:
+      object_type: list
+      writable: false
+      value: 
+        - 50
+        - 100
+        - 150
+      options:
+        - 50
+        - 100
+        - 150
+      description: 
+  description: Keras optimize parameters
+  dependencies: 
+    model: Keras
+  comments: 
+  group: modeling
 
 output_format:
   advanced: regular

@@ -146,6 +146,15 @@ class BaseEstimator:
         self.Y = Y
         self.nobj, self.nvarx = np.shape(X)
 
+        # Check if model is a keras model and
+        # adjust n_jobs=1 if so
+        if self.param.getVal('model') == 'my_keras'\
+         or self.param.getVal('model') == 'Keras':
+            self.n_jobs = 1
+        else:
+            self.n_jobs = -1
+
+
         # Get cross-validator
         # Consider to include a Random Seed for cross-validator
         if self.param.getVal('ModelValidationCV'):
@@ -793,6 +802,7 @@ class BaseEstimator:
             return False, f'Error computing goodness of fit with exception: {e}'
 
         # Compute Cross-validation quality metrics
+
         try:
             # Get predicted Y
             # y_pred = cross_val_predict(copy.copy(self.estimator), copy.copy(X), copy.copy(Y), cv=self.cv, n_jobs=1)
@@ -824,6 +834,8 @@ class BaseEstimator:
         results ['Y_adj'] = Yp
         results ['Y_pred'] = y_pred
         return True, results
+
+
 
     def qualitativeValidation(self):
         ''' performs validation for qualitative models '''
@@ -864,7 +876,8 @@ class BaseEstimator:
 
         # Get cross-validated Y 
         try:
-            y_pred = cross_val_predict(self.estimator, X, Y, cv=self.cv, n_jobs=-1)
+            y_pred = cross_val_predict(self.estimator, X, Y, cv=self.cv,
+                                       n_jobs=self.n_jobs)
         except Exception as e:
             return False, f'Cross-validation failed with exception: {e}'
 
@@ -1147,6 +1160,8 @@ class BaseEstimator:
             params = self.estimator_temp.get_params()
         else:
             params = self.estimator.get_params()
+        if self.param.getVal('model') == "Keras":
+            params = ["Keras sequential model"]
 
         self.conveyor.addVal(params, 'estimator_parameters',
                             'estimator parameters', 'method', 'single',

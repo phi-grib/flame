@@ -1,4 +1,4 @@
-name: flame
+name: flame_gpu
 channels:
   - default
   - rdkit
@@ -12,7 +12,8 @@ dependencies:
   - scikit-learn=>0.19.1
   - requests
   - rdkit
-  - keras
+  - matplotlib
+  - keras-gpu
   - pyyaml
   - pytest
   - psycopg2

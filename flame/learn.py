@@ -24,6 +24,7 @@
 import os
 import pickle
 import numpy as np
+import time
 
 from sklearn.preprocessing import MinMaxScaler 
 from sklearn.preprocessing import StandardScaler 
@@ -36,6 +37,7 @@ from flame.stats.PLSR import PLSR
 from flame.stats.PLSDA import PLSDA
 from flame.stats import feature_selection
 from flame.stats.XGboost import XGBOOST
+from flame.stats.Keras import Keras_nn
 from flame.stats.combo import median, mean, majority, matrix
 from flame.stats.imbalance import run_imbalance  
 
@@ -65,6 +67,7 @@ class Learn:
                               ('GNB', GNB),
                               ('PLSR', PLSR),
                               ('PLSDA', PLSDA), 
+                              ('Keras', Keras_nn),
                               ('median', median),
                               ('mean', mean),
                               ('majority', majority),
@@ -397,6 +400,8 @@ class Learn:
         '''
         Builds the model using the appropriate toolkit (internal or custom).
         '''
+        # Count the time
+        start = time.time()
 
         toolkit = self.param.getVal('modelingToolkit')
 
@@ -411,5 +416,10 @@ class Learn:
             LOG.error("Modeling toolkit is not yet supported")
             self.conveyor.setError( 'modeling Toolkit ' + \
                 toolkit+' is not supported yet')
-
+        
+        end = time.time()
+        hours, rem = divmod(end-start, 3600)
+        minutes, seconds = divmod(rem, 60)
+        LOG.info("{:0>2}:{:0>2}:{:05.2f}".format(int(hours),
+              int(minutes),seconds))
         return 
