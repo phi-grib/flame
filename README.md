@@ -8,7 +8,13 @@ Flame allows to:
 - Easily develop machine-learning models, for example QSAR-like models, starting from annotated collections of chemical compounds stored in standard formats (i.e. SDFiles)
 - Transfer new models into a production environment where they can be used by web services to predict the properties of new compounds.
 
-Flame is in active development and **no stable release has been produced so far**. Even this README is under construction, so please excuse errors and inaccuracies.
+Flame can be used in comand mode or using a web based GUI. The code for the GUI is accessible [here](https://github.com/phi-grib/flame_API). We provide Windows and Linux installers (both for the Flame backend and the GUI) that can be downloaded here
+- [Windows](https://drive.google.com/file/d/1SQwNnjpFBBYUcSkPT-cIrG5yHwskgrKS/view?usp=sharing)
+- [Linux](https://github.com/phi-grib/Flame_installer_linux)
+
+A Flame walkthrough, showing some of its main features is accesible [here](https://drive.google.com/file/d/1J6Enx0sYQ6ZIL5CXNWaDvbTci45kIVMI/view?usp=sharing)
+
+
 
 ## Installation
 
@@ -65,9 +71,6 @@ For development, use the -e flag. This will made accesible the latest changes to
 pip install -e .
 ```
 
-Installers for Windows and Linux can be downloaded here:
-- [Windows](https://drive.google.com/file/d/1SQwNnjpFBBYUcSkPT-cIrG5yHwskgrKS/view?usp=sharing)
-- [Linux](https://github.com/phi-grib/Flame_installer_linux)
 
 ## Configuration
 
@@ -225,6 +228,7 @@ Once it was built, this chemical space can be used to search compounds similar t
 flame -c search -s MySpace -v 0 -f query.sdf -p similarity.yaml
 ```
 The file `query.sdf` can contain the chemical structure of one or many compounds. The file `similarity.yaml` must define the metric used for the search, the distance cutoff and the maximum number of similars to extract per query compound. The last two fields can be left empty to avoid applying these limits. 
+
 
 ## Flame commands
 
