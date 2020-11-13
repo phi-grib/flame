@@ -65,6 +65,10 @@ For development, use the -e flag. This will made accesible the latest changes to
 pip install -e .
 ```
 
+Installers for Windows and Linux can be downloaded here:
+- [Windows](https://drive.google.com/file/d/1SQwNnjpFBBYUcSkPT-cIrG5yHwskgrKS/view?usp=sharing)
+- [Linux](https://github.com/phi-grib/Flame_installer_linux)
+
 ## Configuration
 
 After installation is completed, you must run the configuration command to configure the directory where flame will place the models and chemical spaces. If Flame has not been configured previously the following command
