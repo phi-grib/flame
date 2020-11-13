@@ -10,7 +10,7 @@ Flame allows to:
 
 Flame can be used in comand mode or using a web based GUI. The code for the GUI is accessible [here](https://github.com/phi-grib/flame_API). We provide Windows and Linux installers (both for the Flame backend and the GUI) that can be downloaded here
 - [Windows](https://drive.google.com/file/d/1SQwNnjpFBBYUcSkPT-cIrG5yHwskgrKS/view?usp=sharing)
-- [Linux](https://github.com/phi-grib/Flame_installer_linux)
+- [Linux](https://drive.google.com/file/d/1J7AMqHWkwHcCRUrWaFyqzjB8Yb688L-i/view?usp=sharing)
 
 A Flame walkthrough, showing some of its main features is accesible [here](https://drive.google.com/file/d/1J6Enx0sYQ6ZIL5CXNWaDvbTci45kIVMI/view?usp=sharing)
 
