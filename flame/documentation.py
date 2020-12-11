@@ -123,16 +123,24 @@ class Documentation:
             hash of the configuration file 
         '''
 
-        # if not self.loadYaml(model, version, isSpace):
-        #     return False, 'file not found'
-        
-        # parse parameter file assuning it will be in
-        # a YAML-compatible format
+        # input is a string, either in JSON or YAML format
+        # this is the typical input sent by 
+
+        if iformat not in ['JSON','JSONS','YAML','YAMLS']:
+            return False, 'input format not recognized'
+
         if iformat == 'JSONS':
             try:
                 newp = json.loads(doc)
             except Exception as e:
                 return False, e
+        elif iformat == 'YAMLS':
+            try:
+                newp = yaml.load(doc)
+            except Exception as e:
+                return False, e
+
+        # input is a file, either in YAML or JSON format
         else:
             try:
                 with open(doc, 'r') as pfile:
@@ -297,6 +305,90 @@ class Documentation:
 
     def dumpJSON (self):
         return json.dumps(self.fields, allow_nan=True)
+
+    def dumpYAML (self):
+        yaml_out = []
+
+        order = ['ID', 'Version', 'Contact', 'Institution', 'Date', 'Endpoint',
+            'Endpoint_units', 'Interpretation', 'Dependent_variable', 'Species',
+        'Limits_applicability', 'Experimental_protocol', 'Model_availability',
+        'Data_info', 'Algorithm', 'Software', 'Descriptors', 'Algorithm_settings',
+        'AD_method', 'AD_parameters', 'Goodness_of_fit_statistics', 
+        'Internal_validation_1', 'Internal_validation_2', 'External_validation',
+        'Comments', 'Other_related_models', 'Date_of_QMRF', 'Date_of_QMRF_updates',
+        'QMRF_updates', 'References', 'QMRF_same_models', 'Comment_on_the_endpoint',
+        'Endpoint_data_quality_and_variability', 'Descriptor_selection'
+        ]
+
+        for ik in order:
+            if ik in self.fields:
+                k = ik
+                v = self.fields[k]
+
+                ivalue = ''
+                idescr = ''
+                ioptio = ''
+
+                ## newest parameter formats are extended and contain
+                ## rich metainformation for each entry
+                if 'value' in v:
+                    if not isinstance(v['value'] ,dict):
+                        ivalue = v['value']
+                    else:
+                        # print header of dictionary
+                        yaml_out.append (f'{k} :')
+
+                        # iterate keys assuming existence of value and description
+                        for intk in v['value']:
+                            intv = v['value'][intk]
+                            if not isinstance(intv, dict):
+                                yaml_out.append (f'   {intk:27} : {str(intv):30}')  #{iioptio} {iidescr}')
+                            
+                            else:
+                                #print(intk)
+                                intv = v['value'][intk]
+
+                                iivalue = ''
+                                if "value" in intv:                                
+                                    iivalue = intv["value"]
+                                # else: 
+                                #     iivalue = intv
+
+                                iidescr = ''
+                                if "description" in intv and intv["description"] is not None:
+                                    iidescr = intv["description"]
+
+                                iioptio = ''
+                                if 'options' in intv:
+                                    toptio = intv['options']
+
+                                    if isinstance(toptio, list):
+                                        if toptio != [None]:
+                                            iioptio = f' {toptio}'
+
+                                if isinstance (iivalue, float):
+                                    iivalue =  f'{iivalue:f}'
+                                elif iivalue is None:
+                                    iivalue = ''
+
+                                yaml_out.append (f'   {intk:27} : {str(iivalue):30} #{iioptio} {iidescr}')
+
+                        continue
+
+                    if 'description' in v:
+                        idescr = v['description'] 
+
+                    if 'options' in v:
+                        toptio = v['options']
+
+                        if isinstance(toptio, list):
+                            ioptio = f' {toptio}'
+
+                yaml_out.append (f'{k:30} : {str(ivalue):30} #{ioptio} {idescr}')
+        
+        return (yaml_out)
+
+
 
     def assign_parameters(self):
         '''

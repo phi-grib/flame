@@ -1,8 +1,8 @@
 admin_email: admin@domain.org
 admin_name: Admin Name
-config_status: true
+config_status: false
 homepage: homepage@domain.org
-model_repository_path: E:\synced\internals\confomal_datasets\models
-predictions_repository_path: E:\synced\internals\confomal_datasets\predictions
+model_repository_path: C:\Users\myname\models
+predictions_repository_path: C:\Users\myname\predictions
 provider: My Organization
-space_repository_path: E:\synced\internals\confomal_datasets\spaces
+space_repository_path: C:\Users\myname\spaces
