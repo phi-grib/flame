@@ -25,9 +25,10 @@ from copy import copy
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.neighbors import KNeighborsRegressor
 
+
 from nonconformist.base import ClassifierAdapter, RegressorAdapter
 from nonconformist.acp import AggregatedCp
-from nonconformist.acp import BootstrapSampler
+from nonconformist.acp import BootstrapSampler, RandomSubSampler, CrossSampler
 from nonconformist.icp import IcpClassifier, IcpRegressor
 from nonconformist.nc import ClassifierNc, MarginErrFunc, RegressorNc
 from nonconformist.nc import AbsErrorErrFunc, RegressorNormalizer
@@ -172,32 +173,46 @@ class XGBOOST(BaseEstimator):
             return True, results
         # Create the conformal estimator
         try:
+            # set parameters
+            conformal_settings = self.param.getDict('conformal_settings')
+
+            samplers = {"BootstrapSampler" : BootstrapSampler(), "RandomSubSampler" : RandomSubSampler(),
+                        "CrossSampler" : CrossSampler()}
+            aggregation_f = conformal_settings['aggregation_function']
+            try:
+                sampler = samplers[conformal_settings['ACP_sampler']]
+                n_predictors = conformal_settings['conformal_predictors']
+
+            except Exception as e:
+                # For previous models
+                sampler = BootstrapSampler()
+                n_predictors = 10
+            
             # Conformal regressor
             if self.param.getVal('quantitative'):
-                conformal_settings = self.param.getDict('conformal_settings')
                 LOG.info("Building conformal Quantitative XGBOOST model")
-
+                normalizers = {'KNN' : RegressorAdapter(KNeighborsRegressor(
+                                       n_neighbors=conformal_settings['KNN_NN'])),
+                                'Underlying' : RegressorAdapter(self.estimator_temp),
+                                'None' : None}
                 underlying_model = RegressorAdapter(self.estimator_temp)
-                self.normalizing_model = RegressorAdapter(
-                    KNeighborsRegressor(n_neighbors=conformal_settings['KNN_NN']))
-                # normalizing_model = RegressorAdapter(self.estimator_temp)
-                normalizer = RegressorNormalizer(
-                                underlying_model,
-                                copy(self.normalizing_model),
-                                AbsErrorErrFunc())
+                self.normalizing_model = normalizers[conformal_settings['error_model']]
+                if self.normalizing_model is not None:
+                    normalizer = RegressorNormalizer(
+                                    underlying_model,
+                                    copy(self.normalizing_model),
+                                    AbsErrorErrFunc())
+                else:
+                    normalizer = None
                 nc = RegressorNc(underlying_model,
                                     AbsErrorErrFunc(),
                                     normalizer)
 
-                # self.conformal_pred = AggregatedCp(IcpRegressor
-                # (RegressorNc(RegressorAdapter(self.estimator))),
-                #                                   BootstrapSampler())
-
                 self.estimator = AggregatedCp(IcpRegressor(nc),
-                                                BootstrapSampler())
+                                            sampler=sampler, aggregation_func=aggregation_f,
+                                            n_models=n_predictors)
 
                 self.estimator.fit(X, Y)
-                # results.append(('model', 'model type', 'conformal XGBOOST quantitative'))
 
             # Conformal classifier
             else:
@@ -211,17 +226,14 @@ class XGBOOST(BaseEstimator):
                                             MarginErrFunc()
                                         )
                                     ),
-                                    BootstrapSampler())
-
+                                    sampler=sampler, aggregation_func=aggregation_f,
+                                            n_models=n_predictors)
                 # Fit estimator to the data
                 self.estimator.fit(X, Y)
-                # results.append(('model', 'model type', 'conformal XGBOOST qualitative'))
-
         except Exception as e:
             return False, f'Exception building conformal XGBOOST estimator with exception {e}'
 
         return True, results
-
 
 
 ## Overriding of parent methods

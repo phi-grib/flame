@@ -203,24 +203,26 @@ class PLSR(BaseEstimator):
         try:
             
             LOG.info('Building PLSR aggregated conformal predictor')
-            conformal_settings = self.param.getDict('conformal_settings')
+            normalizers = {'KNN' : RegressorAdapter(KNeighborsRegressor(
+                                    n_neighbors=conformal_settings['KNN_NN'])),
+                            'Underlying' : RegressorAdapter(self.estimator_temp),
+                            'None' : None}
             underlying_model = RegressorAdapter(self.estimator_temp)
-            self.normalizing_model = RegressorAdapter(
-                KNeighborsRegressor(n_neighbors=conformal_settings['KNN_NN']))
-            normalizer = RegressorNormalizer(
-                            underlying_model,
-                            copy(self.normalizing_model),
-                            AbsErrorErrFunc())
+            self.normalizing_model = normalizers[conformal_settings['error_model']]
+            if self.normalizing_model is not None:
+                normalizer = RegressorNormalizer(
+                                underlying_model,
+                                copy(self.normalizing_model),
+                                AbsErrorErrFunc())
+            else:
+                normalizer = None
             nc = RegressorNc(underlying_model,
                                 AbsErrorErrFunc(),
                                 normalizer)
 
-            # self.conformal_pred = AggregatedCp(IcpRegressor
-            # (RegressorNc(RegressorAdapter(self.estimator))),
-            #                                   BootstrapSampler())
-
             self.estimator = AggregatedCp(IcpRegressor(nc),
-                                            BootstrapSampler())
+                                        sampler=sampler, aggregation_func=aggregation_f,
+                                        n_models=n_predictors)
 
             self.estimator.fit(X, Y)
 
