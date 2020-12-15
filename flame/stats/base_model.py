@@ -796,7 +796,7 @@ class BaseEstimator:
         try:
             # Get predicted Y
             # y_pred = cross_val_predict(copy.copy(self.estimator), copy.copy(X), copy.copy(Y), cv=self.cv, n_jobs=1)
-            y_pred = cross_val_predict(self.estimator, X, Y, cv=self.cv, n_jobs=-1)
+            y_pred = cross_val_predict(self.estimator, X, Y, cv=self.cv, n_jobs=1)
             SSY0_out = np.sum(np.square(Ym - Y))
             SSY_out = np.sum(np.square(Y - y_pred))
             self.scoringP = mean_squared_error(Y, y_pred)
@@ -864,7 +864,7 @@ class BaseEstimator:
 
         # Get cross-validated Y 
         try:
-            y_pred = cross_val_predict(self.estimator, X, Y, cv=self.cv, n_jobs=-1)
+            y_pred = cross_val_predict(self.estimator, X, Y, cv=self.cv, n_jobs=1)
         except Exception as e:
             return False, f'Cross-validation failed with exception: {e}'
 
