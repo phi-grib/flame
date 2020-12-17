@@ -12,6 +12,19 @@ Flame can be used in comand mode or using a web based GUI. The code for the GUI 
 - [Windows](https://drive.google.com/file/d/1SQwNnjpFBBYUcSkPT-cIrG5yHwskgrKS/view?usp=sharing)
 - [Linux](https://drive.google.com/file/d/1J7AMqHWkwHcCRUrWaFyqzjB8Yb688L-i/view?usp=sharing)
 
+A docker container (https://www.docker.com/), fully configured can be downloaded from DockerHub and installed using:
+
+```bash
+docker run -d -p 8010:8000 mpastorphi/flame
+```
+Then, the Flame GUI will be accesible from a web broser at http://localhost:8010
+
+A persistent local model and prediction repository (eg. c:\flame_repo) can also be added using: 
+
+```bash
+docker run -d -p 8010:8000 -v c:\flame_repo:/data mpastorphi/flame
+```
+
 A Flame walkthrough, showing some of its main features is accesible [here](https://drive.google.com/file/d/1J6Enx0sYQ6ZIL5CXNWaDvbTci45kIVMI/view?usp=sharing)
 
 
