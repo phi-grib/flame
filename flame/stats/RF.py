@@ -159,7 +159,12 @@ class RF(BaseEstimator):
 
             samplers = {"BootstrapSampler" : BootstrapSampler(), "RandomSubSampler" : RandomSubSampler(),
                         "CrossSampler" : CrossSampler()}
-            aggregation_f = conformal_settings['aggregation_function']
+            try:
+                aggregation_f = conformal_settings['aggregation_function']
+            except Exception as e:
+                aggregation_f = "median"
+
+
             try:
                 sampler = samplers[conformal_settings['ACP_sampler']]
                 n_predictors = conformal_settings['conformal_predictors']
@@ -177,9 +182,12 @@ class RF(BaseEstimator):
                                 'Underlying' : RegressorAdapter(self.estimator_temp),
                                 'None' : None}
                 underlying_model = RegressorAdapter(self.estimator_temp)
-                self.normalizing_model = normalizers[conformal_settings['error_model']]
-                print(conformal_settings)
-                print(self.normalizing_model)
+                
+                try:
+                    self.normalizing_model = normalizers[conformal_settings['error_model']]
+                
+                except:
+                    self.normalizing_model = None
                 if self.normalizing_model is not None:
                     normalizer = RegressorNormalizer(
                                     underlying_model,
@@ -217,7 +225,8 @@ class RF(BaseEstimator):
                 # results.append(('model', 'model type', 'conformal RF qualitative'))
 
         except Exception as e:
-            return False, f'Exception building conformal RF estimator with exception {e}'
+            raise
+            #return False, f'Exception building conformal RF estimator with exception {e}'
 
         return True, results
 
