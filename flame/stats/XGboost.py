@@ -178,7 +178,11 @@ class XGBOOST(BaseEstimator):
 
             samplers = {"BootstrapSampler" : BootstrapSampler(), "RandomSubSampler" : RandomSubSampler(),
                         "CrossSampler" : CrossSampler()}
-            aggregation_f = conformal_settings['aggregation_function']
+            try:
+                aggregation_f = conformal_settings['aggregation_function']
+            except Exception as e:
+                aggregation_f = "median"
+                
             try:
                 sampler = samplers[conformal_settings['ACP_sampler']]
                 n_predictors = conformal_settings['conformal_predictors']
