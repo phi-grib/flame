@@ -19,11 +19,13 @@ docker run -d -p 8010:8000 mpastorphi/flame
 ```
 Then, the Flame GUI will be accesible from a web broser at http://localhost:8010
 
-A persistent local model and prediction repository (eg. c:\flame_repo) can also be added using: 
+It is also possible to use an existing local model and prediction repository (eg. c:\flame_repo), with the following command: 
 
 ```bash
 docker run -d -p 8010:8000 -v c:\flame_repo:/data mpastorphi/flame
 ```
+
+(note that the local repository should already contain the 'models', 'predictions' and 'spaces' folders inside)
 
 A Flame walkthrough, showing some of its main features is accesible [here](https://drive.google.com/file/d/1J6Enx0sYQ6ZIL5CXNWaDvbTci45kIVMI/view?usp=sharing)
 
