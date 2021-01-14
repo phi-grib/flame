@@ -384,6 +384,8 @@ def action_dir():
     '''
     # get de space repo path
     spaces_path = pathlib.Path(utils.space_repository_path())
+    if spaces_path.is_dir() is False:
+        return False, 'the spaces repository path does not exist. Please run "flame -c config".'
 
     # get directories in space repo path
     dirs = [x for x in spaces_path.iterdir() if x.is_dir()]

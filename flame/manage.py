@@ -581,7 +581,6 @@ def action_documentation(model, version=None, doc_file=None, oformat='YAML'):
     return True, doc
 
 
-
 def action_label(model, version=None, labels=None, oformat='text'):
     ''' Returns / sets the model labels '''
 
@@ -638,6 +637,8 @@ def action_dir():
     '''
     # get de model repo path
     models_path = pathlib.Path(utils.model_repository_path())
+    if models_path.is_dir() is False:
+        return False, 'the model repository path does not exist. Please run "flame -c config".'
 
     # get directories in model repo path
     dirs = [x for x in models_path.iterdir() if x.is_dir()]

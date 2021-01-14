@@ -23,6 +23,7 @@
 __modules__ = None
 
 import os
+import time
 import sys
 import yaml
 import random
@@ -63,6 +64,11 @@ def read_config():
                 conf[i] = os.path.abspath(conf[i])
             except:
                 return False, f'Configuration file incorrect. Unable to convert "{conf[i]}" to a valid path.'
+            # try:
+            #     if not os.path.isdir(conf[i]):
+            #         os.mkdir(conf[i])
+            # except Exception as e:
+            #     return False, f'Path "{conf[i]}" does not exist and cannot be created, with error {e}.'
         
     return True, conf
 
@@ -77,10 +83,6 @@ def config_test() -> None:
             if config['config_status']:
                 if os.path.isdir(config['model_repository_path']):
                     return
-
-    print("Flame hasn't been configured yet. "
-        "Model repository may be wrong. "
-        "Please use 'flame -c config' before using flame")
 
     sys.exit()  # force exit
 

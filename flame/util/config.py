@@ -96,9 +96,23 @@ def configure(path: None, silent: False):
 
         # If flame has been already configured, just show values in screen and return values
         if config['config_status'] == True:
-            print(f'current model repository is {config["model_repository_path"]}')
-            print(f'current space repository is {config["space_repository_path"]}')
-            print(f'current predictions repository is {config["predictions_repository_path"]}')
+
+            models_path = config["model_repository_path"]
+            spaces_path = config["space_repository_path"]
+            predictions_path = config["predictions_repository_path"]
+            try:
+                if not os.path.isdir(models_path):
+                    os.mkdir(models_path)
+                if not os.path.isdir(spaces_path):
+                    os.mkdir(spaces_path)
+                if not os.path.isdir(predictions_path):
+                    os.mkdir(predictions_path)
+            except Exception as e:
+                return False, e
+
+            print(f'current model repository is {models_path}')
+            print(f'current space repository is {spaces_path}')
+            print(f'current predictions repository is {predictions_path}')
 
             return True, config
 
