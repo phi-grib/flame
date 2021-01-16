@@ -7,6 +7,24 @@ ID:
   description: 'Model identifier'
   value: null
 
+Model_title:
+  level: 1
+  QMRF_field: ''
+  description: 'Model title'
+  value: null
+
+Model_description:
+  level: 1
+  QMRF_field: ''
+  description: 'Model description'
+  value: null
+
+Keywords:
+  level: 1
+  QMRF_field: ''
+  description: 'Keywords'
+  value: null
+
 Version:
   level: 1
   QMRF_field: ''
@@ -81,6 +99,15 @@ Data_info:
      format:
       value: null
       description: 'Format used (SDF, SMILES, table..)'
+     test_selection:
+      value: null
+      description: 'method used to split the data in training and test sets'
+     endpoint_positive:
+      value: null
+      description: 'proportion of positive in training series'
+     endpoint_negative:
+      value: null
+      description: 'proportion of negative in training series'
      raw_data_url: 
       value: null
       description: 'URL of the original data'
@@ -272,6 +299,24 @@ QMRF_same_models:
   level: 3
   QMRF_field: '2.9'
   description: 'Availability of another QMRF for exactly the same model' 
+  value: null
+
+Mechanistic_basis:
+  level: 3
+  QMRF_field: ''
+  description: 'Any information providing the mechanistic basis of the model' 
+  value: null
+
+Mechanistic_references:
+  level: 3
+  QMRF_field: ''
+  description: 'Literature references that support the mechanistic basis of the model' 
+  value: null
+
+Supporting_information:
+  level: 3
+  QMRF_field: ''
+  description: 'Any supporting information available, like related models or meta data' 
   value: null
 
 Comment_on_the_endpoint:
