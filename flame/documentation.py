@@ -246,14 +246,15 @@ class Documentation:
             if "value" in self.fields[key]:
                 if not isinstance(self.fields[key]['value'], dict):
                     self.fields[key]["value"] = value
-                else:
-                    # print(key)
-                    for k in value.keys():
-                        self.fields[key][k] = value[k]
+                # this should never happen, since value is never a dictionary
+                # else:
+                #     for k in value.keys():
+                #         self.fields[key][k] = value[k]
 
-        # for new keys, create a new element with 'value' key
-        else:
-            self.fields[key] = {'value': value}
+        # this behaviour is deprecated, do not add new keys
+        # # for new keys, create a new element with 'value' key
+        # else:
+        #     self.fields[key] = {'value': value}
 
     def setInnerVal(self, okey, ikey, value):
         ''' Sets a parameter within an internal dictionary. The entry is defined
@@ -275,15 +276,24 @@ class Documentation:
         if not isinstance(odict, dict):
             return
         
+        # now we are sure that odict is the right inner dictionary
         if not ikey in odict:
             return
+
+        # algorithm parameters not present in the template
         if not isinstance(odict[ikey], dict):
             odict['value'] = value
             return
+
+        # keys present in the template
         if "value" in odict[ikey]:
             odict[ikey]["value"] = value
-        else:
-            odict[ikey] = {'value': value}
+
+        # this should never happen
+        # else:
+        #     odict[ikey] = {'value': value}
+        #     print ('caseC', value)
+
 
     def appVal(self, key, value):
         ''' Appends value to the end of existing key list 

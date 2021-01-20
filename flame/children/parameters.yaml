@@ -513,7 +513,7 @@ RF_parameters:
         - balanced
       description: Weights associated with classes. If not given, all classes are supposed to have weight one
     max_depth:
-      object_type: string
+      object_type: int
       writable: true
       value: null
       options:
