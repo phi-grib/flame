@@ -77,6 +77,16 @@ class RF(BaseEstimator):
         # Load estimator parameters        
         self.estimator_parameters = self.param.getDict('RF_parameters')
 
+        # patch to solve bug in the object_type definition of max_depth
+        # should not appear from versions older than 20/01/2021
+        if 'max_depth' in self.estimator_parameters:
+            v = self.estimator_parameters['max_depth']
+            if v is not None:
+                try:
+                    self.estimator_parameters['max_depth']=int(v)
+                except:
+                    self.estimator_parameters['max_depth']=None
+
         # Load tune parameters
         self.tune_parameters = self.param.getDict('RF_optimize')
 
