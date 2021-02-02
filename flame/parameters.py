@@ -427,10 +427,11 @@ class Parameters:
         'version']
 
         order += ['MD_settings', 'RF_parameters','RF_optimize',
+        'XGBOOST_parameters', 'XGBOOST_optimize',
         'SVM_parameters','SVM_optimize',
-        'PLSDA_parameters','PLSDA_optimize',
         'PLSR_parameters','PLSR_optimize',
-        'GNB_parameters']
+        'PLSDA_parameters','PLSDA_optimize',
+        'GNB_parameters' ]
 
 
         for ik in order:
