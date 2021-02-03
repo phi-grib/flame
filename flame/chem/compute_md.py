@@ -288,6 +288,7 @@ def _RDKit_descriptors(ifile, **kwargs):
 
             if np.isnan(mdi).any() or np.isinf(mdi).any():
                 success_list.append(False)
+                num_obj += 1
                 continue               
 
             xmatrix[num_obj]=mdi
@@ -347,7 +348,7 @@ def _RDKit_properties(ifile, **kwargs):
             if mol is None:
                 LOG.error(
                     f'Unable to process molecule #{num_obj+1} in {ifile}')
-
+                num_obj += 1
                 success_list.append(False)
                 continue
 
