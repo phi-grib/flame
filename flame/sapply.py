@@ -92,8 +92,13 @@ class Sapply:
             self.scaler = dict_prepro['scaler']
 
         # Check consistency between parameter file and pickle info
+        non_scale_list = ['majority','matrix']
         if self.scaler is None:
-            return False, 'Inconsistency error. Scaling method defined but no Scaler loaded'
+            # methods like majority and matrix are forced to avoid scaling 
+            if self.param.getVal('model') in non_scale_list:   
+                return True, X
+            else:
+                return False, 'Inconsistency error. Scaling method defined but no Scaler loaded'
 
         return True, self.scaler.transform(X)  
 
