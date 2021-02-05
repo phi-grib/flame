@@ -32,7 +32,8 @@ import re
 from flame.util import utils, get_logger
 
 # if the number of models is higher, try to run in multithread
-MAX_MODELS_SINGLE_CPU = 4
+MAX_MODELS_SINGLE_CPU = 10
+# MAX_MODELS_SINGLE_CPU = 4
 
 LOG = get_logger(__name__)
 

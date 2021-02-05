@@ -517,6 +517,7 @@ class Idata:
             methods = [m for m in methods if m not in no_recog_meth]
 
         is_empty = True
+        shape = []
 
         combined = {}
         for method in methods:
@@ -585,6 +586,7 @@ class Idata:
 
         first = True
         combined = {}
+        shape = []
 
         for iresults in results_tuple:
 
@@ -1201,43 +1203,46 @@ class Idata:
             combined_confidence.append(i_result.getVal('confidence'))
 
             # confidence values and names
-            if self.param.getVal('quantitative'):
-                i_low = i_result.getVal('lower_limit')
-                i_up  = i_result.getVal('upper_limit')
-                if i_up is not None and i_low is not None:
 
-                    num_conformal += 1
+            # we don't know if the low level models are qualitative or quantitative or a mixture of both
+            # simply check the presence of the CI keys and add whatever is present
 
-                    if combined_ci is None:  # for first element just copy
-                        combined_ci = np.array(i_low, dtype=np.float64)
-                        combined_ci = np.column_stack((combined_ci, i_up))
-                    else:  # append laterally
-                        combined_ci = np.column_stack((combined_ci, i_low))
-                        combined_ci = np.column_stack((combined_ci, i_up))
+            i_low = i_result.getVal('lower_limit')
+            i_up  = i_result.getVal('upper_limit')
+            if i_up is not None and i_low is not None:
 
-                    combined_ci_names.append(
-                        'lower_limit'+':'+i_result.getMeta('endpoint')+':'+str(i_result.getMeta('version')))
-                    combined_ci_names.append(
-                        'upper_limit'+':'+i_result.getMeta('endpoint')+':'+str(i_result.getMeta('version')))
-            else:
+                num_conformal += 1
+
+                if combined_ci is None:  # for first element just copy
+                    combined_ci = np.array(i_low, dtype=np.float64)
+                    combined_ci = np.column_stack((combined_ci, i_up))
+                else:  # append laterally
+                    combined_ci = np.column_stack((combined_ci, i_low))
+                    combined_ci = np.column_stack((combined_ci, i_up))
+
+                combined_ci_names.append(
+                    'lower_limit'+':'+i_result.getMeta('endpoint')+':'+str(i_result.getMeta('version')))
+                combined_ci_names.append(
+                    'upper_limit'+':'+i_result.getMeta('endpoint')+':'+str(i_result.getMeta('version')))
                 # confidence values and names
-                i_c0 = i_result.getVal('c0')
-                i_c1 = i_result.getVal('c1')
-                if i_c0 is not None and i_c1 is not None:
 
-                    num_conformal += 1
+            i_c0 = i_result.getVal('c0')
+            i_c1 = i_result.getVal('c1')
+            if i_c0 is not None and i_c1 is not None:
 
-                    if combined_ci is None:  # for first element just copy
-                        combined_ci = np.array(i_c0, dtype=np.float64)
-                        combined_ci = np.column_stack((combined_ci, i_c1))
-                    else:  # append laterally
-                        combined_ci = np.column_stack((combined_ci, i_c0))
-                        combined_ci = np.column_stack((combined_ci, i_c1))
+                num_conformal += 1
 
-                    combined_ci_names.append(
-                        'c0'+':'+i_result.getMeta('endpoint')+':'+str(i_result.getMeta('version')))
-                    combined_ci_names.append(
-                        'c1'+':'+i_result.getMeta('endpoint')+':'+str(i_result.getMeta('version')))
+                if combined_ci is None:  # for first element just copy
+                    combined_ci = np.array(i_c0, dtype=np.float64)
+                    combined_ci = np.column_stack((combined_ci, i_c1))
+                else:  # append laterally
+                    combined_ci = np.column_stack((combined_ci, i_c0))
+                    combined_ci = np.column_stack((combined_ci, i_c1))
+
+                combined_ci_names.append(
+                    'c0'+':'+i_result.getMeta('endpoint')+':'+str(i_result.getMeta('version')))
+                combined_ci_names.append(
+                    'c1'+':'+i_result.getMeta('endpoint')+':'+str(i_result.getMeta('version')))
 
         self.conveyor.addVal( combined_md, 'xmatrix', 'X matrix',
                          'results', 'vars', 'Combined output from external sources')
