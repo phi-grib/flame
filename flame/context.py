@@ -32,8 +32,7 @@ import re
 from flame.util import utils, get_logger
 
 # if the number of models is higher, try to run in multithread
-MAX_MODELS_SINGLE_CPU = 10
-# MAX_MODELS_SINGLE_CPU = 4
+MAX_MODELS_SINGLE_CPU = 4
 
 LOG = get_logger(__name__)
 
@@ -66,12 +65,15 @@ def get_ensemble_input(task, model_names, model_versions, infile):
 
     # run in multithreading
     if parallel:
-        import multiprocessing as mp
+        # import multiprocessing as mp
 
         LOG.info(f'Runing {num_models} threads in parallel')       
        
-        pool = mp.Pool(len(model_cmd))
-        model_tmp = pool.map(predict_cmd, model_cmd)
+        # pool = mp.Pool(len(model_cmd))
+        # model_tmp = pool.map(predict_cmd, model_cmd)
+
+        from joblib import Parallel, delayed
+        model_tmp = Parallel(n_jobs=num_models)(delayed(predict_cmd)(model_cmd[i]) for i in range(num_models))
 
         for iresult in model_tmp:
             model_suc.append(iresult[0])

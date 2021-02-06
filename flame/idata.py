@@ -25,7 +25,8 @@ import sys
 import pickle
 import shutil
 import tempfile
-import multiprocessing as mp
+# import multiprocessing as mp
+from joblib import Parallel, delayed
 import pathlib
 
 import numpy as np
@@ -961,6 +962,7 @@ class Idata:
         lfile = os.path.join(temp_path, os.path.basename(self.ifile))
 
         # Execute the workflow in 1 or n CPUs
+        ncpu = 4
         if ncpu > 1:
             LOG.debug('Entering molecule workflow for {} cpus'.format(ncpu))
             success, results = sdfutils.split_SDFile(lfile, ncpu)
@@ -972,12 +974,16 @@ class Idata:
             split_files_names = results[0]
             split_files_sizes = results[1]
 
-            pool = mp.Pool(ncpu)
+            # pool = mp.Pool(ncpu)
+            # if self.param.getVal('mol_batch') == 'series':
+            #     results_tuple = pool.map(self.workflow_series, split_files_names)
+            # else:
+            #     results_tuple = pool.map(self.workflow_objects, split_files_names)
 
             if self.param.getVal('mol_batch') == 'series':
-                results_tuple = pool.map(self.workflow_series, split_files_names)
+                results_tuple = Parallel(n_jobs=ncpu)(delayed(self.workflow_series)(split_files_names[i]) for i in range(ncpu))
             else:
-                results_tuple = pool.map(self.workflow_objects, split_files_names)
+                results_tuple = Parallel(n_jobs=ncpu)(delayed(self.workflow_objects)(split_files_names[i]) for i in range(ncpu))
 
             success, results = self.consolidate(results_tuple, split_files_sizes)
 
