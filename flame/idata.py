@@ -61,6 +61,7 @@ class Idata:
             SDF file with the molecules to use as training or predict        
 
         """
+
         # parameters and conveyor should have been initialized by the
         # parent class calling idata
         self.param = parameters
@@ -80,6 +81,7 @@ class Idata:
         
         input_type = self.param.getVal('input_type')
         self.conveyor.addMeta('input_type',input_type)
+
 
         # in case of top ensemble models...
         if input_type == 'model_ensemble':
@@ -582,7 +584,7 @@ class Idata:
         '''
         Mix the results obtained by multiple CPUs into a single result file.
         '''
-        LOG.info('Concatenating results from'
+        LOG.info('Concatenating results from '
                  f'{len(nobj)} jobs with shapes {nobj}')
 
         first = True
@@ -962,7 +964,7 @@ class Idata:
         lfile = os.path.join(temp_path, os.path.basename(self.ifile))
 
         # Execute the workflow in 1 or n CPUs
-        ncpu = 4
+        
         if ncpu > 1:
             LOG.debug('Entering molecule workflow for {} cpus'.format(ncpu))
             success, results = sdfutils.split_SDFile(lfile, ncpu)

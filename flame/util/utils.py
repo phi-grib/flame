@@ -37,6 +37,13 @@ from flame.util import get_logger
 
 LOG = get_logger(__name__)
 
+def isSingleThread ():
+    success, config = read_config()
+    if success:
+        if 'single_thread' in config:
+            return config['single_thread']
+    return False
+
 def read_config():
     '''
     Reads configuration file "config.yaml" and checks
@@ -184,6 +191,7 @@ def set_repositories(model_path, space_path, predictions_path):
     configuration['predictions_repository_path'] = str(new_predictions_path.resolve())
 
     write_config(configuration)
+
 
 def path_expand (path, version):
     ''' 

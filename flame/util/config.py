@@ -52,7 +52,7 @@ def ask_user ():
     return False
 
 
-def configure(path: None, silent: False):
+def configure(path: None, silent: False, single: False):
     """Configures model repository.
 
     Loads config.yaml and writes a correct model repository path
@@ -65,6 +65,11 @@ def configure(path: None, silent: False):
         return False, config
 
     if silent:
+
+        config['single_thread'] = single
+        utils.write_config(config)
+        print(f'configured as single thread: {single}')
+
         if path is not None:  
             source_dir = os.path.abspath(path)
         else:
@@ -89,6 +94,9 @@ def configure(path: None, silent: False):
         print(f'model repository set to {models_path}')
         print(f'space repository set to {spaces_path}')
         print(f'predictions repository set to {predictions_path}')
+
+
+
 
         return True, config
 

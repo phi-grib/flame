@@ -146,6 +146,12 @@ class BaseEstimator:
         self.Y = Y
         self.nobj, self.nvarx = np.shape(X)
 
+        self.cross_jobs = -1
+        if utils.isSingleThread():
+            self.cross_jobs = 1
+            
+        LOG.info(f'Num jobs set to {self.cross_jobs}')
+
         # Get cross-validator
         # Consider to include a Random Seed for cross-validator
         if self.param.getVal('ModelValidationCV'):
@@ -796,7 +802,7 @@ class BaseEstimator:
         try:
             # Get predicted Y
             # y_pred = cross_val_predict(copy.copy(self.estimator), copy.copy(X), copy.copy(Y), cv=self.cv, n_jobs=1)
-            y_pred = cross_val_predict(self.estimator, X, Y, cv=self.cv, n_jobs=1)
+            y_pred = cross_val_predict(self.estimator, X, Y, cv=self.cv, n_jobs=self.cross_jobs)
             SSY0_out = np.sum(np.square(Ym - Y))
             SSY_out = np.sum(np.square(Y - y_pred))
             self.scoringP = mean_squared_error(Y, y_pred)
@@ -864,7 +870,7 @@ class BaseEstimator:
 
         # Get cross-validated Y 
         try:
-            y_pred = cross_val_predict(self.estimator, X, Y, cv=self.cv, n_jobs=1)
+            y_pred = cross_val_predict(self.estimator, X, Y, cv=self.cv, n_jobs=self.cross_jobs)
         except Exception as e:
             return False, f'Cross-validation failed with exception: {e}'
 
@@ -962,7 +968,7 @@ class BaseEstimator:
         # constant.
         try:
             tclf = GridSearchCV(estimator, tune_parameters,
-                                scoring=metric, cv=3, n_jobs=-1)
+                                scoring=metric, cv=3, n_jobs=self.cross_jobs)
             tclf.fit(X, Y)
             self.estimator = copy.copy(tclf.best_estimator_)
         except Exception as e:

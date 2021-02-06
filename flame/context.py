@@ -45,11 +45,12 @@ def get_ensemble_input(task, model_names, model_versions, infile):
     
     # when there are multiple external sources it is more convenient parallelize the 
     # models than to run internal task in parallel
-    parallel = (num_models > MAX_MODELS_SINGLE_CPU)
+
+    parallel = (utils.isSingleThread() == False and num_models > MAX_MODELS_SINGLE_CPU)
     
     # disables internal parallelism
-    if parallel:
-        task.set_single_CPU() 
+    # if parallel:
+    #     task.set_single_CPU() 
 
     # add input molecule to the model input definition of every internal model
     model_suc = []  # True / False
@@ -142,6 +143,9 @@ def predict_cmd(arguments, output_format=None):
 
     predict = Predict(arguments['endpoint'], version=arguments['version'],  output_format=output_format, label=arguments['label'])
 
+    if utils.isSingleThread():
+        predict.set_single_CPU()
+
     ensemble = predict.get_ensemble()
 
     # ensemble[0]     Boolean with True for ensemble models and False otherwyse
@@ -223,6 +227,9 @@ def build_cmd(arguments, output_format=None):
         build = Build(arguments['endpoint'], param_string=arguments['param_string'], output_format=output_format)
     else:
         build = Build(arguments['endpoint'], output_format=output_format)
+
+    if utils.isSingleThread():
+        build.set_single_CPU()
 
     ensemble = build.get_ensemble()
 
@@ -338,6 +345,9 @@ def sbuild_cmd(arguments, output_format=None):
     else:
         sbuild = Sbuild(arguments['space'], output_format=output_format)
 
+    if utils.isSingleThread():
+        sbuild.set_single_CPU()
+
     ifile = arguments['infile']
     epd = utils.space_path(arguments['space'], 0)
     lfile = os.path.join(epd, 'training_series')
@@ -382,6 +392,9 @@ def search_cmd(model, output_format=None):
         return False, 'Endpoint name not found in space repository.'
 
     search = Search(model['space'], version=model['version'], output_format=output_format, label=model['label'])
+
+    if utils.isSingleThread():
+        search.set_single_CPU()
 
     success, results = search.run(model)
 
