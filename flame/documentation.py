@@ -33,8 +33,6 @@ from flame.parameters import Parameters
 from rdkit.Chem import AllChem
 import hashlib
 
-
-
 class Documentation:
     ''' Class storing the information needed to documentate models
         Fields are loaded from a YAML file (documentation.yaml)
@@ -110,6 +108,11 @@ class Documentation:
             self.assign_results()
             self.setVal('md5',self.idataHash())
 
+    def safe_copy (inputfile):
+        ''' this function makes sure that the input file contains only printable chars
+
+        '''
+
 
     def delta(self, model, version, doc, iformat='YAML', isSpace=False):
         ''' load a set of parameters from the configuration file present 
@@ -133,12 +136,12 @@ class Documentation:
             try:
                 newp = json.loads(doc)
             except Exception as e:
-                return False, e
+                return False, str(e)
         elif iformat == 'YAMLS':
             try:
                 newp = yaml.load(doc)
             except Exception as e:
-                return False, e
+                return False, str(e)
 
         # input is a file, either in YAML or JSON format
         else:
@@ -149,7 +152,7 @@ class Documentation:
                     elif iformat == 'JSON':
                         newp = json.load(pfile)
             except Exception as e:
-                return False, e
+                return False, str(e)
         
         # update interna dict with keys in the input file (delta)
         black_list = []
