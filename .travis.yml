@@ -21,6 +21,7 @@ install:
       conda info -a
       conda env create -f environment.yml
       conda activate flame
+      conda list
       python setup.py install
     fi
 before_script:
