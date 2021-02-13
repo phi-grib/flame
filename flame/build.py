@@ -95,28 +95,28 @@ class Build:
 
         # path to endpoint
         epd = utils.model_path(self.model, 0)
-        if not os.path.isdir(epd):
-            self.conveyor.setError(f'Unable to find model {self.model}')
-            #LOG.error(f'Unable to find model {self.model}')
+        # if not os.path.isdir(epd):
+        #     self.conveyor.setError(f'Unable to find model {self.model}')
+        #     #LOG.error(f'Unable to find model {self.model}')
 
         # import ichild classes
-        if not self.conveyor.getError():
-            # uses the child classes within the 'model' folder,
-            # to allow customization of  the processing applied to each model
-            modpath = utils.module_path(self.model, 0)
+        # if not self.conveyor.getError():
+        # uses the child classes within the 'model' folder,
+        # to allow customization of  the processing applied to each model
+        modpath = utils.module_path(self.model, 0)
 
-            idata_child = importlib.import_module(modpath+".idata_child")
-            learn_child = importlib.import_module(modpath+".learn_child")
-            odata_child = importlib.import_module(modpath+".odata_child")
+        idata_child = importlib.import_module(modpath+".idata_child")
+        learn_child = importlib.import_module(modpath+".learn_child")
+        odata_child = importlib.import_module(modpath+".odata_child")
 
-            # run idata object, in charge of generate model data from input
-            try:
-                idata = idata_child.IdataChild(self.param, self.conveyor, input_source)
-            except:
-                LOG.warning ('Idata child architecture mismatch, defaulting to Idata parent')
-                idata = Idata(self.param, self.conveyor, input_source)
-            idata.run() 
-            LOG.debug(f'idata child {type(idata).__name__} completed `run()`')
+        # run idata object, in charge of generate model data from input
+        try:
+            idata = idata_child.IdataChild(self.param, self.conveyor, input_source)
+        except:
+            LOG.warning ('Idata child architecture mismatch, defaulting to Idata parent')
+            idata = Idata(self.param, self.conveyor, input_source)
+        idata.run() 
+        LOG.debug(f'idata child {type(idata).__name__} completed `run()`')
 
         if not self.conveyor.getError():
             # check there is a suitable X and Y

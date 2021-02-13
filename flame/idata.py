@@ -1187,6 +1187,7 @@ class Idata:
 
             # predictions
             i_md = i_result.getVal('values')
+
             i_md_size = len(i_md)
             if i_md_size != num_obj:
                 self.conveyor.setError('the number of results produced by the first model is inconsistent with the number of molecules recognized in the input file')

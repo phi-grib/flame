@@ -163,7 +163,9 @@ def predict_cmd(arguments, output_format=None):
         success, model_res = get_ensemble_input(predict, emodels, evers, arguments['infile'])
 
         if not success:
-            return False, model_res
+            predict.conveyor.setError (model_res)
+            LOG.error (model_res)
+            # return False, model_res        # TO-DO, comment this line and run prediction to allow odata to generate error info
 
         # check the presence of changes in the inner models
         modelID = predict.conveyor.getMeta('modelID')
