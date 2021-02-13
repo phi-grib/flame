@@ -886,7 +886,7 @@ class Idata:
 
         # update success results using updateMolIndex function
         success, results['success_arr'] = self.updateMolIndex(mol_index, results['success_arr'])
-        
+
         return success, results
 
     def ammend_objects(self, inform, workflow) -> None:
@@ -999,7 +999,8 @@ class Idata:
         # series processing (1 or n CPUs) can produce a success == False if
         # any of the series/pieces contains an error. Abort the processing...
         if not success:
-            self.conveyor.setError(results)
+            self.conveyor.setError('error in workflow processing')
+            return
 
         # check if any molecule failed to complete the workflow and then
         # ammend object annotations in self.conveyor

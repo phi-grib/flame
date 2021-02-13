@@ -109,9 +109,9 @@ class Conveyor:
 
     def setError (self, message):
         if self.error is None:
-            self.error = message
+            self.error = str(message)
         else:
-            self.error += '\n'+message
+            self.error += '\n'+str(message)
 
     def getWarning (self):
         return self.warning is not None
@@ -121,9 +121,9 @@ class Conveyor:
 
     def setWarning (self, message):
         if self.warning is None:
-            self.warning = message
+            self.warning = str(message)
         else:
-            self.warning += '\n'+message
+            self.warning += '\n'+str(message)
         
         print ('warning status:', self.warning)
     
