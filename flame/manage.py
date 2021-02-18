@@ -282,11 +282,13 @@ def action_import(model):
     for x in os.listdir(base_path):
         model_path = os.path.join(base_path,x)
         model_pkl  = os.path.join(model_path,'estimator.pkl')
-        try:
+        dict_estimator = {}
+        if os.path.isfile (model_pkl):
             with open(model_pkl, "rb") as input_file:
-                dict_estimator = pickle.load(input_file)
-        except FileNotFoundError:
-            continue
+                try:
+                    dict_estimator = pickle.load(input_file)
+                except Exception as e:
+                    return False, f'Incompatible libraries found!. Import aborted with message "{str(e)}"'
 
         # check if the libraries used to build this model are similar to current libraries
         if 'libraries' in dict_estimator:
