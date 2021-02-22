@@ -104,12 +104,14 @@ class SVM(BaseEstimator):
         X = self.X.copy()
         Y = self.Y.copy()
 
+        if (self.estimator_parameters['gamma'] is None or self.estimator_parameters['gamma'] < 0.000):
+            self.estimator_parameters['gamma'] = 'auto'
+
         results = []
         results.append(('nobj', 'number of objects', self.nobj))
         results.append(('nvarx', 'number of predictor variables', self.nvarx))
         results.append(('model', 'model type', 'SVM'))
 
-        
         # If tune then call gridsearch to optimize the estimator
         if self.param.getVal('tune'):
 

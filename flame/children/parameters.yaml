@@ -968,22 +968,20 @@ XGBOOST_parameters:
   options: null
   value:
     max_depth:
-      object_type: list
-      writable: false
+      object_type: int
+      writable: true
       value: 3
       options:
-        - 1
-        - 3
-        - 6
+        - null
       description:  Maximum tree depth for base learners.
     learning_rate:
       object_type: float
       writable: true
-      value: 1
+      value: 0.3
       options:
         - 1
+        - 0.3
         - 0.1
-        - 0.01
       description:  Boosting learning rate (xgb's "eta")
     n_estimators:
       object_type: int
@@ -994,7 +992,7 @@ XGBOOST_parameters:
       description: Number of trees to fit.
     booster:
       object_type: string
-      writable: true
+      writable: false
       value: gbtree
       options: 
         - gbtree
