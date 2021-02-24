@@ -223,7 +223,7 @@ def _RDKit_morganFPS(ifile, **kwargs):
 
     results = {
         'matrix': xmatrix,
-        'names' : [],
+        'names' : [f'f{i}' for i in range(morgan_nbits)],
         'success_arr': success_list
     }
     return True, results
