@@ -522,6 +522,9 @@ class Idata:
         is_empty = True
         shape = []
 
+        # sort methods to avoid non-reproducible results when blocks are combined in diverse order
+        methods.sort()
+
         combined = {}
         for method in methods:
             # success, results = registered_methods[method](ifile)
@@ -537,8 +540,8 @@ class Idata:
 
                 combined['matrix'] = results['matrix']  # np.array of values
                 combined['names'] = results['names']  # list of variable names
-                combined['success_arr'] = results['success_arr'] # list of true/false
                 combined['fingerprint_index'] = [is_fingerprint for i in range(nvarx)]
+                combined['success_arr'] = results['success_arr'] # list of true/false
 
                 shape = np.shape(combined['matrix'])
 
@@ -560,14 +563,18 @@ class Idata:
 
                 combined['matrix'] = np.hstack((combined['matrix'], results['matrix']))
                 combined['names'].extend(results['names'])
+                combined['fingerprint_index'] += [is_fingerprint for i in range(nvarx)]
 
                 # combine sucess results into one list with AND
                 # All results must be True to get True
                 # scc stands for success
-                new_sc = [scc and results['success_arr'][i]for i, scc in enumerate(combined['success_arr'])]
-                          
-                combined['success_arr'] = new_sc
-                combined['fingerprint_index'] += [is_fingerprint for i in range(nvarx)]
+                # new_sc = [scc and results['success_arr'][i]for i, scc in enumerate(combined['success_arr'])]
+                # combined['success_arr'] = new_sc
+
+                for i, sci in enumerate(results['success_arr']):
+                    if not sci:
+                        combined['success_arr'][i] = False
+
             
         # delete all objects for which success is not true but 
         # IN REVERSE order, so the index if the lines to remove
@@ -694,6 +701,8 @@ class Idata:
             return 
 
         try:
+            # debug option when you want to compute MD allways
+            # return False
             picklfile = os.path.join(self.dest_path, 'data.pkl')
             if not os.path.isfile(picklfile):
                 return False

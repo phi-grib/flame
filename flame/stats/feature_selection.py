@@ -73,6 +73,8 @@ def run_feature_selection(X, Y, scaler, param):
     # Manual selection of number of variables
     else:
         n_features = int(param.getVal("feature_number"))
+        if n_features > nvarx:
+            n_features = nvarx
 
     # Apply variable selection.
     try:
