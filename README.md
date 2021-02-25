@@ -9,7 +9,7 @@ Flame allows to:
 - Transfer new models into a production environment where they can be used by web services to predict the properties of new compounds.
 
 Flame can be used in comand mode or using a web based GUI. The code for the GUI is accessible [here](https://github.com/phi-grib/flame_API). We provide Windows and Linux installers (both for the Flame backend and the GUI) that can be downloaded here
-- [Windows](https://drive.google.com/file/d/1_o2SUJGClANnHNFJpzDub56bJujlQHO6/view?usp=sharing)
+- [Windows](https://drive.google.com/file/d/1_q7YBdhxb59QAzWg7j3alyckiSC_9uv4/view?usp=sharing)
 - [Linux](https://drive.google.com/file/d/1J7AMqHWkwHcCRUrWaFyqzjB8Yb688L-i/view?usp=sharing)
 
 A docker container (https://www.docker.com/), fully configured can be downloaded from DockerHub and installed using:
