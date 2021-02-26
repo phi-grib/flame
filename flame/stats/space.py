@@ -25,6 +25,7 @@ import pickle
 import numpy as np
 from scipy.spatial import distance 
 import os
+import time
 
 from rdkit import Chem
 from rdkit.Chem import AllChem
@@ -77,10 +78,11 @@ class Space:
         # if X contains fingerprints as numpy, convert to RDKit BitVector to speed-up
         # future similarity searches
         if self.isFingerprint: # include any RDKit fingerprint here
-            Xbit = []
-            for i in self.X:
-                Xbit.append(DataStructs.cDataStructs.CreateFromBitString("".join(i.astype(str))))
+            t1 = time.time()
+            Xbit = [DataStructs.cDataStructs.CreateFromBitString("".join(i.astype(str))) for i in self.X]
             self.X = Xbit
+            print (f'time: {time.time()-t1}')
+
             self.Dmax = 1.0
         else:
             ydist = distance.pdist(self.X, metric='Euclidean')
