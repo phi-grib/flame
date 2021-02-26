@@ -10,7 +10,7 @@ Flame allows to:
 
 Flame can be used in comand mode or using a web based GUI. The code for the GUI is accessible [here](https://github.com/phi-grib/flame_API). We provide Windows and Linux installers (both for the Flame backend and the GUI) that can be downloaded here
 - [Windows](https://drive.google.com/file/d/1_q7YBdhxb59QAzWg7j3alyckiSC_9uv4/view?usp=sharing)
-- [Linux](https://drive.google.com/file/d/1J7AMqHWkwHcCRUrWaFyqzjB8Yb688L-i/view?usp=sharing)
+- [Linux](https://drive.google.com/file/d/1bcpvBRIW0KmX-YWc4MXww1kUB1oikst5/view?usp=sharing)
 
 A docker container (https://www.docker.com/), fully configured can be downloaded from DockerHub and installed using:
 
