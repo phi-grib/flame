@@ -72,9 +72,122 @@ def simple_subsampling (Y):
 
     return True, mask
 
-def run_imbalance(method, Y):
+
+def near_miss1(X, Y):
+    from imblearn.under_sampling import NearMiss
+    nm1 = NearMiss(version=1)
+    nm1.fit_resample(X, Y)
+    indexes = nm1.sample_indices_
+    mask = []
+    for i in range(len(X)):
+        if i in indexes:
+            mask.append(1)
+        else:
+            mask.append(0)
+    return True, np.asarray(mask)
+
+def near_miss2(X, Y):
+    from imblearn.under_sampling import NearMiss
+    nm1 = NearMiss(version=2)
+    nm1.fit_resample(X, Y)
+    indexes = nm1.sample_indices_
+    mask = []
+    for i in range(len(X)):
+        if i in indexes:
+            mask.append(1)
+        else:
+            mask.append(0)
+    return True, np.asarray(mask)
+
+def near_miss3(X, Y):
+    from imblearn.under_sampling import NearMiss
+    nm1 = NearMiss(version=3)
+    nm1.fit_resample(X, Y)
+    indexes = nm1.sample_indices_
+    mask = []
+    for i in range(len(X)):
+        if i in indexes:
+            mask.append(1)
+        else:
+            mask.append(0)
+    return True, np.asarray(mask)
+
+
+def edited_KNN(X, Y):
+    from imblearn.under_sampling import EditedNearestNeighbours
+    enn = EditedNearestNeighbours()
+    enn.fit_resample(X, Y)
+    indexes = enn.sample_indices_
+    mask = []
+    for i in range(len(X)):
+        if i in indexes:
+            mask.append(1)
+        else:
+            mask.append(0)
+    return True, np.asarray(mask)
+
+def rep_edited_KNN(X, Y):
+    from imblearn.under_sampling import RepeatedEditedNearestNeighbours
+    renn = RepeatedEditedNearestNeighbours()
+    renn.fit_resample(X, Y)
+    indexes = renn.sample_indices_
+    mask = []
+    for i in range(len(X)):
+        if i in indexes:
+            mask.append(1)
+        else:
+            mask.append(0)
+    return True, np.asarray(mask)
+
+
+def all_KNN(X, Y):
+    from imblearn.under_sampling import AllKNN
+    allknn = AllKNN()
+    allknn.fit_resample(X, Y)
+    indexes = allknn.sample_indices_
+    mask = []
+    for i in range(len(X)):
+        if i in indexes:
+            mask.append(1)
+        else:
+            mask.append(0)
+    return True, np.asarray(mask)
+
+
+def iht(X, Y):
+    from sklearn.linear_model import LogisticRegression
+    from imblearn.under_sampling import InstanceHardnessThreshold
+    iht = InstanceHardnessThreshold(random_state=0,
+                                estimator=LogisticRegression(
+                                solver='lbfgs', multi_class='auto'))
+    Y = np.array(Y, dtype=int)
+    iht.fit_resample(X, Y)
+    indexes = iht.sample_indices_
+    mask = []
+    for i in range(len(X)):
+        if i in indexes:
+            mask.append(1)
+        else:
+            mask.append(0)
+    return True, np.asarray(mask)
+
+
+def run_imbalance(method, X, Y):
     if method == "simple_subsampling":
         return simple_subsampling(Y)
-
+    if method == "near_miss1":
+        return near_miss1(X, Y)
+    if method == "near_miss2":
+        return near_miss2(X, Y)
+    if method == "near_miss3":
+        return near_miss3(X, Y)
+    if method == "edited_KNN":
+        return edited_KNN(X, Y)
+    if method == "rep_edited_KNN":
+        return rep_edited_KNN(X, Y)
+    if method == "all_KNN":
+        return all_KNN(X, Y)
+    if method == "iht":
+        return iht(X, Y)
     return False, "Imbalance data method not recognized"
             
