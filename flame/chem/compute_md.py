@@ -228,6 +228,77 @@ def _RDKit_morganFPS(ifile, **kwargs):
     }
     return True, results
 
+def _RDKit_patternFPS(ifile, **kwargs):
+    ''' 
+    Morgan circular FP using RDkit output is a boolean and
+    a tupla with the xmatrix and the variable names
+    '''
+    try:
+        suppl = Chem.SDMolSupplier(ifile)
+    except Exception as e:
+        LOG.error(f'Unable to create supplier with exception {e}')
+        return False, 'unable to create supplier'
+
+    # defaults
+    pattern_nbits = 2048
+
+    # read arguments
+    if 'pattern_nbits' in kwargs:
+        pattern_nbits = kwargs['pattern_nbits']
+
+    LOG.info(f'computing RDKit Pattern fingerprint... with size {pattern_nbits}')
+
+    # get from here num of properties
+
+    success_list = []
+    est_obj = len(suppl)
+    xmatrix = np.zeros((est_obj, pattern_nbits), dtype=np.int8)
+
+    try:
+        num_obj = 0
+        for mol in suppl:
+            if mol is None:
+                LOG.error(
+                    f'Unable to process molecule #{num_obj+1} in {ifile}')
+                success_list.append(False)
+                num_obj += 1
+                continue
+
+            if mol.GetNumHeavyAtoms() == 0:
+                LOG.error('Empty molecule'
+                          f'#{num_obj+1} in {ifile}')
+                success_list.append(False)
+                num_obj += 1
+                continue
+            fp = Chem.PatternFingerprint(mol, pattern_nbits)
+            DataStructs.ConvertToNumpyArray(fp,xmatrix[num_obj])
+
+            # xmatrix.append(xvector)
+            success_list.append(True)
+            num_obj += 1
+
+    except Exception as e:
+        LOG.error(f'Failed computing RDKit Pattern Fingerprints for molecule #{num_obj+1} in {ifile}'
+                  f' with exception: {e}')
+        return False, 'Failed computing RDKit Pattern Fingerprints for molecule' + str(num_obj+1) + 'in file ' + ifile
+
+    # if num_obj < est_obj:
+    #     # if some molecules failed to compute we will clean xmatrix by 
+    #     # removing extra rows
+    #     for i in range (num_obj, est_obj):
+    #         xmatrix = np.delete(xmatrix,num_obj,axis=0)
+
+    LOG.debug(f'computed RDKit Pattern Fingerprints matrix with shape {np.shape(xmatrix)}')
+    if num_obj == 0:
+        return False, 'Unable to compute RDKit Pattern Fingerprints for molecule '+ifile
+
+    results = {
+        'matrix': xmatrix,
+        'names' : [f'f{i}' for i in range(pattern_nbits)],
+        'success_arr': success_list
+    }
+    return True, results
+
 
 def _RDKit_descriptors(ifile, **kwargs):
     '''

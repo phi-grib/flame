@@ -502,6 +502,7 @@ class Idata:
 
         registered_methods = dict([('RDKit_properties', computeMD._RDKit_properties),
                                    ('morganFP', computeMD._RDKit_morganFPS),
+                                   ('substructureFP', computeMD._RDKit_patternFPS),
                                    ('RDKit_md', computeMD._RDKit_descriptors),
                                    ('custom', self.computeMD_custom)])
 

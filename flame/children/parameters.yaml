@@ -195,6 +195,7 @@ computeMD_method:
     - RDKit_properties 
     - RDKit_md
     - morganFP
+    - substructureFP
     - custom
   description: Selection of molecular descriptors to be used in model generation
   dependencies: 

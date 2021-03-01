@@ -374,7 +374,7 @@ def sbuild_cmd(arguments, output_format=None):
 
     return success, results
 
-def search_cmd(model, output_format=None):
+def search_cmd(command, output_format=None):
     '''
     Instantiates a Search object to run a search using the given input
     file and space.
@@ -385,20 +385,20 @@ def search_cmd(model, output_format=None):
     # ** DEPRECATE **
     # this is a back-compatibility trick for older versions of APIs 
     # not supporting the label argument
-    if 'label' not in model:
-        model['label'] = 'temp'
+    if 'label' not in command:
+        command['label'] = 'temp'
 
     # safety check if model exists
-    space_dir = utils.space_path(model['space'], 0)
+    space_dir = utils.space_path(command['space'], 0)
     if not os.path.isdir(space_dir):
         return False, 'Endpoint name not found in space repository.'
 
-    search = Search(model['space'], version=model['version'], output_format=output_format, label=model['label'])
+    search = Search(command['space'], version=command['version'], output_format=output_format, label=command['label'])
 
     if utils.isSingleThread():
         search.set_single_CPU()
 
-    success, results = search.run(model)
+    success, results = search.run(command)
 
     LOG.info('Search completed...')
 
