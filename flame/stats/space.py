@@ -87,7 +87,6 @@ class Space:
 
     def _buildMD (self):
         ydist = distance.pdist(self.X, metric='Euclidean')
-        #print ('min:', np.min(ydist), 'max:', np.max(ydist))
         self.Dmax = np.percentile(ydist,95)
         return
 
