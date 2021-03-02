@@ -100,12 +100,16 @@ class Space:
         MDs = self.param.getVal('computeMD_method')
         if   'morganFP' in MDs:
             self._buildMorganFP ()
+            descriptors = 'fingerprints'
         elif 'substructureFP' in MDs:
             self._buildSubStructure ()
+            descriptors = 'substructure'
         else:
             self._buildMD ()
+            descriptors = 'descriptors'
 
         results.append(('dmax', 'perecentil 95 of internal distances', self.Dmax))
+        results.append(('descriptors', 'descriptors used for computing the distance', descriptors))
 
         return True, results
 
@@ -208,7 +212,9 @@ class Space:
             # for each compound in the space
             for j, jfp in enumerate(self.Xref):
                 if DataStructs.AllProbeBitsMatch(ifp, jfp):
+                # if True:
                     mi = Chem.MolFromSmiles(self.objinfo['SMILES'][i])
+                    # mi = Chem.MolFromSmarts('C[!C](C)CC1*C=CCC1')
                     mj = Chem.MolFromSmiles(self.objinforef['SMILES'][j])
 
                     if mj.HasSubstructMatch(mi):

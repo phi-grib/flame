@@ -118,8 +118,6 @@ class Slearn:
         # builds space from idata results
         LOG.debug('Starting space building')
 
-
-
         success, space_building_results = space.build()
         if not success:
             LOG.error('space_building_results')

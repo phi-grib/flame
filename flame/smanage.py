@@ -216,103 +216,16 @@ def action_parameters(space, version=None, oformat='text'):
     param = Parameters()
     param.loadYaml(space, version, isSpace=True)
 
-    if oformat == 'JSON':
+    if oformat != 'text':
         return True, param
 
     else:
-
-        order = ['input_type', 'quantitative', 'SDFile_activity', 'SDFile_name','SDFile_id',
-        'SDFile_experimental', 'normalize_method', 'ionize_method', 'convert3D_method', 
-        'computeMD_method', 'model', 'modelAutoscaling', 'tune', 'conformal', 
-        'conformalConfidence', 'ModelValidationCV', 'ModelValidationLC', 
-        'ModelValidationN', 'ModelValidationP', 'output_format', 'output_md', 
-        'TSV_activity', 'TSV_objnames', 'TSV_varnames', 'imbalance', 
-        'feature_selection', 'feature_number', 'mol_batch', 
-        'ensemble_models', 'ensemble_versions', 'numCPUs', 'verbose_error', 'modelingToolkit', 
-        'endpoint', 'model_path', 
-        #'md5', 
-        'version']
-
-        order += ['MD_settings', 'RF_parameters','RF_optimize',
-        'SVM_parameters','SVM_optimize',
-        'PLSDA_parameters','PLSDA_optimize',
-        'PLSR_parameters','PLSR_optimize',
-        'GNB_parameters']
-
-
-        for ik in order:
-            if ik in param.p:
-                k = ik
-                v = param.p[k]
-
-                ivalue = ''
-                idescr = ''
-                ioptio = ''
-
-                ## newest parameter formats are extended and contain
-                ## rich metainformation for each entry
-                if param.extended:
-                    if 'value' in v:
-                        if not isinstance(v['value'] ,dict):
-                            ivalue = v['value']
-                        else:
-                            # print header of dictionaty
-                            print (f'{k} :')
-
-                            # iterate keys assuming existence of value and description
-                            for intk in v['value']:
-                                intv = v['value'][intk]
-
-                                iivalue = ''
-                                if "value" in intv:                                
-                                    iivalue = intv["value"]
-
-                                iidescr = ''
-                                if "description" in intv and intv["description"] is not None:
-                                    iidescr = intv["description"]
-
-                                iioptio = ''
-                                if 'options' in intv:
-                                    toptio = intv['options']
-
-                                    if isinstance(toptio, list):
-                                        if toptio != [None]:
-                                            iioptio = f' {toptio}'
-
-                                if isinstance (iivalue, float):
-                                    iivalue =  f'{iivalue:f}'
-                                elif iivalue is None:
-                                    iivalue = ''
-
-                                print (f'   {intk:27} : {str(iivalue):30} #{iioptio} {iidescr}')
-
-                            continue
-
-                    if 'description' in v:
-                        idescr = v['description'] 
-
-                    if 'options' in v:
-                        toptio = v['options']
-
-                        if isinstance(toptio, list):
-                            ioptio = f' {toptio}'
-
-                ### compatibility: old stile parameters
-                else:
-                    if not isinstance(v ,dict):
-                        ivalue = v
-                    else:
-                        ivalue = '*dictionary*'
-                ### end compatibility
-
-                if isinstance (ivalue, float):
-                    ivalue =  f'{ivalue:f}'
-                elif ivalue is None:
-                    ivalue = ''
-
-                print (f'{k:30} : {str(ivalue):30} #{ioptio} {idescr}')
+        yaml = param.dumpYAML()
+        for line in yaml:
+            print (line)
 
         return True, 'parameters listed'
+
 
 ## the following commands are argument-less, intended to be called from a web-service to 
 ## generate JSON output only
@@ -380,7 +293,7 @@ def action_info(space, version, output='text'):
 
 def action_dir():
     '''
-    Returns a JSON with the list of spaces and versions
+    Returns a the list of spaces and versions
     '''
     # get de space repo path
     spaces_path = pathlib.Path(utils.space_repository_path())
@@ -394,18 +307,37 @@ def action_dir():
     # get last dir name [-1]: space name
     space_dirs = [d.parts[-1] for d in dirs if list(d.glob('dev'))]
 
+    # results = []
+    # for ispace in space_dirs:
+    #     idict = {}
+    #     idict ["spacename"] = ispace
+    #     versions = [0]
+
+    #     for iversion in os.listdir(utils.space_tree_path(ispace)):
+    #         if iversion.startswith('ver'):
+    #             versions.append(utils.modeldir2ver(iversion))
+
+    #     idict ["versions"] = versions
+    #     results.append(idict)
+
     results = []
     for ispace in space_dirs:
         idict = {}
         idict ["spacename"] = ispace
-        versions = [0]
+        idict ["version"] = 0
+        idict ["info"] = action_info(ispace, 0, output=None)[1]
+
+        results.append(idict)
 
         for iversion in os.listdir(utils.space_tree_path(ispace)):
             if iversion.startswith('ver'):
-                versions.append(utils.modeldir2ver(iversion))
+                idict = {}
+                idict ["spacename"] = ispace
+                idict ["version"] = utils.modeldir2ver(iversion)
+                idict ["info"] = action_info(ispace, idict ["version"], output=None)[1]
 
-        idict ["versions"] = versions
-        results.append(idict)
+                results.append(idict)
+
 
     # print (json.dumps(results))
     return True, results
