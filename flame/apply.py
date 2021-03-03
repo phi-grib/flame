@@ -30,7 +30,7 @@ from flame.stats.SVM import SVM
 from flame.stats.GNB import GNB
 from flame.stats.PLSR import PLSR
 from flame.stats.PLSDA import PLSDA
-from flame.stats.combo import median, mean, majority, matrix
+from flame.stats.combo import median, mean, majority, logicalOR, matrix
 from flame.stats.XGboost import XGBOOST
 from sklearn.metrics import mean_squared_error, matthews_corrcoef as mcc
 from sklearn.metrics import f1_score
@@ -60,6 +60,7 @@ class Apply:
                               ('median', median),
                               ('mean', mean),
                               ('majority', majority),
+                              ('logicalOR', logicalOR),
                               ('matrix', matrix)]
 
 
@@ -338,7 +339,7 @@ class Apply:
             self.scaler = dict_prepro['scaler']
 
         # Check consistency between parameter file and pickle info
-        non_scale_list = ['majority','matrix']
+        non_scale_list = ['majority','logicalOR','matrix']
         if self.scaler is None:
             # methods like majority and matrix are forced to avoid scaling 
             if self.param.getVal('model') in non_scale_list:   

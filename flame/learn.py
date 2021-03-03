@@ -36,7 +36,7 @@ from flame.stats.PLSR import PLSR
 from flame.stats.PLSDA import PLSDA
 from flame.stats import feature_selection
 from flame.stats.XGboost import XGBOOST
-from flame.stats.combo import median, mean, majority, matrix
+from flame.stats.combo import median, mean, majority, logicalOR, matrix
 from flame.stats.imbalance import run_imbalance  
 
 from flame.graph.graph import generateProjectedSpace
@@ -68,6 +68,7 @@ class Learn:
                               ('median', median),
                               ('mean', mean),
                               ('majority', majority),
+                              ('logicalOR', logicalOR),
                               ('matrix', matrix)]
 
     def run_custom(self):
@@ -149,7 +150,7 @@ class Learn:
         scale_method = self.param.getVal('modelAutoscaling')
         
         # prevent the scaling of input which must be binary or with preserved values
-        non_scale_list = ['majority','matrix']
+        non_scale_list = ['majority','logicalOR','matrix']
         if self.param.getVal('model') in non_scale_list and scale_method is not None:
             LOG.info(f"Method '{self.param.getVal('model')}' is incompatible with '{scale_method}' scaler. Forced to 'None'")
             scale_method = None

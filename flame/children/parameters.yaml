@@ -333,6 +333,7 @@ model:
     - mean
     - median
     - majority
+    - logicalOR
     - matrix
   description: List of available ML algorithms
   dependencies: 
