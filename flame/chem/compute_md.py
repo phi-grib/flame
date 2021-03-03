@@ -138,6 +138,78 @@ def _mordred_descriptors(ifile, **kwargs):
 
     return True, results
 
+def _RDKit_rdkFPS(ifile, **kwargs):
+    ''' 
+    RDK FP using RDkit output is a boolean and
+    a tupla with the xmatrix and the variable names
+    '''
+    try:
+        suppl = Chem.SDMolSupplier(ifile)
+    except Exception as e:
+        LOG.error(f'Unable to create supplier with exception {e}')
+        return False, 'unable to create supplier'
+
+    # defaults
+    rdk_maxPath = 6
+    rdk_nbits = 2048
+
+    # read arguments
+    if 'rdk_maxPath' in kwargs:
+        rdk_maxPath = kwargs['rdk_maxPath']
+
+    if 'rdk_nbits' in kwargs:
+        rdk_nbits = kwargs['rdk_nbits']
+
+    LOG.info(f'computing RDKit RDK fingerprint... with maxPath {rdk_maxPath} and size {rdk_nbits}')
+
+    # get from here num of properties
+
+    success_list = []
+    est_obj = len(suppl)
+    xmatrix = np.zeros((est_obj, rdk_nbits), dtype=np.int8)
+
+    try:
+        num_obj = 0
+        for mol in suppl:
+            if mol is None:
+                LOG.error(
+                    f'Unable to process molecule #{num_obj+1} in {ifile}')
+                success_list.append(False)
+                num_obj += 1
+                continue
+
+            if mol.GetNumHeavyAtoms() == 0:
+                LOG.error('Empty molecule'
+                          f'#{num_obj+1} in {ifile}')
+                success_list.append(False)
+                num_obj += 1
+                continue
+
+            fp = Chem.RDKFingerprint(mol, 
+                        maxPath=rdk_maxPath,
+                        fpSize=rdk_nbits)
+
+            DataStructs.ConvertToNumpyArray(fp,xmatrix[num_obj])
+
+            success_list.append(True)
+            num_obj += 1
+
+    except Exception as e:
+        LOG.error(f'Failed computing RDKit RDK Fingerprints for molecule #{num_obj+1} in {ifile}'
+                  f' with exception: {e}')
+        return False, 'Failed computing RDKit RDK Fingerprints for molecule' + str(num_obj+1) + 'in file ' + ifile
+
+    LOG.debug(f'computed RDKit RDK Fingerprints matrix with shape {np.shape(xmatrix)}')
+    if num_obj == 0:
+        return False, 'Unable to compute RDKit RDK Fingerprints for molecule '+ifile
+
+    results = {
+        'matrix': xmatrix,
+        'names' : [f'f{i}' for i in range(rdk_nbits)],
+        'success_arr': success_list
+    }
+    return True, results
+
 
 def _RDKit_morganFPS(ifile, **kwargs):
     ''' 
@@ -194,6 +266,7 @@ def _RDKit_morganFPS(ifile, **kwargs):
                             morgan_radius,  
                             nBits=morgan_nbits,
                             useFeatures=morgan_features)
+
 
             #xvector = np.empty((1, 2048), dtype=np.int8)
             DataStructs.ConvertToNumpyArray(fp,xmatrix[num_obj])

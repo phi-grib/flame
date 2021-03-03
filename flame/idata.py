@@ -503,10 +503,11 @@ class Idata:
         registered_methods = dict([('RDKit_properties', computeMD._RDKit_properties),
                                    ('morganFP', computeMD._RDKit_morganFPS),
                                    ('substructureFP', computeMD._RDKit_patternFPS),
+                                   ('rdkFP', computeMD._RDKit_rdkFPS),
                                    ('RDKit_md', computeMD._RDKit_descriptors),
                                    ('custom', self.computeMD_custom)])
 
-        fingerprint_list = ['morganFP']  # update with any other fingerprint method
+        fingerprint_list = ['rdkFP','morganFP','substructreFP']  # update with any other fingerprint method
 
         # check if input methods are members of registered methods
         if not all(m in registered_methods for m in methods):
