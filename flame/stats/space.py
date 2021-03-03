@@ -222,7 +222,7 @@ class Space:
                         selected_d.append(1.00)
                         nselected+=1
 
-                if nselected > numsel:
+                if nselected >= numsel:
                     break
 
             # results for molecule i are stored in a dictionary

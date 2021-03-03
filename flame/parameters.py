@@ -426,7 +426,7 @@ class Parameters:
         #'md5', 
         'version']
 
-        order += ['MD_settings', 'RF_parameters','RF_optimize',
+        order += ['MD_settings', 'conformal_settings', 'RF_parameters','RF_optimize',
         'XGBOOST_parameters', 'XGBOOST_optimize',
         'SVM_parameters','SVM_optimize',
         'PLSR_parameters','PLSR_optimize',
