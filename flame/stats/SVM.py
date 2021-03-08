@@ -29,7 +29,7 @@ from sklearn.neighbors import KNeighborsRegressor
 
 from nonconformist.base import ClassifierAdapter, RegressorAdapter
 from nonconformist.acp import AggregatedCp
-from nonconformist.acp import BootstrapSampler
+from nonconformist.acp import BootstrapSampler, RandomSubSampler, CrossSampler
 from nonconformist.icp import IcpClassifier, IcpRegressor
 from nonconformist.nc import ClassifierNc, MarginErrFunc, RegressorNc
 from nonconformist.nc import AbsErrorErrFunc, RegressorNormalizer
@@ -166,35 +166,55 @@ class SVM(BaseEstimator):
         
         # Create the conformal estimator
         try:
+            # set parameters
+            conformal_settings = self.param.getDict('conformal_settings')
+
+            samplers = {"BootstrapSampler" : BootstrapSampler(), "RandomSubSampler" : RandomSubSampler(),
+                        "CrossSampler" : CrossSampler()}
+            try:
+                aggregation_f = conformal_settings['aggregation_function']
+            except Exception as e:
+                aggregation_f = "median"
+
+            try:
+                sampler = samplers[conformal_settings['ACP_sampler']]
+                n_predictors = conformal_settings['conformal_predictors']
+
+            except Exception as e:
+                # For previous models
+                sampler = BootstrapSampler()
+                n_predictors = 10
+            
+            # Conformal regressor
             if self.param.getVal('quantitative'):
-
-                LOG.info("Building conformal Quantitative SVM-R model")
-
+                LOG.info("Building conformal Quantitative SVM model")
+                normalizers = {'KNN' : RegressorAdapter(KNeighborsRegressor(
+                                       n_neighbors=conformal_settings['KNN_NN'])),
+                                'Underlying' : RegressorAdapter(self.estimator_temp),
+                                'None' : None}
                 underlying_model = RegressorAdapter(self.estimator_temp)
-                normalizing_model = RegressorAdapter(
-                KNeighborsRegressor(n_neighbors=15))
-                # normalizing_model = RegressorAdapter(self.estimator_temp)
-                normalizer = RegressorNormalizer(
-                                underlying_model, 
-                                normalizing_model, 
-                                AbsErrorErrFunc())
+                self.normalizing_model = normalizers[conformal_settings['error_model']]
+                if self.normalizing_model is not None:
+                    normalizer = RegressorNormalizer(
+                                    underlying_model,
+                                    copy(self.normalizing_model),
+                                    AbsErrorErrFunc())
+                else:
+                    normalizer = None
                 nc = RegressorNc(underlying_model,
-                                    AbsErrorErrFunc(), 
+                                    AbsErrorErrFunc(),
                                     normalizer)
-                # self.conformal_pred = AggregatedCp(IcpRegressor(
-                # RegressorNc(RegressorAdapter(self.estimator))),
-                #                                   BootstrapSampler())
 
                 self.estimator = AggregatedCp(IcpRegressor(nc),
-                                                BootstrapSampler())
+                                            sampler=sampler, aggregation_func=aggregation_f,
+                                            n_models=n_predictors)
+
                 self.estimator.fit(X, Y)
 
-                # overrides non-conformal
-                # results.append(('model', 'model type', 'conformal SVM quantitative'))
-
+            # Conformal classifier
             else:
 
-                LOG.info("Building conformal Qualitative SVM-C model")
+                LOG.info("Building conformal Qualitative SVM model")
 
                 self.estimator = AggregatedCp(
                                     IcpClassifier(
@@ -203,14 +223,14 @@ class SVM(BaseEstimator):
                                             MarginErrFunc()
                                         )
                                     ),
-                                    BootstrapSampler())
+                                    sampler=sampler, aggregation_func=aggregation_f,
+                                            n_models=n_predictors)
+                # Fit estimator to the data
                 self.estimator.fit(X, Y)
-
-                # overrides non-conformal
-                # results.append(('model', 'model type', 'conformal SVM qualitative'))
+                # results.append(('model', 'model type', 'conformal RF qualitative'))
 
         except Exception as e:
-            return False, f'Exception building aggregated conformal SVM estimator with exception {e}'
+            return False, f'Exception building conformal SVM estimator with exception {e}'
 
         return True, results
 

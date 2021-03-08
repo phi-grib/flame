@@ -86,7 +86,8 @@ def run_feature_selection(X, Y, scaler, param):
         
         # The scaler has to be fitted to the reduced matrix
         # in order to be applied in prediction.
-        if scaler is not None:
+        if param.getVal('modelAutoscaling') is not None\
+                                 and scaler is not None:
             X = scaler.inverse_transform(X)
             X = X[:, variable_mask]
             scaler = scaler.fit(X)

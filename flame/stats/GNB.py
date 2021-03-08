@@ -28,9 +28,10 @@ from sklearn.naive_bayes import GaussianNB
 
 from nonconformist.base import ClassifierAdapter, RegressorAdapter
 from nonconformist.acp import AggregatedCp
-from nonconformist.acp import BootstrapSampler
+from nonconformist.acp import BootstrapSampler, RandomSubSampler, CrossSampler
 from nonconformist.icp import IcpClassifier, IcpRegressor
 from nonconformist.nc import ClassifierNc, MarginErrFunc, RegressorNc
+from nonconformist.nc import AbsErrorErrFunc, RegressorNormalizer
 
 from flame.stats.base_model import BaseEstimator
 from flame.util import get_logger
@@ -98,23 +99,45 @@ class GNB(BaseEstimator):
         # results.append(('model', 'model type', 'GNB qualitative'))
 
         self.estimator.fit(X, Y)
+        self.estimator_temp = self.estimator
 
         if not self.param.getVal('conformal'):
             return True, results
 
         # If conformal, then create aggregated conformal classifier
-        self.estimator_temp = copy(self.estimator)
-        self.estimator = AggregatedCp(
-                            IcpClassifier(
-                                ClassifierNc(
-                                    ClassifierAdapter(self.estimator_temp),
-                                    MarginErrFunc()
-                                )
-                            ),
-                            BootstrapSampler())
-        
-        # Fit estimator to the data
-        self.estimator.fit(X, Y)
-        # results.append(('model', 'model type', 'conformal GNB qualitative'))
-        
+        try:
+
+            # set parameters
+            conformal_settings = self.param.getDict('conformal_settings')
+
+            samplers = {"BootstrapSampler" : BootstrapSampler(), "RandomSubSampler" : RandomSubSampler(),
+                        "CrossSampler" : CrossSampler()}
+            try:
+                aggregation_f = conformal_settings['aggregation_function']
+            except Exception as e:
+                aggregation_f = "median"
+                
+            try:
+                sampler = samplers[conformal_settings['ACP_sampler']]
+                n_predictors = conformal_settings['conformal_predictors']
+
+            except Exception as e:
+                # For previous models
+                sampler = BootstrapSampler()
+                n_predictors = 10
+            LOG.info("Building conformal Qualitative RF model")
+            self.estimator = AggregatedCp(
+                                IcpClassifier(
+                                    ClassifierNc(
+                                        ClassifierAdapter(self.estimator),
+                                        MarginErrFunc()
+                                    )
+                                ),
+                                sampler=sampler, aggregation_func=aggregation_f,
+                                        n_models=n_predictors)
+            # Fit estimator to the data
+            self.estimator.fit(X, Y)
+        except Exception as e:
+            return False, f'Exception building conformal GNB estimator with exception {e}'
+
         return True, results

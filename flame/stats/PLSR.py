@@ -27,7 +27,7 @@ from flame.stats.base_model import BaseEstimator
 
 from nonconformist.base import ClassifierAdapter, RegressorAdapter
 from nonconformist.acp import AggregatedCp
-from nonconformist.acp import BootstrapSampler
+from nonconformist.acp import BootstrapSampler, RandomSubSampler, CrossSampler
 from nonconformist.icp import IcpClassifier, IcpRegressor
 from nonconformist.nc import ClassifierNc, MarginErrFunc, RegressorNc
 from nonconformist.nc import AbsErrorErrFunc, RegressorNormalizer
@@ -200,19 +200,53 @@ class PLSR(BaseEstimator):
             return True, results
 
         self.estimator_temp = copy(self.estimator)
+
         try:
             
-            LOG.info('Building PLSR aggregated conformal predictor')
+            LOG.info('Building PLSR aggregated conformal regressor predictor')
+            # set parameters
+            conformal_settings = self.param.getDict('conformal_settings')
 
-            underlying_model = RegressorAdapter(self.estimator_temp)
-            self.normalizing_model = RegressorAdapter(
-                                     KNeighborsRegressor(n_neighbors=15))
-            # normalizing_model = RegressorAdapter(self.estimator_temp)
-            normalizer = RegressorNormalizer(underlying_model, self.normalizing_model,
-                                             AbsErrorErrFunc())
+            samplers = {"BootstrapSampler" : BootstrapSampler(), "RandomSubSampler" : RandomSubSampler(),
+                        "CrossSampler" : CrossSampler()}
+            try:
+                aggregation_f = conformal_settings['aggregation_function']
+            except Exception as e:
+                aggregation_f = "median"
 
-            nc = RegressorNc(underlying_model, AbsErrorErrFunc(), normalizer)
-            self.estimator = AggregatedCp(IcpRegressor(nc), BootstrapSampler())
+            try:
+                sampler = samplers[conformal_settings['ACP_sampler']]
+                n_predictors = conformal_settings['conformal_predictors']
+
+            except Exception as e:
+                # For previous models
+                sampler = BootstrapSampler()
+                n_predictors = 10
+            
+            # Conformal regressor
+            if self.param.getVal('quantitative'):
+                normalizers = {'KNN' : RegressorAdapter(KNeighborsRegressor(
+                                       n_neighbors=conformal_settings['KNN_NN'])),
+                                'Underlying' : RegressorAdapter(self.estimator_temp),
+                                'None' : None}
+                underlying_model = RegressorAdapter(self.estimator_temp)
+                self.normalizing_model = normalizers[conformal_settings['error_model']]
+                if self.normalizing_model is not None:
+                    normalizer = RegressorNormalizer(
+                                    underlying_model,
+                                    copy(self.normalizing_model),
+                                    AbsErrorErrFunc())
+                else:
+                    normalizer = None
+                nc = RegressorNc(underlying_model,
+                                    AbsErrorErrFunc(),
+                                    normalizer)
+
+                self.estimator = AggregatedCp(IcpRegressor(nc),
+                                            sampler=sampler, aggregation_func=aggregation_f,
+                                            n_models=n_predictors)
+
+                self.estimator.fit(X, Y)
 
         except Exception as e:
             LOG.error(f'Error building aggregated PLSR conformal'

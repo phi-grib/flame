@@ -367,6 +367,7 @@ conformal_settings:
       value: KNN
       options:
         - KNN
+        - Underlying
       description: Error model type
     KNN_NN:
       object_type: int
@@ -375,6 +376,32 @@ conformal_settings:
       options:
         - null
       description: Number of nearest neighbors
+    conformal_predictors:
+      object_type: int
+      writable: true
+      value: 10
+      options:
+        - null
+      description: Number of models to build the aggregated CP.
+    ACP_sampler:
+      object_type: string
+      writable: true
+      value: Bootstrap_subsampler
+      options:
+        - BootstrapSampler
+        - RandomSubSampler
+        - CrossSampler
+      description: Sampling strategies.
+    aggregation_function:
+      object_type: string
+      writable: false
+      value: median
+      options:
+        - median
+        - mean
+        - max
+        - min
+      description: P-value aggregation function in ACP
   options: null
   description: conformal predictor settings
   dependencies: 
