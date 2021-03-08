@@ -386,7 +386,7 @@ conformal_settings:
     ACP_sampler:
       object_type: string
       writable: true
-      value: Bootstrap_subsampler
+      value: BootstrapSampler
       options:
         - BootstrapSampler
         - RandomSubSampler

@@ -44,6 +44,8 @@ from sklearn.preprocessing import MinMaxScaler
 
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.tree import DecisionTreeRegressor
+from sklearn.neighbors import KNeighborsRegressor
+
 
 # nonconformist imports
 from nonconformist.base import ClassifierAdapter, RegressorAdapter
@@ -399,14 +401,9 @@ class BaseEstimator:
         Y_rec = np.mean(Y_rec_in, axis=1)
         interval_mean_rec = np.mean(np.abs((Y_rec_in[:, 0]) - (Y_rec_in[:, 1])))
 
-        # # conformal models only use kfold for validation
-        # kf = KFold(n_splits=self.param.getVal('ModelValidationN'), shuffle=True, random_state=46)
-
         # Copy Y vector to use it as template to assign predictions
         Y_pred_in = copy.copy(Y).tolist()
-        from sklearn.neighbors import KNeighborsRegressor
         try:
-            # for train_index, test_index in kf.split(X):
             for train_index, test_index in self.cv.split(X):
                 # Generate training and test sets
                 X_train, X_test = X[train_index], X[test_index]
@@ -414,18 +411,6 @@ class BaseEstimator:
                 
                 # Create the aggregated conformal regressor.
                 conformal_pred = copy.copy(self.estimator)
-                # underlying_model = RegressorAdapter(self.estimator_temp)
-                # # normalizing_model = RegressorAdapter(self.estimator_temp)
-                # normalizer = RegressorNormalizer(
-                #                 underlying_model,
-                #                 copy.copy(self.normalizing_model),
-                #                 AbsErrorErrFunc())
-                # nc = RegressorNc(underlying_model,
-                #                     AbsErrorErrFunc(),
-                #                     normalizer)
-
-                # conformal_pred = AggregatedCp(IcpRegressor(nc),
-                #                                 BootstrapSampler())
 
                 # Fit conformal regressor to the data
                 conformal_pred.fit(X_train, Y_train)
@@ -549,28 +534,18 @@ class BaseEstimator:
         not_predicted_all = 0
 
         info = []
-        from sklearn.model_selection import KFold
-
-        # # conformal models only use kfold for validation
-        #self.cv = KFold(n_splits=self.param.getVal('ModelValidationN'), shuffle=False, random_state=46)
 
         # Copy Y vector to use it as template to assign predictions
         Y_pred = copy.copy(Y).tolist()
         
         try:
-            # for train_index, test_index in kf.split(X):
             for train_index, test_index in self.cv.split(X):
                 # Generate training and test sets
                 X_train, X_test = X[train_index], X[test_index]
                 Y_train, Y_test = Y[train_index], Y[test_index]
 
-                # Create the aggregated conformal classifier.
-                # conformal_pred = AggregatedCp(IcpClassifier(
-                #                             ClassifierNc(ClassifierAdapter(
-                #                                             self.estimator_temp),
-                #                                 MarginErrFunc())),
-                #                             BootstrapSampler())
                 conformal_pred = copy.copy(self.estimator)
+                
                 # Fit the conformal classifier to the data
                 conformal_pred.fit(X_train, Y_train)
                 
@@ -1009,6 +984,89 @@ class BaseEstimator:
         self.conveyor.addVal(Yp, 'values', 'Prediction',
                         'result', 'objs',
                         'Results of the prediction', 'main')
+
+
+    def conformalBuild (self, X, Y):
+
+        try:
+            # Read conformal settings
+            conformal_settings = self.param.getDict('conformal_settings')
+
+            samplers = {"BootstrapSampler" : BootstrapSampler(), 
+                        "RandomSubSampler" : RandomSubSampler(),
+                        "CrossSampler"     : CrossSampler()}
+            try:
+                aggregation_f = conformal_settings['aggregation_function']
+            except Exception as e:
+                aggregation_f = "median"
+
+            try:
+                sampler = samplers[conformal_settings['ACP_sampler']]
+                n_predictors = conformal_settings['conformal_predictors']
+            except Exception as e:
+                sampler = BootstrapSampler()
+                n_predictors = 10
+            
+            # Conformal regressor
+            if self.param.getVal('quantitative'):
+                LOG.info("Building conformal Quantitative model")
+
+                # Normalizing model (lambda)
+                normalizers = {'KNN' : RegressorAdapter(KNeighborsRegressor(
+                                       n_neighbors=conformal_settings['KNN_NN'])),
+                               'Underlying' : RegressorAdapter(self.estimator_temp),
+                               'None' : None}
+                
+                try:
+                    normalizing_model = normalizers[conformal_settings['error_model']]
+                except:
+                    normalizing_model = None
+
+                if normalizing_model is not None:
+                    normalizer = RegressorNormalizer( self.estimator_temp,
+                                                    # copy(self.normalizing_model),
+                                                      normalizing_model,
+                                                      AbsErrorErrFunc())
+                else:
+                    normalizer = None
+
+                # ACP Agregated Conformal (ICP)
+                self.estimator = AggregatedCp(
+                                    IcpRegressor(
+                                        RegressorNc(
+                                            RegressorAdapter(self.estimator_temp), 
+                                                AbsErrorErrFunc(), 
+                                            normalizer
+                                        )
+                                    ),
+                                    sampler=sampler, 
+                                    aggregation_func=aggregation_f,
+                                    n_models=n_predictors)
+
+            # Conformal classifier
+            else:
+
+                LOG.info("Building conformal Qualitative model")
+
+                # ACP Agregated Conformal (ICP)
+                self.estimator = AggregatedCp(
+                                    IcpClassifier(
+                                        ClassifierNc(
+                                            ClassifierAdapter(self.estimator_temp),
+                                                MarginErrFunc()
+                                        )
+                                    ),
+                                    sampler=sampler, 
+                                    aggregation_func=aggregation_f,
+                                    n_models=n_predictors)
+
+            # Fit estimator to the data
+            self.estimator.fit(X, Y)
+
+        except Exception as e:
+            return False, f'Exception building conformal RF estimator with exception {e}'
+        
+        return True, ''
 
     def conformalProject(self, Xb):
         ''' projects a collection of query objects in a conformal model,

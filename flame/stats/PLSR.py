@@ -199,71 +199,78 @@ class PLSR(BaseEstimator):
         if not self.param.getVal('conformal'):
             return True, results
 
-        self.estimator_temp = copy(self.estimator)
+        # self.estimator_temp = copy(self.estimator)
 
-        try:
+        self.estimator_temp = self.estimator
+        success, error = self.conformalBuild(X, Y)
+        if success:
+            return True, results
+        else:
+            return False, error
+
+        # try:
             
-            LOG.info('Building PLSR aggregated conformal regressor predictor')
-            # set parameters
-            conformal_settings = self.param.getDict('conformal_settings')
+        #     LOG.info('Building PLSR aggregated conformal regressor predictor')
+        #     # set parameters
+        #     conformal_settings = self.param.getDict('conformal_settings')
 
-            samplers = {"BootstrapSampler" : BootstrapSampler(), "RandomSubSampler" : RandomSubSampler(),
-                        "CrossSampler" : CrossSampler()}
-            try:
-                aggregation_f = conformal_settings['aggregation_function']
-            except Exception as e:
-                aggregation_f = "median"
+        #     samplers = {"BootstrapSampler" : BootstrapSampler(), "RandomSubSampler" : RandomSubSampler(),
+        #                 "CrossSampler" : CrossSampler()}
+        #     try:
+        #         aggregation_f = conformal_settings['aggregation_function']
+        #     except Exception as e:
+        #         aggregation_f = "median"
 
-            try:
-                sampler = samplers[conformal_settings['ACP_sampler']]
-                n_predictors = conformal_settings['conformal_predictors']
+        #     try:
+        #         sampler = samplers[conformal_settings['ACP_sampler']]
+        #         n_predictors = conformal_settings['conformal_predictors']
 
-            except Exception as e:
-                # For previous models
-                sampler = BootstrapSampler()
-                n_predictors = 10
+        #     except Exception as e:
+        #         # For previous models
+        #         sampler = BootstrapSampler()
+        #         n_predictors = 10
             
-            # Conformal regressor
-            if self.param.getVal('quantitative'):
-                normalizers = {'KNN' : RegressorAdapter(KNeighborsRegressor(
-                                       n_neighbors=conformal_settings['KNN_NN'])),
-                                'Underlying' : RegressorAdapter(self.estimator_temp),
-                                'None' : None}
-                underlying_model = RegressorAdapter(self.estimator_temp)
-                self.normalizing_model = normalizers[conformal_settings['error_model']]
-                if self.normalizing_model is not None:
-                    normalizer = RegressorNormalizer(
-                                    underlying_model,
-                                    copy(self.normalizing_model),
-                                    AbsErrorErrFunc())
-                else:
-                    normalizer = None
-                nc = RegressorNc(underlying_model,
-                                    AbsErrorErrFunc(),
-                                    normalizer)
+        #     # Conformal regressor
+        #     if self.param.getVal('quantitative'):
+        #         normalizers = {'KNN' : RegressorAdapter(KNeighborsRegressor(
+        #                                n_neighbors=conformal_settings['KNN_NN'])),
+        #                         'Underlying' : RegressorAdapter(self.estimator_temp),
+        #                         'None' : None}
+        #         underlying_model = RegressorAdapter(self.estimator_temp)
+        #         self.normalizing_model = normalizers[conformal_settings['error_model']]
+        #         if self.normalizing_model is not None:
+        #             normalizer = RegressorNormalizer(
+        #                             underlying_model,
+        #                             copy(self.normalizing_model),
+        #                             AbsErrorErrFunc())
+        #         else:
+        #             normalizer = None
+        #         nc = RegressorNc(underlying_model,
+        #                             AbsErrorErrFunc(),
+        #                             normalizer)
 
-                self.estimator = AggregatedCp(IcpRegressor(nc),
-                                            sampler=sampler, aggregation_func=aggregation_f,
-                                            n_models=n_predictors)
+        #         self.estimator = AggregatedCp(IcpRegressor(nc),
+        #                                     sampler=sampler, aggregation_func=aggregation_f,
+        #                                     n_models=n_predictors)
 
-                self.estimator.fit(X, Y)
+        #         self.estimator.fit(X, Y)
 
-        except Exception as e:
-            LOG.error(f'Error building aggregated PLSR conformal'
-                        f' regressor with exception: {e}')
-            return False, f'Error building aggregated PLSR conformal regressor with exception: {e}'
+        # except Exception as e:
+        #     LOG.error(f'Error building aggregated PLSR conformal'
+        #                 f' regressor with exception: {e}')
+        #     return False, f'Error building aggregated PLSR conformal regressor with exception: {e}'
 
-            # self.conformal_pred = AggregatedCp(IcpRegressor(
-            # RegressorNc(RegressorAdapter(self.estimator))),
-            #                                    BootstrapSampler())
+        #     # self.conformal_pred = AggregatedCp(IcpRegressor(
+        #     # RegressorNc(RegressorAdapter(self.estimator))),
+        #     #                                    BootstrapSampler())
 
-        # Fit conformal estimator to the data
-        self.estimator.fit(X, Y)
+        # # Fit conformal estimator to the data
+        # self.estimator.fit(X, Y)
 
-        # overrides non-conformal
-        # results.append(('model', 'model type', 'conformal PLSR quantitative'))
+        # # overrides non-conformal
+        # # results.append(('model', 'model type', 'conformal PLSR quantitative'))
 
-        return True, results
+        # return True, results
 
     def optimize(self, X, Y, estimator, tune_parameters):
         ''' optimizes a model using a grid search over a 
