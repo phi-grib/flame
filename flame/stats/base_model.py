@@ -990,7 +990,13 @@ class BaseEstimator:
         ''' uses self.estimator_temp to build a conformal estimator with the parameters defined in
         conformal_settings, fits X and Y and copy the result to self.estimator'''
 
-        # Read conformal settings
+        # Read conformal settings, defining the 
+        # - normalizer (KNN, Underlying) (only for regressor)
+        # - sampler (Boostrap, Random, Cross) 
+        # - aggregation function (mean, median, min, max)
+        # 
+        # However, the scorers were hardcoded to AbsErr for regressors and MarginErr for classifiers
+
         conformal_settings = self.param.getDict('conformal_settings')
 
         samplers = {"BootstrapSampler" : BootstrapSampler(), 
@@ -1008,14 +1014,23 @@ class BaseEstimator:
             sampler = BootstrapSampler()
             n_predictors = 10
             
+        if 'KNN_NN' in conformal_settings:
+            n_neighbors=conformal_settings['KNN_NN']
+        else:
+            n_neighbors=15
+
         try:
             # Conformal regressor
             if self.param.getVal('quantitative'):
                 LOG.info("Building conformal Quantitative model")
+                LOG.info(f"Using {conformal_settings['ACP_sampler']} sampler," \
+                        +f"{conformal_settings['aggregation_function']} aggregator " \
+                        +f"and {conformal_settings['error_model']} normalizer")
+                LOG.info(f"Aggegated Conformal using {n_predictors} models")
 
                 # Normalizing model (lambda)
                 normalizers = {'KNN' : RegressorAdapter(KNeighborsRegressor(
-                                       n_neighbors=conformal_settings['KNN_NN'])),
+                                       n_neighbors=n_neighbors)),
                                'Underlying' : RegressorAdapter(self.estimator_temp),
                                'None' : None}
                 
@@ -1049,6 +1064,9 @@ class BaseEstimator:
             else:
 
                 LOG.info("Building conformal Qualitative model")
+                LOG.info(f"Using {conformal_settings['ACP_sampler']} sampler," \
+                        +f"{conformal_settings['aggregation_function']} aggregator ")
+                LOG.info(f"Aggegated Conformal using {n_predictors} models" )
 
                 # ACP Agregated Conformal (ICP)
                 self.estimator = AggregatedCp(
