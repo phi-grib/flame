@@ -113,13 +113,11 @@ class SVM(BaseEstimator):
                 # Check type of model
                 if self.param.getVal('quantitative'):
                     self.estimator = svm.SVR(**self.estimator_parameters)
-                    self.optimize(X, Y, self.estimator,
-                                 self.tune_parameters)
+                    self.optimize(X, Y, self.estimator, self.tune_parameters)
 
                 else:
                     self.estimator = svm.SVC(**self.estimator_parameters)
-                    self.optimize(X, Y, self.estimator,
-                                  self.tune_parameters)
+                    self.optimize(X, Y, self.estimator, self.tune_parameters)
                 LOG.debug('SVM estimator optimized')
                 self.estimator.fit(X, Y)
             except Exception as e:

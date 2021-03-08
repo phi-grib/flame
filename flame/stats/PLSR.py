@@ -176,8 +176,6 @@ class PLSR(BaseEstimator):
                 LOG.error('Type of tune not recognized, check the input')
                 return False, 'Type of tune not recognized, check the input'    
 
-            # results.append(('model', 'model type', 'PLSR quantitative (optimized)'))
-
         else:
             LOG.info('Building Quantitative PLSR with no optimization')
             try:
@@ -191,15 +189,11 @@ class PLSR(BaseEstimator):
                           f'exception {e}')
                 return False, f'Error at PLS_da instantiation with exception {e}'
 
-            # results.append(('model', 'model type', 'PLSR quantitative'))
-        
         # Fit estimator to the data
         self.estimator.fit(X, Y)
 
         if not self.param.getVal('conformal'):
             return True, results
-
-        # self.estimator_temp = copy(self.estimator)
 
         self.estimator_temp = self.estimator
         success, error = self.conformalBuild(X, Y)
@@ -207,70 +201,6 @@ class PLSR(BaseEstimator):
             return True, results
         else:
             return False, error
-
-        # try:
-            
-        #     LOG.info('Building PLSR aggregated conformal regressor predictor')
-        #     # set parameters
-        #     conformal_settings = self.param.getDict('conformal_settings')
-
-        #     samplers = {"BootstrapSampler" : BootstrapSampler(), "RandomSubSampler" : RandomSubSampler(),
-        #                 "CrossSampler" : CrossSampler()}
-        #     try:
-        #         aggregation_f = conformal_settings['aggregation_function']
-        #     except Exception as e:
-        #         aggregation_f = "median"
-
-        #     try:
-        #         sampler = samplers[conformal_settings['ACP_sampler']]
-        #         n_predictors = conformal_settings['conformal_predictors']
-
-        #     except Exception as e:
-        #         # For previous models
-        #         sampler = BootstrapSampler()
-        #         n_predictors = 10
-            
-        #     # Conformal regressor
-        #     if self.param.getVal('quantitative'):
-        #         normalizers = {'KNN' : RegressorAdapter(KNeighborsRegressor(
-        #                                n_neighbors=conformal_settings['KNN_NN'])),
-        #                         'Underlying' : RegressorAdapter(self.estimator_temp),
-        #                         'None' : None}
-        #         underlying_model = RegressorAdapter(self.estimator_temp)
-        #         self.normalizing_model = normalizers[conformal_settings['error_model']]
-        #         if self.normalizing_model is not None:
-        #             normalizer = RegressorNormalizer(
-        #                             underlying_model,
-        #                             copy(self.normalizing_model),
-        #                             AbsErrorErrFunc())
-        #         else:
-        #             normalizer = None
-        #         nc = RegressorNc(underlying_model,
-        #                             AbsErrorErrFunc(),
-        #                             normalizer)
-
-        #         self.estimator = AggregatedCp(IcpRegressor(nc),
-        #                                     sampler=sampler, aggregation_func=aggregation_f,
-        #                                     n_models=n_predictors)
-
-        #         self.estimator.fit(X, Y)
-
-        # except Exception as e:
-        #     LOG.error(f'Error building aggregated PLSR conformal'
-        #                 f' regressor with exception: {e}')
-        #     return False, f'Error building aggregated PLSR conformal regressor with exception: {e}'
-
-        #     # self.conformal_pred = AggregatedCp(IcpRegressor(
-        #     # RegressorNc(RegressorAdapter(self.estimator))),
-        #     #                                    BootstrapSampler())
-
-        # # Fit conformal estimator to the data
-        # self.estimator.fit(X, Y)
-
-        # # overrides non-conformal
-        # # results.append(('model', 'model type', 'conformal PLSR quantitative'))
-
-        # return True, results
 
     def optimize(self, X, Y, estimator, tune_parameters):
         ''' optimizes a model using a grid search over a 
@@ -294,8 +224,6 @@ class PLSR(BaseEstimator):
                 
                 r2_0 = r2_score(Y, y_pred)
 
-                # print (n_comp, r2_0)
-
                 # Update estimator0 to best current estimator
                 if r2_0 >= r2 or estimator0 == None:
                     r2 = r2_0
@@ -307,10 +235,6 @@ class PLSR(BaseEstimator):
 
         self.estimator = estimator0
 
-        # LOG.debug('Number of latent variables, r2')
-        # for lv in list_latent:
-        #     LOG.debug(f'Number of latent variables: {lv[0]} \nr2: {lv[1]}\n')
-
         self.estimator.fit(X, Y)
         LOG.info(f'Estimator best parameters: {self.estimator.get_params()}')
         return True, 'OK'
@@ -320,11 +244,8 @@ class PLSR(BaseEstimator):
     # def CF_quantitative_validation(self):
     #     ''' performs validation for conformal quantitative models '''
 
-      
-
     # def CF_qualitative_validation(self):
     #     ''' performs validation for conformal qualitative models '''
-
 
     # def quantitativeValidation(self):
     #     ''' performs validation for quantitative models '''
@@ -332,22 +253,17 @@ class PLSR(BaseEstimator):
     # def qualitativeValidation(self):
     #     ''' performs validation for qualitative models '''
 
-
     # def validate(self):
     #     ''' Validates the model and computes suitable model quality scoring values'''
-
 
     # def optimize(self, X, Y, estimator, tune_parameters):
     #     ''' optimizes a model using a grid search over a range of values for diverse parameters'''
 
-
     # def regularProject(self, Xb, results):
     #     ''' projects a collection of query objects in a regular model, for obtaining predictions '''
 
-
     # def conformalProject(self, Xb, results):
     #     ''' projects a collection of query objects in a conformal model, for obtaining predictions '''
-
 
     # def project(self, Xb, results):
     #     ''' Uses the X matrix provided as argument to predict Y'''

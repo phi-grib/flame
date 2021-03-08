@@ -109,13 +109,10 @@ class RF(BaseEstimator):
                     self.estimator = RandomForestRegressor(
                                         **self.estimator_parameters)
                     self.optimize(X, Y, self.estimator, self.tune_parameters)
-                    # results.append(('model','model type','RF quantitative (optimized)'))
                 else:
                     self.estimator = RandomForestClassifier(
                                         **self.estimator_parameters)
-                    self.optimize(X, Y, self.estimator,
-                                  self.tune_parameters)
-                    # results.append(('model','model type','RF qualitative (optimized)'))
+                    self.optimize(X, Y, self.estimator, self.tune_parameters)
 
             except Exception as e:
                 return False, f'Exception optimizing RF estimator with exception {e}'
@@ -126,13 +123,13 @@ class RF(BaseEstimator):
                     LOG.info("Building Quantitative RF model")
 
                     self.estimator = RandomForestRegressor(
-                        **self.estimator_parameters)
+                                        **self.estimator_parameters)
 
                 else:
                     LOG.info("Building Qualitative RF model")
 
                     self.estimator = RandomForestClassifier(
-                        **self.estimator_parameters)
+                                        **self.estimator_parameters)
 
                 self.estimator.fit(X, Y)
 
@@ -157,10 +154,8 @@ class RF(BaseEstimator):
     #     ''' performs validation for conformal quantitative models '''
 
       
-
     # def CF_qualitative_validation(self):
     #     ''' performs validation for conformal qualitative models '''
-
 
     # def quantitativeValidation(self):
     #     ''' performs validation for quantitative models '''

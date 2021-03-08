@@ -987,26 +987,28 @@ class BaseEstimator:
 
 
     def conformalBuild (self, X, Y):
+        ''' uses self.estimator_temp to build a conformal estimator with the parameters defined in
+        conformal_settings, fits X and Y and copy the result to self.estimator'''
+
+        # Read conformal settings
+        conformal_settings = self.param.getDict('conformal_settings')
+
+        samplers = {"BootstrapSampler" : BootstrapSampler(), 
+                    "RandomSubSampler" : RandomSubSampler(),
+                    "CrossSampler"     : CrossSampler()}
+        try:
+            aggregation_f = conformal_settings['aggregation_function']
+        except Exception as e:
+            aggregation_f = "median"
 
         try:
-            # Read conformal settings
-            conformal_settings = self.param.getDict('conformal_settings')
-
-            samplers = {"BootstrapSampler" : BootstrapSampler(), 
-                        "RandomSubSampler" : RandomSubSampler(),
-                        "CrossSampler"     : CrossSampler()}
-            try:
-                aggregation_f = conformal_settings['aggregation_function']
-            except Exception as e:
-                aggregation_f = "median"
-
-            try:
-                sampler = samplers[conformal_settings['ACP_sampler']]
-                n_predictors = conformal_settings['conformal_predictors']
-            except Exception as e:
-                sampler = BootstrapSampler()
-                n_predictors = 10
+            sampler = samplers[conformal_settings['ACP_sampler']]
+            n_predictors = conformal_settings['conformal_predictors']
+        except Exception as e:
+            sampler = BootstrapSampler()
+            n_predictors = 10
             
+        try:
             # Conformal regressor
             if self.param.getVal('quantitative'):
                 LOG.info("Building conformal Quantitative model")
@@ -1064,9 +1066,9 @@ class BaseEstimator:
             self.estimator.fit(X, Y)
 
         except Exception as e:
-            return False, f'Exception building conformal RF estimator with exception {e}'
+            return False, f'Exception building conformal estimator with exception {e}'
         
-        return True, ''
+        return True, 'OK'
 
     def conformalProject(self, Xb):
         ''' projects a collection of query objects in a conformal model,
@@ -1175,6 +1177,7 @@ class BaseEstimator:
         if self.estimator == None:
             self.conveyor.setError('failed to load classifier')
             return
+        
         # Apply variable mask to prediction vector/matrix
         # if self.param.getVal("feature_selection"):
         #     Xb = Xb[:, self.variable_mask]
@@ -1184,6 +1187,7 @@ class BaseEstimator:
             # Xb = Xb*self.wgx
             # Xb = self.scaler.transform(Xb)
         # Select the type of projection
+
         if not self.param.getVal('conformal'):
             self.regularProject(Xb)
         else:

@@ -103,18 +103,13 @@ class XGBOOST(BaseEstimator):
             try:
                 # Check type of model
                 if self.param.getVal('quantitative'):
-                    self.estimator = XGBRegressor(
-                                        **self.estimator_parameters)
+                    self.estimator = XGBRegressor(**self.estimator_parameters)
                     self.optimize(X, Y, self.estimator, self.tune_parameters)
-                    # results.append(('model','model type','XGBOOST quantitative (optimized)'))
                 else:
-                    self.estimator = XGBClassifier(
-                                        **self.estimator_parameters)
+                    self.estimator = XGBClassifier(**self.estimator_parameters)
                     params = self.estimator.get_params()
                     params['num_class'] = 2
-                    self.optimize(X, Y, self.estimator,
-                                  self.tune_parameters)
-                    # results.append(('model','model type','XGBOOST qualitative (optimized)'))
+                    self.optimize(X, Y, self.estimator, self.tune_parameters)
 
             except Exception as e:
                 return False, f'Exception optimizing XGBOOST estimator with exception {e}'
@@ -152,7 +147,6 @@ class XGBOOST(BaseEstimator):
     # def CF_quantitative_validation(self):
     #     ''' performs validation for conformal quantitative models '''
 
-      
 
     # def CF_qualitative_validation(self):
     #     ''' performs validation for conformal qualitative models '''
