@@ -425,6 +425,7 @@ class Documentation:
         if self.parameters.getVal('conformal'):
             self.setInnerVal('AD_method', 'name', 'conformal prediction')
             self.setInnerVal('AD_parameters', 'confidence',  f'{self.parameters.getVal("conformalConfidence")}')
+            # TODO: add conformal_settings here
 
     def assign_results(self):
         '''
