@@ -35,7 +35,6 @@ from flame.stats.GNB import GNB
 from flame.stats.PLSR import PLSR
 from flame.stats.PLSDA import PLSDA
 from flame.stats import feature_selection
-from flame.stats.XGboost import XGBOOST
 from flame.stats.combo import median, mean, majority, logicalOR, matrix
 from flame.stats.imbalance import run_imbalance  
 
@@ -58,18 +57,7 @@ class Learn:
         self.scaler = None
         self.variable_mask = None
 
-        # expand with new methods here:
-        self.registered_methods = [('RF', RF),
-                              ('XGBOOST', XGBOOST),
-                              ('SVM', SVM),
-                              ('GNB', GNB),
-                              ('PLSR', PLSR),
-                              ('PLSDA', PLSDA), 
-                              ('median', median),
-                              ('mean', mean),
-                              ('majority', majority),
-                              ('logicalOR', logicalOR),
-                              ('matrix', matrix)]
+
 
     def run_custom(self):
         '''
@@ -236,6 +224,22 @@ class Learn:
         for being displayed in manage tools.
         '''
 
+        # expand with new methods here:
+        registered_methods = [('RF', RF),
+                              ('SVM', SVM),
+                              ('GNB', GNB),
+                              ('PLSR', PLSR),
+                              ('PLSDA', PLSDA), 
+                              ('median', median),
+                              ('mean', mean),
+                              ('majority', majority),
+                              ('logicalOR', logicalOR),
+                              ('matrix', matrix)]
+
+        if self.param.getVal('model') == 'XGBOOST':
+            from flame.stats.XGboost import XGBOOST
+            registered_methods.append( ('XGBOOST', XGBOOST))
+
         # check suitability of Y matrix
         if not self.param.getVal('quantitative') :
             success, yresult  = utils.qualitative_Y(self.Y)
@@ -268,7 +272,7 @@ class Learn:
 
         # instantiate an appropriate child of base_model
         model = None
-        for imethod in self.registered_methods:
+        for imethod in registered_methods:
             if imethod[0] == self.param.getVal('model'):
 
                 # we instantiate the subtype of base_model, 

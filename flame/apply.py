@@ -23,7 +23,6 @@
 import numpy as np
 import pickle
 import os
-import hashlib
 
 from flame.stats.RF import RF
 from flame.stats.SVM import SVM
@@ -31,7 +30,7 @@ from flame.stats.GNB import GNB
 from flame.stats.PLSR import PLSR
 from flame.stats.PLSDA import PLSDA
 from flame.stats.combo import median, mean, majority, logicalOR, matrix
-from flame.stats.XGboost import XGBOOST
+
 from sklearn.metrics import mean_squared_error, matthews_corrcoef as mcc
 from sklearn.metrics import f1_score
 from sklearn.metrics import make_scorer
@@ -50,18 +49,7 @@ class Apply:
         self.param = parameters
         self.conveyor = conveyor
 
-        # expand with new methods here:
-        self.registered_methods = [('RF', RF),
-                              ('SVM', SVM),
-                              ('XGBOOST', XGBOOST),
-                              ('GNB', GNB),
-                              ('PLSR', PLSR),
-                              ('PLSDA', PLSDA),
-                              ('median', median),
-                              ('mean', mean),
-                              ('majority', majority),
-                              ('logicalOR', logicalOR),
-                              ('matrix', matrix)]
+
 
 
     # def external_validation(self):
@@ -357,6 +345,23 @@ class Apply:
         Most of these methods can be found at the stats folder
 
         '''
+
+        # expand with new methods here:
+        registered_methods = [('RF', RF),
+                              ('SVM', SVM),
+                              ('GNB', GNB),
+                              ('PLSR', PLSR),
+                              ('PLSDA', PLSDA),
+                              ('median', median),
+                              ('mean', mean),
+                              ('majority', majority),
+                              ('logicalOR', logicalOR),
+                              ('matrix', matrix)]
+
+        if self.param.getVal('model') == 'XGBOOST':
+            from flame.stats.XGboost import XGBOOST
+            registered_methods.append( ('XGBOOST', XGBOOST))
+
         # assume X matrix is present in 'xmatrix'
         X = self.conveyor.getVal("xmatrix")
 
@@ -388,7 +393,7 @@ class Apply:
 
         # instantiate an appropriate child of base_model
         model = None
-        for imethod in self.registered_methods:
+        for imethod in registered_methods:
             if imethod[0] == self.param.getVal('model'):
 
                 # we instantiate the subtype of base_model, 
