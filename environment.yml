@@ -16,6 +16,7 @@ dependencies:
   - pytest
   - psycopg2
   - chembl_structure_pipeline
+  - cmake=>3.16
   - pip:
      - xgboost
      - django==2.2.8
