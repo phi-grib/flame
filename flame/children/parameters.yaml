@@ -361,6 +361,15 @@ conformal_settings:
   object_type: dictionary
   writable: false
   value: 
+    aggregated:
+      object_type: boolean
+      writable: false
+      value: true
+      options:
+        - true
+        - false
+      description: Use aggregated conformal (ACP) or inductive conformal (ICP) predictions
+
     error_model:
       object_type: string
       writable: true

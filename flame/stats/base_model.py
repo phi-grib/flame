@@ -991,9 +991,10 @@ class BaseEstimator:
         conformal_settings, fits X and Y and copy the result to self.estimator'''
 
         # Read conformal settings, defining the 
-        # - normalizer (KNN, Underlying) (only for regressor)
+        # - aggregated (True/False)
         # - sampler (Boostrap, Random, Cross) 
         # - aggregation function (mean, median, min, max)
+        # - normalizer (KNN, Underlying) (only for regressor)
         # 
         # However, the scorers were hardcoded to AbsErr for regressors and MarginErr for classifiers
 
@@ -1002,35 +1003,44 @@ class BaseEstimator:
         samplers = {"BootstrapSampler" : BootstrapSampler(), 
                     "RandomSubSampler" : RandomSubSampler(),
                     "CrossSampler"     : CrossSampler()}
-        try:
-            aggregation_f = conformal_settings['aggregation_function']
-        except Exception as e:
-            aggregation_f = "median"
 
-        try:
+        if 'aggregated' in conformal_settings:
+            isACP = conformal_settings['aggregated']
+        else:
+            isACP = True
+
+        if 'ACP_sampler' in conformal_settings:
             sampler = samplers[conformal_settings['ACP_sampler']]
-            n_predictors = conformal_settings['conformal_predictors']
-        except Exception as e:
+        else:
             sampler = BootstrapSampler()
+
+        if 'conformal_predictors' in conformal_settings:
+            n_predictors = conformal_settings['conformal_predictors']
+        else:
             n_predictors = 10
+
+        if 'aggregation_function' in conformal_settings:
+            aggregation_f = conformal_settings['aggregation_function']
+        else:
+            aggregation_f = "median"
             
         if 'KNN_NN' in conformal_settings:
             n_neighbors=conformal_settings['KNN_NN']
         else:
             n_neighbors=15
 
-        isACP = False
-
         if isACP :
-
+            #########################################################################
+            ###   ACP
+            #########################################################################
             try:
                 # Conformal regressor
                 if self.param.getVal('quantitative'):
-                    LOG.info("Building Agregated Conformal Quantitative model")
+                    LOG.info("Building Quantitative Aggregated Conformal model")
                     LOG.info(f"Using {conformal_settings['ACP_sampler']} sampler," \
                             +f"{conformal_settings['aggregation_function']} aggregator " \
                             +f"and {conformal_settings['error_model']} normalizer")
-                    LOG.info(f"Aggegated Conformal using {n_predictors} models")
+                    LOG.info(f"Aggregation of {n_predictors} models")
 
                     # Normalizing model (lambda)
                     normalizers = {'KNN' : RegressorAdapter(KNeighborsRegressor(
@@ -1045,13 +1055,11 @@ class BaseEstimator:
 
                     if normalizing_model is not None:
                         normalizer = RegressorNormalizer( self.estimator_temp,
-                                                        # copy(self.normalizing_model),
                                                         normalizing_model,
                                                         AbsErrorErrFunc())
                     else:
                         normalizer = None
 
-                    # ACP Agregated Conformal (ICP)
                     self.estimator = AggregatedCp(
                                         IcpRegressor(
                                             RegressorNc(
@@ -1066,13 +1074,11 @@ class BaseEstimator:
 
                 # Conformal classifier
                 else:
-
-                    LOG.info("Building Agregated Conformal Qualitative model")
+                    LOG.info("Building Qualitative Aggregated Conformal model")
                     LOG.info(f"Using {conformal_settings['ACP_sampler']} sampler," \
                             +f"{conformal_settings['aggregation_function']} aggregator ")
-                    LOG.info(f"Aggegated Conformal using {n_predictors} models" )
+                    LOG.info(f"Aggregation of {n_predictors} models" )
 
-                    # ACP Agregated Conformal (ICP)
                     self.estimator = AggregatedCp(
                                         IcpClassifier(
                                             ClassifierNc(
@@ -1091,10 +1097,13 @@ class BaseEstimator:
                 return False, f'Exception building conformal estimator with exception {e}'
 
         else :
+            #########################################################################
+            ###   ICP
+            #########################################################################
             try:
                 # Conformal regressor
                 if self.param.getVal('quantitative'):
-                    LOG.info("Building Inductive Conformal Quantitative model")
+                    LOG.info("Building Quantitative Inductive Conformal model")
                     LOG.info(f"Using {conformal_settings['error_model']} normalizer")
 
                     # Normalizing model (lambda)
@@ -1110,13 +1119,11 @@ class BaseEstimator:
 
                     if normalizing_model is not None:
                         normalizer = RegressorNormalizer( self.estimator_temp,
-                                                        # copy(self.normalizing_model),
                                                         normalizing_model,
                                                         AbsErrorErrFunc())
                     else:
                         normalizer = None
 
-                    # ACP Agregated Conformal (ICP)
                     self.estimator = IcpRegressor(
                                         RegressorNc(
                                             RegressorAdapter(self.estimator_temp), 
@@ -1127,10 +1134,8 @@ class BaseEstimator:
 
                 # Conformal classifier
                 else:
+                    LOG.info("Building Qualitative Inductive Conformal model")
 
-                    LOG.info("Building Inductive Conformal Qualitative model")
-
-                    # ACP Agregated Conformal (ICP)
                     self.estimator = IcpClassifier(
                                         ClassifierNc(
                                             ClassifierAdapter(self.estimator_temp),
@@ -1139,12 +1144,11 @@ class BaseEstimator:
                                      )
 
 
+                # Divide the data into 80% training set and 20% calibration set 
                 np.random.seed(46)
                 nobj, nvarx = np.shape(X)
                 idx = np.random.permutation(nobj)
                 train_size = int(np.floor(nobj*0.8))
-
-                # Divide the data into 80% training set and 20% calibration set 
                 idx_train, idx_cal = idx[:train_size], idx[train_size:nobj]
 
                 # Fit estimator to the data
@@ -1157,8 +1161,6 @@ class BaseEstimator:
                 return False, f'Exception building conformal estimator with exception {e}'
 
         return True, 'OK'
-
-
 
 
     def conformalProject(self, Xb):
