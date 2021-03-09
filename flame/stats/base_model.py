@@ -1088,6 +1088,7 @@ class BaseEstimator:
         
         return True, 'OK'
 
+
     def conformalProject(self, Xb):
         ''' projects a collection of query objects in a conformal model,
          for obtaining predictions '''
