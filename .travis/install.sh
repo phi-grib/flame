@@ -11,7 +11,7 @@ conda init bash
 source $HOME/.bash_profile
 #Useful for debugging any issues with conda
 conda info -a
-conda env create -f ../.travis/environment_mac.yml
+conda env create -f environment_mac.yml
 conda activate flame
 conda list
 echo "------ Using Python `which python` -----------"
