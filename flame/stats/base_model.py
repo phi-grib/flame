@@ -1019,74 +1019,146 @@ class BaseEstimator:
         else:
             n_neighbors=15
 
-        try:
-            # Conformal regressor
-            if self.param.getVal('quantitative'):
-                LOG.info("Building conformal Quantitative model")
-                LOG.info(f"Using {conformal_settings['ACP_sampler']} sampler," \
-                        +f"{conformal_settings['aggregation_function']} aggregator " \
-                        +f"and {conformal_settings['error_model']} normalizer")
-                LOG.info(f"Aggegated Conformal using {n_predictors} models")
+        isACP = False
 
-                # Normalizing model (lambda)
-                normalizers = {'KNN' : RegressorAdapter(KNeighborsRegressor(
-                                       n_neighbors=n_neighbors)),
-                               'Underlying' : RegressorAdapter(self.estimator_temp),
-                               'None' : None}
-                
-                try:
-                    normalizing_model = normalizers[conformal_settings['error_model']]
-                except:
-                    normalizing_model = None
+        if isACP :
 
-                if normalizing_model is not None:
-                    normalizer = RegressorNormalizer( self.estimator_temp,
-                                                    # copy(self.normalizing_model),
-                                                      normalizing_model,
-                                                      AbsErrorErrFunc())
+            try:
+                # Conformal regressor
+                if self.param.getVal('quantitative'):
+                    LOG.info("Building Agregated Conformal Quantitative model")
+                    LOG.info(f"Using {conformal_settings['ACP_sampler']} sampler," \
+                            +f"{conformal_settings['aggregation_function']} aggregator " \
+                            +f"and {conformal_settings['error_model']} normalizer")
+                    LOG.info(f"Aggegated Conformal using {n_predictors} models")
+
+                    # Normalizing model (lambda)
+                    normalizers = {'KNN' : RegressorAdapter(KNeighborsRegressor(
+                                        n_neighbors=n_neighbors)),
+                                'Underlying' : RegressorAdapter(self.estimator_temp),
+                                'None' : None}
+                    
+                    try:
+                        normalizing_model = normalizers[conformal_settings['error_model']]
+                    except:
+                        normalizing_model = None
+
+                    if normalizing_model is not None:
+                        normalizer = RegressorNormalizer( self.estimator_temp,
+                                                        # copy(self.normalizing_model),
+                                                        normalizing_model,
+                                                        AbsErrorErrFunc())
+                    else:
+                        normalizer = None
+
+                    # ACP Agregated Conformal (ICP)
+                    self.estimator = AggregatedCp(
+                                        IcpRegressor(
+                                            RegressorNc(
+                                                RegressorAdapter(self.estimator_temp), 
+                                                    AbsErrorErrFunc(), 
+                                                normalizer
+                                            )
+                                        ),
+                                        sampler=sampler, 
+                                        aggregation_func=aggregation_f,
+                                        n_models=n_predictors)
+
+                # Conformal classifier
                 else:
-                    normalizer = None
 
-                # ACP Agregated Conformal (ICP)
-                self.estimator = AggregatedCp(
-                                    IcpRegressor(
+                    LOG.info("Building Agregated Conformal Qualitative model")
+                    LOG.info(f"Using {conformal_settings['ACP_sampler']} sampler," \
+                            +f"{conformal_settings['aggregation_function']} aggregator ")
+                    LOG.info(f"Aggegated Conformal using {n_predictors} models" )
+
+                    # ACP Agregated Conformal (ICP)
+                    self.estimator = AggregatedCp(
+                                        IcpClassifier(
+                                            ClassifierNc(
+                                                ClassifierAdapter(self.estimator_temp),
+                                                    MarginErrFunc()
+                                            )
+                                        ),
+                                        sampler=sampler, 
+                                        aggregation_func=aggregation_f,
+                                        n_models=n_predictors)
+
+                # Fit estimator to the data
+                self.estimator.fit(X, Y)
+
+            except Exception as e:
+                return False, f'Exception building conformal estimator with exception {e}'
+
+        else :
+            try:
+                # Conformal regressor
+                if self.param.getVal('quantitative'):
+                    LOG.info("Building Inductive Conformal Quantitative model")
+                    LOG.info(f"Using {conformal_settings['error_model']} normalizer")
+
+                    # Normalizing model (lambda)
+                    normalizers = {'KNN' : RegressorAdapter(KNeighborsRegressor(
+                                        n_neighbors=n_neighbors)),
+                                'Underlying' : RegressorAdapter(self.estimator_temp),
+                                'None' : None}
+                    
+                    try:
+                        normalizing_model = normalizers[conformal_settings['error_model']]
+                    except:
+                        normalizing_model = None
+
+                    if normalizing_model is not None:
+                        normalizer = RegressorNormalizer( self.estimator_temp,
+                                                        # copy(self.normalizing_model),
+                                                        normalizing_model,
+                                                        AbsErrorErrFunc())
+                    else:
+                        normalizer = None
+
+                    # ACP Agregated Conformal (ICP)
+                    self.estimator = IcpRegressor(
                                         RegressorNc(
                                             RegressorAdapter(self.estimator_temp), 
                                                 AbsErrorErrFunc(), 
                                             normalizer
                                         )
-                                    ),
-                                    sampler=sampler, 
-                                    aggregation_func=aggregation_f,
-                                    n_models=n_predictors)
+                                    )
 
-            # Conformal classifier
-            else:
+                # Conformal classifier
+                else:
 
-                LOG.info("Building conformal Qualitative model")
-                LOG.info(f"Using {conformal_settings['ACP_sampler']} sampler," \
-                        +f"{conformal_settings['aggregation_function']} aggregator ")
-                LOG.info(f"Aggegated Conformal using {n_predictors} models" )
+                    LOG.info("Building Inductive Conformal Qualitative model")
 
-                # ACP Agregated Conformal (ICP)
-                self.estimator = AggregatedCp(
-                                    IcpClassifier(
+                    # ACP Agregated Conformal (ICP)
+                    self.estimator = IcpClassifier(
                                         ClassifierNc(
                                             ClassifierAdapter(self.estimator_temp),
                                                 MarginErrFunc()
                                         )
-                                    ),
-                                    sampler=sampler, 
-                                    aggregation_func=aggregation_f,
-                                    n_models=n_predictors)
+                                     )
 
-            # Fit estimator to the data
-            self.estimator.fit(X, Y)
 
-        except Exception as e:
-            return False, f'Exception building conformal estimator with exception {e}'
-        
+                np.random.seed(46)
+                nobj, nvarx = np.shape(X)
+                idx = np.random.permutation(nobj)
+                train_size = int(np.floor(nobj*0.8))
+
+                # Divide the data into 80% training set and 20% calibration set 
+                idx_train, idx_cal = idx[:train_size], idx[train_size:nobj]
+
+                # Fit estimator to the data
+                self.estimator.fit(X[idx_train, :], Y[idx_train])
+
+                # Calibrate the data
+                self.estimator.calibrate (X[idx_cal, :], Y[idx_cal])
+
+            except Exception as e:
+                return False, f'Exception building conformal estimator with exception {e}'
+
         return True, 'OK'
+
+
 
 
     def conformalProject(self, Xb):
@@ -1217,6 +1289,7 @@ class BaseEstimator:
 
         # This dictionary contain all the objects which will be needed
         # for prediction
+
         dict_estimator = {'estimator' : self.estimator,
              'version': 1,
              'libraries': utils.module_versions()}
