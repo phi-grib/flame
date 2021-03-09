@@ -1010,9 +1010,11 @@ class BaseEstimator:
             isACP = True
 
         if 'ACP_sampler' in conformal_settings:
-            sampler = samplers[conformal_settings['ACP_sampler']]
+            sampler_id = conformal_settings['ACP_sampler']
         else:
-            sampler = BootstrapSampler()
+            sampler_id = 'BootstrapSampler'
+
+        sampler = samplers[sampler_id]
 
         if 'conformal_predictors' in conformal_settings:
             n_predictors = conformal_settings['conformal_predictors']
@@ -1029,6 +1031,17 @@ class BaseEstimator:
         else:
             n_neighbors=15
 
+        if 'error_model' in conformal_settings:
+            normalizing_id = conformal_settings['error_model']
+        else:
+            normalizing_id = None
+
+        normalizers = {'KNN' : RegressorAdapter(
+                                KNeighborsRegressor(
+                                    n_neighbors=n_neighbors)),
+                       'Underlying' : RegressorAdapter(self.estimator_temp),
+                       'None' : None}
+
         if isACP :
             #########################################################################
             ###   ACP
@@ -1037,21 +1050,13 @@ class BaseEstimator:
                 # Conformal regressor
                 if self.param.getVal('quantitative'):
                     LOG.info("Building Quantitative Aggregated Conformal model")
-                    LOG.info(f"Using {conformal_settings['ACP_sampler']} sampler," \
-                            +f"{conformal_settings['aggregation_function']} aggregator " \
-                            +f"and {conformal_settings['error_model']} normalizer")
+                    LOG.info(f"Using {sampler_id} sampler, " \
+                            +f"{aggregation_f} aggregator " \
+                            +f"and {normalizing_id} normalizer")
                     LOG.info(f"Aggregation of {n_predictors} models")
 
                     # Normalizing model (lambda)
-                    normalizers = {'KNN' : RegressorAdapter(KNeighborsRegressor(
-                                        n_neighbors=n_neighbors)),
-                                'Underlying' : RegressorAdapter(self.estimator_temp),
-                                'None' : None}
-                    
-                    try:
-                        normalizing_model = normalizers[conformal_settings['error_model']]
-                    except:
-                        normalizing_model = None
+                    normalizing_model = normalizers[normalizing_id]
 
                     if normalizing_model is not None:
                         normalizer = RegressorNormalizer( self.estimator_temp,
@@ -1075,8 +1080,8 @@ class BaseEstimator:
                 # Conformal classifier
                 else:
                     LOG.info("Building Qualitative Aggregated Conformal model")
-                    LOG.info(f"Using {conformal_settings['ACP_sampler']} sampler," \
-                            +f"{conformal_settings['aggregation_function']} aggregator ")
+                    LOG.info(f"Using {sampler_id} sampler, " \
+                            +f"{aggregation_f} aggregator ")
                     LOG.info(f"Aggregation of {n_predictors} models" )
 
                     self.estimator = AggregatedCp(
@@ -1104,18 +1109,10 @@ class BaseEstimator:
                 # Conformal regressor
                 if self.param.getVal('quantitative'):
                     LOG.info("Building Quantitative Inductive Conformal model")
-                    LOG.info(f"Using {conformal_settings['error_model']} normalizer")
+                    LOG.info(f"Using {normalizing_id} normalizer")
 
                     # Normalizing model (lambda)
-                    normalizers = {'KNN' : RegressorAdapter(KNeighborsRegressor(
-                                        n_neighbors=n_neighbors)),
-                                'Underlying' : RegressorAdapter(self.estimator_temp),
-                                'None' : None}
-                    
-                    try:
-                        normalizing_model = normalizers[conformal_settings['error_model']]
-                    except:
-                        normalizing_model = None
+                    normalizing_model = normalizers[normalizing_id]
 
                     if normalizing_model is not None:
                         normalizer = RegressorNormalizer( self.estimator_temp,
