@@ -27,7 +27,7 @@ docker run -d -p 8010:8000 -v c:\flame_repo:/data mpastorphi/flame
 
 (note that the local repository should already contain the 'models', 'predictions' and 'spaces' folders inside)
 
-A Flame walkthrough, showing some of its main features is accesible [here](https://drive.google.com/file/d/1J6Enx0sYQ6ZIL5CXNWaDvbTci45kIVMI/view?usp=sharing)
+A Flame walkthrough, showing some of its main features is accesible [here](https://drive.google.com/file/d/1aX1aogDVlIDoYpBR1vu4dIxB10si_8Ex/view?usp=sharing)
 
 
 
