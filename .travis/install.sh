@@ -13,6 +13,7 @@ source $HOME/.bash_profile
 conda info -a
 conda env create -f environment.yml
 conda activate flame
+conda list
 echo "------ Using Python `which python` -----------"
 python setup.py install
 echo "------ Using Flame `which flame` -----------"
