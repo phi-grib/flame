@@ -372,7 +372,7 @@ conformal_settings:
 
     error_model:
       object_type: string
-      writable: true
+      writable: false
       value: KNN
       options:
         - KNN
@@ -394,7 +394,7 @@ conformal_settings:
       description: Number of models to build the aggregated CP.
     ACP_sampler:
       object_type: string
-      writable: true
+      writable: false
       value: BootstrapSampler
       options:
         - BootstrapSampler
