@@ -368,30 +368,33 @@ conformal_settings:
       options:
         - true
         - false
-      description: Use aggregated conformal (ACP) or inductive conformal (ICP) predictions
+      description: Use aggregated conformal predictions (ACP).
 
-    error_model:
+    normalizing_model:
       object_type: string
       writable: false
       value: KNN
       options:
         - KNN
         - Underlying
-      description: Error model type
+      description: Normalizing model used to scale non-conformity scores.
+
     KNN_NN:
       object_type: int
       writable: true
       value: 15
       options:
         - null
-      description: Number of nearest neighbors
+      description: Number of nearest neighbors used by KNN normalizing model.
+
     conformal_predictors:
       object_type: int
       writable: true
       value: 10
       options:
         - null
-      description: Number of models to build the aggregated CP.
+      description: Number of models to build aggregated conformal predictions (ACP).
+
     ACP_sampler:
       object_type: string
       writable: false
@@ -400,7 +403,8 @@ conformal_settings:
         - BootstrapSampler
         - RandomSubSampler
         - CrossSampler
-      description: Sampling strategies.
+      description: Sampling strategy to select callibration sets in aggregated conformal predictions (ACP).
+
     aggregation_function:
       object_type: string
       writable: false
@@ -408,9 +412,8 @@ conformal_settings:
       options:
         - median
         - mean
-        - max
-        - min
-      description: P-value aggregation function in ACP
+      description: Function used to aggregate p-values in aggregated conformal predictions (ACP).
+
   options: null
   description: conformal predictor settings
   dependencies: 
@@ -1160,6 +1163,7 @@ similarity_metric:
   options:
     - Euclidean
     - Tanimoto
+    - Substructural
   description: Show compounds similar to the query compounds present in the training series
   dependencies: 
     output_similar: true 

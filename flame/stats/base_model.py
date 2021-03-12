@@ -1031,8 +1031,8 @@ class BaseEstimator:
         else:
             n_neighbors=15
 
-        if 'error_model' in conformal_settings:
-            normalizing_id = conformal_settings['error_model']
+        if 'normalizing_model' in conformal_settings:
+            normalizing_id = conformal_settings['normalizing_model']
         else:
             normalizing_id = None
 
