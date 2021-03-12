@@ -530,9 +530,7 @@ class Odata():
                         line += f'{dist:.3f}\t{name}\t{idv}\t[{smil}]\t{act}'
                         fo.write(line+'\n')
 
-        output = self.conveyor
-
-        return True, output
+        return True, self.conveyor
 
 
     def run(self):
