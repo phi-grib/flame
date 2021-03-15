@@ -157,6 +157,7 @@ class PLSDA(BaseEstimator):
             self.conveyor.setError('PLSDA only applies to qualitative data')
             return 
 
+        # 'PLS_da' object has no attribute 'predict_proba', required for conformal models
         if self.param.getVal('conformal'):
             LOG.error('Conformal prediction no implemented in PLSDA yet')
             self.conveyor.setError('Conformal prediction no implemented in PLSDA yet')
@@ -173,7 +174,6 @@ class PLSDA(BaseEstimator):
         results.append(('nobj', 'number of objects', self.nobj))
         results.append(('nvarx', 'number of predictor variables', self.nvarx))
         results.append(('model', 'model type', 'PLSDA'))
-
 
         if self.param.getVal('tune'):
 

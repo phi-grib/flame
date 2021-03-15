@@ -44,8 +44,15 @@ class Space:
         self.objinfo = {}
         itemlist = ['obj_nam', 'obj_id', 'SMILES', 'ymatrix']
         for item in itemlist:
-            item_val = self.conveyor.getVal(item)
+            item_val = self.conveyor.getVal(item)                
             if item_val is not None:
+
+                # if ymatrix contains nan the structure_result cannot be
+                # serialized to JSON and crashes the web app
+                if item is 'ymatrix':
+                    ymatrix = np.nan_to_num(np.array(item_val))
+                    item_val = ymatrix.tolist()
+
                 self.objinfo[item] = item_val
 
         MDs = self.param.getVal('computeMD_method')

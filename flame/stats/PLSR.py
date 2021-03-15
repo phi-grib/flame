@@ -27,7 +27,7 @@ from flame.stats.base_model import BaseEstimator
 
 from nonconformist.base import ClassifierAdapter, RegressorAdapter
 from nonconformist.acp import AggregatedCp
-from nonconformist.acp import BootstrapSampler
+from nonconformist.acp import BootstrapSampler, RandomSubSampler, CrossSampler
 from nonconformist.icp import IcpClassifier, IcpRegressor
 from nonconformist.nc import ClassifierNc, MarginErrFunc, RegressorNc
 from nonconformist.nc import AbsErrorErrFunc, RegressorNormalizer
@@ -176,8 +176,6 @@ class PLSR(BaseEstimator):
                 LOG.error('Type of tune not recognized, check the input')
                 return False, 'Type of tune not recognized, check the input'    
 
-            # results.append(('model', 'model type', 'PLSR quantitative (optimized)'))
-
         else:
             LOG.info('Building Quantitative PLSR with no optimization')
             try:
@@ -191,45 +189,18 @@ class PLSR(BaseEstimator):
                           f'exception {e}')
                 return False, f'Error at PLS_da instantiation with exception {e}'
 
-            # results.append(('model', 'model type', 'PLSR quantitative'))
-        
         # Fit estimator to the data
         self.estimator.fit(X, Y)
 
         if not self.param.getVal('conformal'):
             return True, results
 
-        self.estimator_temp = copy(self.estimator)
-        try:
-            
-            LOG.info('Building PLSR aggregated conformal predictor')
-
-            underlying_model = RegressorAdapter(self.estimator_temp)
-            self.normalizing_model = RegressorAdapter(
-                                     KNeighborsRegressor(n_neighbors=15))
-            # normalizing_model = RegressorAdapter(self.estimator_temp)
-            normalizer = RegressorNormalizer(underlying_model, self.normalizing_model,
-                                             AbsErrorErrFunc())
-
-            nc = RegressorNc(underlying_model, AbsErrorErrFunc(), normalizer)
-            self.estimator = AggregatedCp(IcpRegressor(nc), BootstrapSampler())
-
-        except Exception as e:
-            LOG.error(f'Error building aggregated PLSR conformal'
-                        f' regressor with exception: {e}')
-            return False, f'Error building aggregated PLSR conformal regressor with exception: {e}'
-
-            # self.conformal_pred = AggregatedCp(IcpRegressor(
-            # RegressorNc(RegressorAdapter(self.estimator))),
-            #                                    BootstrapSampler())
-
-        # Fit conformal estimator to the data
-        self.estimator.fit(X, Y)
-
-        # overrides non-conformal
-        # results.append(('model', 'model type', 'conformal PLSR quantitative'))
-
-        return True, results
+        self.estimator_temp = self.estimator
+        success, error = self.conformalBuild(X, Y)
+        if success:
+            return True, results
+        else:
+            return False, error
 
     def optimize(self, X, Y, estimator, tune_parameters):
         ''' optimizes a model using a grid search over a 
@@ -253,8 +224,6 @@ class PLSR(BaseEstimator):
                 
                 r2_0 = r2_score(Y, y_pred)
 
-                # print (n_comp, r2_0)
-
                 # Update estimator0 to best current estimator
                 if r2_0 >= r2 or estimator0 == None:
                     r2 = r2_0
@@ -266,10 +235,6 @@ class PLSR(BaseEstimator):
 
         self.estimator = estimator0
 
-        # LOG.debug('Number of latent variables, r2')
-        # for lv in list_latent:
-        #     LOG.debug(f'Number of latent variables: {lv[0]} \nr2: {lv[1]}\n')
-
         self.estimator.fit(X, Y)
         LOG.info(f'Estimator best parameters: {self.estimator.get_params()}')
         return True, 'OK'
@@ -279,11 +244,8 @@ class PLSR(BaseEstimator):
     # def CF_quantitative_validation(self):
     #     ''' performs validation for conformal quantitative models '''
 
-      
-
     # def CF_qualitative_validation(self):
     #     ''' performs validation for conformal qualitative models '''
-
 
     # def quantitativeValidation(self):
     #     ''' performs validation for quantitative models '''
@@ -291,22 +253,17 @@ class PLSR(BaseEstimator):
     # def qualitativeValidation(self):
     #     ''' performs validation for qualitative models '''
 
-
     # def validate(self):
     #     ''' Validates the model and computes suitable model quality scoring values'''
-
 
     # def optimize(self, X, Y, estimator, tune_parameters):
     #     ''' optimizes a model using a grid search over a range of values for diverse parameters'''
 
-
     # def regularProject(self, Xb, results):
     #     ''' projects a collection of query objects in a regular model, for obtaining predictions '''
 
-
     # def conformalProject(self, Xb, results):
     #     ''' projects a collection of query objects in a conformal model, for obtaining predictions '''
-
 
     # def project(self, Xb, results):
     #     ''' Uses the X matrix provided as argument to predict Y'''

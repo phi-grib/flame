@@ -292,12 +292,6 @@ class Documentation:
         if "value" in odict[ikey]:
             odict[ikey]["value"] = value
 
-        # this should never happen
-        # else:
-        #     odict[ikey] = {'value': value}
-        #     print ('caseC', value)
-
-
     def appVal(self, key, value):
         ''' Appends value to the end of existing key list 
         '''
@@ -424,7 +418,14 @@ class Documentation:
 
         if self.parameters.getVal('conformal'):
             self.setInnerVal('AD_method', 'name', 'conformal prediction')
-            self.setInnerVal('AD_parameters', 'confidence',  f'{self.parameters.getVal("conformalConfidence")}')
+            # self.setInnerVal('AD_parameters', 'confidence',  f'{self.parameters.getVal("conformalConfidence")}')
+            conformal_settings_dict = {}
+            conformal_settings_dict ['confidence'] = self.parameters.getVal("conformalConfidence")
+            conformal_settings = self.parameters.getVal('conformal_settings')
+            if conformal_settings is not None:
+                for key in conformal_settings:
+                    conformal_settings_dict[key] = conformal_settings[key]["value"]
+            self.fields['AD_parameters']['value'] = conformal_settings_dict
 
     def assign_results(self):
         '''
@@ -452,25 +453,23 @@ class Documentation:
         self.fields['Algorithm_settings']['value'] = \
             (self.conveyor.getVal('estimator_parameters'))
 
+        # print (self.conveyor.getVal('estimator_parameters'))
+
         # Horrendous patch to solve backcompatibility problem
         if 'subfields' in self.fields['Data_info']:
             sub_label = 'subfields'
         else:
             sub_label = 'value'
 
-        self.fields['Data_info']\
-            [sub_label]['training_set_size']['value'] = \
+        self.fields['Data_info'][sub_label]['training_set_size']['value'] = \
             model_info[0][2]
         
-        self.fields['Data_info']\
-            [sub_label]['training_set_size']['value'] = \
+        self.fields['Data_info'][sub_label]['training_set_size']['value'] = \
             model_info[0][2]
 
-        self.fields['Descriptors']\
-            [sub_label]['final_number']['value'] = \
+        self.fields['Descriptors'][sub_label]['final_number']['value'] = \
             model_info[1][2]
-        self.fields['Descriptors']\
-            [sub_label]['ratio']['value'] = \
+        self.fields['Descriptors'][sub_label]['ratio']['value'] = \
             '{:0.2f}'.format(model_info[1][2]/model_info[0][2])
         
         internal_val = dict()

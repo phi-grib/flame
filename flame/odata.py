@@ -287,8 +287,8 @@ class Odata():
                 nams = self.conveyor.getVal('obj_nam')
                 vals = self.conveyor.getVal('values')
                 for i in range (self.conveyor.getVal('obj_num')):
-                    # print (self.conveyor.getVal('obj_nam')[i], '\t' , float("{0:.4f}".format(self.conveyor.getVal('values')[i])))
-                    print (f'{nams[i]}\t{vals[i]:.4f}')
+                   # print (self.conveyor.getVal('obj_nam')[i], '\t' , float("{0:.4f}".format(self.conveyor.getVal('values')[i])))
+                   print (f'{nams[i]}\t{vals[i]:.4f}')
 
         ###
         # 3. molecular descriptors file in TSV format [optional]
@@ -530,9 +530,7 @@ class Odata():
                         line += f'{dist:.3f}\t{name}\t{idv}\t[{smil}]\t{act}'
                         fo.write(line+'\n')
 
-        output = self.conveyor
-
-        return True, output
+        return True, self.conveyor
 
 
     def run(self):

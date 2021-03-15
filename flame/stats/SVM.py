@@ -22,22 +22,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Flame.  If not, see <http://www.gnu.org/licenses/>.
 
-from copy import copy
-
 from sklearn import svm
-from sklearn.neighbors import KNeighborsRegressor
-
-from nonconformist.base import ClassifierAdapter, RegressorAdapter
-from nonconformist.acp import AggregatedCp
-from nonconformist.acp import BootstrapSampler
-from nonconformist.icp import IcpClassifier, IcpRegressor
-from nonconformist.nc import ClassifierNc, MarginErrFunc, RegressorNc
-from nonconformist.nc import AbsErrorErrFunc, RegressorNormalizer
-
 from flame.stats.base_model import BaseEstimator
 from flame.util import get_logger
 LOG = get_logger(__name__)
-
 
 class SVM(BaseEstimator):
     """
@@ -125,15 +113,11 @@ class SVM(BaseEstimator):
                 # Check type of model
                 if self.param.getVal('quantitative'):
                     self.estimator = svm.SVR(**self.estimator_parameters)
-                    self.optimize(X, Y, self.estimator,
-                                 self.tune_parameters)
-                    # results.append(('model', 'model type', 'SVM quantitative (optimized)'))
+                    self.optimize(X, Y, self.estimator, self.tune_parameters)
 
                 else:
                     self.estimator = svm.SVC(**self.estimator_parameters)
-                    self.optimize(X, Y, self.estimator,
-                                  self.tune_parameters)
-                    # results.append(('model', 'model type', 'SVM qualitative (optimized)'))
+                    self.optimize(X, Y, self.estimator, self.tune_parameters)
                 LOG.debug('SVM estimator optimized')
                 self.estimator.fit(X, Y)
             except Exception as e:
@@ -142,78 +126,30 @@ class SVM(BaseEstimator):
         else:
             try:
                 if self.param.getVal('quantitative'):
-
                     LOG.info("Building Quantitative SVM-R model")
 
                     self.estimator = svm.SVR(**self.estimator_parameters)
-                    # results.append(('model', 'model type', 'SVM quantitative'))
                 else:
-
                     LOG.info("Building Qualitative SVM-C model")
 
                     self.estimator = svm.SVC(**self.estimator_parameters)
-                    # results.append(('model', 'model type', 'SVM qualitative'))
 
                 self.estimator.fit(X, Y)
 
             except Exception as e:
                 return False, f'Exception building SVM estimator with exception {e}'
                 
-        self.estimator_temp = copy(self.estimator)
-
         if not self.param.getVal('conformal'):
             return True, results
+
+        self.estimator_temp = self.estimator
+        success, error = self.conformalBuild(X, Y)
+        if success:
+            return True, results
+        else:
+            return False, error
         
-        # Create the conformal estimator
-        try:
-            if self.param.getVal('quantitative'):
-
-                LOG.info("Building conformal Quantitative SVM-R model")
-
-                underlying_model = RegressorAdapter(self.estimator_temp)
-                normalizing_model = RegressorAdapter(
-                KNeighborsRegressor(n_neighbors=15))
-                # normalizing_model = RegressorAdapter(self.estimator_temp)
-                normalizer = RegressorNormalizer(
-                                underlying_model, 
-                                normalizing_model, 
-                                AbsErrorErrFunc())
-                nc = RegressorNc(underlying_model,
-                                    AbsErrorErrFunc(), 
-                                    normalizer)
-                # self.conformal_pred = AggregatedCp(IcpRegressor(
-                # RegressorNc(RegressorAdapter(self.estimator))),
-                #                                   BootstrapSampler())
-
-                self.estimator = AggregatedCp(IcpRegressor(nc),
-                                                BootstrapSampler())
-                self.estimator.fit(X, Y)
-
-                # overrides non-conformal
-                # results.append(('model', 'model type', 'conformal SVM quantitative'))
-
-            else:
-
-                LOG.info("Building conformal Qualitative SVM-C model")
-
-                self.estimator = AggregatedCp(
-                                    IcpClassifier(
-                                        ClassifierNc(
-                                            ClassifierAdapter(self.estimator_temp),
-                                            MarginErrFunc()
-                                        )
-                                    ),
-                                    BootstrapSampler())
-                self.estimator.fit(X, Y)
-
-                # overrides non-conformal
-                # results.append(('model', 'model type', 'conformal SVM qualitative'))
-
-        except Exception as e:
-            return False, f'Exception building aggregated conformal SVM estimator with exception {e}'
-
-        return True, results
-
+        
 
 # Overriding of parent methods
 

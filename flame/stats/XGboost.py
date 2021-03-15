@@ -20,18 +20,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Flame.  If not, see <http://www.gnu.org/licenses/>.
 
-from copy import copy
-
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.neighbors import KNeighborsRegressor
-
-from nonconformist.base import ClassifierAdapter, RegressorAdapter
-from nonconformist.acp import AggregatedCp
-from nonconformist.acp import BootstrapSampler
-from nonconformist.icp import IcpClassifier, IcpRegressor
-from nonconformist.nc import ClassifierNc, MarginErrFunc, RegressorNc
-from nonconformist.nc import AbsErrorErrFunc, RegressorNormalizer
-
 from flame.stats.base_model import BaseEstimator
 from flame.util import get_logger
 LOG = get_logger(__name__)
@@ -115,18 +103,13 @@ class XGBOOST(BaseEstimator):
             try:
                 # Check type of model
                 if self.param.getVal('quantitative'):
-                    self.estimator = XGBRegressor(
-                                        **self.estimator_parameters)
+                    self.estimator = XGBRegressor(**self.estimator_parameters)
                     self.optimize(X, Y, self.estimator, self.tune_parameters)
-                    # results.append(('model','model type','XGBOOST quantitative (optimized)'))
                 else:
-                    self.estimator = XGBClassifier(
-                                        **self.estimator_parameters)
+                    self.estimator = XGBClassifier(**self.estimator_parameters)
                     params = self.estimator.get_params()
                     params['num_class'] = 2
-                    self.optimize(X, Y, self.estimator,
-                                  self.tune_parameters)
-                    # results.append(('model','model type','XGBOOST qualitative (optimized)'))
+                    self.optimize(X, Y, self.estimator, self.tune_parameters)
 
             except Exception as e:
                 return False, f'Exception optimizing XGBOOST estimator with exception {e}'
@@ -134,31 +117,13 @@ class XGBOOST(BaseEstimator):
         else:
             try:
                 if self.param.getVal('quantitative'):
-
                     LOG.info("Building Quantitative XGBOOST model")
-                    # params = {
-                    #     'objective': 'reg:squarederror',
-                    #     'missing': -99.99999,
-                    #     # 'max_depth': 20,
-                    #     # 'learning_rate': 1.0,
-                    #     # 'silent': 1,
-                    #     # 'n_estimators': 25
-                    #     }
-                    # self.estimator = XGBRegressor(**params)
-                    self.estimator = XGBRegressor(**self.estimator_parameters)
-                    # results.append(('model', 'model type', 'XGBOOST quantitative'))
-                else:
 
+                    self.estimator = XGBRegressor(**self.estimator_parameters)
+                else:
                     LOG.info("Building Qualitative XGBOOST model")
-                    # params = {
-                    #     'objective': 'binary:logistic',
-                    #      'max_depth': 3,
-                    #      #'learning_rate': 0.7,
-                    #      #'silent': 1,
-                    #      'n_estimators': 100
-                    #     }
+
                     self.estimator = XGBClassifier(**self.estimator_parameters)
-                    # results.append(('model', 'model type', 'XGBOOST qualitative'))
 
                 self.estimator.fit(X, Y)
                 LOG.debug (self.estimator)
@@ -166,62 +131,15 @@ class XGBOOST(BaseEstimator):
             except Exception as e:
                 return False, f'Exception building XGBOOST estimator with exception {e}'
 
-        self.estimator_temp = copy(self.estimator)
-
         if not self.param.getVal('conformal'):
             return True, results
-        # Create the conformal estimator
-        try:
-            # Conformal regressor
-            if self.param.getVal('quantitative'):
-                conformal_settings = self.param.getDict('conformal_settings')
-                LOG.info("Building conformal Quantitative XGBOOST model")
 
-                underlying_model = RegressorAdapter(self.estimator_temp)
-                self.normalizing_model = RegressorAdapter(
-                    KNeighborsRegressor(n_neighbors=conformal_settings['KNN_NN']))
-                # normalizing_model = RegressorAdapter(self.estimator_temp)
-                normalizer = RegressorNormalizer(
-                                underlying_model,
-                                copy(self.normalizing_model),
-                                AbsErrorErrFunc())
-                nc = RegressorNc(underlying_model,
-                                    AbsErrorErrFunc(),
-                                    normalizer)
-
-                # self.conformal_pred = AggregatedCp(IcpRegressor
-                # (RegressorNc(RegressorAdapter(self.estimator))),
-                #                                   BootstrapSampler())
-
-                self.estimator = AggregatedCp(IcpRegressor(nc),
-                                                BootstrapSampler())
-
-                self.estimator.fit(X, Y)
-                # results.append(('model', 'model type', 'conformal XGBOOST quantitative'))
-
-            # Conformal classifier
-            else:
-
-                LOG.info("Building conformal Qualitative XGBOOST model")
-
-                self.estimator = AggregatedCp(
-                                    IcpClassifier(
-                                        ClassifierNc(
-                                            ClassifierAdapter(self.estimator_temp),
-                                            MarginErrFunc()
-                                        )
-                                    ),
-                                    BootstrapSampler())
-
-                # Fit estimator to the data
-                self.estimator.fit(X, Y)
-                # results.append(('model', 'model type', 'conformal XGBOOST qualitative'))
-
-        except Exception as e:
-            return False, f'Exception building conformal XGBOOST estimator with exception {e}'
-
-        return True, results
-
+        self.estimator_temp = self.estimator
+        success, error = self.conformalBuild(X, Y)
+        if success:
+            return True, results
+        else:
+            return False, error
 
 
 ## Overriding of parent methods
@@ -229,7 +147,6 @@ class XGBOOST(BaseEstimator):
     # def CF_quantitative_validation(self):
     #     ''' performs validation for conformal quantitative models '''
 
-      
 
     # def CF_qualitative_validation(self):
     #     ''' performs validation for conformal qualitative models '''

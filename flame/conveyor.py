@@ -240,7 +240,6 @@ class Conveyor:
             else:
                 temp_json[key]=value
 
-        # print (json.dumps(temp_json))
         json_result = json.dumps(temp_json, allow_nan=True)
         
         return json_result
