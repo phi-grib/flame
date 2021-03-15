@@ -17,11 +17,9 @@ dependencies:
   - psycopg2
   - chembl_structure_pipeline
   - pip:
-     - xgboost
      - django==2.2.8
      - djangorestframework
      - django-cors-headers
      - djangorestframework-yaml
      - "https://github.com/phi-grib/standardiser/archive/master.zip"
-     - "https://github.com/phi-grib/nonconformist/archive/master.zip"
-
+     - "https://github.com/josecarlosgomezt/nonconformist/archive/master.zip"
