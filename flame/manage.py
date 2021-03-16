@@ -21,7 +21,7 @@
 # along with Flame. If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import sys
+import time
 import shutil
 import tarfile
 import pickle
@@ -313,7 +313,7 @@ def action_export(model):
         return False, 'Empty model label'
 
     current_path = os.getcwd()
-    exportfile = os.path.join(current_path,model+'.tgz')
+    compressedfile = os.path.join(current_path,model+'.tgz')
 
     base_path = utils.model_tree_path(model)
 
@@ -326,11 +326,15 @@ def action_export(model):
     itemend = os.listdir()
     itemend.sort()
 
-    with tarfile.open(exportfile, 'w:gz') as tar:
+    # t1 = time.time()
+
+    with tarfile.open(compressedfile, 'w:gz') as tar:
         for iversion in itemend:
             if not os.path.isdir(iversion):
                 continue
             tar.add(iversion)
+
+    # print (time.time()-t1)
 
     # return to current directory
     os.chdir(current_path)
