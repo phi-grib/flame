@@ -458,6 +458,8 @@ def manage_cmd(args):
             if args.version == None:
                 version = None
             success, results = manage.action_refresh(args.endpoint, version)
+        elif args.action == 'series':
+            success, results = manage.action_series(args.endpoint, version)         
         elif args.action == 'results':
             success, results = manage.action_results(args.endpoint, version)
         elif args.action == 'parameters':

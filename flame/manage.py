@@ -343,6 +343,24 @@ def action_export(model):
     return True, f'Model {model} exported as {model}.tgz'
 
 
+def action_series(model, version):
+    '''
+    Returns the training series used for building a certain model /version 
+    '''
+    if model is None:
+        return False, 'Empty model label'
+
+    meta_path = utils.model_path(model, version)
+    training_file = os.path.join(meta_path, 'training_series')
+    if not os.path.isfile(training_file):
+        return False, 'training series file not found'
+
+    shutil.copy(training_file, './training_series.sdf')
+    
+    LOG.info(f'Training series for model {model}, version {version}, saved as "training_series.sdf"')
+    return True, 'OK'
+
+
 def action_info(model, version, output='text'):
     '''
     Returns a text or an object with results info for a given model and version
