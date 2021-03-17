@@ -274,6 +274,7 @@ Management commands deserve further description:
 | list | *flame -c manage -a list* | Lists the models present in the repository and the published version for each one. If the name of a model is provided, lists only the published versions for this model  |
 | info | *flame -c manage -e MODEL -a info* | Shows summary information about the characteristics of model MODEL  |
 | parameters | *flame -c manage -e MODEL -a parameters* | Shows a list of the main modeling parameters used by build to generate model MODEL |
+| series | *flame -c manage -e MODEL -a series* | Download a copy of the training series used to build MODEL as "training_series.sdf" |
 | documentation | *flame -c manage -e MODEL -a documentation* | Shows a list with the main documentation information of model MODEL. When called with parameter -t, it can be used to add new documentation information  |
 | export | *flame -c manage -a export -e NEWMODEL* | Exports the model entry NEWMODE, creating a tar compressed file *NEWMODEL.tgz* which contains all the versions. This file can be imported by another flame instance (installed in a different host or company) with the *-c manage import* command |
 | import | *flame -c manage -a import -f NEWMODEL.tgz* | Imports file *NEWMODEL.tgz*, typically generated using command *-c manage -a export* creating model NEWMODEL in the local model repository |
