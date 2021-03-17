@@ -1084,63 +1084,74 @@ class Idata:
             var_nam = []
             obj_nam = []
             smiles = []
+            ymatrix = []
+
+            hasObjNames = self.param.getVal('TSV_objnames')
+
+            activity_param = self.param.getVal('TSV_activity')
 
             for index, line in enumerate(fi):
+
+                # TODO: this will not work if we don't have var names!
+
                 # we asume that the first row contains var names
-                if index == 0 and self.param.getVal('TSV_varnames'):
+                if index == 0:
                     var_nam = line.strip().split('\t')
-                    var_nam = var_nam[1:]
+
+                    # create mask
+                    mask = np.ones(len(var_nam), dtype=np.int32)
+
+                    # blind first column (names)
+                    if hasObjNames:
+                        mask[0] = 0
+                    
+                    # blind SMILES column 
+                    if 'SMILES' in var_nam:
+                        mask[var_nam.index('SMILES')] = 0
+
+                    # blind activity column 
+                    if activity_param in var_nam:
+                        mask[var_nam.index(activity_param)] = 0
+
                 else:
                     value_list = line.strip().split('\t')
 
-                    if self.param.getVal('TSV_objnames'):
-                        # we asume that the first column contains object names
+                    if hasObjNames:
                         obj_nam.append(value_list[0])
-                        value_list = value_list[1:]
 
                     if 'SMILES' in var_nam:
-                        col = var_nam.index('SMILES')
-                        smiles.append(value_list[col])
-                        del value_list[col]
+                        smiles.append(value_list[var_nam.index('SMILES')])
 
-                    value_array = np.array(value_list, dtype=np.float64)
+                    if activity_param in var_nam:
+                        ymatrix.append(np.float(value_list[var_nam.index(activity_param)]))
+
+                    masked = [ x for j, x in enumerate(value_list) if mask[j]==1 ]
+
+                    value_array = np.array(masked, dtype=np.float64)
+
                     if index == 1:  # for the fist row, just copy the value list to the xmatrix
                         xmatrix = value_array
                     else:
                         xmatrix = np.vstack((xmatrix, value_array))
 
-        obj_num = index
+        obj_num = index - 1 
         LOG.debug('loaded TSV with shape {} '.format(xmatrix.shape))
-        
-        # if the TSV contains the variables names (as the first line) this
-        # has increased the line count and the obj_num must be reduced
-        if self.param.getVal('TSV_varnames'):
-            obj_num -= 1  
-
-        # extract any named as "TSV_activity" as the ymatrix
-        activity_param = self.param.getVal('TSV_activity')
         LOG.debug('creating ymatrix from column {}'.format(activity_param))
+        
         if activity_param in var_nam:
-            col = var_nam.index(activity_param)  # Something is failing here: + 1 needed
-            ymatrix = xmatrix[:, col]
-            xmatrix = np.delete(xmatrix, col, 1)
-            self.conveyor.addVal( ymatrix, 'ymatrix', 'Activity', 'decoration',
+            self.conveyor.addVal( np.array(ymatrix), 'ymatrix', 'Activity', 'decoration',
                              'objs', 'Biological anotation to be predicted by the model')
 
         self.conveyor.addVal( obj_num, 'obj_num', 'Num mol', 'method',
                          'single', 'Number of molecules present in the input file')
 
-        #TODO: optional sanitization step, to check if the X matrix contains extreme values or variables
-        # with unreasonable variances
-        
         self.conveyor.addVal( xmatrix, 'xmatrix',
                          'X matrix', 'method', 'vars', 'Molecular descriptors')
 
-        if self.param.getVal('TSV_varnames'):
-            self.conveyor.addVal( var_nam, 'var_nam', 'Var names',
+        self.conveyor.addVal( var_nam, 'var_nam', 'Var names',
                              'method', 'vars', 'Names of the X variables')
 
-        if not self.param.getVal('TSV_objnames'):
+        if not hasObjNames:
             for i in range(obj_num):
                 obj_nam.append('obj%.10f' % i)
 

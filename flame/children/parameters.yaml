@@ -171,20 +171,6 @@ TSV_objnames:
   comments: 
   group: data 
 
-TSV_varnames:
-  advanced: regular
-  object_type: boolean
-  writable: false
-  value: true
-  options: 
-    - true
-    - false
-  description: True if variable names in first row of data matrix
-  dependencies: 
-    input_type: data
-  comments: 
-  group: data 
-
 computeMD_method:
   advanced: regular
   object_type: list

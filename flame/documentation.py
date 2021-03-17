@@ -717,7 +717,7 @@ class Documentation:
         # update with any new idata relevant parameter 
         keylist = ['SDFile_name','SDFile_activity','SDFile_experimental',
                    'normalize_method','ionize_method','convert3D_method',
-                   'computeMD_method','TSV_varnames','TSV_objnames',
+                   'computeMD_method','TSV_objnames',
                    'TSV_activity','input_type']
 
         idata_params = []
