@@ -1087,14 +1087,15 @@ class Idata:
             ymatrix = []
 
             hasObjNames = self.param.getVal('TSV_objnames')
-
             activity_param = self.param.getVal('TSV_activity')
+
+            iSMILES = -1
+            iActivity = -1
 
             for index, line in enumerate(fi):
 
-                # TODO: this will not work if we don't have var names!
-
-                # we asume that the first row contains var names
+                # FIRST LINE: read var names and generate a mask to speed up
+                # the reading of MDs and populate names, SMILES and y's
                 if index == 0:
                     var_nam = line.strip().split('\t')
 
@@ -1107,26 +1108,33 @@ class Idata:
                     
                     # blind SMILES column 
                     if 'SMILES' in var_nam:
-                        mask[var_nam.index('SMILES')] = 0
+                        iSMILES = var_nam.index('SMILES')
+                        mask[iSMILES] = 0
 
                     # blind activity column 
                     if activity_param in var_nam:
-                        mask[var_nam.index(activity_param)] = 0
+                        iActivity = var_nam.index(activity_param)
+                        mask[iActivity] = 0
 
+                    # assign names to X variables (md's)
+                    md_nam = [ x for x, z in zip(var_nam, mask) if z==1 ]     
+
+                # REST OF LINES: apply the mask and collect names, SMILES and y's
+                # from predefined possitions
                 else:
                     value_list = line.strip().split('\t')
 
                     if hasObjNames:
                         obj_nam.append(value_list[0])
 
-                    if 'SMILES' in var_nam:
-                        smiles.append(value_list[var_nam.index('SMILES')])
+                    if iSMILES != -1:
+                        smiles.append(value_list[iSMILES])
 
-                    if activity_param in var_nam:
-                        ymatrix.append(np.float(value_list[var_nam.index(activity_param)]))
+                    if iActivity != -1:
+                        ymatrix.append(np.float(value_list[iActivity]))
 
-                    masked = [ x for j, x in enumerate(value_list) if mask[j]==1 ]
-
+                    # extract only the variables assumed to be md
+                    masked = [ x for x, z in zip(value_list, mask) if z==1 ]
                     value_array = np.array(masked, dtype=np.float64)
 
                     if index == 1:  # for the fist row, just copy the value list to the xmatrix
@@ -1134,11 +1142,11 @@ class Idata:
                     else:
                         xmatrix = np.vstack((xmatrix, value_array))
 
-        obj_num = index - 1 
+        obj_num = index - 1  # the first line are variable names 
         LOG.debug('loaded TSV with shape {} '.format(xmatrix.shape))
         LOG.debug('creating ymatrix from column {}'.format(activity_param))
         
-        if activity_param in var_nam:
+        if iActivity != -1:
             self.conveyor.addVal( np.array(ymatrix), 'ymatrix', 'Activity', 'decoration',
                              'objs', 'Biological anotation to be predicted by the model')
 
@@ -1148,7 +1156,7 @@ class Idata:
         self.conveyor.addVal( xmatrix, 'xmatrix',
                          'X matrix', 'method', 'vars', 'Molecular descriptors')
 
-        self.conveyor.addVal( var_nam, 'var_nam', 'Var names',
+        self.conveyor.addVal( md_nam, 'var_nam', 'Var names',
                              'method', 'vars', 'Names of the X variables')
 
         if not hasObjNames:
@@ -1161,6 +1169,7 @@ class Idata:
         if len(smiles) > 0:
             self.conveyor.addVal( smiles, 'SMILES', 'SMILES',
                              'smiles', 'objs', 'Structure of the molecule in SMILES format')
+
         return
 
     def _run_model_ensemble(self):
