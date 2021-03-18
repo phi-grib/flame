@@ -1124,24 +1124,28 @@ class Idata:
                 else:
                     value_list = line.strip().split('\t')
 
-                    if hasObjNames:
-                        obj_nam.append(value_list[0])
+                    try:
+                        if hasObjNames:
+                            obj_nam.append(value_list[0])
 
-                    if iSMILES != -1:
-                        smiles.append(value_list[iSMILES])
+                        if iSMILES != -1:
+                            smiles.append(value_list[iSMILES])
 
-                    if iActivity != -1:
-                        ymatrix.append(np.float(value_list[iActivity]))
+                        if iActivity != -1:
+                            ymatrix.append(np.float(value_list[iActivity]))
 
-                    # extract only the variables assumed to be md
-                    masked = [ x for x, z in zip(value_list, mask) if z==1 ]
-                    value_array = np.array(masked, dtype=np.float64)
+                        # extract only the variables assumed to be md
+                        masked = [ x for x, z in zip(value_list, mask) if z==1 ]
+                        value_array = np.array(masked, dtype=np.float64)
 
-                    if index == 1:  # for the fist row, just copy the value list to the xmatrix
-                        xmatrix = value_array
-                    else:
-                        xmatrix = np.vstack((xmatrix, value_array))
-
+                        if index == 1:  # for the fist row, just copy the value list to the xmatrix
+                            xmatrix = value_array
+                        else:
+                            xmatrix = np.vstack((xmatrix, value_array))
+                    except Exception as e:
+                        self.conveyor.setError(f'Error in line {index+1}: '+str(e))
+                        return
+                        
         obj_num = index - 1  # the first line are variable names 
         LOG.debug('loaded TSV with shape {} '.format(xmatrix.shape))
         LOG.debug('creating ymatrix from column {}'.format(activity_param))
