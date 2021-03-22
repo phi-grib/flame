@@ -28,7 +28,10 @@ from flame.stats.pca import pca
 from flame.util import utils, get_logger
 LOG = get_logger(__name__)
 
-    
+def generateManifoldSpace(X,param,conveyor):
+    print('Hello world')
+
+
 def generateProjectedSpace(X, param, conveyor):
     ''' This function uses the scaled X matrix of the model to build a 2 PCs PCA model
         
