@@ -1,0 +1,109 @@
+input_type                     : molecule                       # ['molecule', 'data', 'model_ensemble'] Type of input data.
+quantitative                   : True                           # [True, False] Should be true for quantitative endpoints andf false for qualitative endpoints
+SDFile_activity                : JCHEM_REFRACTIVITY                       # Name of the activity field in the SDF file
+SDFile_name                    : ['GENERIC_NAME', 'name']       # Name of the compound name field in the SDF file
+SDFile_id                      : ID                             # Name of the compound ID field in the SDF file
+SDFile_experimental            :                                # Experimental data field in the SDF file
+SDFile_complementary           :                                # Complementary data field in the SDF file
+normalize_method               : standardize                    # [None, 'standardize', 'chEMBL'] Selection of a standardization method
+ionize_method                  :                                # [None, 'moka'] Selection of a ionization method
+convert3D_method               :                                # ['ETKDG', None] Selection of a 3D conversion method
+computeMD_method               : ['morganFP']           # ['RDKit_properties', 'RDKit_md', 'morganFP', 'rdkFP', 'substructureFP', 'custom'] Selection of molecular descriptors to be used in model generation
+model                          : RF                             # ['RF', 'XGBOOST', 'SVM', 'PLSR', 'PLSDA', 'GNB', 'mean', 'median', 'majority', 'logicalOR', 'matrix'] List of available ML algorithms
+modelAutoscaling               : StandardScaler                 # ['StandardScaler', 'MinMaxScaler', 'RobustScaler', None] Scaling method. Null means that raw, unscaled data, will be used
+tune                           : False                          # [True, False] Whether to perform or not algorithm hyperparameter optimization
+conformal                      : True                           # [True, False] If true, use the conformal variant of the selected modeling method, when available
+conformalConfidence            : 0.800000                       # Conformal estimator confidence (from 0 to 1)
+ModelValidationCV              : kfold                          # ['loo', 'kfold', 'lpo'] Selection of cross-validation method
+ModelValidationN               : 2                              # Number of folds
+ModelValidationP               : 1                              # Size of the test set
+output_format                  : JSON                           # ['JSON', 'TSV'] Output data format
+output_md                      : False                          # [True, False] Dump descriptors to a TSV file
+output_similar                 : True                           # [True, False] Show compounds similar to the query compounds present in the training series
+TSV_activity                   : activity                       # Name of the activity field in the TSV file
+TSV_objnames                   : True                           # [True, False] True if object names in first column of data matrix
+TSV_varnames                   : True                           # [True, False] True if variable names in first row of data matrix
+imbalance                      :                                # [None, 'simple_subsampling', 'near_miss1', 'near_miss2', 'near_miss3', 'edited_KNN', 'rep_edited_KNN', 'all_KNN', 'iht'] Whether to perform or not sub/over sampling strategies. Imbalance strategies adapted from https://imbalanced-learn.readthedocs.io/en/stable/
+feature_selection              :                                # [None, 'Kbest'] Whether to perform or not feature selection
+feature_number                 : auto                           # ['auto'] Number of features to keep
+mol_batch                      : series                         # ['series', 'objects'] How molecules are going to be processed
+ensemble_names                 :                                # Names of the ensemble models the output of which will be used as input for this model
+ensemble_versions              :                                # Versions of the ensemble models the output of which will be used as input for this model
+similarity_metric              : Tanimoto                               # ['Euclidean', 'Tanimoto'] Show compounds similar to the query compounds present in the training series
+similarity_cutoff_num          : 5                              # Integer indicatin maximum number of similar compounds to extract. If not set, all compounds meeting other criteria will be extracted
+similarity_cutoff_distance     : 0.600000                       # Float in the range (0.0 - 1.0) indicating minimum similarity of the compounds to extract. If not set, all compounds meeting other criteria will be extracted
+numCPUs                        : 1                              # [None] Number of independent threads used to compute MD
+verbose_error                  : True                           # [True, False] When false, RDKit errors are captured and not shown
+modelingToolkit                : internal                       # ['internal', 'R', 'KNIME', 'custom'] List of toolkits usable to build models
+endpoint                       : drugbank2                      # 
+model_path                     : C:\Users\parod\flame_data\spaces\drugbank2\dev # 
+version                        : 0                              # 
+MD_settings :
+   morgan_radius               : 2                              # Morgan fingerprint radius (e.g. 2, 4)
+   morgan_nbits                : 2048                           # Size of the Morgan fingerprint (e.g. 1024, 2048)
+   morgan_features             : True                           # [True, False] Whether to use or not feature-based invariants.
+   rdkit_black_list            : ['Ipc']                        # Name of problematic RDKit molecular descriptor to avoid
+   mordred_3D                  : False                          # Whether to compute or not mordred 3D descriptors
+conformal_settings :
+   aggregated                  : True                           # [True, False] Use aggregated conformal (ACP) or inductive conformal (ICP) predictions
+   error_model                 : KNN                            # ['KNN', 'Underlying'] Error model type
+   KNN_NN                      : 15                             # Number of nearest neighbors
+   conformal_predictors        : 10                             # Number of models to build the aggregated CP.
+   ACP_sampler                 : BootstrapSampler               # ['BootstrapSampler', 'RandomSubSampler', 'CrossSampler'] Sampling strategies.
+   aggregation_function        : median                         # ['median', 'mean', 'max', 'min'] P-value aggregation function in ACP
+RF_parameters :
+   class_weight                : balanced                       # [None, 'balanced'] Weights associated with classes. If not given, all classes are supposed to have weight one
+   max_depth                   :                                # The maximum depth of the tree. If None, then nodes are expanded until all leaves are pure or until all leaves contain less than min_samples_split samples
+   max_features                : sqrt                           # ['auto', 'sqrt', 'log2', None] The maximum depth of the tree. If auto, then max_features=sqrt(n_features). If sqrt, idem as auto. If log2, then max_features=log2(n_features). If None, then max_features=n_features.
+   n_estimators                : 200                            # [50, 100, 150] The number of trees in the forest
+   oob_score                   : True                           # [True, False] Whether to use out-of-bag samples to estimate the generalization accuracy
+   random_state                : 46                             # [46, None] Random seed
+RF_optimize :
+   class_weight                : ['default', 'balanced']        # ['default', 'balanced'] 
+   max_features                : ['sqrt', 'log2']               # ['auto', 'sqrt', 'log2', None] 
+   n_estimators                : [50, 100]                      # 
+XGBOOST_parameters :
+   max_depth                   : 3                              # Maximum tree depth for base learners.
+   learning_rate               : 0.300000                       # [1, 0.3, 0.1] Boosting learning rate (xgb's "eta")
+   n_estimators                : 100                            # Number of trees to fit.
+   booster                     : gbtree                         # ['gbtree', 'gblinear', 'dart'] Specify which booster to use
+XGBOOST_optimize :
+   max_depth                   : [1, 3, 6]                      # [1, 3, 6] 
+   learning_rate               : [1, 0.1, 0.01]                 # [1, 0.1, 0.01] 
+   n_estimators                : [50, 100, 150]                 # [50, 100, 150] 
+   booster                     : ['gbtree', 'gblinear', 'dart'] # ['gbtree', 'gblinear', 'dart'] 
+SVM_parameters :
+   class_weight                :                                # [None, 'balanced'] Set the parameter C of class i to class_weight[i]*C for SVC. If not given, all classes are supposed to have weight one.
+   C                           : 1.000000                       # Penalty parameter C of the error term.
+   coef0                       : 0.000000                       # Independent term in kernel function. It is only significant in poly and sigmoid.
+   degree                      : 3                              # Degree of the polynomial kernel function (poly). Ignored by all other kernels.
+   gamma                       : auto                           # Kernel coefficient for rbf, poly and sigmoid.
+   random_state                : 46                             # [46, None] Random seed
+   kernel                      : rbf                            # [None, 'rbf', 'linear', 'poly'] Specifies the kernel type to be used in the algorithm.
+   probability                 : True                           # [True, False] Whether to enable probability estimates.
+   shrinking                   : True                           # [True, False] Whether to use the shrinking heuristic.
+SVM_optimize :
+   class_weight                : ['default', 'balanced']        # ['default', 'balanced'] 
+   C                           : [1, 10, 100]                   # [None, 1, 3, 5] 
+   coef0                       : [0, 0.8, 100]                  # [None, 0, 0.8, 100] 
+   degree                      : [1, 3, 5]                      # [None, 1, 3, 5] 
+   gamma                       : ['auto']                       # [None, 'auto'] 
+   kernel                      : ['rbf']                        # [None, 'rfb', 'linear', 'poly'] 
+   probability                 : [True]                         # [True, False] 
+   shrinking                   : [True]                         # [True, False] 
+PLSR_parameters :
+   tol                         : 0.000006                       # Tolerance used in the iterative algorithm default 1e-06
+   n_components                : 2                              # Number of latent variables to extract
+   optimize                    : manual                         # ['manual', 'auto'] 
+PLSR_optimize :
+   n_components                : [1, 2, 3, 4, 5]                # [1, 2, 3, 4, 5] 
+PLSDA_parameters :
+   tol                         : 0.000006                       # Tolerance used in the iterative algorithm default 1e-06
+   n_components                : 2                              # Number of latent variables to extract
+   optimize                    : manual                         # ['manual', 'auto'] 
+   threshold                   : 0.500000                       # [0.5] 
+PLSDA_optimize :
+   n_components                : [2, 3, 4, 5]                   # [1, 2, 3, 4, 5, 6] 
+   threshold                   : [0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65] # [0.4, 0.5, 0.6] 
+GNB_parameters :
+   priors                      :                                # 
