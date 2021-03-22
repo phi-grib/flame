@@ -385,6 +385,7 @@ def search_cmd(command, output_format=None):
     # ** DEPRECATE **
     # this is a back-compatibility trick for older versions of APIs 
     # not supporting the label argument
+
     if 'label' not in command:
         command['label'] = 'temp'
 

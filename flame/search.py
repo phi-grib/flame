@@ -85,6 +85,11 @@ class Search:
         LOG.debug('parameter "numCPUs" forced to be 1')
         self.param.setVal('numCPUs',1)
 
+    def getVal (self, idict, ikey):
+        if not ikey in idict:
+            return None
+        return idict[ikey]
+
     # def run(self, input_source, runtime_param=None, metric=None, numsel=None, cutoff=None):
     def run(self, param_dict):
         ''' Executes a default predicton workflow '''
@@ -99,14 +104,19 @@ class Search:
             LOG.error(f'Unable to find space {self.space}')
             self.conveyor.setError(f'Unable to find space {self.space}, version {self.version}')
 
-        if 'infile' in param_dict:
+        if self.getVal(param_dict,'smart') is not None:
+            input_source = param_dict['smart']
+            self.param.setVal('input_type', 'smart')
+
+        elif self.getVal(param_dict,'infile') is not None:
             input_source = param_dict['infile']
+
         else:
             LOG.error(f'Unable to find input_file')
             self.conveyor.setError('wrong format in the runtime similarity parameters')
 
         if 'runtime_param' in param_dict:
-            runtime_param = param_dict['runtime_param']
+            runtime_param = self.getVal(param_dict, 'runtime_param')
             if runtime_param is not None:
                 print (runtime_param)
                 try:
@@ -152,10 +162,13 @@ class Search:
             LOG.debug(f'idata child {type(idata).__name__} completed `run()`')
 
         if not self.conveyor.getError():
+
+
             # make sure there is X data
             if not self.conveyor.isKey('xmatrix'):
-                LOG.debug(f'Failed to compute MDs')
-                self.conveyor.setError(f'Failed to compute MDs')
+                if not self.conveyor.isKey ('SMART'):
+                    LOG.debug(f'Failed to compute MDs')
+                    self.conveyor.setError(f'Failed to compute MDs')
 
         if not self.conveyor.getError():
             # run apply object, in charge of generate a prediction from idata

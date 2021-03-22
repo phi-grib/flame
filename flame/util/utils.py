@@ -308,6 +308,12 @@ def md5sum(filename, blocksize=65536):
     '''
     Returns the MD5 sum of the file given as argument
     '''
+    if filename is None:
+        return 0
+
+    if not os.path.isfile(filename):
+        return 0
+        
     hash = hashlib.md5()
 
     with open(filename, "rb") as f:

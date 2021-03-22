@@ -95,6 +95,10 @@ def main():
                         action='store_true',
                         required=False )
 
+    parser.add_argument('--smart',
+                        help='SMART string used as input for similarity',
+                        required=False )
+
     args = parser.parse_args()
 
     # init logger Level and set general config
@@ -144,7 +148,7 @@ def main():
 
     elif args.command == 'search':
 
-        if (args.space is None) or (args.infile is None) :
+        if (args.space is None) or (args.infile is None and args.smart is None) :
             LOG.error ('flame search : space and input file arguments are compulsory')
             return
 
@@ -157,6 +161,7 @@ def main():
         command_search = {'space': args.space,
                  'version': version,
                  'infile': args.infile,
+                 'smart': args.smart,
                  'runtime_param': args.parameters,
                  'label': label}
 

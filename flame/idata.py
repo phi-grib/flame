@@ -84,7 +84,13 @@ class Idata:
 
 
         # in case of top ensemble models...
-        if input_type == 'model_ensemble':
+        if input_type == 'smart':
+            self.smart = input_source
+            self.ifile = None
+            self.idata = None
+
+        elif input_type == 'model_ensemble':
+            self.smart = None
             self.idata = input_source
             self.ifile = None
             randomName = 'flame-'+utils.id_generator()
@@ -100,6 +106,7 @@ class Idata:
             self.conveyor.addMeta('input_file',ifile)
 
         else:
+            self.smart = None
             self.idata = None
             self.ifile = input_source
             self.dest_path = os.path.dirname(self.ifile)
@@ -954,6 +961,16 @@ class Idata:
 
         return
 
+    def _run_smart (self):
+        self.conveyor.addVal(self.smart, 'SMART', 'SMART query',
+                            'method', 'single', 'SMART query string')
+
+        self.conveyor.addVal(['SMART query'], 'obj_nam', 'Mol name', 'label',
+                            'objs', 'Name of the molecule, as present in the input file')
+
+        self.conveyor.addVal([self.smart], 'SMILES', 'SMILES',
+                             'smiles', 'objs', 'Structure of the molecule in SMILES format')
+
     def _run_molecule(self):
         '''
         version of Run for molecular input
@@ -1325,7 +1342,7 @@ class Idata:
         input_type = self.param.getVal('input_type')
         LOG.info('Running with input type: {}'.format(input_type))
 
-        if input_type != 'model_ensemble':
+        if input_type in ['molecule','data']:
 
             # if the input file is not found return
             if not os.path.isfile(self.ifile):
@@ -1339,8 +1356,11 @@ class Idata:
 
                 return 
 
+        if input_type == 'smart':
+            self._run_smart()
+        
         # processing for molecular input (for now an SDFile)
-        if input_type == 'molecule':
+        elif input_type == 'molecule':
 
             self.captureStdError(True)
             self._run_molecule()

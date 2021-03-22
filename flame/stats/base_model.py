@@ -169,7 +169,6 @@ class BaseEstimator:
                 LOG.error(f'Error retrieving cross-validator with exception: {e}')
                 self.conveyor.setError(f'Error retrieving cross-validator with exception: {e}')
 
-
     # External validation
     def external_validation(self):
         ''' when experimental values are available for the predicted compounds,
