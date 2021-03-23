@@ -57,7 +57,7 @@ def generateManifoldSpace(X,param,conveyor):
 
  
     with open("models.pkl", "wb") as f:
-        pickle.dump(options, f)
+        pickle.dump(options, f,protocol=pickle.HIGHEST_PROTOCOL)
 
     #TODO: store both models
 
