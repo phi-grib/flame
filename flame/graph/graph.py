@@ -42,14 +42,14 @@ def generateManifoldSpace(X,param,conveyor):
 
     # a = time.time()
 
-    # pca = PCA(n_components=500,random_state=46)
-    # pca.fit(X)
-    # t = pca.transform(X)
+    pca = PCA(n_components=200,random_state=46)
+    pca.fit(X)
+    t = pca.transform(X)
 
     # print ('PCA generated in: ', a-time.time())
     a = time.time()
 
-    umap=umap.UMAP(n_components=2, random_state=46).fit(X)
+    umap=umap.UMAP(n_components=2, random_state=46).fit(t)
 
     print ('UMAP generated in: ', a-time.time())
 
@@ -62,6 +62,32 @@ def generateManifoldSpace(X,param,conveyor):
     conveyor.addVal(umap.embedding_[:,1],'PC2',
                         'UMAP D2','method','objs',
                         'UMAP D2 score for graphic representation')
+
+def projectManifoldPredictions(X, param, conveyor):
+    '''
+        This method projects X umap Vector, using X_pca
+
+        We assume a two dimension model
+
+        The method returs scores for dimensions 1 and 2
+
+    '''
+
+    X=copy.copy(X)
+    t = pca.transform(X)
+
+    test_embedding = umap.transform(t)
+    
+    
+    conveyor.addVal(test_embedding[:,0], 'UMAP1proj',
+                       'UMAP projected D1', 'method', 'objs',
+                       'UMAP projected scores D1 for graphic representation')
+
+            
+    conveyor.addVal(test_embedding[:,1], 'UMAP2proj',
+                       'UMAP projected D2', 'method', 'objs',
+                       'UMAP projected scores D2 for graphic representation')
+ 
 
 def generateProjectedSpace(X, param, conveyor):
     ''' This function uses the scaled X matrix of the model to build a 2 PCs PCA model
