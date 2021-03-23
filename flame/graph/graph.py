@@ -102,45 +102,45 @@ def projectManifoldPredictions(X, param, conveyor):
                        'UMAP projected D2', 'method', 'objs',
                        'UMAP projected scores D2 for graphic representation')
 
-# def generatetsneSpace(X,Y,param,conveyor):
+def generatetsneSpace(X,Y,param,conveyor):
     
-#     ''' This function uses the scaled X matrix of the model to build a PCs PCA model
+    ''' This function uses the scaled X matrix of the model to build a PCs PCA model
         
-#         This model is saved and the scores are dumped to the conveyor, after a umap 
+        This model is saved and the scores are dumped to the conveyor, after a umap 
         
-#         of 2 dimensions is obtained.
-#     '''
-#     LOG.info('Generating projected X space...')
+        of 2 dimensions is obtained.
+    '''
+    LOG.info('Generating projected X space...')
 
-#     # a = time.time()
+    # a = time.time()
 
-#     pca = PCA(n_components=200,random_state=46)
-#     X_pca = pca.fit_transform(X)
+    pca = PCA(n_components=15,random_state=46)
+    X_pca = pca.fit_transform(X)
 
-#     # print ('PCA generated in: ', a-time.time())
-#     a = time.time()
+    # print ('PCA generated in: ', a-time.time())
+    a = time.time()
 
-#     tsne = PredictableTSNE().fit(X_pca,Y)
+    tsne = PredictableTSNE().fit(X_pca,Y)
 
-#     print ('TSNE generated in: ', a-time.time())
+    print ('TSNE generated in: ', a-time.time())
 
-#     options = {"model_pca": pca, "model_tsne":tsne}
+    options = {"model_pca": pca, "model_tsne":tsne}
 
- 
-#     with open("models.pkl", "wb") as f:
-#         pickle.dump(options, f,protocol=pickle.HIGHEST_PROTOCOL)
+    models_path = os.path.join(param.getVal('model_path'),'models.pkl')
+    with open("models.pkl", "wb") as f:
+        pickle.dump(options, f,protocol=pickle.HIGHEST_PROTOCOL)
 
-#     train_tsne = tsne.transform(X_pca)
+    train_tsne = tsne.transform(X_pca)
 
-#     #TODO: store both models
+    #TODO: store both models
 
-#     conveyor.addVal(train_tsne[:,0],'t-SNE1',
-#                         't-SNE D1','method','objs',
-#                         't-SNE D1 score for graphic representation')
+    conveyor.addVal(train_tsne[:,0],'PC1',
+                        't-SNE D1','method','objs',
+                        't-SNE D1 score for graphic representation')
     
-#     conveyor.addVal(train_tsne[:,1],'t-SNE2',
-#                         't-SNE D2','method','objs',
-#                         't-SNE D2 score for graphic representation')
+    conveyor.addVal(train_tsne[:,1],'PC2',
+                        't-SNE D2','method','objs',
+                        't-SNE D2 score for graphic representation')
 
 def projecttsnePredictions(X, param, conveyor):
     '''
@@ -151,6 +151,7 @@ def projecttsnePredictions(X, param, conveyor):
         The method returs scores for dimensions 1 and 2
 
     '''
+    models_path = os.path.join(param.getVal('model_path'),'models.pkl')
     with open('models.pkl', "rb") as f:
         options = pickle.load(f)
 
@@ -163,12 +164,12 @@ def projecttsnePredictions(X, param, conveyor):
     tsne_test = tsne.transform(X_test)
     
     
-    conveyor.addVal(tsne_test[:,0], 't-SNE1proj',
+    conveyor.addVal(tsne_test[:,0], 'PC1proj',
                        't-SNE projected D1', 'method', 'objs',
                        't-SNE projected scores D1 for graphic representation')
 
             
-    conveyor.addVal(tsne_test[:,1], 'UMAP2proj',
+    conveyor.addVal(tsne_test[:,1], 'PC2proj',
                        't-SNE projected D2', 'method', 'objs',
                        't-SNE projected scores D2 for graphic representation')
  
