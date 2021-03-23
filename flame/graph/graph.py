@@ -87,7 +87,7 @@ def projectManifoldPredictions(X, param, conveyor):
     X=copy.copy(X)
     X_test = pca.transform(X)
 
-    test_embedding = umap.transform(t)
+    test_embedding = umap.transform(X_test)
     
     
     conveyor.addVal(test_embedding[:,0], 'UMAP1proj',
