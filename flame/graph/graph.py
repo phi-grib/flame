@@ -26,6 +26,8 @@ import copy
 import pickle
 from flame.stats.pca import pca    
 from sklearn.decomposition import PCA
+from sklearn.manifold import TSNE
+from mlinsights.mlmodel import PredictableTSNE
 import time 
 
 from flame.util import utils, get_logger
@@ -98,6 +100,76 @@ def projectManifoldPredictions(X, param, conveyor):
     conveyor.addVal(test_embedding[:,1], 'UMAP2proj',
                        'UMAP projected D2', 'method', 'objs',
                        'UMAP projected scores D2 for graphic representation')
+
+def generatetsneSpace(X,Y,param,conveyor):
+    
+    ''' This function uses the scaled X matrix of the model to build a PCs PCA model
+        
+        This model is saved and the scores are dumped to the conveyor, after a umap 
+        
+        of 2 dimensions is obtained.
+    '''
+    LOG.info('Generating projected X space...')
+
+    # a = time.time()
+
+    pca = PCA(n_components=200,random_state=46)
+    X_pca = pca.fit_transform(X)
+
+    # print ('PCA generated in: ', a-time.time())
+    a = time.time()
+
+    tsne = PredictableTSNE().fit(X_pca,Y)
+
+    print ('TSNE generated in: ', a-time.time())
+
+    options = {"model_pca": pca, "model_tsne":tsne}
+
+ 
+    with open("models.pkl", "wb") as f:
+        pickle.dump(options, f,protocol=pickle.HIGHEST_PROTOCOL)
+
+    train_tsne = tsne.transform(X_pca)
+
+    #TODO: store both models
+
+    conveyor.addVal(train_tsne[:,0],'t-SNE1',
+                        't-SNE D1','method','objs',
+                        't-SNE D1 score for graphic representation')
+    
+    conveyor.addVal(train_tsne[:,1],'t-SNE2',
+                        't-SNE D2','method','objs',
+                        't-SNE D2 score for graphic representation')
+
+def projecttsnePredictions(X, param, conveyor):
+    '''
+        This method projects X umap Vector, using X_pca
+
+        We assume a two dimension model
+
+        The method returs scores for dimensions 1 and 2
+
+    '''
+    with open('models.pkl', "rb") as f:
+        options = pickle.load(f)
+
+    pca  = options["model_pca"]
+    tsne = options["model_tsne"]
+
+    X=copy.copy(X)
+    X_test = pca.transform(X)
+
+    tsne_test = tsne.transform(X_test)
+    
+    
+    conveyor.addVal(tsne_test[:,0], 't-SNE1proj',
+                       't-SNE projected D1', 'method', 'objs',
+                       't-SNE projected scores D1 for graphic representation')
+
+            
+    conveyor.addVal(tsne_test[:,1], 'UMAP2proj',
+                       't-SNE projected D2', 'method', 'objs',
+                       't-SNE projected scores D2 for graphic representation')
  
 
 def generateProjectedSpace(X, param, conveyor):

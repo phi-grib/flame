@@ -40,6 +40,7 @@ from flame.stats.imbalance import run_imbalance
 
 # from flame.graph.graph import generateProjectedSpace
 from flame.graph.graph import generateManifoldSpace
+# from flame.graph.graph import generatetsneSpace
 
 from flame.util import utils, get_logger
 LOG = get_logger(__name__)
@@ -392,6 +393,8 @@ class Learn:
         # generate a proyected space and use it to generate graphics
         # generateProjectedSpace(self.X, self.param, self.conveyor)
         generateManifoldSpace(self.X, self.param, self.conveyor)
+        # generatetsneSpace (self.X,self.Y,self.param,self.conveyor)
+
 
         LOG.info('Model finished successfully')
 
