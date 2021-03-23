@@ -27,7 +27,7 @@ import pickle
 from flame.stats.pca import pca    
 from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
-# from mlinsights.mlmodel import PredictableTSNE
+from mlinsights.mlmodel import PredictableTSNE
 import time 
 
 from flame.util import utils, get_logger
