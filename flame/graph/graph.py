@@ -45,7 +45,7 @@ def generateManifoldSpace(X,param,conveyor):
 
     # a = time.time()
 
-    pca = PCA(n_components=15,random_state=46)
+    pca = PCA(n_components=round(X.shape[0]/4),random_state=46)
     X_pca = pca.fit_transform(X)
 
     # print ('PCA generated in: ', a-time.time())
@@ -114,7 +114,7 @@ def generatetsneSpace(X,Y,param,conveyor):
 
     # a = time.time()
 
-    pca = PCA(n_components=15,random_state=46)
+    pca = PCA(n_components=round(X.shape[0]/4),random_state=46)
     X_pca = pca.fit_transform(X)
 
     # print ('PCA generated in: ', a-time.time())
