@@ -24,6 +24,8 @@ import os
 import numpy as np
 import copy
 from flame.stats.pca import pca    
+from sklearn.decomposition import PCA
+import time 
 
 from flame.util import utils, get_logger
 LOG = get_logger(__name__)
@@ -37,44 +39,27 @@ def generateManifoldSpace(X,param,conveyor):
         of 2 dimensions is obtained.
     '''
     LOG.info('Generating projected X space...')
-    mpca = pca()
-    mpca.build(X,targetA=2,autoscale=False)
 
-    pca_path = os.path.join(param.getVal('model_path'),'pca.npy')
-    mpca.saveModel(pca_path)
-    if np.isnan (np.sum(mpca.t[0])):
-        t = np.zeros(len(mpca.t[0]))
-    else:
-        t = mpca.t[0]
+    a = time.time()
 
-    conveyor.addVal(t, 'PC1',
-                        'PCA PC1', 'method', 'objs',
-                        'PCA PC1 score for graphic representation')
+    pca = PCA(n_components=50,random_state=46)
+    pca.fit(X)
+    t = pca.transform(X)
 
-    if np.isnan (np.sum(mpca.t[1])):
-        t = np.zeros(len(mpca.t[1]))
-    else:
-        t = mpca.t[1]
+    print ('PCA generated in: ', a-time.time())
+    a = time.time()
 
-    conveyor.addVal(t, 'PC2',
-                        'PCA PC2', 'method', 'objs',
-                        'PCA PC2 score for graphic representation')
+    umap=umap.UMAP(n_components=2, random_state=46).fit(t)
+
+    print ('UMAP generated in: ', a-time.time())
+
+    #TODO: store both models
     
-    z=np.vstack([[mpca.t[0],mpca.t[1]]]).T
-
-    conveyor.addval(z,'PC1-2',
-                        'PCA1-2','method','objs',
-                        'PCA1-2 both dimensions')
-    umap=umap.UMAP(n_components=2).fit(z)
-    t = umap.embedding_[:,0]
-
-    conveyor.addval(t,'UMAP1',
+    conveyor.addVal(umap.embedding_[:,0],'PC1',
                         'UMAP D1','method','objs',
                         'UMAP D1 score for graphic representation')
     
-    t= umap.embedding_[:,1]
-
-    conveyor.addval(t,'UMAP2',
+    conveyor.addVal(umap.embedding_[:,1],'PC2',
                         'UMAP D2','method','objs',
                         'UMAP D2 score for graphic representation')
 

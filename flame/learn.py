@@ -38,7 +38,8 @@ from flame.stats import feature_selection
 from flame.stats.combo import median, mean, majority, logicalOR, matrix
 from flame.stats.imbalance import run_imbalance  
 
-from flame.graph.graph import generateProjectedSpace
+# from flame.graph.graph import generateProjectedSpace
+from flame.graph.graph import generateManifoldSpace
 
 from flame.util import utils, get_logger
 LOG = get_logger(__name__)
@@ -389,7 +390,8 @@ class Learn:
         # TODO: compute AD (when applicable)
 
         # generate a proyected space and use it to generate graphics
-        generateProjectedSpace(self.X, self.param, self.conveyor)
+        # generateProjectedSpace(self.X, self.param, self.conveyor)
+        generateManifoldSpace(self.X, self.param, self.conveyor)
 
         LOG.info('Model finished successfully')
 
