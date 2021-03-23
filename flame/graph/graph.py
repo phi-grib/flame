@@ -23,6 +23,7 @@
 import os
 import numpy as np
 import copy
+import pickle
 from flame.stats.pca import pca    
 from sklearn.decomposition import PCA
 import time 
@@ -43,15 +44,20 @@ def generateManifoldSpace(X,param,conveyor):
     # a = time.time()
 
     pca = PCA(n_components=200,random_state=46)
-    pca.fit(X)
-    t = pca.transform(X)
+    X_pca = pca.fit_transform(X)
 
     # print ('PCA generated in: ', a-time.time())
     a = time.time()
 
-    umap=umap.UMAP(n_components=2, random_state=46).fit(t)
+    umap=umap.UMAP(n_components=2, random_state=46).fit(X_pca)
 
     print ('UMAP generated in: ', a-time.time())
+
+    options = {"model_pca": pca, "model_umap":umap}
+
+ 
+    with open("models.pkl", "wb") as f:
+        pickle.dump(options, f)
 
     #TODO: store both models
 
@@ -72,9 +78,14 @@ def projectManifoldPredictions(X, param, conveyor):
         The method returs scores for dimensions 1 and 2
 
     '''
+    with open('models.pkl', "rb") as f:
+        options = pickle.load(f)
+
+    pca  = options["model_pca"]
+    umap = options["model_umap"]
 
     X=copy.copy(X)
-    t = pca.transform(X)
+    X_test = pca.transform(X)
 
     test_embedding = umap.transform(t)
     
