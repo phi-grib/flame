@@ -40,21 +40,21 @@ def generateManifoldSpace(X,param,conveyor):
     '''
     LOG.info('Generating projected X space...')
 
+    # a = time.time()
+
+    # pca = PCA(n_components=500,random_state=46)
+    # pca.fit(X)
+    # t = pca.transform(X)
+
+    # print ('PCA generated in: ', a-time.time())
     a = time.time()
 
-    pca = PCA(n_components=50,random_state=46)
-    pca.fit(X)
-    t = pca.transform(X)
-
-    print ('PCA generated in: ', a-time.time())
-    a = time.time()
-
-    umap=umap.UMAP(n_components=2, random_state=46).fit(t)
+    umap=umap.UMAP(n_components=2, random_state=46).fit(X)
 
     print ('UMAP generated in: ', a-time.time())
 
     #TODO: store both models
-    
+
     conveyor.addVal(umap.embedding_[:,0],'PC1',
                         'UMAP D1','method','objs',
                         'UMAP D1 score for graphic representation')
