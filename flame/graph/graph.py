@@ -36,7 +36,7 @@ import joblib
 from flame.util import utils, get_logger
 LOG = get_logger(__name__)
 
-def generateManifoldSpace(X,param,conveyor):
+def generateManifoldSpace(X,Y,param,conveyor):
     ''' This function uses the scaled X matrix of the model to build 2D UMAP model
         This model is saved and the two transformed vars are dumped to the conveyor 
     '''
