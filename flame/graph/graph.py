@@ -27,7 +27,7 @@ import pickle
 from flame.stats.pca import pca    
 from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
-from mlinsights.mlmodel import PredictableTSNE
+from flame.graph.predtsne import PredictableTSNE
 import time 
 import joblib
 
@@ -50,9 +50,11 @@ def generateManifoldSpace(X,param,conveyor):
     # UMAP fit
     a = time.time()
     # umap=umap.UMAP(n_components=2, random_state=46).fit(X_pca)
-    umap=umap.UMAP(n_components=2, random_state=46).fit(X)
+    umap=umap.UMAP(n_neighbors = 5, random_state=46).fit(X)
     new_x = umap.transform(X)
-    print (new_x)    
+    mini_x = umap.transform(X[:10])
+    print (new_x[:10])    
+    print (mini_x)
 
     LOG.info(f'UMAP generated in: {a-time.time()}')
 
@@ -149,7 +151,7 @@ def projecttsnePredictions(X, param, conveyor):
 
     '''
     models_path = os.path.join(param.getVal('model_path'),'models.pkl')
-    with open('models.pkl', "rb") as f:
+    with open(models_path, "rb") as f:
         options = pickle.load(f)
 
     pca  = options["model_pca"]
