@@ -51,7 +51,7 @@ def generateManifoldSpace(X,param,conveyor):
     # print ('PCA generated in: ', a-time.time())
     a = time.time()
 
-    umap=umap.UMAP(n_components=2, random_state=46).fit(X_pca)
+    umap=umap.UMAP(n_neighbors=5, n_components=2, random_state=46).fit(X_pca)
 
     print ('UMAP generated in: ', a-time.time())
 
