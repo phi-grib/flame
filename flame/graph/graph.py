@@ -120,7 +120,7 @@ def generateIsomapSpace(X,param,conveyor):
     # print ('PCA generated in: ', a-time.time())
     a = time.time()
 
-    isomap=Isomap(n_components=2)
+    isomap=Isomap(n_components=2).fit(X_pca)
 
     print ('UMAP generated in: ', a-time.time())
 
@@ -132,7 +132,7 @@ def generateIsomapSpace(X,param,conveyor):
 
     #TODO: store both models
 
-    X_train=isomap.fit_transform(X_pca)
+    X_train=isomap.transform(X_pca)
 
     conveyor.addVal(X_train[:,0],'PC1',
                         'ISOMAP D1','method','objs',
