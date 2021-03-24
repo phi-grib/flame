@@ -1,6 +1,11 @@
+# File extracted from mlinsights
+# https://github.com/sdpython/mlinsights
+# adapted to produce reproducible results 
+
+
 """
 @file
-@brief Implements a predicatable *t-SNE*.
+@brief Implements a predictable *t-SNE*.
 """
 import inspect
 from sklearn.base import BaseEstimator, TransformerMixin, clone
@@ -42,7 +47,7 @@ class PredictableTSNE(BaseEstimator, TransformerMixin):
         if estimator is None:
             estimator = MLPRegressor(random_state=46)
         if transformer is None:
-            transformer = umap.UMAP(random_state=46)
+            transformer = TSNE(random_state=46)
         self.estimator = estimator
         self.transformer = transformer
         self.normalizer = normalizer
@@ -110,14 +115,20 @@ class PredictableTSNE(BaseEstimator, TransformerMixin):
             self.estimator_ = clone(self.estimator).fit(
                 X, target, sample_weight=sample_weight)
         else:
-            self.estimator_ = clone(self.estimator).fit(X, target)
+            self.estimator_ = clone(self.estimator).fit(
+                X, target)
         mean = target.mean(axis=0)
         var = target.std(axis=0)
         self.mean_ = mean
         self.inv_std_ = 1. / var
+
+        # comment to speed up calculation if no loss_ is needed
+        # uncommenting next line
+        # self.loss_ = 0.0
         exp = (target - mean) * self.inv_std_
         got = (self.estimator_.predict(X) - mean) * self.inv_std_
         self.loss_ = mean_squared_error(exp, got)
+
         if self.keep_tsne_outputs:
             self.tsne_outputs_ = exp if self.normalize else target
         return self

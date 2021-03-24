@@ -217,17 +217,24 @@ def generatetsneSpace(X,Y,param,conveyor):
     '''
     LOG.info('Generating projected X space...')
 
-    # a = time.time()
-
-    pca = PCA(n_components=round(X.shape[0]/4),random_state=46)
-    X_pca = pca.fit_transform(X)
-
-    # print ('PCA generated in: ', a-time.time())
     a = time.time()
 
-    tsne = PredictableTSNE().fit(X_pca,Y)
+    npc = min(X.shape[0]/2,200)
+    pca = PCA(n_components=npc,random_state=46)
+    # pca = PCA(n_components=round(X.shape[0]/4),random_state=46)
+    X_pca = pca.fit_transform(X)
+
+    print ('PCA generated in: ', a-time.time())
+
+    # DO NOT PASS the Y matrix. We need an empty y array of this shape but 
+    # I have no idea how it is using it
+    # tsne = PredictableTSNE().fit(X_pca,Y)
+    iY = np.empty((X.shape[0], 2))
+    tsne = PredictableTSNE().fit(X_pca, iY)
+
 
     print ('TSNE generated in: ', a-time.time())
+    print ('with error:', tsne.loss_)
 
     options = {"model_pca": pca, "model_tsne":tsne}
 
