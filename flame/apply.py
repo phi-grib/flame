@@ -438,8 +438,8 @@ class Apply:
 
         # project on the chemical space built using the training series    
         # projectPredictions (X, self.param, self.conveyor)
-        projectManifoldPredictions (X,self.param,self.conveyor)
-        # projecttsnePredictions (X,self.param,self.conveyor)
+        # projectManifoldPredictions (X,self.param,self.conveyor)
+        projecttsnePredictions (X,self.param,self.conveyor)
         # projectIsomapPredictions (X,self.param,self.conveyor)
 
 

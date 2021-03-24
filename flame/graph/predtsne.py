@@ -7,7 +7,7 @@ from sklearn.base import BaseEstimator, TransformerMixin, clone
 from sklearn.manifold import TSNE
 from sklearn.neural_network import MLPRegressor
 from sklearn.metrics import mean_squared_error
-
+import umap
 
 class PredictableTSNE(BaseEstimator, TransformerMixin):
     """
@@ -40,9 +40,9 @@ class PredictableTSNE(BaseEstimator, TransformerMixin):
         TransformerMixin.__init__(self)
         BaseEstimator.__init__(self)
         if estimator is None:
-            estimator = MLPRegressor()
+            estimator = MLPRegressor(random_state=46)
         if transformer is None:
-            transformer = TSNE()
+            transformer = umap.UMAP(random_state=46)
         self.estimator = estimator
         self.transformer = transformer
         self.normalizer = normalizer
