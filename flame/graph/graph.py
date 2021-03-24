@@ -29,14 +29,13 @@ from flame.stats.pca import pca
 from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
 from flame.graph.predtsne import PredictableTSNE
-from flame.graph.predumap import PredictableUMAP
 import time 
 import joblib
 
 from flame.util import utils, get_logger
 LOG = get_logger(__name__)
 
-def generateManifoldSpace(X,Y,param,conveyor):
+def generateManifoldSpace(X,param,conveyor):
     ''' This function uses the scaled X matrix of the model to build 2D UMAP model
         This model is saved and the two transformed vars are dumped to the conveyor 
     '''
@@ -49,7 +48,7 @@ def generateManifoldSpace(X,Y,param,conveyor):
     # # print ('PCA generated in: ', a-time.time())
     # a = time.time()
 
-    umap = PredictableUMAP().fit(X,Y)
+    umap = umap.UMAP(n_components=2,random_state=46).fit(X)
 
     options = {"model_umap":umap}
 
@@ -57,13 +56,12 @@ def generateManifoldSpace(X,Y,param,conveyor):
     with open(models_path, "wb") as f:
         pickle.dump(options, f,protocol=pickle.HIGHEST_PROTOCOL)
 
-    train_umap = umap.transform(X)
 
-    conveyor.addVal(train_umap[:,0],'PC1',
+    conveyor.addVal(umap.embedding_[:,0],'PC1',
                         'UMAP D1','method','objs',
                         'UMAP D1 score for graphic representation')
     
-    conveyor.addVal(train_umap[:,1],'PC2',
+    conveyor.addVal(umap.embedding_[:,1],'PC2',
                         'UMAP D2','method','objs',
                         'UMAP D2 score for graphic representation')
 
