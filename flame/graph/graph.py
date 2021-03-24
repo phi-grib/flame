@@ -27,6 +27,7 @@ import pickle
 from flame.stats.pca import pca    
 from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
+from sklearn.manifold import Isomap
 from mlinsights.mlmodel import PredictableTSNE
 import time 
 
@@ -101,6 +102,77 @@ def projectManifoldPredictions(X, param, conveyor):
     conveyor.addVal(test_embedding[:,1], 'PC2proj',
                        'UMAP projected D2', 'method', 'objs',
                        'UMAP projected scores D2 for graphic representation')
+
+def generateIsomapSpace(X,param,conveyor):
+    ''' This function uses the scaled X matrix of the model to build a PCs PCA model
+        
+        This model is saved and the scores are dumped to the conveyor, after a umap 
+        
+        of 2 dimensions is obtained.
+    '''
+    LOG.info('Generating projected X space...')
+
+    # a = time.time()
+
+    pca = PCA(n_components=round(X.shape[0]/4),random_state=46)
+    X_pca = pca.fit_transform(X)
+
+    # print ('PCA generated in: ', a-time.time())
+    a = time.time()
+
+    isomap=Isomap(n_components=2)
+
+    print ('UMAP generated in: ', a-time.time())
+
+    options = {"model_pca": pca, "model_isomap":isomap}
+
+    models_path = os.path.join(param.getVal('model_path'),'models.pkl')
+    with open(models_path, "wb") as f:
+        pickle.dump(options, f,protocol=pickle.HIGHEST_PROTOCOL)
+
+    #TODO: store both models
+
+    X_train=isomap.fit_transform(X_pca)
+
+    conveyor.addVal(X_train[:,0],'PC1',
+                        'ISOMAP D1','method','objs',
+                        'ISOMAP D1 score for graphic representation')
+    
+    conveyor.addVal(X_train[:,1],'PC2',
+                        'ISOMAP D2','method','objs',
+                        'ISOMAP D2 score for graphic representation')
+
+def projectIsomapPredictions(X, param, conveyor):
+    '''
+        This method projects X umap Vector, using X_pca
+
+        We assume a two dimension model
+
+        The method returs scores for dimensions 1 and 2
+
+    '''
+    models_path = os.path.join(param.getVal('model_path'),'models.pkl')
+    with open(models_path, "rb") as f:
+        options = pickle.load(f)
+
+    pca  = options["model_pca"]
+    isomap = options["model_isomap"]
+
+    X=copy.copy(X)
+    X_test = pca.transform(X)
+
+    test_isomap = isomap.transform(X_test)
+    
+    
+    conveyor.addVal(test_isomap[:,0], 'PC1proj',
+                       'ISOMAP projected D1', 'method', 'objs',
+                       'ISOMAP projected scores D1 for graphic representation')
+
+            
+    conveyor.addVal(test_isomap[:,1], 'PC2proj',
+                       'ISOMAP projected D2', 'method', 'objs',
+                       'ISOMAP projected scores D2 for graphic representation')
+
 
 def generatetsneSpace(X,Y,param,conveyor):
     
