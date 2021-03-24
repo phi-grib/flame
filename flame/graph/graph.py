@@ -24,10 +24,12 @@ import os
 import numpy as np
 import copy
 import pickle
+import umap
 from flame.stats.pca import pca    
 from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
 from flame.graph.predtsne import PredictableTSNE
+from flame.graph.predumap import PredictableUMAP
 import time 
 import joblib
 
@@ -35,48 +37,55 @@ from flame.util import utils, get_logger
 LOG = get_logger(__name__)
 
 def generateManifoldSpace(X,param,conveyor):
-    import umap
     ''' This function uses the scaled X matrix of the model to build 2D UMAP model
         This model is saved and the two transformed vars are dumped to the conveyor 
     '''
     LOG.info('Generating UMAP transformed X space...')
 
     # reduce original dimensionality
-    print (X.shape[0])
-    print (X[0])
-    # pca = PCA(n_components=round(X.shape[0]/4),random_state=46)
-    # X_pca = pca.fit_transform(X)
+    pca = PCA(n_components=round(X.shape[0]/4),random_state=46)
+    X_pca = pca.fit_transform(X)
 
-    # UMAP fit
+    # print ('PCA generated in: ', a-time.time())
     a = time.time()
-    # umap=umap.UMAP(n_components=2, random_state=46).fit(X_pca)
-    umap=umap.UMAP(n_neighbors = 5, random_state=46).fit(X)
-    new_x = umap.transform(X)
-    mini_x = umap.transform(X[:10])
-    print (new_x[:10])    
-    print (mini_x)
 
-    umap=umap.UMAP(n_neighbors=5, n_components=2, random_state=46).fit(X_pca)
-
-    print ('UMAP generated in: ', a-time.time())
+    umap = PredictableUMAP().fit(X_pca,Y)
 
     options = {"model_pca": pca, "model_umap":umap}
 
-    # save models
     models_path = os.path.join(param.getVal('model_path'),'models.pkl')
-    # options = {"model_pca": pca, "model_umap":umap}
-    # with open(models_path, "wb") as f:
-    #     pickle.dump( options, f,protocol=pickle.HIGHEST_PROTOCOL)
-    joblib.dump(umap, models_path)
+    with open(models_path, "wb") as f:
+        pickle.dump(options, f,protocol=pickle.HIGHEST_PROTOCOL)
 
-    # dumpy the two variables to Conveyor
-    conveyor.addVal(new_x[:,0],'PC1',
+    train_umap = umap.transform(X_pca)
+
+    conveyor.addVal(train_umap[:,0],'PC1',
                         'UMAP D1','method','objs',
                         'UMAP D1 score for graphic representation')
     
-    conveyor.addVal(new_x[:,1],'PC2',
+    conveyor.addVal(train_umap[:,1],'PC2',
                         'UMAP D2','method','objs',
                         'UMAP D2 score for graphic representation')
+
+    # print ('UMAP generated in: ', a-time.time())
+
+    # options = {"model_pca": pca, "model_umap":umap}
+
+    # # save models
+    # models_path = os.path.join(param.getVal('model_path'),'models.pkl')
+    # # options = {"model_pca": pca, "model_umap":umap}
+    # # with open(models_path, "wb") as f:
+    # #     pickle.dump( options, f,protocol=pickle.HIGHEST_PROTOCOL)
+    # joblib.dump(umap, models_path)
+
+    # # dumpy the two variables to Conveyor
+    # conveyor.addVal(new_x[:,0],'PC1',
+    #                     'UMAP D1','method','objs',
+    #                     'UMAP D1 score for graphic representation')
+    
+    # conveyor.addVal(new_x[:,1],'PC2',
+    #                     'UMAP D2','method','objs',
+    #                     'UMAP D2 score for graphic representation')
 
 
 def projectManifoldPredictions(X, param, conveyor):
@@ -86,7 +95,30 @@ def projectManifoldPredictions(X, param, conveyor):
     '''
 
     models_path = os.path.join(param.getVal('model_path'),'models.pkl')
-    umap = joblib.load(models_path)
+    with open(models_path, "rb") as f:
+        options = pickle.load(f)
+
+    pca  = options["model_pca"]
+    umap = options["model_umap"]
+
+    X=copy.copy(X)
+    X_test = pca.transform(X)
+
+    umap_test = umap.transform(X_test)
+    
+    
+    conveyor.addVal(umap_test[:,0], 'PC1proj',
+                       'UMAP projected D1', 'method', 'objs',
+                       'UMAP projected scores D1 for graphic representation')
+
+            
+    conveyor.addVal(umap_test[:,1], 'PC2proj',
+                       'UMAP projected D2', 'method', 'objs',
+                       'UMAP projected scores D2 for graphic representation')
+    # models_path = os.path.join(param.getVal('model_path'),'models.pkl')
+    # umap = joblib.load(models_path)
+
+
     # with open(models_path, "rb") as f:
     #     options = pickle.load(f)
 
