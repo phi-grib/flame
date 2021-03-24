@@ -219,7 +219,7 @@ def generatetsneSpace(X,Y,param,conveyor):
 
     a = time.time()
 
-    npc = min(X.shape[0]/2,200)
+    npc = round(min(X.shape[0]/2,200))
     pca = PCA(n_components=npc,random_state=46)
     # pca = PCA(n_components=round(X.shape[0]/4),random_state=46)
     X_pca = pca.fit_transform(X)
