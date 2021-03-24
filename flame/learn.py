@@ -39,7 +39,7 @@ from flame.stats.combo import median, mean, majority, logicalOR, matrix
 from flame.stats.imbalance import run_imbalance  
 
 # from flame.graph.graph import generateProjectedSpace
-# from flame.graph.graph import generateManifoldSpace
+from flame.graph.graph import generateManifoldSpace
 from flame.graph.graph import generatetsneSpace
 
 from flame.util import utils, get_logger
