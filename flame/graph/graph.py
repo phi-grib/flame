@@ -51,13 +51,13 @@ def generateManifoldSpace(X,Y,param,conveyor):
 
     umap = PredictableUMAP().fit(X,Y)
 
-    options = {"model_pca": pca, "model_umap":umap}
+    options = {"model_umap":umap}
 
     models_path = os.path.join(param.getVal('model_path'),'models.pkl')
     with open(models_path, "wb") as f:
         pickle.dump(options, f,protocol=pickle.HIGHEST_PROTOCOL)
 
-    train_umap = umap.transform(X_pca)
+    train_umap = umap.transform(X)
 
     conveyor.addVal(train_umap[:,0],'PC1',
                         'UMAP D1','method','objs',
@@ -98,13 +98,12 @@ def projectManifoldPredictions(X, param, conveyor):
     with open(models_path, "rb") as f:
         options = pickle.load(f)
 
-    pca  = options["model_pca"]
     umap = options["model_umap"]
 
     X=copy.copy(X)
-    X_test = pca.transform(X)
+    # X_test = pca.transform(X)
 
-    umap_test = umap.transform(X_test)
+    umap_test = umap.transform(X)
     
     
     conveyor.addVal(umap_test[:,0], 'PC1proj',
