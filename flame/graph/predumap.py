@@ -23,7 +23,7 @@ class PredictableUMAP(BaseEstimator, TransformerMixin):
     """
 
     def __init__(self, normalizer=None, transformer=None, estimator=None,
-                 normalize=True, keep_tsne_outputs=False):
+                 normalize=True, keep_umap_outputs=False):
         """
         @param      normalizer          None by default
         @param      transformer         :epkg:`sklearn:manifold:TSNE`
@@ -40,9 +40,9 @@ class PredictableUMAP(BaseEstimator, TransformerMixin):
         TransformerMixin.__init__(self)
         BaseEstimator.__init__(self)
         if estimator is None:
-            estimator = MLPRegressor()
+            estimator = MLPRegressor(random_state=46)
         if transformer is None:
-            transformer = umap.UMAP()
+            transformer = umap.UMAP(random_state=46)
         self.estimator = estimator
         self.transformer = transformer
         self.normalizer = normalizer

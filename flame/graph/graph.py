@@ -43,13 +43,13 @@ def generateManifoldSpace(X,param,conveyor):
     LOG.info('Generating UMAP transformed X space...')
 
     # reduce original dimensionality
-    pca = PCA(n_components=round(X.shape[0]/4),random_state=46)
-    X_pca = pca.fit_transform(X)
+    # pca = PCA(n_components=round(X.shape[0]/4),random_state=46)
+    # X_pca = pca.fit_transform(X)
 
-    # print ('PCA generated in: ', a-time.time())
-    a = time.time()
+    # # print ('PCA generated in: ', a-time.time())
+    # a = time.time()
 
-    umap = PredictableUMAP().fit(X_pca,Y)
+    umap = PredictableUMAP().fit(X,Y)
 
     options = {"model_pca": pca, "model_umap":umap}
 
