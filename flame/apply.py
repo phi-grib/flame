@@ -36,8 +36,8 @@ from sklearn.metrics import f1_score
 from sklearn.metrics import make_scorer
 from sklearn.metrics import confusion_matrix
 
-# from flame.graph.graph import projectPredictions
-# from flame.graph.graph import projectManifoldPredictions
+from flame.graph.graph import projectPredictions
+from flame.graph.graph import projectManifoldPredictions
 from flame.graph.graph import projecttsnePredictions
 from flame.util import utils, get_logger
 LOG = get_logger(__name__)
@@ -436,8 +436,8 @@ class Apply:
 
         # project on the chemical space built using the training series    
         # projectPredictions (X, self.param, self.conveyor)
-        # projectManifoldPredictions (X,self.param,self.conveyor)
-        projecttsnePredictions (X,self.param,self.conveyor)
+        projectManifoldPredictions (X,self.param,self.conveyor)
+        # projecttsnePredictions (X,self.param,self.conveyor)
 
 
         return

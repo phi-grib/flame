@@ -29,74 +29,73 @@ from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
 from mlinsights.mlmodel import PredictableTSNE
 import time 
+import joblib
 
 from flame.util import utils, get_logger
 LOG = get_logger(__name__)
 
 def generateManifoldSpace(X,param,conveyor):
     import umap
-    ''' This function uses the scaled X matrix of the model to build a PCs PCA model
-        
-        This model is saved and the scores are dumped to the conveyor, after a umap 
-        
-        of 2 dimensions is obtained.
+    ''' This function uses the scaled X matrix of the model to build 2D UMAP model
+        This model is saved and the two transformed vars are dumped to the conveyor 
     '''
-    LOG.info('Generating projected X space...')
+    LOG.info('Generating UMAP transformed X space...')
 
-    # a = time.time()
+    # reduce original dimensionality
+    print (X.shape[0])
+    print (X[0])
+    # pca = PCA(n_components=round(X.shape[0]/4),random_state=46)
+    # X_pca = pca.fit_transform(X)
 
-    pca = PCA(n_components=round(X.shape[0]/4),random_state=46)
-    X_pca = pca.fit_transform(X)
-
-    # print ('PCA generated in: ', a-time.time())
+    # UMAP fit
     a = time.time()
+    # umap=umap.UMAP(n_components=2, random_state=46).fit(X_pca)
+    umap=umap.UMAP(n_components=2, random_state=46).fit(X)
+    new_x = umap.transform(X)
+    print (new_x)    
 
-    umap=umap.UMAP(n_components=2, random_state=46).fit(X_pca)
+    LOG.info(f'UMAP generated in: {a-time.time()}')
 
-    print ('UMAP generated in: ', a-time.time())
-
-    options = {"model_pca": pca, "model_umap":umap}
-
+    # save models
     models_path = os.path.join(param.getVal('model_path'),'models.pkl')
-    with open(models_path, "wb") as f:
-        pickle.dump(options, f,protocol=pickle.HIGHEST_PROTOCOL)
+    # options = {"model_pca": pca, "model_umap":umap}
+    # with open(models_path, "wb") as f:
+    #     pickle.dump( options, f,protocol=pickle.HIGHEST_PROTOCOL)
+    joblib.dump(umap, models_path)
 
-    #TODO: store both models
-
-    conveyor.addVal(umap.embedding_[:,0],'PC1',
+    # dumpy the two variables to Conveyor
+    conveyor.addVal(new_x[:,0],'PC1',
                         'UMAP D1','method','objs',
                         'UMAP D1 score for graphic representation')
     
-    conveyor.addVal(umap.embedding_[:,1],'PC2',
+    conveyor.addVal(new_x[:,1],'PC2',
                         'UMAP D2','method','objs',
                         'UMAP D2 score for graphic representation')
+
 
 def projectManifoldPredictions(X, param, conveyor):
     '''
         This method projects X umap Vector, using X_pca
-
-        We assume a two dimension model
-
-        The method returs scores for dimensions 1 and 2
-
+        The method returs transformed X for dimensions 1 and 2
     '''
+
     models_path = os.path.join(param.getVal('model_path'),'models.pkl')
-    with open(models_path, "rb") as f:
-        options = pickle.load(f)
+    umap = joblib.load(models_path)
+    # with open(models_path, "rb") as f:
+    #     options = pickle.load(f)
 
-    pca  = options["model_pca"]
-    umap = options["model_umap"]
+    # pca  = options["model_pca"]
+    # umap = options["model_umap"]
 
-    X=copy.copy(X)
-    X_test = pca.transform(X)
+    # X=copy.copy(X)
+    # X_test = pca.transform(X)
 
-    test_embedding = umap.transform(X_test)
-    
-    
+    # test_embedding = umap.transform(X_test)
+    test_embedding = umap.transform(X)
+    print (test_embedding)    
     conveyor.addVal(test_embedding[:,0], 'PC1proj',
                        'UMAP projected D1', 'method', 'objs',
                        'UMAP projected scores D1 for graphic representation')
-
             
     conveyor.addVal(test_embedding[:,1], 'PC2proj',
                        'UMAP projected D2', 'method', 'objs',
@@ -127,12 +126,10 @@ def generatetsneSpace(X,Y,param,conveyor):
     options = {"model_pca": pca, "model_tsne":tsne}
 
     models_path = os.path.join(param.getVal('model_path'),'models.pkl')
-    with open("models.pkl", "wb") as f:
+    with open(models_path, "wb") as f:
         pickle.dump(options, f,protocol=pickle.HIGHEST_PROTOCOL)
 
     train_tsne = tsne.transform(X_pca)
-
-    #TODO: store both models
 
     conveyor.addVal(train_tsne[:,0],'PC1',
                         't-SNE D1','method','objs',
