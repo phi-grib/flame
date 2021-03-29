@@ -84,7 +84,7 @@ class Idata:
 
 
         # in case of top ensemble models...
-        if input_type == 'smart':
+        if input_type == 'smarts':
             self.smart = input_source
             self.ifile = None
             self.idata = None
@@ -961,11 +961,11 @@ class Idata:
 
         return
 
-    def _run_smart (self):
-        self.conveyor.addVal(self.smart, 'SMART', 'SMART query',
-                            'method', 'single', 'SMART query string')
+    def _run_smarts (self):
+        self.conveyor.addVal(self.smart, 'SMARTS', 'SMARTS query',
+                            'method', 'single', 'SMARTS query string')
 
-        self.conveyor.addVal(['SMART query'], 'obj_nam', 'Mol name', 'label',
+        self.conveyor.addVal(['SMARTS query'], 'obj_nam', 'Mol name', 'label',
                             'objs', 'Name of the molecule, as present in the input file')
 
         self.conveyor.addVal([self.smart], 'SMILES', 'SMILES',
@@ -1356,8 +1356,8 @@ class Idata:
 
                 return 
 
-        if input_type == 'smart':
-            self._run_smart()
+        if input_type == 'smarts':
+            self._run_smarts()
         
         # processing for molecular input (for now an SDFile)
         elif input_type == 'molecule':

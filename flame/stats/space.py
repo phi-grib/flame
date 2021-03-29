@@ -58,8 +58,8 @@ class Space:
 
                 self.objinfo[item] = item_val
 
-        self.isSMART = self.conveyor.getVal('SMART') is not None
-        if self.isSMART:
+        self.isSMARTS = self.conveyor.getVal('SMARTS') is not None
+        if self.isSMARTS:
             self.isFingerprint = True
             self.MDs = 'substructureFP'
             self.nobj = 1
@@ -215,7 +215,7 @@ class Space:
 
         t1 = time.time()
 
-        if self.isSMART:
+        if self.isSMARTS:
 
             nselected = 0
             selected_i = []
@@ -224,7 +224,7 @@ class Space:
              # for each compound in the space
             for j, jfp in enumerate(self.Xref):
                 # mi = Chem.MolFromSmarts('C[!C](C)CC1*C=CCC1')
-                mi = Chem.MolFromSmarts(self.conveyor.getVal('SMART'))
+                mi = Chem.MolFromSmarts(self.conveyor.getVal('SMARTS'))
                 mj = Chem.MolFromSmiles(self.objinforef['SMILES'][j])
 
                 if mj.HasSubstructMatch(mi):

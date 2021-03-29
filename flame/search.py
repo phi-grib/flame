@@ -104,9 +104,9 @@ class Search:
             LOG.error(f'Unable to find space {self.space}')
             self.conveyor.setError(f'Unable to find space {self.space}, version {self.version}')
 
-        if self.getVal(param_dict,'smart') is not None:
-            input_source = param_dict['smart']
-            self.param.setVal('input_type', 'smart')
+        if self.getVal(param_dict,'smarts') is not None:
+            input_source = param_dict['smarts']
+            self.param.setVal('input_type', 'smarts')
 
         elif self.getVal(param_dict,'infile') is not None:
             input_source = param_dict['infile']
@@ -166,7 +166,7 @@ class Search:
 
             # make sure there is X data
             if not self.conveyor.isKey('xmatrix'):
-                if not self.conveyor.isKey ('SMART'):
+                if not self.conveyor.isKey ('SMARTS'):
                     LOG.debug(f'Failed to compute MDs')
                     self.conveyor.setError(f'Failed to compute MDs')
 
