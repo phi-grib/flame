@@ -41,7 +41,10 @@ class Space:
         self.param = param
         self.conveyor = conveyor
 
+
         self.objinfo = {}
+        self.X = None
+        
         itemlist = ['obj_nam', 'obj_id', 'SMILES', 'ymatrix']
         for item in itemlist:
             item_val = self.conveyor.getVal(item)                
@@ -55,23 +58,28 @@ class Space:
 
                 self.objinfo[item] = item_val
 
-        MDs = self.param.getVal('computeMD_method')
-        self.isFingerprint = ('morganFP' in MDs)
+        self.isSMARTS = self.conveyor.getVal('SMARTS') is not None
+        if self.isSMARTS:
+            self.isFingerprint = True
+            self.MDs = 'substructureFP'
+            self.nobj = 1
 
-        self.X = None
-
-        if self.isFingerprint and len(MDs)>1:
-            fingerprint_index = self.conveyor.getVal('fingerprint_index')
-        
-            if fingerprint_index is None:
-                return False, 'Only a single type of MD can be used to compute similarity'
-            else:
-                LOG.warning("Flame cannot combine fingerprints and continuous variables for computing similarity. Only the fingerprints will be used for showing similar compounds.")
-                self.X = self.conveyor.getVal('xmatrix')[:,fingerprint_index]
         else:
-            self.X = self.conveyor.getVal('xmatrix')
+            self.MDs = self.param.getVal('computeMD_method')
+            self.isFingerprint = ('morganFP' in self.MDs)
 
-        self.nobj, self.nvarx = np.shape(self.X)
+            if self.isFingerprint and len(self.MDs)>1:
+                fingerprint_index = self.conveyor.getVal('fingerprint_index')
+            
+                if fingerprint_index is None:
+                    return False, 'Only a single type of MD can be used to compute similarity'
+                else:
+                    LOG.warning("Flame cannot combine fingerprints and continuous variables for computing similarity. Only the fingerprints will be used for showing similar compounds.")
+                    self.X = self.conveyor.getVal('xmatrix')[:,fingerprint_index]
+            else:
+                self.X = self.conveyor.getVal('xmatrix')
+
+            self.nobj, self.nvarx = np.shape(self.X)
 
         self.Xref = None # metric of reference spaced, loaded in searches only 
         self.Dmax = 1000.0 # an arbitrary value
@@ -207,6 +215,43 @@ class Space:
 
         t1 = time.time()
 
+        if self.isSMARTS:
+
+            nselected = 0
+            selected_i = []
+            selected_d = []
+
+             # for each compound in the space
+            for j, jfp in enumerate(self.Xref):
+                # mi = Chem.MolFromSmarts('C[!C](C)CC1*C=CCC1')
+                mi = Chem.MolFromSmarts(self.conveyor.getVal('SMARTS'))
+                mj = Chem.MolFromSmiles(self.objinforef['SMILES'][j])
+
+                if mj.HasSubstructMatch(mi):
+                    selected_i.append(j)
+                    selected_d.append(1.00)
+                    nselected+=1
+
+                if nselected >= numsel:
+                    break
+
+            # results for molecule i are stored in a dictionary
+            results_info = {}
+            results_info['distances'] = []   # distances are allways stored
+            for oi in self.objinforef:
+                results_info[oi] = []        # all the objects information (name, smiles, ID, activity, etc.)
+
+            for sd,si in zip(selected_d, selected_i):
+                results_info['distances'].append(sd)
+                for oi in self.objinforef:
+                    results_info[oi].append(self.objinforef[oi][si])
+
+            results.append(results_info)
+            
+            LOG.info (f'search completed in time: {time.time()-t1:.4f} secs')
+
+            return True, results
+
         # for each compound in the search set 
         for i, ivector in enumerate(self.X):
             bitestring="".join(ivector.astype(str))
@@ -338,10 +383,9 @@ class Space:
             #numsel = len(self.X)
             numsel = 10
 
-        MDs = self.param.getVal('computeMD_method')
-        if   'morganFP' in MDs:
+        if   'morganFP' in self.MDs:
             return self._searchMorganFP (cutoff, numsel, metric)
-        elif 'substructureFP' in MDs:
+        elif 'substructureFP' in self.MDs:
             return self._searchSubStructure (numsel, metric)
         else:
             return self._searchMD (cutoff, numsel, metric)
