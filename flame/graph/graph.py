@@ -41,20 +41,20 @@ def generateManifoldSpace(X,Y,param,conveyor):
 
     if X.shape[1]==2048:
         emb=PredictableTSNE().fit(X,Y)
-        X_train=emb.transform(X)
         # print('Uso TSNE')
-        return X_train
+        return emb
     else:
         emb=PCA(n_components=2,random_state=46).fit(X)
-        X_train=emb.transform(X)
         # print('USO PCA')
-        return X_train
+        return emb
 
     options = {"model_reduc":emb}
 
     models_path = os.path.join(param.getVal('model_path'),'models.pkl')
     with open(models_path, "wb") as f:
         pickle.dump(options, f,protocol=pickle.HIGHEST_PROTOCOL)
+
+    X_train=emb.transform(X)
 
     conveyor.addVal(X_train[:,0],'PC1',
                         'Model D1','method','objs',
