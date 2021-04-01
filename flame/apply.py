@@ -27,7 +27,6 @@ import os
 from flame.stats.RF import RF
 from flame.stats.SVM import SVM
 from flame.stats.GNB import GNB
-from flame.graph.graph import manifolds
 from flame.stats.PLSR import PLSR
 from flame.stats.PLSDA import PLSDA
 from flame.stats.combo import median, mean, majority, logicalOR, matrix
@@ -442,8 +441,6 @@ class Apply:
         # projectManifoldPredictions (X,self.param,self.conveyor)
         # projecttsnePredictions (X,self.param,self.conveyor)
         # projectIsomapPredictions (X,self.param,self.conveyor)
-        manifolds(self.X,self.Y,self.param,self.conveyor).mani()
-        manifolds(self.X,self.Y,self.param,self.conveyor).pca()
 
 
         return
