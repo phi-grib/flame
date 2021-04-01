@@ -35,7 +35,48 @@ import joblib
 from flame.util import utils, get_logger
 LOG = get_logger(__name__)
 
-def generateManifoldSpace(X,param,conveyor):
+class manifolds:
+    def __init__(self,X,Y,param,conveyor):
+        self.X=X
+        self.Y=Y
+    def mani(self):
+        LOG.info('Generating projected X space...')
+        tsne = PredictableTSNE().fit_transform(self.X, self.Y)
+
+        options = {"model_tsne":tsne}
+
+        models_path = os.path.join(param.getVal('model_path'),'models.pkl')
+        with open(models_path, "wb") as f:
+            pickle.dump(options, f,protocol=pickle.HIGHEST_PROTOCOL)
+
+        conveyor.addVal(tsne[:,0],'PC1',
+                        't-SNE D1','method','objs',
+                        't-SNE D1 score for graphic representation')
+    
+        conveyor.addVal(tsne[:,1],'PC2',
+                        't-SNE D2','method','objs',
+                        't-SNE D2 score for graphic representation')
+        return tsne
+
+    def pca(self):
+        pca=PCA(n_components=2,random_state=46).fit_transform(self.X)
+        options = {"model_pca":pca}
+
+        models_path = os.path.join(param.getVal('model_path'),'models.pkl')
+        with open(models_path, "wb") as f:
+            pickle.dump(options, f,protocol=pickle.HIGHEST_PROTOCOL)
+
+        conveyor.addVal(pca[:,0],'PC1',
+                        'PCA D1','method','objs',
+                        'PCA D1 score for graphic representation')
+    
+        conveyor.addVal(pca[:,1],'PC2',
+                        'PCA D2','method','objs',
+                        'PCA D2 score for graphic representation')
+        return pca
+
+
+def generateManifoldSpace(X,self,param,conveyor):
     ''' This function uses the scaled X matrix of the model to build 2D UMAP model
         This model is saved and the two transformed vars are dumped to the conveyor 
     '''
