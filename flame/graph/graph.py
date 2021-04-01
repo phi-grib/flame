@@ -37,15 +37,17 @@ from flame.util import utils, get_logger
 LOG = get_logger(__name__)
 
 def generateManifoldSpace(X,Y,param,conveyor):
+    LOG.info('Generating projected X space...')
+
     if X.shape[1]==2048:
         emb=PredictableTSNE().fit(X,Y)
         X_train=emb.transform(X)
-        print('Uso TSNE')
+        # print('Uso TSNE')
         return X_train
     else:
         emb=PCA(n_components=2,random_state=46).fit(X)
         X_train=emb.transform(X)
-        print('USO PCA')
+        # print('USO PCA')
         return X_train
 
     options = {"model_reduc":emb}
