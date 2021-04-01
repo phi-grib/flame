@@ -443,6 +443,7 @@ class Apply:
         # projecttsnePredictions (X,self.param,self.conveyor)
         # projectIsomapPredictions (X,self.param,self.conveyor)
         manifolds(self.X,self.Y,self.param,self.conveyor).mani()
+        manifolds(self.X,self.Y,self.param,self.conveyor).pca()
 
 
         return

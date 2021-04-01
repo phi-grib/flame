@@ -27,6 +27,7 @@ import pickle
 import umap
 from flame.stats.pca import pca    
 from sklearn.decomposition import PCA
+from flame.chem.compute_md import _RDKit_rdkFPS,_RDKit_morganFPS
 from sklearn.manifold import TSNE
 from flame.graph.predtsne import PredictableTSNE
 import time 
@@ -39,41 +40,43 @@ class manifolds:
     def __init__(self,X,Y,param,conveyor):
         self.X=X
         self.Y=Y
-    def mani(self):
-        LOG.info('Generating projected X space...')
-        tsne = PredictableTSNE().fit_transform(self.X, self.Y)
+    if X==_RDKit_rdkFPS or X==_RDKit_morganFPS:
+        def mani(self):
+            LOG.info('Generating projected X space...')
+            tsne = PredictableTSNE().fit_transform(self.X, self.Y)
 
-        options = {"model_tsne":tsne}
+            options = {"model_tsne":tsne}
 
-        models_path = os.path.join(param.getVal('model_path'),'models.pkl')
-        with open(models_path, "wb") as f:
-            pickle.dump(options, f,protocol=pickle.HIGHEST_PROTOCOL)
+            models_path = os.path.join(param.getVal('model_path'),'models.pkl')
+            with open(models_path, "wb") as f:
+                pickle.dump(options, f,protocol=pickle.HIGHEST_PROTOCOL)
 
-        conveyor.addVal(tsne[:,0],'PC1',
-                        't-SNE D1','method','objs',
-                        't-SNE D1 score for graphic representation')
-    
-        conveyor.addVal(tsne[:,1],'PC2',
-                        't-SNE D2','method','objs',
-                        't-SNE D2 score for graphic representation')
-        return tsne
+            conveyor.addVal(tsne[:,0],'PC1',
+                            't-SNE D1','method','objs',
+                            't-SNE D1 score for graphic representation')
+        
+            conveyor.addVal(tsne[:,1],'PC2',
+                            't-SNE D2','method','objs',
+                            't-SNE D2 score for graphic representation')
+            return tsne
+    else:
 
-    def pca(self):
-        pca=PCA(n_components=2,random_state=46).fit_transform(self.X)
-        options = {"model_pca":pca}
+        def pca(self):
+            pca=PCA(n_components=2,random_state=46).fit_transform(self.X)
+            options = {"model_pca":pca}
 
-        models_path = os.path.join(param.getVal('model_path'),'models.pkl')
-        with open(models_path, "wb") as f:
-            pickle.dump(options, f,protocol=pickle.HIGHEST_PROTOCOL)
+            models_path = os.path.join(param.getVal('model_path'),'models.pkl')
+            with open(models_path, "wb") as f:
+                pickle.dump(options, f,protocol=pickle.HIGHEST_PROTOCOL)
 
-        conveyor.addVal(pca[:,0],'PC1',
-                        'PCA D1','method','objs',
-                        'PCA D1 score for graphic representation')
-    
-        conveyor.addVal(pca[:,1],'PC2',
-                        'PCA D2','method','objs',
-                        'PCA D2 score for graphic representation')
-        return pca
+            conveyor.addVal(pca[:,0],'PC1',
+                            'PCA D1','method','objs',
+                            'PCA D1 score for graphic representation')
+        
+            conveyor.addVal(pca[:,1],'PC2',
+                            'PCA D2','method','objs',
+                            'PCA D2 score for graphic representation')
+            return pca
 
 
 def generateManifoldSpace(X,self,param,conveyor):
