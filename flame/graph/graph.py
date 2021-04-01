@@ -36,7 +36,7 @@ import joblib
 from flame.util import utils, get_logger
 LOG = get_logger(__name__)
 
-def generateManifoldSpace(X,Y,self,param,conveyor):
+def generateManifoldSpace(X,Y,param,conveyor):
     if X.shape[1]==2048:
         emb=PredictableTSNE().fit(X,Y)
         X_train=emb.transform(X)
