@@ -123,8 +123,10 @@ class Space:
             self._buildMD ()
             descriptors = 'descriptors'
 
-        results.append(('dmax', 'perecentil 95 of internal distances', self.Dmax))
-        results.append(('descriptors', 'descriptors used for computing the distance', descriptors))
+        results.append(('dmax', 'percentil 95 of internal distances', self.Dmax))
+        results.append(('type', 'type of descriptors', descriptors))
+        results.append(('descriptors', 'descriptors used for computing the distance', MDs))
+        results.append(('nvar', 'number of molecular descriptors used', self.nvarx))
 
         return True, results
 
