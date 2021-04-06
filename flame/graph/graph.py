@@ -36,16 +36,17 @@ import joblib
 from flame.util import utils, get_logger
 LOG = get_logger(__name__)
 
-def generateManifoldSpace(X,Y,param,conveyor):
+def generateManifoldSpace(X,param,conveyor):
     LOG.info('Generating projected X space...')
 
-    if X.shape[1]==2048:
-        emb=PredictableTSNE().fit(X,Y)
-        # print('Uso TSNE')
+    if X.shape[1]>300:
+        iY = np.empty((X.shape[0], 2))
+        emb=PredictableTSNE().fit(X,iY)
+        LOG.info('Generating t-SNE...')
         return emb
     else:
         emb=PCA(n_components=2,random_state=46).fit(X)
-        # print('USO PCA')
+        LOG.info('Generating PCA...')
         return emb
 
     options = {"model_reduc":emb}

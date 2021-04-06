@@ -394,7 +394,7 @@ class Learn:
 
         # generate a proyected space and use it to generate graphics
         # generateProjectedSpace(self.X, self.param, self.conveyor)
-        generateManifoldSpace(self.X,self.Y, self.param, self.conveyor)
+        generateManifoldSpace(self.X, self.param, self.conveyor)
         # generatetsneSpace (self.X,self.Y,self.param,self.conveyor)
         # generateIsomapSpace (self.X,self.param,self.conveyor)
 
