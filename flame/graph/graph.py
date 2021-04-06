@@ -37,6 +37,7 @@ from flame.util import utils, get_logger
 LOG = get_logger(__name__)
 
 def generateManifoldSpace(X,param,conveyor):
+    
     LOG.info('Generating projected X space...')
 
     if X.shape[1]>300:
@@ -54,6 +55,8 @@ def generateManifoldSpace(X,param,conveyor):
     models_path = os.path.join(param.getVal('model_path'),'models.pkl')
     with open(models_path, "wb") as f:
         pickle.dump(options, f,protocol=pickle.HIGHEST_PROTOCOL)
+
+    models_path = os.path.join(param.getVal('model_path'),'models.pkl')
 
     X_train=emb.transform(X)
 
@@ -74,6 +77,7 @@ def projectManifoldPredictions(X, param, conveyor):
         The method returs scores for dimensions 1 and 2
 
     '''
+
     models_path = os.path.join(param.getVal('model_path'),'models.pkl')
     with open(models_path, "rb") as f:
         options = pickle.load(f)
