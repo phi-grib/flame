@@ -58,12 +58,12 @@ def generateManifoldSpace(X,param,conveyor):
     X_train=emb.transform(X)
 
     conveyor.addVal(X_train[:,0],'PC1',
-                        'Model D1','method','objs',
-                        'Model D1 score for graphic representation')
+                        'PCA PC1', 'method', 'objs',
+                        'PCA PC1 score for graphic representation')
     
     conveyor.addVal(X_train[:,1],'PC2',
-                        'Model D2','method','objs',
-                        'Model D2 score for graphic representation')
+                        'PCA PC2', 'method', 'objs',
+                        'PCA PC2 score for graphic representation')
 
 def projectManifoldPredictions(X, param, conveyor):
     '''
