@@ -118,7 +118,7 @@ class Search:
         if 'runtime_param' in param_dict:
             runtime_param = self.getVal(param_dict, 'runtime_param')
             if runtime_param is not None:
-                print (runtime_param)
+                LOG.info (f'runtime parameters: {str(runtime_param)}')
                 try:
                     with open(runtime_param, 'r') as pfile:
                         rtparam = yaml.safe_load(pfile)
@@ -141,6 +141,11 @@ class Search:
                 LOG.error('wrong format in the runtime similarity parameters')
                 self.conveyor.setError('wrong format in the runtime similarity parameters')
 
+        md = self.param.getVal('computeMD_method')
+        if len(md) > 1:
+            LOG.warning(f'Only a single type of MD can be used to build spaces. Selecting {md[0]}')
+            self.param.setVal('computeMD_method',[md[0]])
+
         if not self.conveyor.getError():
             # uses the child classes within the 'space' folder,
             # to allow customization of
@@ -162,7 +167,6 @@ class Search:
             LOG.debug(f'idata child {type(idata).__name__} completed `run()`')
 
         if not self.conveyor.getError():
-
 
             # make sure there is X data
             if not self.conveyor.isKey('xmatrix'):

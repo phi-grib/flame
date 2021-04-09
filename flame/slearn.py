@@ -49,12 +49,12 @@ class Slearn:
         self.scaler = None
         
         # update if other fingerprints are added
-        isFingerprint = (self.param.getVal('computeMD_method') == ['morganFP'])
-
+        isFingerprint = utils.isFingerprint(self.param.getVal('computeMD_method'))
+        
         # Run scaling for MD but never for fingerprints
         if self.param.getVal('modelAutoscaling'):
             if isFingerprint:
-                LOG.info('fingerprint descriptors are not scaled for similarity')
+                LOG.info('fingerprint descriptors will not be scaled for similarity')
             else:
                 try:
                     scaler = None

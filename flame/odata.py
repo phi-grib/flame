@@ -27,6 +27,8 @@ import numpy as np
 from flame.util import utils, get_logger, supress_log
 from datetime import datetime
 
+from scipy.spatial.distance import MetricInfo
+
 LOG = get_logger(__name__)
 
 class Odata():
@@ -416,6 +418,7 @@ class Odata():
         names   = self.conveyor.getVal('obj_nam')
         ids     = self.conveyor.getVal('obj_id')
         smiles  = self.conveyor.getVal('SMILES')
+        # metric  = self.conveyor.getVal('metric')
 
         if results is not None and names is not None:
             if len (results) != len (names):

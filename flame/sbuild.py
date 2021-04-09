@@ -66,6 +66,11 @@ class Sbuild:
             LOG.critical(f'Unable to load space parameters. {message}. Aborting...')
             sys.exit(1)
 
+        md = self.param.getVal('computeMD_method')
+        if len(md) > 1:
+            LOG.warning(f'Only a single type of MD can be used to build spaces. Selecting {md[0]}')
+            self.param.setVal('computeMD_method',[md[0]])
+
         # add additional output formats included in the constructor 
         # this is requiered to add JSON format as output when the object is
         # instantiated from a web service call, requiring this output   

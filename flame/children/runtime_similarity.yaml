@@ -1,3 +1,3 @@
-similarity_metric : Tanimoto
+similarity_metric : tanimoto
 similarity_cutoff_num : 20
 similarity_cutoff_distance: 0.7

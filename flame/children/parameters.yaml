@@ -1147,9 +1147,9 @@ similarity_metric:
   writable: false
   value: 
   options:
-    - Euclidean
-    - Tanimoto
-    - Substructural
+    - euclidean
+    - tanimoto
+    - substructural
   description: Show compounds similar to the query compounds present in the training series
   dependencies: 
     output_similar: true 

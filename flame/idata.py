@@ -82,6 +82,7 @@ class Idata:
         input_type = self.param.getVal('input_type')
         self.conveyor.addMeta('input_type',input_type)
 
+        LOG.debug (f'Molecular descriptors:{self.param.getVal("computeMD_method")}')
 
         # in case of top ensemble models...
         if input_type == 'smarts':
@@ -534,6 +535,8 @@ class Idata:
         # sort methods to avoid non-reproducible results when blocks are combined in diverse order
         methods.sort()
 
+        fingerprint_found = False
+
         combined = {}
         for method in methods:
             # success, results = registered_methods[method](ifile)
@@ -542,7 +545,11 @@ class Idata:
             if not success:  # if computing returns False in status
                 return success, results
 
-            is_fingerprint = method in fingerprint_list
+            is_fingerprint = (utils.isFingerprint(method) and not fingerprint_found)
+
+            if is_fingerprint:
+                fingerprint_found = True
+                
             nobj, nvarx = np.shape(results['matrix'])
 
             if is_empty:  # first md computed, just copy

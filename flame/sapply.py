@@ -123,6 +123,10 @@ class Sapply:
         # instances space object
         space = Space(self.param, self.conveyor)
 
+        # check metric
+        if metric is None:
+            metric = space.defaultMetric
+
         # builds space from idata results
         LOG.info('Starting space searching')
         success, search_results = space.search (cutoff, numsel, metric)
@@ -131,12 +135,21 @@ class Sapply:
             return
 
         self.conveyor.addVal(
+                    space.metric,
+                    'metric',
+                    'metric',
+                    'method',
+                    'single',
+                    'Final metric used in the search')
+
+        self.conveyor.addVal(
                     search_results,
                     'search_results',
                     'Search results',
                     'result',
                     'objs',
                     'Collection of similar compounds','main')
+        
 
         LOG.info('Space search finished successfully')
 

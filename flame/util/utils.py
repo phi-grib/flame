@@ -427,3 +427,18 @@ def compatible_modules (ext_libraries):
                             f'does not match imported library "{ilib}:{ext_libraries[ilib]}"'
     
     return True, 'OK'
+
+def isFingerprint (md):
+    fplist = ['morganFP','rdkFP', 'substructureFP']
+    
+    # if input is a list check every element
+    if isinstance(md, list):
+        for imd in md:
+            if imd in fplist:
+                return True
+    # if input is a value, just check that is not in the list of fingerprints
+    else:
+        if md in fplist:
+            return True
+    
+    return False 

@@ -129,12 +129,6 @@ class Learn:
         # Run scaling.
         self.scaler = None
 
-        # # update if other fingerprints are added
-        # isFingerprint = (self.param.getVal('computeMD_method') == ['morganFP'])
-
-        # if self.param.getVal('modelAutoscaling') and \
-        #                 not isFingerprint:
-
         scale_method = self.param.getVal('modelAutoscaling')
         
         # prevent the scaling of input which must be binary or with preserved values
