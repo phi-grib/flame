@@ -71,14 +71,16 @@ class Space:
             self.MDs = self.param.getVal('computeMD_method')
             self.isFingerprint = utils.isFingerprint(self.MDs)
 
-
+            # using multiple fingerprints or MD+fingerprints for computing similarity is not supported 
             if self.isFingerprint and len(self.MDs)>1:
                 fingerprint_index = self.conveyor.getVal('fingerprint_index')
             
                 if fingerprint_index is None:
-                    return False, 'Only a single type of MD can be used to compute similarity'
+                    return False, 'Missing fingeprint index, no similarity will be computed'
+                    self.conveyor.setWarning("Missing fingerprint index, no similarity will be computed")
                 else:
-                    LOG.warning("Flame cannot combine fingerprints and continuous variables for computing similarity. Only the fingerprints will be used for showing similar compounds.")
+                    LOG.warning("Only the first fingerprints were used to calculate similarity")
+                    self.conveyor.setWarning("Only the first fingerprints were used to calculate similarity")
                     self.X = self.conveyor.getVal('xmatrix')[:,fingerprint_index]
             else:
                 self.X = self.conveyor.getVal('xmatrix')

@@ -142,8 +142,9 @@ class Search:
                 self.conveyor.setError('wrong format in the runtime similarity parameters')
 
         md = self.param.getVal('computeMD_method')
-        if len(md) > 1:
-            LOG.warning(f'Only a single type of MD can be used to build spaces. Selecting {md[0]}')
+        if utils.isFingerprint(md) and len(md) > 1:
+            LOG.warning(f'When using fingerprints, only a single type of MD can be used to build spaces. Selecting {md[0]}')
+            self.conveyor.setWarning(f'When using fingerprints, only a single type of MD can be used to build spaces. Selecting {md[0]}')
             self.param.setVal('computeMD_method',[md[0]])
 
         if not self.conveyor.getError():
