@@ -166,7 +166,7 @@ def action_publish(space):
         return False, f'Unable to copy contents of dev version for space {space}'
 
     LOG.info(f'New space version created from {src_path} to {new_path}')
-    return True, f'New space version created from {src_path} to {new_path}'
+    return True, max_version+1
 
 
 def action_remove(space, version):
@@ -214,7 +214,11 @@ def action_parameters(space, version=None, oformat='text'):
     from flame.parameters import Parameters
 
     param = Parameters()
-    param.loadYaml(space, version, isSpace=True)
+    success, results  = param.loadYaml(space, version, isSpace=True)
+
+    if not success:
+        print (f'error obtaining parametes for space {space} : {results}')
+        return False, results
 
     if oformat != 'text':
         return True, param
