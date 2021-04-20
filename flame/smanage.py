@@ -240,7 +240,7 @@ def action_info(space, version, output='text'):
     '''
 
     if space is None:
-        if output == 'JSON':
+        if output != 'text':
             return False, {'code':1, 'message': 'Empty space label'}
         return False, 'Empty space label'
 
@@ -248,7 +248,7 @@ def action_info(space, version, output='text'):
     meta_file = os.path.join(meta_path, 'space-meta.pkl')
     
     if not os.path.isfile(meta_file):
-        if output == 'JSON':
+        if output != 'text':
             return False, {'code':0, 'message': 'Info file not found'}
         return False, 'Info file not found'
 
@@ -259,7 +259,7 @@ def action_info(space, version, output='text'):
         space_info = pickle.load(handle)
     
     if errorMessage is not None:
-        if output == 'JSON':
+        if output != 'text':
             return False, {'code':1, 'message': errorMessage}
         return False, 'No relevant information found'
    
@@ -277,7 +277,7 @@ def action_info(space, version, output='text'):
                 info+=iinfo
 
     if info == None:
-        if output == 'JSON':
+        if output != 'text':
             return False, {'code':1, 'message': 'No relevant information found'}
         return False, 'No relevant information found'
 
