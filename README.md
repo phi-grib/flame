@@ -29,7 +29,17 @@ docker run -d -p 8010:8000 -v c:\flame_repo:/data mpastorphi/flame
 
 A Flame walkthrough, showing some of its main features is accesible [here](https://drive.google.com/file/d/1aX1aogDVlIDoYpBR1vu4dIxB10si_8Ex/view?usp=sharing)
 
+Flame is described in the following open-access article:
 
+```
+Flame: an open source framework for model development, hosting, and usage in production environments
+
+Manuel Pastor, José Carlos Gómez-Tamayo & Ferran Sanz 
+
+Journal of Cheminformatics volume 13, Article number: 31 (2021)
+```
+
+(https://jcheminf.biomedcentral.com/articles/10.1186/s13321-021-00509-z)
 
 ## Installation
 
