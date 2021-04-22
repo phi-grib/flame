@@ -12,7 +12,7 @@ from sklearn.base import BaseEstimator, TransformerMixin, clone
 from sklearn.manifold import TSNE
 from sklearn.neural_network import MLPRegressor
 from sklearn.metrics import mean_squared_error
-import umap
+# import umap
 
 class PredictableTSNE(BaseEstimator, TransformerMixin):
     """
