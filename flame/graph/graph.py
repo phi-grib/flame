@@ -134,14 +134,13 @@ def projectReduced(X, param, conveyor):
     if options['method'] == 'PCA':
         nobj, nvarx = np.shape(X)
         X_pred = emb.inverse_transform(X_test)
+        dmodx = []
         for iobj in range (nobj):
             mse = mean_squared_error (X_pred[iobj], X[iobj])
-            sse = np.sqrt(mse*nobj)
-            dmx = sse * 1/np.sqrt(nobj-2)
-            print (dmx)
+            dmodx.append(np.sqrt(mse))
 
-    # conveyor.addVal(dmodx, 'PCDMODX',
-    #                    'DModX', 'method', 'objs',
-    #                    'Distance of object to a 2PC PCA model')
+        conveyor.addVal(dmodx, 'PCDMODX',
+                        'DModX', 'method', 'objs',
+                        'Distance of object to a 2PC PCA model')
 
     return
