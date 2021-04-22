@@ -1159,10 +1159,10 @@ similarity_metric:
 similarity_cutoff_num:
   advanced: advanced
   object_type: int
-  writable: false
+  writable: true
   value: 5
   options:
-  description: Integer indicatin maximum number of similar compounds to extract. If not set, all compounds meeting other criteria will be extracted     
+  description: Maximum number of similar compounds to extract. If not set, all compounds meeting other criteria will be extracted     
   dependencies: 
     output_similar: true 
   comments: 
@@ -1171,7 +1171,7 @@ similarity_cutoff_num:
 similarity_cutoff_distance:
   advanced: advanced
   object_type: float
-  writable: false
+  writable: true
   value: 0.6
   options:
   description: Float in the range (0.0 - 1.0) indicating minimum similarity of the compounds to extract. If not set, all compounds meeting other criteria will be extracted 
