@@ -37,12 +37,7 @@ from flame.stats.PLSDA import PLSDA
 from flame.stats import feature_selection
 from flame.stats.combo import median, mean, majority, logicalOR, matrix
 from flame.stats.imbalance import run_imbalance  
-
-# from flame.graph.graph import generateProjectedSpace
-# from flame.graph.graph import manifolds
 from flame.graph.graph import generateManifoldSpace, generatePCASpace
-# from flame.graph.graph import generatetsneSpace
-# from flame.graph.graph import generateIsomapSpace
 
 from flame.util import utils, get_logger
 LOG = get_logger(__name__)
