@@ -23,13 +23,46 @@
 import os
 import numpy as np
 import copy
-from flame.stats.pca import pca    
+import pickle
+# import umap
+# from flame.stats.pca import pca    
+from sklearn.decomposition import PCA
+from sklearn.metrics import mean_squared_error
+# from flame.chem.compute_md import _RDKit_rdkFPS,_RDKit_morganFPS
+# from sklearn.manifold import TSNE
+from flame.graph.predtsne import PredictableTSNE
+# import time 
+# import joblib
 
 from flame.util import utils, get_logger
 LOG = get_logger(__name__)
 
+def generateManifoldSpace(X,param,conveyor):
     
-def generateProjectedSpace(X, param, conveyor):
+    LOG.info('Generating projected X space using t-SNE...')
+
+    iY = np.empty((X.shape[0], 2))
+    emb=PredictableTSNE().fit(X,iY)
+
+    options = {"model_reduc":emb, "method": 't-SNE'}
+
+    models_path = os.path.join(param.getVal('model_path'),'models.pkl')
+    with open(models_path, "wb") as f:
+        pickle.dump(options, f,protocol=pickle.HIGHEST_PROTOCOL)
+
+    models_path = os.path.join(param.getVal('model_path'),'models.pkl')
+
+    X_train=emb.transform(X)
+
+    conveyor.addVal(X_train[:,0],'PC1',
+                        'PCA PC1', 'method', 'objs',
+                        'PCA PC1 score for graphic representation')
+    
+    conveyor.addVal(X_train[:,1],'PC2',
+                        'PCA PC2', 'method', 'objs',
+                        'PCA PC2 score for graphic representation')
+
+def generatePCASpace(X, param, conveyor):
     ''' This function uses the scaled X matrix of the model to build a 2 PCs PCA model
         
         This model is saved and the scores are dumped to the conveyor, allowing to show
@@ -37,39 +70,34 @@ def generateProjectedSpace(X, param, conveyor):
 
         Also, the model is saved as pca.npy and can be used to project predictions on top
     '''
-    LOG.info('Generating projected X space...')
-    mpca = pca()
-    mpca.build(X,targetA=2,autoscale=False)
+    LOG.info('Generating projected X space using PCA...')
 
-    pca_path = os.path.join(param.getVal('model_path'),'pca.npy')
-    mpca.saveModel(pca_path)
+    emb=PCA(n_components=2,random_state=46).fit(X)
 
-    if np.isnan (np.sum(mpca.t[0])):
-        t = np.zeros(len(mpca.t[0]))
-    else:
-        t = mpca.t[0]
+    options = {"model_reduc":emb, "method": "PCA"}
 
-    conveyor.addVal(t, 'PC1',
+    models_path = os.path.join(param.getVal('model_path'),'models.pkl')
+    with open(models_path, "wb") as f:
+        pickle.dump(options, f,protocol=pickle.HIGHEST_PROTOCOL)
+
+    X_train=emb.transform(X)
+
+    conveyor.addVal(X_train[:,0],'PC1',
                         'PCA PC1', 'method', 'objs',
                         'PCA PC1 score for graphic representation')
-
-    if np.isnan (np.sum(mpca.t[1])):
-        t = np.zeros(len(mpca.t[1]))
-    else:
-        t = mpca.t[1]
-
-    conveyor.addVal(t, 'PC2',
+    
+    conveyor.addVal(X_train[:,1],'PC2',
                         'PCA PC2', 'method', 'objs',
                         'PCA PC2 score for graphic representation')
 
-    modelSSX = mpca.SSXex/mpca.SSX
-    conveyor.addVal(modelSSX, 'SSX',
-                    'X Sum of Squares explained', 'method', 'single',
-                    'X Sum of Squares explained by each PC dimension')
+    # modelSSX = mpca.SSXex/mpca.SSX
+    # conveyor.addVal(modelSSX, 'SSX',
+    #                 'X Sum of Squares explained', 'method', 'single',
+    #                 'X Sum of Squares explained by each PC dimension')
 
     return
 
-def projectPredictions(X, param, conveyor):
+def projectReduced(X, param, conveyor):
     '''
         This method projects X vectors into the existing PCA space generated for the
         current model (from param.getVal('model_path'))
@@ -87,43 +115,33 @@ def projectPredictions(X, param, conveyor):
 
     '''
     
-    # PCA is destructive
-    X=copy.copy(X)
-    
-    pca_path = os.path.join(param.getVal('model_path'),'pca.npy')
+    models_path = os.path.join(param.getVal('model_path'),'models.pkl')
+    with open(models_path, "rb") as f:
+        options = pickle.load(f)
+    emb = options["model_reduc"]
 
-    if not os.path.isfile(pca_path):
-        return
+    X_test = emb.transform(X)
 
-    LOG.info('Projecting in X space...')
+    conveyor.addVal(X_test[:,0], 'PC1proj',
+                       'Model projected D1', 'method', 'objs',
+                       'Model projected scores D1 for graphic representation')
 
-    mpca = pca()
-    mpca.loadModel(pca_path)
-
-    if not 'numpy.float' in str(type (X[0,0])):
-        X = X.astype(np.float64)
-
-    success, result = mpca.projectPC(X,0)
-    if success:
-        X, t, dmodx = result
-        if np.isnan (np.sum(t)):
-            t = np.zeros(len(t))
-        conveyor.addVal(t, 'PC1proj',
-                       'PCA projected PC1', 'method', 'objs',
-                       'PCA projected scores PC1 for graphic representation')
-
-    success, result = mpca.projectPC(X,1)
-    if success:
-        X, t, dmodx = result
-        if np.isnan (np.sum(t)):
-            t = np.zeros(len(t))
             
-        conveyor.addVal(t, 'PC2proj',
-                       'PCA projected PC1', 'method', 'objs',
-                       'PCA projected scores PC1 for graphic representation')
-        
-        conveyor.addVal(dmodx, 'PCDMODX',
-                       'DModX', 'method', 'objs',
-                       'Distance of object to a 2PC PCA model')
+    conveyor.addVal(X_test[:,1], 'PC2proj',
+                       'Model projected D2', 'method', 'objs',
+                       'Model projected scores D2 for graphic representation')
+
+    if options['method'] == 'PCA':
+        nobj, nvarx = np.shape(X)
+        X_pred = emb.inverse_transform(X_test)
+        for iobj in range (nobj):
+            mse = mean_squared_error (X_pred[iobj], X[iobj])
+            sse = np.sqrt(mse*nobj)
+            dmx = sse * 1/np.sqrt(nobj-2)
+            print (dmx)
+
+    # conveyor.addVal(dmodx, 'PCDMODX',
+    #                    'DModX', 'method', 'objs',
+    #                    'Distance of object to a 2PC PCA model')
 
     return
