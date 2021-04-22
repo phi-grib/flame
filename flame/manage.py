@@ -373,11 +373,20 @@ def action_info(model, version, output='text'):
         return False, 'Empty model label'
 
     meta_path = utils.model_path(model, version)
+
+    # Check that both the meta and the results file are present
+    # return error code 0 if not
     meta_file = os.path.join(meta_path, 'model-meta.pkl')
     if not os.path.isfile(meta_file):
         if output != 'text':
             return False, {'code':0, 'message': 'Info file not found'}
         return False, 'Info file not found'
+
+    results_file = os.path.join(meta_path, 'model-results.pkl')
+    if not os.path.isfile(results_file):
+        if output != 'text':
+            return False, {'code':0, 'message': 'Results file not found'}
+        return False, 'Results file not found'    
 
     with open(meta_file,'rb') as handle:
         modelID = pickle.load(handle)
@@ -395,7 +404,6 @@ def action_info(model, version, output='text'):
     warning_info = None
     if warningMessage is not None:
         warning_info = [('warning', 'runtime warning', warningMessage)]
-
 
     # merge everything 
     info = None

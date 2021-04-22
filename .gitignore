@@ -141,3 +141,5 @@ flame/models/CACO2/dev/parameters.yaml
 flame/stats/modelPCA.npy
 flame/config.yaml
 flame/config.yaml
+
+spaces/*
