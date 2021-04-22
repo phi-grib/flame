@@ -417,7 +417,7 @@ class Parameters:
         'computeMD_method', 'model', 'modelAutoscaling', 'tune', 'conformal', 
         'conformalConfidence', 'ModelValidationCV', 'ModelValidationLC', 
         'ModelValidationN', 'ModelValidationP', 'output_format', 'output_md', 'output_similar',
-        'TSV_activity', 'TSV_objnames', 'TSV_varnames', 'imbalance', 
+        'TSV_activity', 'TSV_objnames', 'imbalance', 
         'feature_selection', 'feature_number', 'mol_batch',  
         'ensemble_names','ensemble_versions', 
         'similarity_metric', 'similarity_cutoff_num', 'similarity_cutoff_distance',
@@ -520,7 +520,7 @@ class Parameters:
         # update with any new idata relevant parameter 
         keylist = ['model_path','version','SDFile_name','SDFile_activity','SDFile_experimental',
                    'normalize_method','ionize_method','convert3D_method',
-                   'computeMD_method','TSV_varnames','TSV_objnames',
+                   'computeMD_method','TSV_objnames',
                    'TSV_activity','input_type','endpoint']
 
         idata_params = []

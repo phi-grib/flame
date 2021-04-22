@@ -82,9 +82,16 @@ class Idata:
         input_type = self.param.getVal('input_type')
         self.conveyor.addMeta('input_type',input_type)
 
+        LOG.debug (f'Molecular descriptors:{self.param.getVal("computeMD_method")}')
 
         # in case of top ensemble models...
-        if input_type == 'model_ensemble':
+        if input_type == 'smarts':
+            self.smart = input_source
+            self.ifile = None
+            self.idata = None
+
+        elif input_type == 'model_ensemble':
+            self.smart = None
             self.idata = input_source
             self.ifile = None
             randomName = 'flame-'+utils.id_generator()
@@ -100,6 +107,7 @@ class Idata:
             self.conveyor.addMeta('input_file',ifile)
 
         else:
+            self.smart = None
             self.idata = None
             self.ifile = input_source
             self.dest_path = os.path.dirname(self.ifile)
@@ -527,6 +535,8 @@ class Idata:
         # sort methods to avoid non-reproducible results when blocks are combined in diverse order
         methods.sort()
 
+        fingerprint_found = False
+
         combined = {}
         for method in methods:
             # success, results = registered_methods[method](ifile)
@@ -535,7 +545,11 @@ class Idata:
             if not success:  # if computing returns False in status
                 return success, results
 
-            is_fingerprint = method in fingerprint_list
+            is_fingerprint = (utils.isFingerprint(method) and not fingerprint_found)
+
+            if is_fingerprint:
+                fingerprint_found = True
+                
             nobj, nvarx = np.shape(results['matrix'])
 
             if is_empty:  # first md computed, just copy
@@ -954,6 +968,16 @@ class Idata:
 
         return
 
+    def _run_smarts (self):
+        self.conveyor.addVal(self.smart, 'SMARTS', 'SMARTS query',
+                            'method', 'single', 'SMARTS query string')
+
+        self.conveyor.addVal(['SMARTS query'], 'obj_nam', 'Mol name', 'label',
+                            'objs', 'Name of the molecule, as present in the input file')
+
+        self.conveyor.addVal([self.smart], 'SMILES', 'SMILES',
+                             'smiles', 'objs', 'Structure of the molecule in SMILES format')
+
     def _run_molecule(self):
         '''
         version of Run for molecular input
@@ -1084,63 +1108,86 @@ class Idata:
             var_nam = []
             obj_nam = []
             smiles = []
+            ymatrix = []
+
+            hasObjNames = self.param.getVal('TSV_objnames')
+            activity_param = self.param.getVal('TSV_activity')
+
+            iSMILES = -1
+            iActivity = -1
 
             for index, line in enumerate(fi):
-                # we asume that the first row contains var names
-                if index == 0 and self.param.getVal('TSV_varnames'):
+
+                # FIRST LINE: read var names and generate a mask to speed up
+                # the reading of MDs and populate names, SMILES and y's
+                if index == 0:
                     var_nam = line.strip().split('\t')
-                    var_nam = var_nam[1:]
+
+                    # create mask
+                    mask = np.ones(len(var_nam), dtype=np.int32)
+
+                    # blind first column (names)
+                    if hasObjNames:
+                        mask[0] = 0
+                    
+                    # blind SMILES column 
+                    if 'SMILES' in var_nam:
+                        iSMILES = var_nam.index('SMILES')
+                        mask[iSMILES] = 0
+
+                    # blind activity column 
+                    if activity_param in var_nam:
+                        iActivity = var_nam.index(activity_param)
+                        mask[iActivity] = 0
+
+                    # assign names to X variables (md's)
+                    md_nam = [ x for x, z in zip(var_nam, mask) if z==1 ]     
+
+                # REST OF LINES: apply the mask and collect names, SMILES and y's
+                # from predefined possitions
                 else:
                     value_list = line.strip().split('\t')
 
-                    if self.param.getVal('TSV_objnames'):
-                        # we asume that the first column contains object names
-                        obj_nam.append(value_list[0])
-                        value_list = value_list[1:]
+                    try:
+                        if hasObjNames:
+                            obj_nam.append(value_list[0])
 
-                    if 'SMILES' in var_nam:
-                        col = var_nam.index('SMILES')
-                        smiles.append(value_list[col])
-                        del value_list[col]
+                        if iSMILES != -1:
+                            smiles.append(value_list[iSMILES])
 
-                    value_array = np.array(value_list, dtype=np.float64)
-                    if index == 1:  # for the fist row, just copy the value list to the xmatrix
-                        xmatrix = value_array
-                    else:
-                        xmatrix = np.vstack((xmatrix, value_array))
+                        if iActivity != -1:
+                            ymatrix.append(np.float(value_list[iActivity]))
 
-        obj_num = index
+                        # extract only the variables assumed to be md
+                        masked = [ x for x, z in zip(value_list, mask) if z==1 ]
+                        value_array = np.array(masked, dtype=np.float64)
+
+                        if index == 1:  # for the fist row, just copy the value list to the xmatrix
+                            xmatrix = value_array
+                        else:
+                            xmatrix = np.vstack((xmatrix, value_array))
+                    except Exception as e:
+                        self.conveyor.setError(f'Error in line {index+1}: '+str(e))
+                        return
+                        
+        obj_num = index - 1  # the first line are variable names 
         LOG.debug('loaded TSV with shape {} '.format(xmatrix.shape))
-        
-        # if the TSV contains the variables names (as the first line) this
-        # has increased the line count and the obj_num must be reduced
-        if self.param.getVal('TSV_varnames'):
-            obj_num -= 1  
-
-        # extract any named as "TSV_activity" as the ymatrix
-        activity_param = self.param.getVal('TSV_activity')
         LOG.debug('creating ymatrix from column {}'.format(activity_param))
-        if activity_param in var_nam:
-            col = var_nam.index(activity_param)  # Something is failing here: + 1 needed
-            ymatrix = xmatrix[:, col]
-            xmatrix = np.delete(xmatrix, col, 1)
-            self.conveyor.addVal( ymatrix, 'ymatrix', 'Activity', 'decoration',
+        
+        if iActivity != -1:
+            self.conveyor.addVal( np.array(ymatrix), 'ymatrix', 'Activity', 'decoration',
                              'objs', 'Biological anotation to be predicted by the model')
 
         self.conveyor.addVal( obj_num, 'obj_num', 'Num mol', 'method',
                          'single', 'Number of molecules present in the input file')
 
-        #TODO: optional sanitization step, to check if the X matrix contains extreme values or variables
-        # with unreasonable variances
-        
         self.conveyor.addVal( xmatrix, 'xmatrix',
                          'X matrix', 'method', 'vars', 'Molecular descriptors')
 
-        if self.param.getVal('TSV_varnames'):
-            self.conveyor.addVal( var_nam, 'var_nam', 'Var names',
+        self.conveyor.addVal( md_nam, 'var_nam', 'Var names',
                              'method', 'vars', 'Names of the X variables')
 
-        if not self.param.getVal('TSV_objnames'):
+        if not hasObjNames:
             for i in range(obj_num):
                 obj_nam.append('obj%.10f' % i)
 
@@ -1150,6 +1197,7 @@ class Idata:
         if len(smiles) > 0:
             self.conveyor.addVal( smiles, 'SMILES', 'SMILES',
                              'smiles', 'objs', 'Structure of the molecule in SMILES format')
+
         return
 
     def _run_model_ensemble(self):
@@ -1301,7 +1349,7 @@ class Idata:
         input_type = self.param.getVal('input_type')
         LOG.info('Running with input type: {}'.format(input_type))
 
-        if input_type != 'model_ensemble':
+        if input_type in ['molecule','data']:
 
             # if the input file is not found return
             if not os.path.isfile(self.ifile):
@@ -1315,8 +1363,11 @@ class Idata:
 
                 return 
 
+        if input_type == 'smarts':
+            self._run_smarts()
+        
         # processing for molecular input (for now an SDFile)
-        if input_type == 'molecule':
+        elif input_type == 'molecule':
 
             self.captureStdError(True)
             self._run_molecule()

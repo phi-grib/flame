@@ -22,15 +22,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Flame.  If not, see <http://www.gnu.org/licenses/>.
 
-from copy import copy
-
 from sklearn.naive_bayes import GaussianNB
-
-from nonconformist.base import ClassifierAdapter, RegressorAdapter
-from nonconformist.acp import AggregatedCp
-from nonconformist.acp import BootstrapSampler
-from nonconformist.icp import IcpClassifier, IcpRegressor
-from nonconformist.nc import ClassifierNc, MarginErrFunc, RegressorNc
 
 from flame.stats.base_model import BaseEstimator
 from flame.util import get_logger
@@ -95,26 +87,17 @@ class GNB(BaseEstimator):
         # Build estimator
         LOG.info('Building GaussianNB model')
         self.estimator = GaussianNB(**self.estimator_parameters)
-        # results.append(('model', 'model type', 'GNB qualitative'))
 
         self.estimator.fit(X, Y)
 
         if not self.param.getVal('conformal'):
             return True, results
 
-        # If conformal, then create aggregated conformal classifier
-        self.estimator_temp = copy(self.estimator)
-        self.estimator = AggregatedCp(
-                            IcpClassifier(
-                                ClassifierNc(
-                                    ClassifierAdapter(self.estimator_temp),
-                                    MarginErrFunc()
-                                )
-                            ),
-                            BootstrapSampler())
+        self.estimator_temp = self.estimator
+
+        success, error = self.conformalBuild(X, Y)
+        if success:
+            return True, results
+        else:
+            return False, error
         
-        # Fit estimator to the data
-        self.estimator.fit(X, Y)
-        # results.append(('model', 'model type', 'conformal GNB qualitative'))
-        
-        return True, results

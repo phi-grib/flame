@@ -23,6 +23,7 @@
 
 import pickle
 import numpy as np
+from numpy.core.fromnumeric import nonzero
 from scipy.spatial import distance 
 import os
 import time
@@ -42,34 +43,67 @@ class Space:
         self.conveyor = conveyor
 
         self.objinfo = {}
+        self.X = None
+        self.metric = nonzero
+        
         itemlist = ['obj_nam', 'obj_id', 'SMILES', 'ymatrix']
         for item in itemlist:
-            item_val = self.conveyor.getVal(item)
+            item_val = self.conveyor.getVal(item)                
             if item_val is not None:
+
+                # if ymatrix contains nan the structure_result cannot be
+                # serialized to JSON and crashes the web app
+                if item is 'ymatrix':
+                    ymatrix = np.nan_to_num(np.array(item_val))
+                    item_val = ymatrix.tolist()
+
                 self.objinfo[item] = item_val
 
-        MDs = self.param.getVal('computeMD_method')
-        self.isFingerprint = ('morganFP' in MDs)
+        self.isSMARTS = self.conveyor.getVal('SMARTS') is not None
+        if self.isSMARTS:
+            self.isFingerprint = True
+            self.MDs = 'substructureFP'
+            self.defaultMetric = 'substructural'
+            self.compatibleMetric = ['substructural']
+            self.nobj = 1
 
-        self.X = None
-
-        if self.isFingerprint and len(MDs)>1:
-            fingerprint_index = self.conveyor.getVal('fingerprint_index')
-        
-            if fingerprint_index is None:
-                return False, 'Only a single type of MD can be used to compute similarity'
-            else:
-                LOG.warning("Flame cannot combine fingerprints and continuous variables for computing similarity. Only the fingerprints will be used for showing similar compounds.")
-                self.X = self.conveyor.getVal('xmatrix')[:,fingerprint_index]
         else:
-            self.X = self.conveyor.getVal('xmatrix')
+            self.MDs = self.param.getVal('computeMD_method')
+            self.isFingerprint = utils.isFingerprint(self.MDs)
 
-        self.nobj, self.nvarx = np.shape(self.X)
+            # using multiple fingerprints or MD+fingerprints for computing similarity is not supported 
+            if self.isFingerprint and len(self.MDs)>1:
+                fingerprint_index = self.conveyor.getVal('fingerprint_index')
+            
+                if fingerprint_index is None:
+                    return False, 'Missing fingeprint index, no similarity will be computed'
+                    self.conveyor.setWarning("Missing fingerprint index, no similarity will be computed")
+                else:
+                    LOG.warning("Only the first fingerprints were used to calculate similarity")
+                    self.conveyor.setWarning("Only the first fingerprints were used to calculate similarity")
+                    self.X = self.conveyor.getVal('xmatrix')[:,fingerprint_index]
+            else:
+                self.X = self.conveyor.getVal('xmatrix')
+
+            self.nobj, self.nvarx = np.shape(self.X)
+
+        if self.isFingerprint:
+            if 'substructureFP' in self.MDs:
+                self.defaultMetric = 'substructural'
+                self.compatibleMetric = ['substructural']
+            else:
+                self.defaultMetric = 'tanimoto'
+                self.compatibleMetric = ['tanimoto']
+
+        else:
+            self.defaultMetric = 'euclidean'
+            self.compatibleMetric = ['euclidean']
+
 
         self.Xref = None # metric of reference spaced, loaded in searches only 
         self.Dmax = 1000.0 # an arbitrary value
 
-    def _buildMorganFP (self):
+    def _buildFingerprint (self):
         t1 = time.time()
         Xbit = [DataStructs.cDataStructs.CreateFromBitString("".join(i.astype(str))) for i in self.X]
         LOG.info (f'{self.nobj} fingerprints converted in time: {time.time()-t1:.4f} secs')
@@ -86,7 +120,7 @@ class Space:
         return
 
     def _buildMD (self):
-        ydist = distance.pdist(self.X, metric='Euclidean')
+        ydist = distance.pdist(self.X, metric='euclidean')
         self.Dmax = np.percentile(ydist,95)
         return
 
@@ -98,29 +132,27 @@ class Space:
         results.append(('nobj', 'number of objects', self.nobj))
 
         MDs = self.param.getVal('computeMD_method')
-        if   'morganFP' in MDs:
-            self._buildMorganFP ()
-            descriptors = 'fingerprints'
-        elif 'substructureFP' in MDs:
-            self._buildSubStructure ()
-            descriptors = 'substructure'
+        if  self.isFingerprint:
+            if 'substructureFP' in MDs:
+                self._buildSubStructure ()
+                descriptors = 'substructure'
+            else:
+                self._buildFingerprint ()
+                descriptors = 'fingerprints'
         else:
             self._buildMD ()
             descriptors = 'descriptors'
 
-        results.append(('dmax', 'perecentil 95 of internal distances', self.Dmax))
-        results.append(('descriptors', 'descriptors used for computing the distance', descriptors))
+        results.append(('dmax', 'percentil 95 of internal distances', self.Dmax))
+        results.append(('type', 'type of descriptors', descriptors))
+        results.append(('descriptors', 'descriptors used for computing the distance', MDs))
+        results.append(('nvar', 'number of molecular descriptors used', self.nvarx))
 
         return True, results
 
-    def _searchMorganFP (self, cutoff, numsel, metric):
+    def _searchFingerprint (self, cutoff, numsel, metric):
 
-        incompatible = ['Substructural']
-        if metric is None:
-            metric = 'Tanimoto'
-        elif metric in incompatible:
-            LOG.warning (f'Metric {metric} is not compatible with the descriptors present in this space')
-            metric = 'Tanimoto'
+        LOG.info ('searching for similar compounds using Tanimoto similarity')
 
         results = []
 
@@ -190,15 +222,48 @@ class Space:
 
     def _searchSubStructure (self, numsel, metric):
 
-        if metric is None:
-            metric = 'Substructural'
-        elif metric != 'Substructural':
-            LOG.warning (f'Metric {metric} is not compatible with the descriptors present in this space. Using Substructural')
-            metric = 'Substructural'
+        LOG.info ('searching for similar compounds using Substructure similarity')
 
         results = []
 
         t1 = time.time()
+
+        if self.isSMARTS:
+
+            nselected = 0
+            selected_i = []
+            selected_d = []
+
+             # for each compound in the space
+            for j, jfp in enumerate(self.Xref):
+                # mi = Chem.MolFromSmarts('C[!C](C)CC1*C=CCC1')
+                mi = Chem.MolFromSmarts(self.conveyor.getVal('SMARTS'))
+                mj = Chem.MolFromSmiles(self.objinforef['SMILES'][j])
+
+                if mj.HasSubstructMatch(mi):
+                    selected_i.append(j)
+                    selected_d.append(1.00)
+                    nselected+=1
+
+                if nselected >= numsel:
+                    break
+
+            # results for molecule i are stored in a dictionary
+            results_info = {}
+            results_info['distances'] = []   # distances are allways stored
+            for oi in self.objinforef:
+                results_info[oi] = []        # all the objects information (name, smiles, ID, activity, etc.)
+
+            for sd,si in zip(selected_d, selected_i):
+                results_info['distances'].append(sd)
+                for oi in self.objinforef:
+                    results_info[oi].append(self.objinforef[oi][si])
+
+            results.append(results_info)
+            
+            LOG.info (f'search completed in time: {time.time()-t1:.4f} secs')
+
+            return True, results
 
         # for each compound in the search set 
         for i, ivector in enumerate(self.X):
@@ -214,7 +279,6 @@ class Space:
                 if DataStructs.AllProbeBitsMatch(ifp, jfp):
                 # if True:
                     mi = Chem.MolFromSmiles(self.objinfo['SMILES'][i])
-                    # mi = Chem.MolFromSmarts('C[!C](C)CC1*C=CCC1')
                     mj = Chem.MolFromSmiles(self.objinforef['SMILES'][j])
 
                     if mj.HasSubstructMatch(mi):
@@ -244,12 +308,7 @@ class Space:
 
     def _searchMD (self, cutoff, numsel, metric):
         
-        incompatible = ['Tanimoto', 'Substructural']
-        if metric is None:
-            metric = 'Euclidean'
-        elif metric in incompatible:
-            LOG.warning (f'Metric {metric} is not compatible with the descriptors present in this space')
-            metric = 'Euclidean'
+        LOG.info ('searching for similar compounds using Euclidean similarity')
 
         results = []
 
@@ -264,8 +323,7 @@ class Space:
             # for each compound in the space
             for j, jvector in enumerate(self.Xref):
 
-                if metric == 'Euclidean':
-                    d = 1.000-(distance.euclidean(ivector,jvector)/self.Dmax)
+                d = 1.000-(distance.euclidean(ivector,jvector)/self.Dmax)
 
                 if d <= cutoff:
                     continue
@@ -331,11 +389,21 @@ class Space:
             #numsel = len(self.X)
             numsel = 10
 
-        MDs = self.param.getVal('computeMD_method')
-        if   'morganFP' in MDs:
-            return self._searchMorganFP (cutoff, numsel, metric)
-        elif 'substructureFP' in MDs:
-            return self._searchSubStructure (numsel, metric)
+        if metric is None:
+            metric = self.defaultMetric
+        elif not metric in self.compatibleMetric:
+            LOG.warning (f'Metric {metric} is not compatible with the descriptors present in this space. Using {self.defaultMetric}')
+            metric = self.defaultMetric
+
+        if self.isSMARTS:
+            metric = 'smarts'
+
+        self.metric = metric
+        
+        if self.isFingerprint:
+            if 'substructureFP' in self.MDs:
+                return self._searchSubStructure (numsel, metric)
+            return self._searchFingerprint (cutoff, numsel, metric)
         else:
             return self._searchMD (cutoff, numsel, metric)
 

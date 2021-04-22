@@ -166,7 +166,7 @@ def action_publish(space):
         return False, f'Unable to copy contents of dev version for space {space}'
 
     LOG.info(f'New space version created from {src_path} to {new_path}')
-    return True, f'New space version created from {src_path} to {new_path}'
+    return True, max_version+1
 
 
 def action_remove(space, version):
@@ -214,7 +214,11 @@ def action_parameters(space, version=None, oformat='text'):
     from flame.parameters import Parameters
 
     param = Parameters()
-    param.loadYaml(space, version, isSpace=True)
+    success, results  = param.loadYaml(space, version, isSpace=True)
+
+    if not success:
+        print (f'error obtaining parametes for space {space} : {results}')
+        return False, results
 
     if oformat != 'text':
         return True, param
@@ -236,7 +240,7 @@ def action_info(space, version, output='text'):
     '''
 
     if space is None:
-        if output == 'JSON':
+        if output != 'text':
             return False, {'code':1, 'message': 'Empty space label'}
         return False, 'Empty space label'
 
@@ -244,7 +248,7 @@ def action_info(space, version, output='text'):
     meta_file = os.path.join(meta_path, 'space-meta.pkl')
     
     if not os.path.isfile(meta_file):
-        if output == 'JSON':
+        if output != 'text':
             return False, {'code':0, 'message': 'Info file not found'}
         return False, 'Info file not found'
 
@@ -255,7 +259,7 @@ def action_info(space, version, output='text'):
         space_info = pickle.load(handle)
     
     if errorMessage is not None:
-        if output == 'JSON':
+        if output != 'text':
             return False, {'code':1, 'message': errorMessage}
         return False, 'No relevant information found'
    
@@ -273,7 +277,7 @@ def action_info(space, version, output='text'):
                 info+=iinfo
 
     if info == None:
-        if output == 'JSON':
+        if output != 'text':
             return False, {'code':1, 'message': 'No relevant information found'}
         return False, 'No relevant information found'
 

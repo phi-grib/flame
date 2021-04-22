@@ -27,6 +27,8 @@ import numpy as np
 from flame.util import utils, get_logger, supress_log
 from datetime import datetime
 
+from scipy.spatial.distance import MetricInfo
+
 LOG = get_logger(__name__)
 
 class Odata():
@@ -287,8 +289,8 @@ class Odata():
                 nams = self.conveyor.getVal('obj_nam')
                 vals = self.conveyor.getVal('values')
                 for i in range (self.conveyor.getVal('obj_num')):
-                    # print (self.conveyor.getVal('obj_nam')[i], '\t' , float("{0:.4f}".format(self.conveyor.getVal('values')[i])))
-                    print (f'{nams[i]}\t{vals[i]:.4f}')
+                   # print (self.conveyor.getVal('obj_nam')[i], '\t' , float("{0:.4f}".format(self.conveyor.getVal('values')[i])))
+                   print (f'{nams[i]}\t{vals[i]:.4f}')
 
         ###
         # 3. molecular descriptors file in TSV format [optional]
@@ -416,6 +418,7 @@ class Odata():
         names   = self.conveyor.getVal('obj_nam')
         ids     = self.conveyor.getVal('obj_id')
         smiles  = self.conveyor.getVal('SMILES')
+        # metric  = self.conveyor.getVal('metric')
 
         if results is not None and names is not None:
             if len (results) != len (names):
@@ -530,9 +533,7 @@ class Odata():
                         line += f'{dist:.3f}\t{name}\t{idv}\t[{smil}]\t{act}'
                         fo.write(line+'\n')
 
-        output = self.conveyor
-
-        return True, output
+        return True, self.conveyor
 
 
     def run(self):

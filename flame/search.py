@@ -85,6 +85,11 @@ class Search:
         LOG.debug('parameter "numCPUs" forced to be 1')
         self.param.setVal('numCPUs',1)
 
+    def getVal (self, idict, ikey):
+        if not ikey in idict:
+            return None
+        return idict[ikey]
+
     # def run(self, input_source, runtime_param=None, metric=None, numsel=None, cutoff=None):
     def run(self, param_dict):
         ''' Executes a default predicton workflow '''
@@ -99,16 +104,21 @@ class Search:
             LOG.error(f'Unable to find space {self.space}')
             self.conveyor.setError(f'Unable to find space {self.space}, version {self.version}')
 
-        if 'infile' in param_dict:
+        if self.getVal(param_dict,'smarts') is not None:
+            input_source = param_dict['smarts']
+            self.param.setVal('input_type', 'smarts')
+
+        elif self.getVal(param_dict,'infile') is not None:
             input_source = param_dict['infile']
+
         else:
             LOG.error(f'Unable to find input_file')
             self.conveyor.setError('wrong format in the runtime similarity parameters')
 
         if 'runtime_param' in param_dict:
-            runtime_param = param_dict['runtime_param']
+            runtime_param = self.getVal(param_dict, 'runtime_param')
             if runtime_param is not None:
-                print (runtime_param)
+                LOG.info (f'runtime parameters: {str(runtime_param)}')
                 try:
                     with open(runtime_param, 'r') as pfile:
                         rtparam = yaml.safe_load(pfile)
@@ -131,6 +141,12 @@ class Search:
                 LOG.error('wrong format in the runtime similarity parameters')
                 self.conveyor.setError('wrong format in the runtime similarity parameters')
 
+        md = self.param.getVal('computeMD_method')
+        if utils.isFingerprint(md) and len(md) > 1:
+            LOG.warning(f'When using fingerprints, only a single type of MD can be used to build spaces. Selecting {md[0]}')
+            self.conveyor.setWarning(f'When using fingerprints, only a single type of MD can be used to build spaces. Selecting {md[0]}')
+            self.param.setVal('computeMD_method',[md[0]])
+
         if not self.conveyor.getError():
             # uses the child classes within the 'space' folder,
             # to allow customization of
@@ -152,10 +168,12 @@ class Search:
             LOG.debug(f'idata child {type(idata).__name__} completed `run()`')
 
         if not self.conveyor.getError():
+
             # make sure there is X data
             if not self.conveyor.isKey('xmatrix'):
-                LOG.debug(f'Failed to compute MDs')
-                self.conveyor.setError(f'Failed to compute MDs')
+                if not self.conveyor.isKey ('SMARTS'):
+                    LOG.debug(f'Failed to compute MDs')
+                    self.conveyor.setError(f'Failed to compute MDs')
 
         if not self.conveyor.getError():
             # run apply object, in charge of generate a prediction from idata

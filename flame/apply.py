@@ -421,6 +421,7 @@ class Apply:
         # try to load model previously built
         LOG.debug(f'Loading model from pickle file')
         success, results = model.load_model()
+
         if not success:
             self.conveyor.setError(f'Failed to load model estimator, with error "{result}"')
             return 

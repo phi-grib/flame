@@ -171,20 +171,6 @@ TSV_objnames:
   comments: 
   group: data 
 
-TSV_varnames:
-  advanced: regular
-  object_type: boolean
-  writable: false
-  value: true
-  options: 
-    - true
-    - false
-  description: True if variable names in first row of data matrix
-  dependencies: 
-    input_type: data
-  comments: 
-  group: data 
-
 computeMD_method:
   advanced: regular
   object_type: list
@@ -361,20 +347,59 @@ conformal_settings:
   object_type: dictionary
   writable: false
   value: 
-    error_model:
+    aggregated:
+      object_type: boolean
+      writable: false
+      value: true
+      options:
+        - true
+        - false
+      description: Use aggregated conformal predictions (ACP).
+
+    normalizing_model:
       object_type: string
-      writable: true
+      writable: false
       value: KNN
       options:
         - KNN
-      description: Error model type
+        - Underlying
+      description: Normalizing model used to scale non-conformity scores.
+
     KNN_NN:
       object_type: int
       writable: true
       value: 15
       options:
         - null
-      description: Number of nearest neighbors
+      description: Number of nearest neighbors used by KNN normalizing model.
+
+    conformal_predictors:
+      object_type: int
+      writable: true
+      value: 10
+      options:
+        - null
+      description: Number of models to build aggregated conformal predictions (ACP).
+
+    ACP_sampler:
+      object_type: string
+      writable: false
+      value: BootstrapSampler
+      options:
+        - BootstrapSampler
+        - RandomSubSampler
+        - CrossSampler
+      description: Sampling strategy to select callibration sets in aggregated conformal predictions (ACP).
+
+    aggregation_function:
+      object_type: string
+      writable: false
+      value: median
+      options:
+        - median
+        - mean
+      description: Function used to aggregate p-values in aggregated conformal predictions (ACP).
+
   options: null
   description: conformal predictor settings
   dependencies: 
@@ -1122,8 +1147,9 @@ similarity_metric:
   writable: false
   value: 
   options:
-    - Euclidean
-    - Tanimoto
+    - euclidean
+    - tanimoto
+    - substructural
   description: Show compounds similar to the query compounds present in the training series
   dependencies: 
     output_similar: true 
@@ -1133,10 +1159,10 @@ similarity_metric:
 similarity_cutoff_num:
   advanced: advanced
   object_type: int
-  writable: false
+  writable: true
   value: 5
   options:
-  description: Integer indicatin maximum number of similar compounds to extract. If not set, all compounds meeting other criteria will be extracted     
+  description: Maximum number of similar compounds to extract. If not set, all compounds meeting other criteria will be extracted     
   dependencies: 
     output_similar: true 
   comments: 
@@ -1145,7 +1171,7 @@ similarity_cutoff_num:
 similarity_cutoff_distance:
   advanced: advanced
   object_type: float
-  writable: false
+  writable: true
   value: 0.6
   options:
   description: Float in the range (0.0 - 1.0) indicating minimum similarity of the compounds to extract. If not set, all compounds meeting other criteria will be extracted 

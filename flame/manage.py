@@ -21,7 +21,7 @@
 # along with Flame. If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import sys
+import time
 import shutil
 import tarfile
 import pickle
@@ -313,7 +313,7 @@ def action_export(model):
         return False, 'Empty model label'
 
     current_path = os.getcwd()
-    exportfile = os.path.join(current_path,model+'.tgz')
+    compressedfile = os.path.join(current_path,model+'.tgz')
 
     base_path = utils.model_tree_path(model)
 
@@ -326,17 +326,39 @@ def action_export(model):
     itemend = os.listdir()
     itemend.sort()
 
-    with tarfile.open(exportfile, 'w:gz') as tar:
+    # t1 = time.time()
+
+    with tarfile.open(compressedfile, 'w:gz') as tar:
         for iversion in itemend:
             if not os.path.isdir(iversion):
                 continue
             tar.add(iversion)
+
+    # print (time.time()-t1)
 
     # return to current directory
     os.chdir(current_path)
 
     LOG.info(f'Model {model} exported as {model}.tgz')
     return True, f'Model {model} exported as {model}.tgz'
+
+
+def action_series(model, version):
+    '''
+    Returns the training series used for building a certain model /version 
+    '''
+    if model is None:
+        return False, 'Empty model label'
+
+    meta_path = utils.model_path(model, version)
+    training_file = os.path.join(meta_path, 'training_series')
+    if not os.path.isfile(training_file):
+        return False, 'training series file not found'
+
+    shutil.copy(training_file, './training_series.sdf')
+    
+    LOG.info(f'Training series for model {model}, version {version}, saved as "training_series.sdf"')
+    return True, 'OK'
 
 
 def action_info(model, version, output='text'):

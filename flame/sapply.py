@@ -42,7 +42,8 @@ class Sapply:
         and apply them to the X matrix passed as an argument'''
 
         # update if other fingerprints are added
-        if self.param.getVal('computeMD_method') == ['morganFP']:
+        if utils.isFingerprint(self.param.getVal('computeMD_method')):
+            LOG.debug ('fingerprints used, no preprocerssing will be applied')
             return True, X
 
         # Run scaling for MD but never for fingerprints
@@ -82,7 +83,11 @@ class Sapply:
             X = X[:, self.variable_mask]
 
         if self.param.getVal('modelAutoscaling') is None:
+            LOG.debug ('No scaler applied because no scaler was selected')
             return True, X
+        else:
+            LOG.debug (f'Scaler {self.param.getVal("modelAutoscaling")} applied')
+
 
         # Load rest of info in an extensible way
         # This allows to add new variables keeping
@@ -91,14 +96,10 @@ class Sapply:
         if 'scaler' in dict_prepro.keys():
             self.scaler = dict_prepro['scaler']
 
-        # Check consistency between parameter file and pickle info
-        non_scale_list = ['majority','matrix']
+        # if no scaler is found we assume it is because fingerprints are used
         if self.scaler is None:
-            # methods like majority and matrix are forced to avoid scaling 
-            if self.param.getVal('model') in non_scale_list:   
-                return True, X
-            else:
-                return False, 'Inconsistency error. Scaling method defined but no Scaler loaded'
+            LOG.debug ('No scaler applied because no scaler has been found')
+            return True, X
 
         return True, self.scaler.transform(X)  
 
@@ -112,15 +113,20 @@ class Sapply:
 
         '''
 
-        # Load scaler and variable mask and preprocess the data
-        success, result = self.preprocess(self.X)
-        if not success:
-            self.conveyor.setError(result)
-            return
-        self.X = result
+        if self.param.getVal('input_type') != "smarts":
+            # Load scaler and variable mask and preprocess the data
+            success, result = self.preprocess(self.X)
+            if not success:
+                self.conveyor.setError(result)
+                return
+            self.X = result
 
         # instances space object
         space = Space(self.param, self.conveyor)
+
+        # check metric
+        if metric is None:
+            metric = space.defaultMetric
 
         # builds space from idata results
         LOG.info('Starting space searching')
@@ -130,12 +136,21 @@ class Sapply:
             return
 
         self.conveyor.addVal(
+                    space.metric,
+                    'metric',
+                    'metric',
+                    'method',
+                    'single',
+                    'Final metric used in the search')
+
+        self.conveyor.addVal(
                     search_results,
                     'search_results',
                     'Search results',
                     'result',
                     'objs',
                     'Collection of similar compounds','main')
+        
 
         LOG.info('Space search finished successfully')
 

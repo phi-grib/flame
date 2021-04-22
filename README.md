@@ -29,7 +29,17 @@ docker run -d -p 8010:8000 -v c:\flame_repo:/data mpastorphi/flame
 
 A Flame walkthrough, showing some of its main features is accesible [here](https://drive.google.com/file/d/1aX1aogDVlIDoYpBR1vu4dIxB10si_8Ex/view?usp=sharing)
 
+Flame is described in the following open-access article:
 
+```
+Flame: an open source framework for model development, hosting, and usage in production environments
+
+Manuel Pastor, José Carlos Gómez-Tamayo & Ferran Sanz 
+
+Journal of Cheminformatics volume 13, Article number: 31 (2021)
+```
+
+(https://jcheminf.biomedcentral.com/articles/10.1186/s13321-021-00509-z)
 
 ## Installation
 
@@ -195,6 +205,19 @@ The file `delta.txt` can be edited to include all the required information. Afte
 flame -c manage -e MyModel -a documentation -t delta.txt
 ```
 
+Flame can also use as input a TSV file, containing all the X and Y values required to build the model. This file must have the following format: columnn must be separated by a single tab. The first row must contain variable names. One row per compound. Molecule names are optional but, if present, must be placed in the first column. SMILES are optional, but can be inserted in any column with the label `SMILES` (all capitals). The activity must be placed in a column with the label specified by the parameter `TSV_activity`.
+
+The commands for building a model or predicting from a TSV file are identical to the ones used with SDFiles. Please make sure that in the parameter file, the `input_type` is set to `data`.
+
+```sh
+flame -c build -e MyModel -f series.tsv 
+```
+
+```sh
+flame -c predict -e MyModel -f query.tsv 
+```
+
+
 In the above commands we specified the model version used for the prediction. So far we only have a model in the development folder (version 0). This version will be overwritten every time we develop a new model for this endpoint. Let's imagine that we are very satisfied with our model and want to store it for future use. We can obtain a persistent copy of it with the command
 ```sh
 flame -c manage -a publish -e MyModel
@@ -274,6 +297,7 @@ Management commands deserve further description:
 | list | *flame -c manage -a list* | Lists the models present in the repository and the published version for each one. If the name of a model is provided, lists only the published versions for this model  |
 | info | *flame -c manage -e MODEL -a info* | Shows summary information about the characteristics of model MODEL  |
 | parameters | *flame -c manage -e MODEL -a parameters* | Shows a list of the main modeling parameters used by build to generate model MODEL |
+| series | *flame -c manage -e MODEL -a series* | Download a copy of the training series used to build MODEL as "training_series.sdf" |
 | documentation | *flame -c manage -e MODEL -a documentation* | Shows a list with the main documentation information of model MODEL. When called with parameter -t, it can be used to add new documentation information  |
 | export | *flame -c manage -a export -e NEWMODEL* | Exports the model entry NEWMODE, creating a tar compressed file *NEWMODEL.tgz* which contains all the versions. This file can be imported by another flame instance (installed in a different host or company) with the *-c manage import* command |
 | import | *flame -c manage -a import -f NEWMODEL.tgz* | Imports file *NEWMODEL.tgz*, typically generated using command *-c manage -a export* creating model NEWMODEL in the local model repository |
