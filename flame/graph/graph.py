@@ -24,15 +24,9 @@ import os
 import numpy as np
 import copy
 import pickle
-# import umap
-# from flame.stats.pca import pca    
 from sklearn.decomposition import PCA
 from sklearn.metrics import mean_squared_error
-# from flame.chem.compute_md import _RDKit_rdkFPS,_RDKit_morganFPS
-# from sklearn.manifold import TSNE
 from flame.graph.predtsne import PredictableTSNE
-# import time 
-# import joblib
 
 from flame.util import utils, get_logger
 LOG = get_logger(__name__)
@@ -90,10 +84,9 @@ def generatePCASpace(X, param, conveyor):
                         'PCA PC2', 'method', 'objs',
                         'PCA PC2 score for graphic representation')
 
-    # modelSSX = mpca.SSXex/mpca.SSX
-    # conveyor.addVal(modelSSX, 'SSX',
-    #                 'X Sum of Squares explained', 'method', 'single',
-    #                 'X Sum of Squares explained by each PC dimension')
+    conveyor.addVal(emb.explained_variance_ratio_, 'SSX',
+                    'Explained variance ratio', 'method', 'single',
+                    'Ratio of variance explainded by each PC dimension')
 
     return
 

@@ -2,7 +2,6 @@
 # https://github.com/sdpython/mlinsights
 # adapted to produce reproducible results 
 
-
 """
 @file
 @brief Implements a predictable *t-SNE*.
@@ -12,7 +11,6 @@ from sklearn.base import BaseEstimator, TransformerMixin, clone
 from sklearn.manifold import TSNE
 from sklearn.neural_network import MLPRegressor
 from sklearn.metrics import mean_squared_error
-# import umap
 
 class PredictableTSNE(BaseEstimator, TransformerMixin):
     """
@@ -124,10 +122,10 @@ class PredictableTSNE(BaseEstimator, TransformerMixin):
 
         # comment to speed up calculation if no loss_ is needed
         # uncommenting next line
-        # self.loss_ = 0.0
-        exp = (target - mean) * self.inv_std_
-        got = (self.estimator_.predict(X) - mean) * self.inv_std_
-        self.loss_ = mean_squared_error(exp, got)
+        self.loss_ = 0.0
+        # exp = (target - mean) * self.inv_std_
+        # got = (self.estimator_.predict(X) - mean) * self.inv_std_
+        # self.loss_ = mean_squared_error(exp, got)
 
         if self.keep_tsne_outputs:
             self.tsne_outputs_ = exp if self.normalize else target
