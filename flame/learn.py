@@ -384,7 +384,7 @@ class Learn:
         # conformal quantitataive models produce a list of tuples, indicating
         # the minumum and maximum value
 
-        dimRed = self.param.getVal("dimensionalityReduction")
+        dimRed = self.param.getVal("dimensionality_reduction")
         if dimRed is None:
             nobj, nvarx = np.shape(self.X)
             if nvarx > 300:
@@ -398,14 +398,6 @@ class Learn:
             generateManifoldSpace(self.X, self.param, self.conveyor)
 
         # TODO: compute AD (when applicable)
-
-
-        # generate a proyected space and use it to generate graphics
-        # generateProjectedSpace(self.X, self.param, self.conveyor)
-        # generateManifoldSpace(self.X, self.param, self.conveyor)
-        # generatetsneSpace (self.X,self.Y,self.param,self.conveyor)
-        # generateIsomapSpace (self.X,self.param,self.conveyor)
-
 
         LOG.info('Model finished successfully')
 

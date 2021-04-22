@@ -305,6 +305,20 @@ modelingToolkit:
   comments: 
   group: modeling
 
+dimensionality_reduction:
+  advanced: regular
+  object_type: string
+  writable: false
+  value: PCA
+  options:
+    - null
+    - PCA
+    - t-SNE
+  description: Method used to reduce the md matrix dimensionality for visualization
+  dependencies: 
+  comments: 
+  group: preferences
+
 model:
   advanced: regular
   object_type: string
