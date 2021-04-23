@@ -49,12 +49,12 @@ def generateManifoldSpace(X,param,conveyor):
     X_train=emb.transform(X)
 
     conveyor.addVal(X_train[:,0],'PC1',
-                        'PCA PC1', 'method', 'objs',
-                        'PCA PC1 score for graphic representation')
+                        't-SNE X', 'method', 'objs',
+                        'X value for a t-SNE representation')
     
     conveyor.addVal(X_train[:,1],'PC2',
-                        'PCA PC2', 'method', 'objs',
-                        'PCA PC2 score for graphic representation')
+                        't-SNE Y', 'method', 'objs',
+                        'X value for a t-SNE representation')
 
 def generatePCASpace(X, param, conveyor):
     ''' This function uses the scaled X matrix of the model to build a 2 PCs PCA model
@@ -108,23 +108,26 @@ def projectReduced(X, param, conveyor):
 
     '''
     
+    label = {'PCA':['PCA PC1', 'PCA PC2'], 't-SNE':['t-SNE X', 't-SNE Y']}
+
     models_path = os.path.join(param.getVal('model_path'),'models.pkl')
     with open(models_path, "rb") as f:
         options = pickle.load(f)
     emb = options["model_reduc"]
+    method = options['method']
 
     X_test = emb.transform(X)
 
     conveyor.addVal(X_test[:,0], 'PC1proj',
-                       'Model projected D1', 'method', 'objs',
+                       label[method][0], 'method', 'objs',
                        'Model projected scores D1 for graphic representation')
 
             
     conveyor.addVal(X_test[:,1], 'PC2proj',
-                       'Model projected D2', 'method', 'objs',
+                       label[method][1], 'method', 'objs',
                        'Model projected scores D2 for graphic representation')
 
-    if options['method'] == 'PCA':
+    if method == 'PCA':
         nobj, nvarx = np.shape(X)
         X_pred = emb.inverse_transform(X_test)
         dmodx = []

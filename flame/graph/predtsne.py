@@ -127,8 +127,8 @@ class PredictableTSNE(BaseEstimator, TransformerMixin):
         # got = (self.estimator_.predict(X) - mean) * self.inv_std_
         # self.loss_ = mean_squared_error(exp, got)
 
-        if self.keep_tsne_outputs:
-            self.tsne_outputs_ = exp if self.normalize else target
+        # if self.keep_tsne_outputs:
+        #     self.tsne_outputs_ = exp if self.normalize else target
         return self
 
     def transform(self, X):
