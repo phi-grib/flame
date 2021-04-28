@@ -22,7 +22,7 @@
 
 import os
 import numpy as np
-import copy
+import time
 import pickle
 from sklearn.decomposition import PCA
 from sklearn.metrics import mean_squared_error
@@ -32,21 +32,45 @@ from flame.util import utils, get_logger
 LOG = get_logger(__name__)
 
 def generateManifoldSpace(X,param,conveyor):
-    
-    LOG.info('Generating projected X space using t-SNE...')
 
-    iY = np.empty((X.shape[0], 2))
-    emb=PredictableTSNE().fit(X,iY)
+    nobj, nvarx = np.shape(X)
+    iY = np.empty((nobj, 2))
 
-    options = {"model_reduc":emb, "method": 't-SNE'}
+    t1= time.time()
+
+    # for large matrices, simplify the t-SNE by running PCA and perform
+    # the algorithm on the scores
+    if nvarx > 1000 and nobj > 1000:
+
+        # number of PCs is the min of nobj-1 and 1/20 nvarx, but never more than 500!
+        A = int(min(nobj-1, nvarx/20, 500))
+        LOG.info(f'Simplifying the matrix using {A} PCs...')
+        pre = PCA(n_components=A ,random_state=46).fit(X)
+        X_red = pre.transform(X)
+
+        LOG.info('Generating projected X space using t-SNE...')
+        emb = PredictableTSNE().fit(X_red,iY)
+        X_train=emb.transform(X_red)
+
+        options = {"model_pre": pre, 
+                   "model_reduc": emb,           
+                   "method": 't-SNE'}
+
+    else:
+        LOG.info('Generating projected X space using t-SNE...')
+        emb = PredictableTSNE().fit(X,iY)
+        X_train=emb.transform(X)
+
+        options = {"model_reduc": emb,           
+                   "method": 't-SNE'}
+
+    LOG.info (f'...completed in {time.time()-t1 :.1f} seconds')
 
     models_path = os.path.join(param.getVal('model_path'),'models.pkl')
     with open(models_path, "wb") as f:
         pickle.dump(options, f,protocol=pickle.HIGHEST_PROTOCOL)
 
     models_path = os.path.join(param.getVal('model_path'),'models.pkl')
-
-    X_train=emb.transform(X)
 
     conveyor.addVal(X_train[:,0],'PC1',
                         't-SNE X', 'method', 'objs',
@@ -113,10 +137,16 @@ def projectReduced(X, param, conveyor):
     models_path = os.path.join(param.getVal('model_path'),'models.pkl')
     with open(models_path, "rb") as f:
         options = pickle.load(f)
+
     emb = options["model_reduc"]
     method = options['method']
 
-    X_test = emb.transform(X)
+    if "model_pre" in options:
+        pre = options["model_pre"]
+        X_red = pre.transform(X)
+        X_test = emb.transform(X_red)
+    else:
+        X_test = emb.transform(X)
 
     conveyor.addVal(X_test[:,0], 'PC1proj',
                        label[method][0], 'method', 'objs',
