@@ -23,6 +23,7 @@
 import os
 import numpy as np
 import time
+import copy
 import pickle
 from sklearn.decomposition import PCA
 from sklearn.metrics import mean_squared_error
@@ -66,11 +67,9 @@ def generateManifoldSpace(X,param,conveyor):
 
     LOG.info (f'...completed in {time.time()-t1 :.1f} seconds')
 
-    models_path = os.path.join(param.getVal('model_path'),'models.pkl')
+    models_path = os.path.join(param.getVal('model_path'),'projection.pkl')
     with open(models_path, "wb") as f:
         pickle.dump(options, f,protocol=pickle.HIGHEST_PROTOCOL)
-
-    models_path = os.path.join(param.getVal('model_path'),'models.pkl')
 
     conveyor.addVal(X_train[:,0],'PC1',
                         't-SNE X', 'method', 'objs',
@@ -94,7 +93,7 @@ def generatePCASpace(X, param, conveyor):
 
     options = {"model_reduc":emb, "method": "PCA"}
 
-    models_path = os.path.join(param.getVal('model_path'),'models.pkl')
+    models_path = os.path.join(param.getVal('model_path'),'projection.pkl')
     with open(models_path, "wb") as f:
         pickle.dump(options, f,protocol=pickle.HIGHEST_PROTOCOL)
 
@@ -131,15 +130,27 @@ def projectReduced(X, param, conveyor):
         Intell Lab Sys 2004: 72, 101-9) and this method must be considered in future versions
 
     '''
-    
-    label = {'PCA':['PCA PC1', 'PCA PC2'], 't-SNE':['t-SNE X', 't-SNE Y']}
 
-    models_path = os.path.join(param.getVal('model_path'),'models.pkl')
-    with open(models_path, "rb") as f:
-        options = pickle.load(f)
+    base_model = param.getVal('model_path')
 
-    emb = options["model_reduc"]
-    method = options['method']
+    models_path = os.path.join(base_model,'projection.pkl')
+    if not os.path.isfile(models_path):
+
+        # compatibility with old method using homebrew PCA code
+        pca_path = os.path.join(base_model,'pca.npy')
+        if os.path.isfile(pca_path):
+            projectPredictions(X, param, conveyor)
+
+        return
+
+    try:
+        with open(models_path, "rb") as f:
+            options = pickle.load(f)
+
+        emb = options["model_reduc"]
+        method = options['method']
+    except:
+        return
 
     if "model_pre" in options:
         pre = options["model_pre"]
@@ -147,6 +158,8 @@ def projectReduced(X, param, conveyor):
         X_test = emb.transform(X_red)
     else:
         X_test = emb.transform(X)
+
+    label = {'PCA':['PCA PC1', 'PCA PC2'], 't-SNE':['t-SNE X', 't-SNE Y']}
 
     conveyor.addVal(X_test[:,0], 'PC1proj',
                        label[method][0], 'method', 'objs',
@@ -168,5 +181,61 @@ def projectReduced(X, param, conveyor):
         conveyor.addVal(dmodx, 'PCDMODX',
                         'DModX', 'method', 'objs',
                         'Distance of object to a 2PC PCA model')
+
+    return
+
+def projectPredictions(X, param, conveyor):
+    '''
+        This method projects X vectors into the existing PCA space generated for the
+        current model (from param.getVal('model_path'))
+        We assume a two dimension model
+        The method returs scores for dimensions 1 and 2, as well as the distance to model (DModX)
+        for a model of dimensionality 2
+        The values of the Distance to Model (DModX in SIMCA) provided in the vector dmod 
+        is the  normalized value (si/s0), where s0 was estimated directly using all the compounds in 
+        the training set. It was suggested that s0 computed this way leads to too narrow CI.
+        A much better estimation would be obtained using jackknifing (see Flaten et al. Chem 
+        Intell Lab Sys 2004: 72, 101-9) and this method must be considered in future versions
+    '''
+    from flame.stats.pca import pca 
+
+    # PCA is destructive
+    X=copy.copy(X)
+    
+    pca_path = os.path.join(param.getVal('model_path'),'pca.npy')
+
+    if not os.path.isfile(pca_path):
+        return
+
+    LOG.info('Projecting in X space...')
+
+    mpca = pca()
+    mpca.loadModel(pca_path)
+
+    if not 'numpy.float' in str(type (X[0,0])):
+        X = X.astype(np.float64)
+
+    success, result = mpca.projectPC(X,0)
+    if success:
+        X, t, dmodx = result
+        if np.isnan (np.sum(t)):
+            t = np.zeros(len(t))
+        conveyor.addVal(t, 'PC1proj',
+                       'PCA projected PC1', 'method', 'objs',
+                       'PCA projected scores PC1 for graphic representation')
+
+    success, result = mpca.projectPC(X,1)
+    if success:
+        X, t, dmodx = result
+        if np.isnan (np.sum(t)):
+            t = np.zeros(len(t))
+            
+        conveyor.addVal(t, 'PC2proj',
+                       'PCA projected PC2', 'method', 'objs',
+                       'PCA projected scores PC2 for graphic representation')
+        
+        conveyor.addVal(dmodx, 'PCDMODX',
+                       'DModX', 'method', 'objs',
+                       'Distance of object to a 2PC PCA model')
 
     return
