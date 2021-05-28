@@ -132,7 +132,8 @@ def set_model_repository(path=None):
 
         write_config(configuration)
 
-def set_repositories(model_path, space_path, predictions_path):
+# def set_repositories(model_path, space_path, predictions_path):
+def set_repositories(root_path, username=None , project=None):
     """
     Set the model repository path.
     This is the dir where flame is going to create and load models.
@@ -147,16 +148,44 @@ def set_repositories(model_path, space_path, predictions_path):
 
     success, configuration = read_config()
     
-    if success:
-        new_model_path = pathlib.Path(model_path)
-        new_space_path = pathlib.Path(space_path)
-        new_predictions_path = pathlib.Path(predictions_path)
+    if not success:
+        return False
 
-        configuration['model_repository_path'] = str(new_model_path.resolve())
-        configuration['space_repository_path'] = str(new_space_path.resolve())
-        configuration['predictions_repository_path'] = str(new_predictions_path.resolve())
+    if username is not None:
+        root_path = os.path.join(root_path,username)
+        try:
+            if not os.path.isdir(root_path):
+                os.mkdir(root_path)
+        except Exception as e:
+            print (f'Error {e}')
+            return False
 
-        write_config(configuration)
+    if project is not None:
+        root_path = os.path.join(root_path,project)
+        try:
+            if not os.path.isdir(root_path):
+                os.mkdir(root_path)
+        except Exception as e:
+            print (f'Error {e}')
+            return False
+
+    configuration['model_repository_path'] = os.path.join(root_path,'models')
+    configuration['space_repository_path'] = os.path.join(root_path,'spaces')
+    configuration['predictions_repository_path'] = os.path.join(root_path,'predictions')
+
+    for i in ['model_repository_path', 'space_repository_path', 'predictions_repository_path']:
+        path = configuration[i]
+        try:
+            if not os.path.isdir(path):
+                os.mkdir(path)
+            print (f'{i}: {configuration[i]}')
+        except Exception as e:
+            print (f'Error {e}')
+            return False
+
+    write_config(configuration)
+
+    return True
 
 
 def path_expand (path, version):

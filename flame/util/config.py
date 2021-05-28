@@ -39,20 +39,20 @@ from flame.util import utils
 #     utils.write_config(config)
 
 
-def ask_user ():
-    ''' utility function to obtain binary confirmation (yes/no) from the user
-    '''
-    userinput = input()
+# def ask_user ():
+#     ''' utility function to obtain binary confirmation (yes/no) from the user
+#     '''
+#     userinput = input()
 
-    if userinput.lower() not in ['yes', 'no', 'y', 'n']:
-        print('Please write "yes", "no", "y" or "n"')
-        return False
-    elif userinput.lower() in ['yes', 'y']:
-        return True
-    return False
+#     if userinput.lower() not in ['yes', 'no', 'y', 'n']:
+#         print('Please write "yes", "no", "y" or "n"')
+#         return False
+#     elif userinput.lower() in ['yes', 'y']:
+#         return True
+#     return False
 
-
-def configure(path: None, silent: False):
+# def configure(path: None, silent: False, username='default', project='default'):
+def configure(path: None, silent: False, username=None, project=None):
     """Configures model repository.
 
     Loads config.yaml and writes a correct model repository path
@@ -61,8 +61,13 @@ def configure(path: None, silent: False):
     """
     
     success, config = utils.read_config()
+    source_dir = ''
     if not success:
         return False, config
+
+    ########################################################
+    ###  Silent
+    ########################################################
 
     if silent:
         if path is not None:  
@@ -70,92 +75,54 @@ def configure(path: None, silent: False):
         else:
             source_dir = os.path.dirname(os.path.dirname(__file__)) 
 
-        models_path = os.path.join (source_dir,'models')
-        predictions_path = os.path.join (source_dir,'predictions')
-        spaces_path = os.path.join (source_dir,'spaces')
-
-        try:
-            if not os.path.isdir(models_path):
-                os.mkdir(models_path)
-            if not os.path.isdir(spaces_path):
-                os.mkdir(spaces_path)
-            if not os.path.isdir(predictions_path):
-                os.mkdir(predictions_path)
-        except Exception as e:
-            return False, e
+        success = utils.set_repositories(source_dir, username, project)
         
-        utils.set_repositories(models_path, spaces_path, predictions_path)
-        
-        print(f'model repository set to {models_path}')
-        print(f'space repository set to {spaces_path}')
-        print(f'predictions repository set to {predictions_path}')
+        if success:
+            return True, config
+        else:
+            return False, 'error setting the repositories'
 
-        return True, config
-
+    ########################################################
+    ###  Path not provided
+    ########################################################
     if path is None:  # set default
 
         # If flame has been already configured, just show values in screen and return values
         if config['config_status'] == True:
-
-            models_path = config["model_repository_path"]
-            spaces_path = config["space_repository_path"]
-            predictions_path = config["predictions_repository_path"]
-            try:
-                if not os.path.isdir(models_path):
-                    os.mkdir(models_path)
-                if not os.path.isdir(spaces_path):
-                    os.mkdir(spaces_path)
-                if not os.path.isdir(predictions_path):
-                    os.mkdir(predictions_path)
-            except Exception as e:
-                return False, e
-
-            print(f'current model repository is {models_path}')
-            print(f'current space repository is {spaces_path}')
-            print(f'current predictions repository is {predictions_path}')
-
+            for i in ['model_repository_path', 'space_repository_path', 'predictions_repository_path']:
+                print (f'{i}: {config[i]}')
             return True, config
 
-        # If flame has not been already configured assign defaults
-        models_path = appdirs.user_data_dir('models', 'flame')
-        spaces_path = appdirs.user_data_dir('spaces', 'flame')
-        predictions_path = appdirs.user_data_dir('predictions', 'flame')
-    else :
+        # Assign defaults
+        source_dir = appdirs.user_data_dir('flame',False)
+        if not os.path.isdir(source_dir):
+            try:
+                os.mkdir(source_dir)
+            except Exception as e:
+                return False, f'Error {e}'
 
+    ########################################################
+    ###  Path provided
+    ########################################################
+    else :
         try:
             source_dir = os.path.realpath(path)
         except:
             return False, f'input path {path} is not recognized as a valid path'
 
-        models_path = os.path.join (source_dir,'models')
-        predictions_path = os.path.join (source_dir,'predictions')
-        spaces_path = os.path.join (source_dir,'spaces')
+    ########################################################
+    ###  Common
+    ########################################################
+    # print(f'root repository will be set to {source_dir}')
+    # print('continue?(y/n)')
 
-    # at this point, paths must has been assigned
-    print(f'model repository will be set to {models_path}')
-    print(f'space repository will be set to {spaces_path}')
-    print(f'predictions repository will be set to {predictions_path}')
-    print('continue?(y/n)')
-
-    if ask_user():
-
-        try:
-            if not os.path.isdir(models_path):
-                os.mkdir(models_path)
-            if not os.path.isdir(spaces_path):
-                os.mkdir(spaces_path)
-            if not os.path.isdir(predictions_path):
-                os.mkdir(predictions_path)
-        except Exception as e:
-            return False, e
-        
-        utils.set_repositories(models_path, spaces_path, predictions_path)
-
-        print(f'model repository set to {models_path}')
-        print(f'space repository set to {spaces_path}')
-        print(f'predictions repository set to {predictions_path}')
+    # if ask_user():
+    success = utils.set_repositories(source_dir, username, project)
+    if success:
         return True, config
-
     else:
-        print('aborting...')
-        return False, 'configuration aborted'
+        return False, 'error setting the repositories'
+
+    # else:
+    #     print('aborting...')
+    #     return False, 'configuration aborted'

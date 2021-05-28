@@ -41,9 +41,7 @@ def set_model_repository(path=None):
     """
     utils.set_model_repository(path)
 
-    # this is a console oriented tool which prints messages. Avoid use of LOG.info
     LOG.info(f'Model repository updated to {path}')
-    #print(f'Model repository updated to {path}')
     return True, 'model repository updated'
 
 
