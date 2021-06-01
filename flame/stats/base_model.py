@@ -1041,6 +1041,12 @@ class BaseEstimator:
             normalizing_id = conformal_settings['normalizing_model']
         else:
             normalizing_id = None
+            
+            # some old versions of Flame used 'error_model' terminology 
+            if 'error_model' in conformal_settings:
+                normalizing_id = conformal_settings['error_model']
+
+
 
         normalizers = {'KNN' : RegressorAdapter(
                                 KNeighborsRegressor(
