@@ -148,6 +148,8 @@ class Combo (BaseEstimator):
                     self.specificityPred = (self.TNpred / (self.TNpred + self.FPpred))
 
                 self.mccp = matthews_corrcoef(Y, Yp)
+                if np.isnan(self.mcccp):
+                    self.mccp = 0.000
 
                 # TODO: it is not too clear if the results of validation in ensemble models is internal or
                 # external. Both sets are added to avoid problems with the GUI but this requires futher
@@ -254,6 +256,8 @@ class Combo (BaseEstimator):
 
             # protect to avoid warnings in special cases (div by zero)
             MCC =  matthews_corrcoef(Ye, Yp)
+            if np.isnan(MCC):
+                MCC = 0.00
 
             if (TP+FN) > 0:
                 sensitivity = (TP / (TP + FN))

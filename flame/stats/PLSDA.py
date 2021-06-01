@@ -272,6 +272,8 @@ class PLSDA(BaseEstimator):
                     y_pred2[y_pred2 < threshold] = 0
                     y_pred2[y_pred2 >= threshold] = 1
                     mcc1 = mcc(Y, y_pred2)
+                    if np.isnan(mcc1):
+                        mcc1 = 0.00
                     # Update threshold value with current best value
                     if mcc1 >= mcc0:
                         mcc0 = mcc1

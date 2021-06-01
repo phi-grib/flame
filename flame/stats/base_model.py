@@ -210,8 +210,9 @@ class BaseEstimator:
                 # a single class is represented (all TP, for example)
                 TN, FP, FN, TP = confusion_matrix(Ye, Yp, labels=[0, 1]).ravel()
 
-                # protect to avoid warnings in special cases (div by zero)
                 MCC = mcc(Ye, Yp)
+                if np.isnan(MCC):
+                    MCC = 0.000
 
                 if (TP+FN) > 0:
                     sensitivity = (TP / (TP + FN))
@@ -306,6 +307,8 @@ class BaseEstimator:
                     else:
                         not_predicted += 1
                 MCC = mcc(Ye1, Yp1)
+                if np.isnan(MCC):
+                    MCC = 0.00
                 TN = c0_correct
                 FP = c0_incorrect
                 TP = c1_correct
@@ -638,7 +641,7 @@ class BaseEstimator:
         except Exception as e:
             LOG.error(f'Failed to compute Mathews Correlation Coefficient'
                         f'exception {e}')
-            self.mcc_f = '-'
+            self.mcc_f = 0.000
  
         # Compute sensitivity, specificity and MCC for cross-validation
         try:
@@ -665,7 +668,7 @@ class BaseEstimator:
         except Exception as e:
             LOG.error(f'Failed to compute Mathews Correlation Coefficient'
                         f'exception {e}')
-            self.mcc = '-'
+            self.mcc = 0.000
 
         info.append(('Sensitivity_f', 'Sensitivity in fitting', self.sensitivity_f))
         info.append(('Specificity_f', 'Specificity in fitting', self.specificity_f))
@@ -829,6 +832,8 @@ class BaseEstimator:
             self.sensitivity_f = (self.TP_f / (self.TP_f + self.FN_f))
             self.specificity_f = (self.TN_f / (self.TN_f + self.FP_f))
             self.mcc_f = mcc(Y, Yp)
+            if np.isnan(self.mcc_f):
+                self.mcc_f = 0.00
 
             info.append(('TP_f', 'True positives in fitting', self.TP_f))
             info.append(('TN_f', 'True negatives in fitting', self.TN_f))
@@ -871,10 +876,12 @@ class BaseEstimator:
             self.mcc = (((self.TP * self.TN) - (self.FP * self.FN)) /
                         np.sqrt((self.TP + self.FP) * (self.TP + self.FN) *
                          (self.TN + self.FP) * (self.TN + self.FN)))
+            if np.isnan(self.mcc):
+                self.mcc = 0.00
         except Exception as e:
             LOG.warning(f'Failed to compute Mathews Correlation Coefficient'
                         f'exception {e}')
-            self.mcc = '-'
+            self.mcc = 0.00
 
         info.append(('TP', 'True positives in cross-validation', self.TP))
         info.append(('TN', 'True negatives in cross-validation', self.TN))
