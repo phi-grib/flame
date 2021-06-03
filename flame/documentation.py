@@ -32,6 +32,8 @@ from flame.conveyor import Conveyor
 from flame.parameters import Parameters
 from rdkit.Chem import AllChem
 import hashlib
+# pip install python-docx
+# from docx import Document
 
 class Documentation:
     ''' Class storing the information needed to documentate models
@@ -398,6 +400,11 @@ class Documentation:
         return (yaml_out)
 
 
+    # def dumpWORD (self):
+
+    #     document = Document()
+    #     document.add_heading('Document Title', 0)
+    #     return (document)
 
     def assign_parameters(self):
         '''
