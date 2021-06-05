@@ -485,7 +485,7 @@ def action_parameters(model, version=None, oformat='text'):
 ## the following commands are argument-less, intended to be called from a web-service to 
 ## generate python output only
 
-def action_documentation(model, version=None, doc_file=None, oformat='WORD'):
+def action_documentation(model, version=None, doc_file=None, oformat='YAML'):
     ''' Returns an object with whole results info for a given model and version '''
 
     if model is None:
@@ -514,11 +514,18 @@ def action_documentation(model, version=None, doc_file=None, oformat='WORD'):
             print (line)
         return True, 'parameters listed'
     
-    # if oformat == 'WORD':
-    #     word = doc.dumpWORD ()
-    #     word.save ('my_documentation.docx')
+    if oformat == 'WORD':
+        oname = 'documentation_'+model+'v'+str(version)+'.docx'
+
+        success, result = doc.dumpWORD (oname)
+
+        if success:
+            print (f'model documentation saved as: {oname}')
+            return True, oname
+
+        return False, result
     
-    # OUTPUT, the doc will be returened as a documentation object
+    # OUTPUT, the doc will be returned as a documentation object
     return True, doc
 
 

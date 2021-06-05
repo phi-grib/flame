@@ -32,8 +32,8 @@ from flame.conveyor import Conveyor
 from flame.parameters import Parameters
 from rdkit.Chem import AllChem
 import hashlib
-# pip install python-docx
-# from docx import Document
+
+
 
 class Documentation:
     ''' Class storing the information needed to documentate models
@@ -400,11 +400,135 @@ class Documentation:
         return (yaml_out)
 
 
-    # def dumpWORD (self):
+    def dumpWORD (self, oname):
 
-    #     document = Document()
-    #     document.add_heading('Document Title', 0)
-    #     return (document)
+        # python-docx should be installed in the environment
+        # pip install python-docx
+
+        from docx import Document
+        from docx.shared import Pt
+        from docx.shared import RGBColor
+
+        document = Document()
+
+        # define style for normal and heading 1
+        normal_style = document.styles['Normal']
+        normal_font = normal_style.font
+        normal_font.name = 'Calibri'
+        normal_font.size = Pt(10)
+
+        heading_style = document.styles['heading 1']
+        heading_font = heading_style.font
+        heading_font.name = 'Calibri'
+        heading_font.color.rgb = RGBColor(0x00, 0x00, 0x00)
+        heading_font.size = Pt(12)
+
+        # withd of column 1 and 2
+        wcol1 = 1400000
+        wcol2 = 4200000
+
+        # withd of internal columns i and 2
+        wicol1 = 1200000
+        wicol2 = 2900000
+
+        # sections of the document, specifying the document keys which will be listed
+        sections = [('General model information',['ID', 'Version', 'Model_title', 'Model_description', 'Keywords', 'Contact', 'Institution', 'Date', 'Endpoint',
+                        'Endpoint_units', 'Interpretation', 'Dependent_variable', 'Species',
+                        'Limits_applicability', 'Experimental_protocol', 'Model_availability',
+                        'Data_info']), 
+                    ('Algorithm and software',['Algorithm', 'Software', 'Descriptors', 'Algorithm_settings',
+                        'AD_method', 'AD_parameters', 'Goodness_of_fit_statistics',
+                        'Internal_validation_1', 'Internal_validation_2', 'External_validation',
+                        'Comments']),
+                    ('Other information',['Other_related_models', 'Date_of_QMRF', 'Date_of_QMRF_updates',
+                        'QMRF_updates', 'References', 'QMRF_same_models', 'Mechanistic_basis', 
+                        'Mechanistic_references', 'Supporting_information', 'Comment_on_the_endpoint',
+                        'Endpoint_data_quality_and_variability', 'Descriptor_selection'])]
+
+        for isection in sections:
+            # heading with the section name
+            document.add_heading(isection[0], level=1)
+
+            # table with one row per key 
+            table = document.add_table(rows=len(isection[1]), cols=2)
+            table.style = 'Table Grid'
+            table.autofit = False
+
+            count = 0
+            for ik in isection[1]:
+                # add a row and format two columns
+                row = table.rows[count]
+                row.cells[0].width = wcol1
+                row.cells[1].width = wcol2
+                
+                label_k = ik.replace('_',' ')
+                row.cells[0].text = f'{label_k}'
+                count = count+1
+                
+                # define value
+                if ik in self.fields:
+
+                    # set defaults for value
+                    ivalue = ''
+
+                    # v is the selected entry in the documentation dictionary
+                    v = self.fields[ik]
+
+                    ## newest parameter formats are extended and contain
+                    ## rich metainformation for each entry
+                    if 'value' in v:
+                        ivalue = v['value']
+                        
+                        # if ivalue is a dictionary create a nested table and iterate
+                        # to represent the keys within
+                        if isinstance(ivalue ,dict):
+
+                            row.cells[0].text = f'{label_k}'
+                            itable = row.cells[1].add_table(rows=len(ivalue), cols=2)
+                            itable.style = 'Table Grid'
+                            itable.autofit = False
+
+                            icount = 0
+                            # iterate keys assuming existence of value and description
+                            for intk in ivalue:
+                                label_ik = intk.replace('_', ' ')
+
+                                irow = itable.rows[icount]
+                                irow.cells[0].width=wicol1
+                                irow.cells[1].width=wicol2
+                                icount = icount +1
+                   
+                                intv = ivalue[intk]
+                                if not isinstance(intv, dict):
+                                    iivalue = intv
+                                
+                                else:
+                                    intv = ivalue[intk]
+
+                                    iivalue = ''
+                                    if "value" in intv:                                
+                                        iivalue = intv["value"]
+                                    if isinstance (iivalue, float):
+                                        iivalue =  f'{iivalue:f}'
+                                    elif iivalue is None:
+                                        iivalue = ''
+
+                                irow.cells[0].text = f'{label_ik}'
+                                irow.cells[1].text = f'{str(iivalue)}'
+
+                        # if the key is not a dictionary just insert the value inside
+                        else:
+                            if ivalue is None: 
+                                ivalue = ''
+
+                            row.cells[1].text = f'{str(ivalue)}'
+
+        try:
+            document.save(oname)
+        except:
+            return False, f'error saving document as {oname}'
+            
+        return True, 'OK'
 
     def assign_parameters(self):
         '''
