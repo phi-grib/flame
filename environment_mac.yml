@@ -16,6 +16,7 @@ dependencies:
   - pytest
   - psycopg2
   - chembl_structure_pipeline
+  - python-docx
   - pip:
      - django==2.2.8
      - djangorestframework
