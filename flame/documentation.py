@@ -409,19 +409,27 @@ class Documentation:
         from docx.shared import Pt
         from docx.shared import RGBColor
 
-        document = Document()
+        # most of the formatting is included in this template, where we
+        # redefined default styles for Normal, 'heading 1' and 'Table Grid'
+        # 
+        # note that this template can be easily customized with a company 
+        # or project logo
+        path = os.path.dirname(os.path.abspath(__file__))
+        path = os.path.join(path,'children')
+        path = os.path.join(path,'documentation_template.docx')
+        document = Document(path)
 
         # define style for normal and heading 1
-        normal_style = document.styles['Normal']
-        normal_font = normal_style.font
-        normal_font.name = 'Calibri'
-        normal_font.size = Pt(10)
+        # normal_style = document.styles['Normal']
+        # normal_font = normal_style.font
+        # normal_font.name = 'Calibri'
+        # normal_font.size = Pt(10)
 
-        heading_style = document.styles['heading 1']
-        heading_font = heading_style.font
-        heading_font.name = 'Calibri'
-        heading_font.color.rgb = RGBColor(0x00, 0x00, 0x00)
-        heading_font.size = Pt(12)
+        # heading_style = document.styles['heading 1']
+        # heading_font = heading_style.font
+        # heading_font.name = 'Calibri'
+        # heading_font.color.rgb = RGBColor(0x00, 0x00, 0x00)
+        # heading_font.size = Pt(12)
 
         # withd of column 1 and 2
         wcol1 = 1400000
