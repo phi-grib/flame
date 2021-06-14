@@ -398,6 +398,103 @@ class Documentation:
                 yaml_out.append (f'{k:30} : {str(ivalue):30} #{ioptio} {idescr}')
         
         return (yaml_out)
+    def dumpExcel (self,oname):
+            # openpyxl should be installed in the environment
+            # pip install openpyxl
+            from openpyxl import Workbook
+            from openpyxl.styles import Font,NamedStyle,Alignment
+
+            wb = Workbook() 
+            ws = wb.active 
+            ws.title = "Model documentation" 
+
+            # Labels Style
+            Label = NamedStyle(name="Label")
+            Label.font = Font(name='Calibri',size=11,bold=True)
+            Label.alignment = Alignment(vertical='center',wrapText=True)
+            # Column dimensions
+            ws.column_dimensions['A'].width = 31.10
+            ws.column_dimensions['B'].width = 28.00
+            ws.column_dimensions['C'].width = 18.00
+
+            # sections of the document, specifying the document keys which will be listed
+            sections = [('General model information',['ID', 'Version', 'Model_title', 'Model_description', 'Keywords', 'Contact', 'Institution', 'Date', 'Endpoint',
+                        'Endpoint_units', 'Interpretation', 'Dependent_variable', 'Species',
+                        'Limits_applicability', 'Experimental_protocol', 'Model_availability',
+                        'Data_info']), 
+                        ('Algorithm and software',['Algorithm', 'Software', 'Descriptors', 'Algorithm_settings',
+                        'AD_method', 'AD_parameters', 'Goodness_of_fit_statistics',
+                        'Internal_validation_1', 'Internal_validation_2', 'External_validation',
+                        'Comments']),
+                        ('Other information',['Other_related_models', 'Date_of_QMRF', 'Date_of_QMRF_updates',
+                        'QMRF_updates', 'References', 'QMRF_same_models', 'Mechanistic_basis', 
+                        'Mechanistic_references', 'Supporting_information', 'Comment_on_the_endpoint',
+                        'Endpoint_data_quality_and_variability', 'Descriptor_selection'])]
+
+
+            count = 1
+            for isection in sections:
+              
+                for ik in isection[1]:
+                    label_k = ik.replace('_',' ')
+                    ws[f"A{count}"] = label_k
+                    ws[f"A{count}"].style = Label
+
+                    if ik in self.fields:
+                        # set defaults for value
+                        ivalue= ''
+                        #v is the selected entry in the documentation dictionary
+                        v = self.fields[ik]
+                        ## newest parameter formats are extended and contain
+                        ## rich metainformation for each entry
+                        if 'value' in v:
+                            ivalue = v['value']
+                            # if is a dict create new rows.
+                            if isinstance(ivalue,dict):
+                            
+                                end = (count)+(len(ivalue)-1)
+                                             
+                                for intk in ivalue:
+                                    label_ik = intk.replace('_',' ')
+                                    ws[f'B{count}'] = label_ik
+                                    ws[f'B{count}'].style = Label
+                                     
+                                    intv = ivalue[intk]
+                                    if not isinstance(intv,dict):
+                                        iivalue = intv
+                                        if iivalue is None:
+                                            iivalue = " "
+                                    else:
+                                        intv = ivalue[intk]
+                                        iivalue = ''
+                                        if 'value' in intv:
+                                            iivalue = intv["value"]
+                                        if iivalue is None:
+                                            iivalue = ''
+                                   
+                                    ws[f'C{count}'] = f'{str(iivalue)}'
+                                    ws[f'C{count}'].font = Font(name='Calibri',size=11,color='3465a4')
+                                    
+                                    ws.merge_cells(f'A{count}:A{end}')
+                                
+                                    
+                                    count +=1
+                                            
+                            else:
+                                if ivalue is None:
+                                    ivalue = ''
+
+                                ws[f'C{count}'] = f'{str(ivalue)}'
+                                ws[f'C{count}'].font = Font(name='Calibri',size=11,color='3465a4')
+                            
+                        count += 1
+                    
+            try:    
+                wb.save(oname)
+            except:
+                return False, f'error saving document as {oname}'
+            
+            return True, 'OK'
 
 
     def dumpWORD (self, oname):
