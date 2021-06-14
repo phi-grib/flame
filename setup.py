@@ -22,6 +22,7 @@ setup(
         'console_scripts': ['flame=flame.flame_scr:main'],
     },
     # If any package contains *.txt or *.rst files, include them:
-    package_data={'': ['*.yaml', '*.yml']},
+    # package_data={'': ['*.yaml', '*.yml']},
+    package_data={'flame': ['config.yaml','children/*.yaml', 'children/*.docx']},
     install_requires=['appdirs']
 )
