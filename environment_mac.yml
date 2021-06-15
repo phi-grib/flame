@@ -17,6 +17,7 @@ dependencies:
   - psycopg2
   - chembl_structure_pipeline
   - python-docx
+  - openpyxl
   - pip:
      - django==2.2.8
      - djangorestframework
