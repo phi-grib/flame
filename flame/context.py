@@ -471,6 +471,9 @@ def manage_cmd(args):
         elif args.action == 'documentation_word':
             success, results = manage.action_documentation(args.endpoint, version, 
             None, oformat='WORD')
+        elif args.action == 'documentation_excel':
+            success, results = manage.action_documentation(args.endpoint, version, 
+            None, oformat='EXCEL')
         elif args.action == 'model_template':
             success, results = manage.action_model_template(args.endpoint, 
             version,  args.documentation_file)
