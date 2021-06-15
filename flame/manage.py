@@ -522,6 +522,15 @@ def action_documentation(model, version=None, doc_file=None, oformat='YAML'):
         if success:
             print (f'model documentation saved as: {oname}')
             return True, oname
+    
+    if oformat == "EXCEL":
+        oname = 'documentation_'+model+'v'+str(version)+'.xlsx'
+
+        success, result = doc.dumpExcel(oname)
+
+        if success:
+            print(f'model documentation saved as {oname}')
+            return True,oname 
 
         return False, result
     
