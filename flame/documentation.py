@@ -399,23 +399,27 @@ class Documentation:
         
         return (yaml_out)
     def dumpExcel (self,oname):
+
             # openpyxl should be installed in the environment
             # pip install openpyxl
+           
             from openpyxl import Workbook
             from openpyxl.styles import Font,NamedStyle,Alignment
+            from openpyxl.comments import Comment
 
             wb = Workbook() 
             ws = wb.active 
-            ws.title = "Model documentation" 
+            ws.title = f"Model {self.model} documentation" 
 
-            # Labels Style
+            # Label Style
             Label = NamedStyle(name="Label")
             Label.font = Font(name='Calibri',size=11,bold=True)
             Label.alignment = Alignment(vertical='center',wrapText=True)
-            # Column dimensions
-            ws.column_dimensions['A'].width = 31.10
+            
+            ws.column_dimensions['A'].width = 25.10
             ws.column_dimensions['B'].width = 28.00
             ws.column_dimensions['C'].width = 18.00
+            ws.column_dimensions['D'].width = 90.00
 
             # sections of the document, specifying the document keys which will be listed
             sections = [('General model information',['ID', 'Version', 'Model_title', 'Model_description', 'Keywords', 'Contact', 'Institution', 'Date', 'Endpoint',
@@ -431,14 +435,23 @@ class Documentation:
                         'Mechanistic_references', 'Supporting_information', 'Comment_on_the_endpoint',
                         'Endpoint_data_quality_and_variability', 'Descriptor_selection'])]
 
-
+            #Save the position and name of the label for the first and last section
+            position = []
+            name = [sections[0][1][0],'Other Comments']
+            
             count = 1
             for isection in sections:
-              
+
                 for ik in isection[1]:
+                 
                     label_k = ik.replace('_',' ')
-                    ws[f"A{count}"] = label_k
-                    ws[f"A{count}"].style = Label
+
+                    if label_k == 'Internal validation 2' or label_k == 'External validation':
+                        ws[f"A{count}"] = label_k
+                        ws[f'A{count}'].style = Label
+                    else:
+                        ws[f"B{count}"] = label_k
+                        ws[f"B{count}"].style = Label
 
                     if ik in self.fields:
                         # set defaults for value
@@ -449,18 +462,23 @@ class Documentation:
                         ## rich metainformation for each entry
                         if 'value' in v:
                             ivalue = v['value']
-                            # if is a dict create new rows.
+                             
                             if isinstance(ivalue,dict):
-                            
+
+                                ws[f"A{count}"] = label_k
+                                ws[f"A{count}"].style = Label
+                                
                                 end = (count)+(len(ivalue)-1)
-                                             
+
                                 for intk in ivalue:
                                     label_ik = intk.replace('_',' ')
                                     ws[f'B{count}'] = label_ik
                                     ws[f'B{count}'].style = Label
+                                    
                                      
                                     intv = ivalue[intk]
                                     if not isinstance(intv,dict):
+                                        
                                         iivalue = intv
                                         if iivalue is None:
                                             iivalue = " "
@@ -471,31 +489,50 @@ class Documentation:
                                             iivalue = intv["value"]
                                         if iivalue is None:
                                             iivalue = ''
-                                   
+
+                                        ws[f'D{count}'] = intv['description']
+                                        
                                     ws[f'C{count}'] = f'{str(iivalue)}'
                                     ws[f'C{count}'].font = Font(name='Calibri',size=11,color='3465a4')
                                     
                                     ws.merge_cells(f'A{count}:A{end}')
-                                
-                                    
+                                 
                                     count +=1
-                                            
+                                               
                             else:
+
+                                ws[f'D{count}'] = v['description']
+
+                                if label_k == 'Experimental protocol' or label_k == 'Comments':
+                                    position.append(count)
+                                    
                                 if ivalue is None:
                                     ivalue = ''
 
                                 ws[f'C{count}'] = f'{str(ivalue)}'
                                 ws[f'C{count}'].font = Font(name='Calibri',size=11,color='3465a4')
-                            
-                        count += 1
-                    
+                                
+                                count += 1
+            
+            itr = 0
+            for i in position:
+                if itr == 0:    
+                    ws[f'A{1}'] = name[itr]
+                    ws[f"A{1}"].style = Label
+                    ws.merge_cells(f'A{1}:A{i}')
+                else:
+                    ws[f'A{i}'] = name[itr]
+                    ws[f"A{i}"].style = Label
+                    ws.merge_cells(f'A{i}:A{count-1}')
+
+                itr +=1
+
             try:    
                 wb.save(oname)
             except:
                 return False, f'error saving document as {oname}'
             
             return True, 'OK'
-
 
     def dumpWORD (self, oname):
 
