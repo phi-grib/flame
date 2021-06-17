@@ -398,6 +398,7 @@ class Documentation:
                 yaml_out.append (f'{k:30} : {str(ivalue):30} #{ioptio} {idescr}')
         
         return (yaml_out)
+
     def dumpExcel (self,oname):
 
             # openpyxl should be installed in the environment
@@ -405,21 +406,22 @@ class Documentation:
            
             from openpyxl import Workbook
             from openpyxl.styles import Font,NamedStyle,Alignment
-            from openpyxl.comments import Comment
+            # from openpyxl.comments import Comment
 
             wb = Workbook() 
             ws = wb.active 
             ws.title = f"Model {self.model} documentation" 
-
+            alignment_style = Alignment(vertical='top',wrapText=True)
+            
             # Label Style
             Label = NamedStyle(name="Label")
             Label.font = Font(name='Calibri',size=11,bold=True)
-            Label.alignment = Alignment(vertical='center',wrapText=True)
+            Label.alignment = alignment_style
             
             ws.column_dimensions['A'].width = 25.10
             ws.column_dimensions['B'].width = 28.00
-            ws.column_dimensions['C'].width = 18.00
-            ws.column_dimensions['D'].width = 90.00
+            ws.column_dimensions['C'].width = 60.00
+            ws.column_dimensions['D'].width = 60.00
 
             # sections of the document, specifying the document keys which will be listed
             sections = [('General model information',['ID', 'Version', 'Model_title', 'Model_description', 'Keywords', 'Contact', 'Institution', 'Date', 'Endpoint',
@@ -491,9 +493,12 @@ class Documentation:
                                             iivalue = ''
 
                                         ws[f'D{count}'] = intv['description']
+                                        ws[f'D{count}'].alignment = alignment_style
+
                                         
                                     ws[f'C{count}'] = f'{str(iivalue)}'
                                     ws[f'C{count}'].font = Font(name='Calibri',size=11,color='3465a4')
+                                    ws[f'C{count}'].alignment = alignment_style
                                     
                                     ws.merge_cells(f'A{count}:A{end}')
                                  
@@ -502,6 +507,7 @@ class Documentation:
                             else:
 
                                 ws[f'D{count}'] = v['description']
+                                ws[f'D{count}'].alignment = alignment_style
 
                                 if label_k == 'Experimental protocol' or label_k == 'Comments':
                                     position.append(count)
@@ -511,6 +517,8 @@ class Documentation:
 
                                 ws[f'C{count}'] = f'{str(ivalue)}'
                                 ws[f'C{count}'].font = Font(name='Calibri',size=11,color='3465a4')
+                                ws[f'C{count}'].alignment = alignment_style
+
                                 
                                 count += 1
             
