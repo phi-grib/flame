@@ -1,8 +1,8 @@
 name: flame
 channels:
   - default
-  - rdkit
   - conda-forge 
+  - rdkit
   - chembl
 dependencies:
   - pip
@@ -10,14 +10,17 @@ dependencies:
   - setuptools=>38.4.0
   - scikit-learn=0.24.1
   - imbalanced-learn=>0.8.0
+  - appdirs
   - requests
   - rdkit=2020.09.1.0
   - pyyaml
   - pytest
   - psycopg2
   - chembl_structure_pipeline
+  - chembl_webresource_client
   - python-docx
   - openpyxl
+  - lxml
   - pip:
      - xgboost
      - django==2.2.8
@@ -26,4 +29,6 @@ dependencies:
      - djangorestframework-yaml
      - "https://github.com/phi-grib/standardiser/archive/master.zip"
      - "https://github.com/phi-grib/nonconformist/archive/master.zip"
+     - "https://github.com/phi-grib/EPA_simplified/archive/master.zip"
+     - "https://github.com/phi-grib/Data_curation/archive/master.zip"
 
