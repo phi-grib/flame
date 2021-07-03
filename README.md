@@ -90,12 +90,16 @@ or
 python setup.py install
 ```
 
-For development, use the -e flag. This will made accesible the latest changes to other components (eg. flame_ws)
+For development, use pip with the -e flag or setup with `develop` instead of `install`. This will made accesible the latest changes to other components (eg. flame_API)
 
 ```bash
 pip install -e .
 ```
+or 
 
+```bash
+python setup develop
+```
 
 ## Configuration
 
