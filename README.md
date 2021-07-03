@@ -98,7 +98,7 @@ pip install -e .
 or 
 
 ```bash
-python setup develop
+python setup.py develop
 ```
 
 ## Configuration
