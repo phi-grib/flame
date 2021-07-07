@@ -29,7 +29,7 @@ import codecs
 import string
 import re 
 
-from flame.util import utils, get_logger
+from flame.util import utils, verify, get_logger
 
 # if the number of models is higher, try to run in multithread
 MAX_MODELS_SINGLE_CPU = 4
@@ -495,6 +495,8 @@ def manage_cmd(args):
             success, results = manage.action_predictions_remove(args.label)
         elif args.action == 'label':
             success, results = manage.action_label(args.endpoint, version, args.label)
+        elif args.action == 'verify':
+            success, results = verify.verify(args.endpoint, version)
         else: 
             success = False
             results = "Specified manage action is not defined"
