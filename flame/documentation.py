@@ -1017,6 +1017,8 @@ class Documentation:
         # use picke as a buffered object, neccesary to generate the hexdigest
         p = pickle.dumps(idata_params)
         return hashlib.md5(p).hexdigest()
+
+        
     def empty_fields(self):
         '''
         This function checks which fields do not contain values 

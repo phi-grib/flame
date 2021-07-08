@@ -17,13 +17,7 @@ def verify_documentation (endpoint, version=None):
 
     # implement empty_fields method in documentation that iterates the fields
     # and returns a list with those that are empty
-    empty = doc.empty_fields()
-    if empty is not None:
-        return False, empty
-
-    print ('verify_documentation', endpoint, version)
-
-    return True, 'OK'
+    return True, doc.empty_fields()
 
 def verify_data (endpoint, version=None):
     print ('verify_data', endpoint, version)
@@ -35,16 +29,19 @@ def verify_prediction (endpoint, version=None):
 
 def verify (endpoint, version=None):
     
-    success, result = verify_documentation (endpoint, version)
+    result = {}
+    success,  result['documentation'] = verify_documentation (endpoint, version)
     if not success:
         return False, result
 
-    success, result = verify_data (endpoint, version)
+    success, result['data'] = verify_data (endpoint, version)
     if not success:
         return False, result
 
-    success, result = verify_prediction (endpoint, version)
+    success, result['prediction'] = verify_prediction (endpoint, version)
     if not success:
         return False, result
 
-    return True, 'OK'
+    print (result)
+    
+    return True, result
