@@ -17,9 +17,7 @@ def verify_documentation (endpoint, version=None):
 
     # implement empty_fields method in documentation that iterates the fields
     # and returns a list with those that are empty
-    # empty = doc.empty_fields ()
-    empty = None
-
+    empty = doc.empty_fields()
     if empty is not None:
         return False, empty
 
