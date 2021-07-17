@@ -1102,6 +1102,13 @@ class Idata:
             self.conveyor.setError(f'{self.ifile} not found')
             return
 
+        # check that the input file is not a SDFile. This is a very common mistake
+        extension = os.path.splitext(self.ifile)[1]
+        if extension == '.sdf':
+            self.conveyor.setError('Input file must be a properly formated TSV, not a SDFile')
+            return
+
+
         #  Reading TSV by hand
         with open(self.ifile, 'r') as fi:
 
@@ -1171,9 +1178,21 @@ class Idata:
                         return
                         
         obj_num = index - 1  # the first line are variable names 
-        LOG.debug('loaded TSV with shape {} '.format(xmatrix.shape))
-        LOG.debug('creating ymatrix from column {}'.format(activity_param))
+        xmatrix_shape = xmatrix.shape
+
+        LOG.debug(f'loaded TSV with shape {xmatrix_shape}')
+        LOG.debug(f'creating ymatrix from column {activity_param}')
         
+        # if the input file is not properly formatted or is an incorrect type, the shape can be wrong
+        # it can be one-dimension or some of the dimensions can be zero
+        if len(xmatrix_shape) == 2 :
+            if xmatrix_shape[0] == 0 or xmatrix_shape[1] == 0:
+                self.conveyor.setError(f'Unable to process input TSV. Wrong dimensions. Input shape is: {xmatrix_shape}')
+                return
+        else:
+            self.conveyor.setError(f'Unable to process input TSV. Not a 2D matrix. Input shape is: {xmatrix_shape}')
+            return
+
         if iActivity != -1:
             self.conveyor.addVal( np.array(ymatrix), 'ymatrix', 'Activity', 'decoration',
                              'objs', 'Biological anotation to be predicted by the model')
