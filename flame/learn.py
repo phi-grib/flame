@@ -49,6 +49,17 @@ class Learn:
         self.param = parameters
         self.conveyor = conveyor
 
+        self.registered_methods = [('RF', RF),
+                              ('SVM', SVM),
+                              ('GNB', GNB),
+                              ('PLSR', PLSR),
+                              ('PLSDA', PLSDA), 
+                              ('median', median),
+                              ('mean', mean),
+                              ('majority', majority),
+                              ('logicalOR', logicalOR),
+                              ('matrix', matrix)]
+
         self.X = self.conveyor.getVal('xmatrix')
         self.Y = self.conveyor.getVal('ymatrix')
 
@@ -218,20 +229,20 @@ class Learn:
         '''
 
         # expand with new methods here:
-        registered_methods = [('RF', RF),
-                              ('SVM', SVM),
-                              ('GNB', GNB),
-                              ('PLSR', PLSR),
-                              ('PLSDA', PLSDA), 
-                              ('median', median),
-                              ('mean', mean),
-                              ('majority', majority),
-                              ('logicalOR', logicalOR),
-                              ('matrix', matrix)]
+        # registered_methods = [('RF', RF),
+        #                       ('SVM', SVM),
+        #                       ('GNB', GNB),
+        #                       ('PLSR', PLSR),
+        #                       ('PLSDA', PLSDA), 
+        #                       ('median', median),
+        #                       ('mean', mean),
+        #                       ('majority', majority),
+        #                       ('logicalOR', logicalOR),
+        #                       ('matrix', matrix)]
 
         if self.param.getVal('model') == 'XGBOOST':
             from flame.stats.XGboost import XGBOOST
-            registered_methods.append( ('XGBOOST', XGBOOST))
+            self.registered_methods.append( ('XGBOOST', XGBOOST))
 
         # check suitability of Y matrix
         if not self.param.getVal('quantitative') :
@@ -265,7 +276,7 @@ class Learn:
 
         # instantiate an appropriate child of base_model
         model = None
-        for imethod in registered_methods:
+        for imethod in self.registered_methods:
             if imethod[0] == self.param.getVal('model'):
 
                 # we instantiate the subtype of base_model, 
