@@ -67,6 +67,13 @@ class Idata:
         self.param = parameters
         self.conveyor = conveyor
 
+        self.registered_methods = dict([('RDKit_properties', computeMD._RDKit_properties),
+                                   ('morganFP', computeMD._RDKit_morganFPS),
+                                   ('substructureFP', computeMD._RDKit_patternFPS),
+                                   ('rdkFP', computeMD._RDKit_rdkFPS),
+                                   ('RDKit_md', computeMD._RDKit_descriptors),
+                                   ('custom', self.computeMD_custom)])
+
         # self.format can inform if we are running in ghost mode
         # as part of an ensemble (low ensemble models)
         self.format = self.param.getVal('output_format')
@@ -508,19 +515,19 @@ class Idata:
 
         md_settings = self.param.getDict('MD_settings')
 
-        registered_methods = dict([('RDKit_properties', computeMD._RDKit_properties),
-                                   ('morganFP', computeMD._RDKit_morganFPS),
-                                   ('substructureFP', computeMD._RDKit_patternFPS),
-                                   ('rdkFP', computeMD._RDKit_rdkFPS),
-                                   ('RDKit_md', computeMD._RDKit_descriptors),
-                                   ('custom', self.computeMD_custom)])
+        # registered_methods = dict([('RDKit_properties', computeMD._RDKit_properties),
+        #                            ('morganFP', computeMD._RDKit_morganFPS),
+        #                            ('substructureFP', computeMD._RDKit_patternFPS),
+        #                            ('rdkFP', computeMD._RDKit_rdkFPS),
+        #                            ('RDKit_md', computeMD._RDKit_descriptors),
+        #                            ('custom', self.computeMD_custom)])
 
         fingerprint_list = ['rdkFP','morganFP','substructreFP']  # update with any other fingerprint method
 
         # check if input methods are members of registered methods
-        if not all(m in registered_methods for m in methods):
+        if not all(m in self.registered_methods for m in methods):
             # find the non member methods
-            no_recog_meth = [m for m in methods if m not in registered_methods]
+            no_recog_meth = [m for m in methods if m not in self.registered_methods]
 
             if len(no_recog_meth) == len(methods):
                 # then no md method is correct... so error
@@ -540,7 +547,7 @@ class Idata:
         combined = {}
         for method in methods:
             # success, results = registered_methods[method](ifile)
-            success, results = registered_methods[method](ifile, **md_settings)
+            success, results = self.registered_methods[method](ifile, **md_settings)
 
             if not success:  # if computing returns False in status
                 return success, results

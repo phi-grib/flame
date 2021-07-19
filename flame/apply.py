@@ -48,8 +48,18 @@ class Apply:
         self.param = parameters
         self.conveyor = conveyor
 
-
-
+        # registered method should be defined in the constructor, so the overrided
+        # childs can enrich the methods
+        self.registered_methods = [('RF', RF),
+                        ('SVM', SVM),
+                        ('GNB', GNB),
+                        ('PLSR', PLSR),
+                        ('PLSDA', PLSDA),
+                        ('median', median),
+                        ('mean', mean),
+                        ('majority', majority),
+                        ('logicalOR', logicalOR),
+                        ('matrix', matrix)]
 
     # def external_validation(self):
     #     ''' when experimental values are available for the predicted compounds,
@@ -345,21 +355,21 @@ class Apply:
 
         '''
 
-        # expand with new methods here:
-        registered_methods = [('RF', RF),
-                              ('SVM', SVM),
-                              ('GNB', GNB),
-                              ('PLSR', PLSR),
-                              ('PLSDA', PLSDA),
-                              ('median', median),
-                              ('mean', mean),
-                              ('majority', majority),
-                              ('logicalOR', logicalOR),
-                              ('matrix', matrix)]
+        # # expand with new methods here:
+        # registered_methods = [('RF', RF),
+        #                       ('SVM', SVM),
+        #                       ('GNB', GNB),
+        #                       ('PLSR', PLSR),
+        #                       ('PLSDA', PLSDA),
+        #                       ('median', median),
+        #                       ('mean', mean),
+        #                       ('majority', majority),
+        #                       ('logicalOR', logicalOR),
+        #                       ('matrix', matrix)]
 
         if self.param.getVal('model') == 'XGBOOST':
             from flame.stats.XGboost import XGBOOST
-            registered_methods.append( ('XGBOOST', XGBOOST))
+            self.registered_methods.append( ('XGBOOST', XGBOOST))
 
         # assume X matrix is present in 'xmatrix'
         X = self.conveyor.getVal("xmatrix")
@@ -392,7 +402,7 @@ class Apply:
 
         # instantiate an appropriate child of base_model
         model = None
-        for imethod in registered_methods:
+        for imethod in self.registered_methods:
             if imethod[0] == self.param.getVal('model'):
 
                 # we instantiate the subtype of base_model, 
