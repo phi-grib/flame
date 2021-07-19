@@ -1169,8 +1169,9 @@ class Idata:
                         masked = [ x for x, z in zip(value_list, mask) if z==1 ]
                         value_array = np.array(masked, dtype=np.float64)
 
-                        if index == 1:  # for the fist row, just copy the value list to the xmatrix
+                        if index == 1:  # for the fist row, copy the value list to the xmatrix, but reshape it as a 2D array
                             xmatrix = value_array
+                            xmatrix = xmatrix.reshape(1,xmatrix.shape[0])
                         else:
                             xmatrix = np.vstack((xmatrix, value_array))
                     except Exception as e:
@@ -1179,6 +1180,7 @@ class Idata:
                         
         obj_num = index - 1  # the first line are variable names 
         xmatrix_shape = xmatrix.shape
+        print (xmatrix_shape)
 
         LOG.debug(f'loaded TSV with shape {xmatrix_shape}')
         LOG.debug(f'creating ymatrix from column {activity_param}')
