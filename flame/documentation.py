@@ -1057,6 +1057,8 @@ class Documentation:
         """
         #ID, Model identifier.
         self.fields['ID']['value'] = utils.getModelID(self.model,self.version, 'model')[1]
+        #Version
+        self.fields['Version']['value'] = str(self.version)
         #Date, Date of model development and Date of QMRF.
         today = date.today().strftime("%B %d, %Y")
 
@@ -1064,11 +1066,10 @@ class Documentation:
         self.fields['Date_of_QMRF']['value'] = today
 
         #format, Format used(SDF,TSV)
-        #data = tsv , else sdf
         if self.parameters.getVal('input_type') == 'data':
-            self.fields['Data_info']['value']['format']['value'] = 'SDF'
-        else:
             self.fields['Data_info']['value']['format']['value'] = 'TSV'
+        else:
+            self.fields['Data_info']['value']['format']['value'] = 'SDF'
         #Algorithm, type: QSAR.
         self.fields['Algorithm']['value']['type']['value'] = 'QSAR'
         #Model, Main modelling program, version, description and license.
@@ -1080,6 +1081,12 @@ class Documentation:
                 self.fields['Software']['value'][field]['value'] = "For conformal models only: "+software
             else:
                 self.fields['Software']['value'][field]['value'] = software
+
+        ### TO DO ###
+        # descriptors: AUTO(list descriptors).
+        # initial number: AUTO (# descriptors) .
+        # selection method: AUTO (feature selection, if applied, NO otherwhise) .
+        # selection: AUTO (final # descriptors if applied, no otherwise).
         
         
         
