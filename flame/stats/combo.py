@@ -24,6 +24,7 @@ import numpy as np
 import copy
 import yaml
 import os
+import pickle
 from sklearn.metrics import mean_squared_error
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import matthews_corrcoef
@@ -32,7 +33,7 @@ from flame.stats.base_model import BaseEstimator
 from flame.util import utils, get_logger
 
 LOG = get_logger(__name__)
-SIMULATION_SIZE = 500
+SIMULATION_SIZE = 1000
 
 class Combo (BaseEstimator):
     """
@@ -974,6 +975,233 @@ class matrix (Combo):
             sval = [np.array(yarray)]
             yarray = self.postprocess(sval)[0] 
 
+
+        return yarray
+
+
+class external_model (Combo):
+    """
+       Predict output using a pre-computed estimator
+
+       TODO: 
+       - implementing qualitative input and/or output
+       - use conformal settings to decide to run or not the simulations to compute CI
+
+    """
+    def __init__(self, X, Y, parameters, conveyor):
+        Combo.__init__(self, X, Y, parameters, conveyor)
+        self.model_path = parameters.getVal('model_path')
+        self.method_name = 'external model'
+
+
+    def lookup (self, x, vmatrix):
+        """Uses the array x of quantitative values to lookup in the matrix of values vmatrix the
+         corresponding value 
+         
+         The binning of the cells of vmatrix are defined by the following class variables which 
+         define, for each matrix dimension: 
+          - self.vzero: starting value
+          - self.vsize: number of cells
+          - self.vstep: width of bins 
+         
+         Once the variables are transformed into vmatrix indexes, a single matrix_index is computed
+         since the n-dimensional vmatrix is stored as a deconvoluted monodimensional array
+        """
+
+        # transform the values of the vectors into vmatrix indexes
+        # note that:
+        #   values < self.vzero are set to 0
+        #   values > self.vzero + self.vsize*self.vstep are set to self.vsize
+
+        index = []
+        for i in range (self.nvarx):
+            cellmax = self.vzero[i]
+            step = self.vstep[i]
+
+            # if values grow, find the first j producing matrix 
+            # value bigger than the x 
+            if step > 0.0: 
+                for j in range (int(self.vsize[i])):
+                    cellmax += step
+                    if x[i] < cellmax:
+                        break
+                        # if values shrink, find the first j producing matrix 
+            # value lower than the x 
+            else:          
+                for j in range (int(self.vsize[i])):
+                    cellmax += step
+                    if x[i] > cellmax:
+                        break
+            index.append (j)
+
+        # compute the index in the deconvoluted monodimensional vector where
+        # the values of vmatrix are stored
+        matrix_index = 0
+        for i in range(self.nvarx):
+            matrix_index += (index[i]*self.offset[i])
+
+        return vmatrix[matrix_index]
+
+    def preprocess (self, X):
+        ''' transform to customize input values, before looking into the table '''
+        return X
+
+    def postprocess (self, varray):
+        ''' transform to customize output values, after they were extracted from the table 
+            input is an array of np.arrays
+            For simple predictions, it only contains a single value
+            For simulations, it contains the low, up and mean values of the CI
+        '''
+        return varray
+
+    def predict(self, X):
+        ''' return a prediction obtained by looking up a table of preprocessed values
+            The input X values are converted to the matrix indexes
+            When all the X values have an associated error, run a simulation to estimate the
+            output error 
+        '''
+        # obtain dimensions of X matrix
+        self.nobj, self.nvarx = np.shape(X)
+
+        # apply custom modifications to the input values
+        X = self.preprocess (X)
+
+
+        # this is the array of predicted Y values 
+        yarray = []
+
+        # assign metainformation to every variable
+        var_names = self.conveyor.getVal('var_nam')
+
+        
+        # load estimator
+        estimator_path = os.path.join(self.model_path,'estimator.pkl')
+        with open(estimator_path, 'rb') as f:
+            estimator_dict = pickle.load(f)
+        
+        estimator = estimator_dict['estimador']
+        transform = estimator_dict['transformador']
+
+        # avoid extrapolating. In polynomial models this can be very dangerous
+        # TODO!!!! clipping values must be passed in the estimator
+        X = np.clip(X, -3.3, 0.3)
+
+        # TODO!!!!!
+        # reorder x matrix
+        print ('var_names', var_names)
+        print ('ext var_names', estimator_dict['var_names'])
+
+        # TODO!!!!!
+        # sd of the variability due to the population
+        ysd = 40
+
+        # if all the original methods contain CI run a simulation to compute the CI for the 
+        # output values and return the mean, the 5% percentil and 95% percentil of the values obtained 
+        computeCI, CIparams = self.getConfidence ()
+        if computeCI:
+            ############################################
+            ##
+            ##  Compute CI
+            ##
+            ############################################
+
+            CI_vals      = CIparams[0]
+            zcoeff       = CIparams[1]
+            error_top_left  = CIparams[2]
+            error_top_right = CIparams[3]
+
+            cilow = []
+            ciupp = []
+            cimean = []
+
+            # make sure the random numbers are reproducible
+            np.random.seed(2324)
+
+            # Ylog = []
+            for j in range (self.nobj):
+                ymulti = []
+                for m in range (SIMULATION_SIZE):
+                    
+                    # add random noise to the X array, using the CI to 
+                    # estimate how wide is the distribution 
+                    x = copy.copy(X[j])
+                    for i in range (self.nvarx):
+                        #ci range is the width of the CI
+                        cirange = CI_vals[j,i*2+1] - CI_vals[j,i*2]
+
+                        # the CI were estimated as +/- z * SE
+                        sd = cirange * zcoeff[i]
+
+                        # now we add normal random noise, with mean 0 and SD = sd
+                        x[i]+=np.random.normal(0.0,sd)
+
+                    # compute y using the noisy x
+                    xp = transform.transform(x.reshape(1, -1))
+
+                    # predict returns an np.array with a single val
+                    yy = estimator.predict(xp)[0]
+
+                    # add random noise to simulate population variability
+                    yy +=np.random.normal(0.0,ysd)
+
+                    ymulti.append (yy)
+
+                ymulti_array = np.array(ymulti)
+                
+                # obtain percentiles to estimate the left and right part of the CI 
+                #
+                # We make no assumptions about the distribution shape, but if it is skewed
+                # the CI can be assymetric
+                # TODO: check the distribution and apply log or other transforms when appropriate
+
+                cilow.append (np.percentile(ymulti_array,error_top_left*100 ,interpolation='linear'))
+                ciupp.append (np.percentile(ymulti_array,error_top_right*100 ,interpolation='linear'))
+                cimean.append(np.percentile(ymulti_array,50,interpolation='linear'))
+            
+            cival = [cilow, ciupp, cimean]
+
+            cival = self.postprocess (cival)
+
+            self.conveyor.addVal(cival[0], 
+                        'lower_limit', 
+                        'Lower limit', 
+                        'confidence',
+                        'objs',
+                        'Lower limit of the conformal prediction'
+                    )
+
+            self.conveyor.addVal(cival[1], 
+                        'upper_limit', 
+                        'Upper limit', 
+                        'confidence',
+                        'objs',
+                        'Upper limit of the conformal prediction'
+                    )
+
+            # copy to yarray because this is what is returned in either case
+            yarray = np.array(cival[2])
+
+        else:
+
+            ############################################
+            ##
+            ##  Compute single predictions
+            ##
+            ############################################
+
+            # For each object look up in the vmatrix, by transforming the input X variables
+            # into indexes and then extracting the corresponding values
+            for j in range (self.nobj):
+                x = copy.copy(X[j])
+                xp = transform.transform(x.reshape(1, -1))
+                yy = estimator.predict(xp)[0]
+                yarray.append (yy)
+
+            sval = [np.array(yarray)]
+        
+            yarray = self.postprocess(sval)[0] 
+
+            print (yarray)
 
         return yarray
             
