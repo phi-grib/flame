@@ -983,67 +983,18 @@ class external_model (Combo):
     """
        Predict output using a pre-computed estimator
 
-       TODO: 
-       - implementing qualitative input and/or output
-       - use conformal settings to decide to run or not the simulations to compute CI
-
     """
     def __init__(self, X, Y, parameters, conveyor):
         Combo.__init__(self, X, Y, parameters, conveyor)
         self.model_path = parameters.getVal('model_path')
         self.method_name = 'external model'
 
-
-    def lookup (self, x, vmatrix):
-        """Uses the array x of quantitative values to lookup in the matrix of values vmatrix the
-         corresponding value 
-         
-         The binning of the cells of vmatrix are defined by the following class variables which 
-         define, for each matrix dimension: 
-          - self.vzero: starting value
-          - self.vsize: number of cells
-          - self.vstep: width of bins 
-         
-         Once the variables are transformed into vmatrix indexes, a single matrix_index is computed
-         since the n-dimensional vmatrix is stored as a deconvoluted monodimensional array
-        """
-
-        # transform the values of the vectors into vmatrix indexes
-        # note that:
-        #   values < self.vzero are set to 0
-        #   values > self.vzero + self.vsize*self.vstep are set to self.vsize
-
-        index = []
-        for i in range (self.nvarx):
-            cellmax = self.vzero[i]
-            step = self.vstep[i]
-
-            # if values grow, find the first j producing matrix 
-            # value bigger than the x 
-            if step > 0.0: 
-                for j in range (int(self.vsize[i])):
-                    cellmax += step
-                    if x[i] < cellmax:
-                        break
-                        # if values shrink, find the first j producing matrix 
-            # value lower than the x 
-            else:          
-                for j in range (int(self.vsize[i])):
-                    cellmax += step
-                    if x[i] > cellmax:
-                        break
-            index.append (j)
-
-        # compute the index in the deconvoluted monodimensional vector where
-        # the values of vmatrix are stored
-        matrix_index = 0
-        for i in range(self.nvarx):
-            matrix_index += (index[i]*self.offset[i])
-
-        return vmatrix[matrix_index]
-
     def preprocess (self, X):
         ''' transform to customize input values, before looking into the table '''
+
+        # ***** MOVE TO OVERRIDING FUNCTIONS *******
+        # avoid extrapolating. In polynomial models this can be very dangerous
+
         return X
 
     def postprocess (self, varray):
@@ -1053,6 +1004,47 @@ class external_model (Combo):
             For simulations, it contains the low, up and mean values of the CI
         '''
         return varray
+
+    def meta_load (self):
+        ''' transform to customize the external estimator loading '''
+
+        # ***** MOVE TO OVERRIDING FUNCTIONS *******
+
+        # load estimator
+        estimator_path = os.path.join(self.model_path,'meta-estimator.pkl')
+        with open(estimator_path, 'rb') as f:
+            estimator_dict = pickle.load(f)
+        
+        self.estimator = estimator_dict['estimador']
+        self.transform = estimator_dict['transformador']
+        
+        # assign metainformation to every variable
+        extended_var_names = self.conveyor.getVal('var_nam')
+        est_names = estimator_dict['var_names']
+
+        # compute a mask to reorder input values on prediction
+        var_names = [ i.split(':')[1] for i in extended_var_names]
+
+        self.var_mask = []
+        for i in est_names:
+            if i in var_names:
+                self.var_mask.append (var_names.index(i))
+            else:
+                LOG.error ('incompatible models!!!')
+                raise
+
+        print ('var_names', var_names)
+        print ('ext var_names', estimator_dict['var_names'])
+        print ('mask:', self.var_mask)
+
+    def meta_predict(self, x):
+        ''' transform to customize how the external estimator will predict using the input x '''
+        # ***** MOVE TO OVERRIDING FUNCTIONS *******
+
+        ordered_x = x[0,[self.var_mask]]
+        xp = self.transform.transform(ordered_x)
+        return self.estimator.predict(xp)[0]
+
 
     def predict(self, X):
         ''' return a prediction obtained by looking up a table of preprocessed values
@@ -1066,30 +1058,13 @@ class external_model (Combo):
         # apply custom modifications to the input values
         X = self.preprocess (X)
 
-
         # this is the array of predicted Y values 
         yarray = []
 
-        # assign metainformation to every variable
-        var_names = self.conveyor.getVal('var_nam')
+        self.meta_load()        
 
-        
-        # load estimator
-        estimator_path = os.path.join(self.model_path,'estimator.pkl')
-        with open(estimator_path, 'rb') as f:
-            estimator_dict = pickle.load(f)
-        
-        estimator = estimator_dict['estimador']
-        transform = estimator_dict['transformador']
-
-        # avoid extrapolating. In polynomial models this can be very dangerous
-        # TODO!!!! clipping values must be passed in the estimator
+        # ***** MOVE TO OVERRIDING FUNCTIONS *******
         X = np.clip(X, -3.3, 0.3)
-
-        # TODO!!!!!
-        # reorder x matrix
-        print ('var_names', var_names)
-        print ('ext var_names', estimator_dict['var_names'])
 
         # TODO!!!!!
         # sd of the variability due to the population
@@ -1135,11 +1110,8 @@ class external_model (Combo):
                         # now we add normal random noise, with mean 0 and SD = sd
                         x[i]+=np.random.normal(0.0,sd)
 
-                    # compute y using the noisy x
-                    xp = transform.transform(x.reshape(1, -1))
+                    yy = self.meta_predict(x.reshape(1, -1))
 
-                    # predict returns an np.array with a single val
-                    yy = estimator.predict(xp)[0]
 
                     # add random noise to simulate population variability
                     yy +=np.random.normal(0.0,ysd)
@@ -1193,8 +1165,10 @@ class external_model (Combo):
             # into indexes and then extracting the corresponding values
             for j in range (self.nobj):
                 x = copy.copy(X[j])
-                xp = transform.transform(x.reshape(1, -1))
-                yy = estimator.predict(xp)[0]
+                yy = self.meta_predict(x.reshape(1, -1))
+
+                # xp = self.transform.transform(x.reshape(1, -1))
+                # yy = self.estimator.predict(xp)[0]
                 yarray.append (yy)
 
             sval = [np.array(yarray)]

@@ -146,7 +146,9 @@ def getName(mol, count=1, field=None):
     candidates = []
     if field:
         if isinstance(field, list):
-            candidates = field
+            # if we do not deep copy, the original 
+            # name list is modified and grows without limits
+            candidates = field.copy()
         elif isinstance(field, str):
             candidates = [field]
 
