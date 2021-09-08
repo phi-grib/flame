@@ -8,7 +8,11 @@ Flame allows to:
 - Easily develop machine-learning models, for example QSAR-like models, starting from annotated collections of chemical compounds stored in standard formats (i.e. SDFiles)
 - Transfer new models into a production environment where they can be used by web services to predict the properties of new compounds.
 
-Flame can be used in comand mode or using a web based GUI. The code for the GUI is accessible [here](https://github.com/phi-grib/flame_API). We provide Windows and Linux installers (both for the Flame backend and the GUI) that can be downloaded here
+Flame can be used in comand mode or using a web based GUI. The code for the GUI is accessible [here](https://github.com/phi-grib/flame_API). 
+
+## Installation (binaries and docker)
+
+We provide Windows and Linux installers (both for the Flame backend and the GUI) that can be downloaded here
 - [Windows](https://drive.google.com/file/d/1_q7YBdhxb59QAzWg7j3alyckiSC_9uv4/view?usp=sharing)
 - [Linux](https://drive.google.com/file/d/1bcpvBRIW0KmX-YWc4MXww1kUB1oikst5/view?usp=sharing)
 
@@ -26,6 +30,8 @@ docker run -d -p 8010:8000 -v c:\flame_repo:/data mpastorphi/flame
 ```
 Then, as in the previous example, you can acces the Flame GUI from a web broser at http://localhost:8010
 
+## Documentation
+
 A Flame walkthrough, showing some of its main features is accesible [here](https://drive.google.com/file/d/1aX1aogDVlIDoYpBR1vu4dIxB10si_8Ex/view?usp=sharing)
 
 Flame is described in the following open-access article:
@@ -40,7 +46,7 @@ Journal of Cheminformatics volume 13, Article number: 31 (2021)
 
 (https://jcheminf.biomedcentral.com/articles/10.1186/s13321-021-00509-z)
 
-## Installation
+## Installing from source code
 
 Flame can be used in most Windows, Linux or macOS configurations, provided that a suitable execution environment is set up. We recommend, as a fist step, installing the Conda package and environment manager. Download a suitable Conda or Anaconda distribution for your operative system from [here](https://docs.conda.io/projects/conda/en/latest/user-guide/install/download.html#)
 
