@@ -948,6 +948,7 @@ class BaseEstimator:
         # Consider crossval number to be a parameter, not
         # constant.
         try:
+            # setting cv to None will use the default (Kfold, k=5)
             tclf = GridSearchCV(estimator, tune_parameters,
                                 scoring=metric, cv=3, n_jobs=self.cross_jobs)
             tclf.fit(X, Y)
