@@ -1182,6 +1182,7 @@ class BaseEstimator:
             return
 
         prediction = self.estimator.predict(Xb, significance = 1.0 - self.param.getVal('conformalConfidence'))
+
         if prediction is None:
             return False, 'prediction error'
 
@@ -1223,11 +1224,13 @@ class BaseEstimator:
                              'Conformal confidence', 'confidence', 'single',
                               'Confidence level used in the conformal method')
         else:
-            # Returns a dictionary with class
-            # predictions
-            # / c0 / c1 
-            # /True/False
-            # This is also converted to a binary 1/0 results
+            # Returns a dictionary with class predictions
+            # c0 / c1 
+
+            # Repeat prediction without confidence to get probabilities
+            # of class0 and class1 for each compound
+            pvalues = self.estimator.predict(Xb)
+
             for i in range(len(prediction[0])):
                 class_key = 'c' + str(i)
                 class_label = 'Class ' + str(i)
@@ -1237,6 +1240,16 @@ class BaseEstimator:
                                 class_label,
                                 'confidence', 'objs', 
                                 'Conformal class assignment')
+
+                if pvalues is not None:
+                    class_key_p = 'p' + str(i)
+                    class_label_p = 'p-value ' + str(i)
+                    class_list_p = pvalues[:, i].tolist()
+                    self.conveyor.addVal(class_list_p, 
+                                    class_key_p, 
+                                    class_label_p,
+                                    'confidence', 'objs', 
+                                    'Conformal class assignment')
 
             # the use of np.zeros defaults to 0 (negative)
 
