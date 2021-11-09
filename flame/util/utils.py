@@ -31,6 +31,9 @@ import string
 import hashlib
 import pathlib
 import numpy as np
+import codecs
+import string
+import re 
 
 from flame.util import get_logger
 
@@ -301,6 +304,28 @@ def predictions_repository_path():
     success, config = read_config()
     if success:
         return config['predictions_repository_path']
+
+def safe_copy (inputfile, outputfile):
+    ''' this function makes sure that the input file contains only printable chars
+        RDKit is very sensitive to the presence of non utf-8 chars and for this reason
+        this pre-filter is needed
+    '''
+
+    characters_to_keep = string.printable #printable us-ascii only
+    search_regex = re.compile("[^%s]" % (re.escape(characters_to_keep)))
+
+    read_stream  = codecs.open(inputfile ,'r',encoding='utf-8', errors='ignore') 
+    write_stream = codecs.open(outputfile,'w',encoding='utf-8', errors='ignore')
+ 
+    buffer = 'start'                                                        
+    buffer_size = 512*1024 # size in bytes. -1 for loading whole file in 
+
+    while  buffer: # empty string evaluates as False. Any other string as True.
+        buffer = read_stream.read(buffer_size)
+        write_stream.write(search_regex.sub('?', buffer))
+
+    read_stream.close()
+    write_stream.close()
 
 def md5sum(filename, blocksize=65536):
     '''

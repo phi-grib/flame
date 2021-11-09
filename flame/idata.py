@@ -20,6 +20,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Flame. If not, see <http://www.gnu.org/licenses/>.
 
+from logging import ERROR
 import os
 import sys
 import pickle
@@ -27,12 +28,12 @@ import shutil
 import tempfile
 # import multiprocessing as mp
 from joblib import Parallel, delayed
-import pathlib
 
 import numpy as np
 from rdkit import Chem
 
 from standardiser import standardise
+
 
 import flame.chem.sdfileutils as sdfutils
 import flame.chem.compute_md as computeMD
@@ -339,6 +340,11 @@ class Idata:
         filename, fileext = os.path.splitext(ifile)
         ofile = filename + '_std' + fileext
         LOG.debug(f'writing standarized molecules to {ofile}')
+
+        if 'chEMBL' in method:
+            from chembl_structure_pipeline import standardizer as embl
+            from chembl_structure_pipeline import checker
+
         with open(ofile, 'w') as fo:
             mcount = 0
             # merror = 0
@@ -392,8 +398,8 @@ class Idata:
                     # Get allowed penalty score from parameters
                     score = self.param.getDict('normalize_settings')['score']
 
-                    from chembl_structure_pipeline import standardizer as embl
-                    from chembl_structure_pipeline import checker
+                    # from chembl_structure_pipeline import standardizer as embl
+                    # from chembl_structure_pipeline import checker
                     
                     try:
                         parent = embl.standardize_molblock(Chem.MolToMolBlock(m))
@@ -426,7 +432,15 @@ class Idata:
                         continue
 
                 # in any case, write parent plus internal ID (flameID)
+                # try:
+                #     fo.write(parent)
+                # except:
+                #     LOG.error (f'unable to write {name} for molecule #{mcount}')
+                #     success_list[mcount]=False
+                #     mcount += 1
+                #     continue
                 fo.write(parent)
+                
 
                 # *** discarded method to control errors ****
                 # flameID = 'fl%0.10d' % mcount
@@ -990,23 +1004,22 @@ class Idata:
         version of Run for molecular input
 
         '''
+        # copy the input file to a temp file which will be cleaned at the end
+        temp_path = tempfile.mkdtemp()
+        lfile = os.path.join(temp_path, os.path.basename(self.ifile))
+        utils.safe_copy(self.ifile, lfile)
 
+        LOG.debug (f'Safe copy {self.ifile} to {lfile}')
+        
         # extract useful information from file
-
-        success_inform = self.extractInformation(self.ifile)
+        success_inform = self.extractInformation(lfile)
         if self.conveyor.getError():
             return
 
         nobj = self.conveyor.getVal('obj_num')
         ncpu = min(nobj, self.param.getVal('numCPUs'))
 
-        # copy the input file to a temp file which will be cleaned at the end
-        temp_path = tempfile.mkdtemp()
-        shutil.copy(self.ifile, temp_path)
-        lfile = os.path.join(temp_path, os.path.basename(self.ifile))
-
-        # Execute the workflow in 1 or n CPUs
-        
+        # Execute the workflow in 1 or n CPUs        
         if ncpu > 1:
             LOG.debug('Entering molecule workflow for {} cpus'.format(ncpu))
             success, results = sdfutils.split_SDFile(lfile, ncpu)
