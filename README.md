@@ -20,7 +20,7 @@ We provide Windows and Linux installers (both for the Flame backend and the GUI)
 
 Head version:
 - [Windows](https://drive.google.com/file/d/1Hl8xBB9bqxyvy8Whqmt3rJxsz1vsceXR/view?usp=sharing)
-- [Linux](https://github.com/phi-grib/Flame_installer_linux/tree/flame_master)
+- [Linux](https://drive.google.com/file/d/1HldcEqnRoyfWFNDcwCOA1qZ4oLmLBDMC/view?usp=sharing)
 
 A docker container (https://www.docker.com/), fully configured can be downloaded from DockerHub and installed using:
 
