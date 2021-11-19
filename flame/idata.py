@@ -489,7 +489,7 @@ class Idata:
 
         return success_list, ofile
 
-    def computeMD_custom(self, ifile):
+    def computeMD_custom(self, ifile, **kwargs):
         '''
         Empty method for computing molecular descriptors.
 
@@ -503,7 +503,7 @@ class Idata:
 
         example:    return True, combined
         '''
-        return False, 'not implemented'
+        return False, 'custom MD not implemented'
 
     def computeMD(self, ifile: str, methods: list):
         '''
@@ -1054,7 +1054,7 @@ class Idata:
         # series processing (1 or n CPUs) can produce a success == False if
         # any of the series/pieces contains an error. Abort the processing...
         if not success:
-            self.conveyor.setError('error in workflow processing')
+            self.conveyor.setError(f'Error in workflow processing: {results}')
             return
 
         # check if any molecule failed to complete the workflow and then
