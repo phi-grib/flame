@@ -104,6 +104,7 @@ class Combo (BaseEstimator):
                 self.scoringR = np.mean(
                     mean_squared_error(Y, Yp)) 
                 self.SDEC = np.sqrt(SSY/self.nobj)
+
                 if SSY0 == 0.00:
                     self.R2 = 0.0
                 else:
@@ -337,22 +338,23 @@ class Combo (BaseEstimator):
             CI_vals = self.conveyor.getVal('ensemble_ci')
 
             # conformal error of the top model
-
-            error_top = 1.0 - self.param.getVal('conformalConfidence') 
+            error_top = self.param.getVal('conformalConfidence') 
             
             # conformal confidence default is 0.8
             if error_top is None:
                 error_top = 0.2  # fallback!!! we asume a default confidence of 80%
+            else:
+                error_top = 1.0 - error_top
 
             error_top_left  = error_top /2.0
             error_top_right = 1.0 - error_top_left
 
             # gather array of confidences for low models
-            error_low = [(1.0 - i) for i in self.conveyor.getVal('ensemble_confidence')]
-            if error_low is None:
+            error_low = [i for i in self.conveyor.getVal('ensemble_confidence')]
+            if None in error_low:
                 error_low = [error_top for i in range(self.nvarx)]
-            elif None in error_low:
-                error_low = [error_top for i in range(self.nvarx)]
+            else:
+                error_low = 1.0 - error_low
 
             zcoeff = []
             for ierror in error_low:
@@ -510,6 +512,7 @@ class mean (Combo):
 
         computeCI, CIparams = self.getConfidence ()
         if computeCI:
+
             ############################################
             ##
             ##  Compute CI
@@ -541,7 +544,16 @@ class mean (Combo):
                 for i in range (self.nvarx):
                     cirange = CI_vals[j,i*2+1] - CI_vals[j,i*2]
                     sd = cirange * zcoeff[i]
-                    w[i] = 1.0/np.square(sd)
+
+                    # if sd is very small (<1^10-9) or zero the weight would be absurdly
+                    # high or infinite. In these case, avoid weighting this variable assigning 
+                    # a sd = 1.00 
+                    if (sd < 1.e-9):
+                        w[i] = 1.0
+                    else:
+                        w[i] = 1.0/np.square(sd)
+
+                # print (cirange)
 
                 ws = np.sum(w)
 

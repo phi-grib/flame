@@ -23,28 +23,27 @@
 import pickle
 import numpy as np
 import os
-import copy
 import time
+import copy
 import gc
 from scipy import stats
 import warnings
 
-from flame.stats.scale import center, scale
 from flame.stats.feature_selection import *
 from flame.stats.imbalance import *  
-
 from flame.stats.crossval import getCrossVal
+# from flame.stats.scale import center, scale
+
 from sklearn.model_selection import cross_val_predict
 from sklearn.model_selection import GridSearchCV 
 from sklearn.metrics import mean_squared_error, matthews_corrcoef as mcc
-from sklearn.metrics import f1_score
 from sklearn.metrics import make_scorer
 from sklearn.metrics import confusion_matrix
-from sklearn.preprocessing import MinMaxScaler
-
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.tree import DecisionTreeRegressor
 from sklearn.neighbors import KNeighborsRegressor
+# from sklearn.metrics import f1_score
+# from sklearn.preprocessing import MinMaxScaler
+# from sklearn.tree import DecisionTreeClassifier
+# from sklearn.tree import DecisionTreeRegressor
 
 
 # nonconformist imports
@@ -56,16 +55,16 @@ from nonconformist.nc import ClassifierNc, MarginErrFunc
 from nonconformist.nc import RegressorNc
 from nonconformist.acp import AggregatedCp
 from nonconformist.acp import BootstrapSampler, CrossSampler, RandomSubSampler
-from nonconformist.acp import BootstrapConformalClassifier
-from nonconformist.acp import CrossConformalClassifier
-from nonconformist.evaluation import class_mean_errors, class_one_c
-from nonconformist.evaluation import cross_val_score as conformal_cross_val_score
-from nonconformist.evaluation import ClassIcpCvHelper, RegIcpCvHelper
-from nonconformist.evaluation import class_avg_c
-from nonconformist.evaluation import reg_mean_errors, reg_median_size
-from nonconformist.evaluation import reg_mean_size
+# from nonconformist.acp import BootstrapConformalClassifier
+# from nonconformist.acp import CrossConformalClassifier
+# from nonconformist.evaluation import class_mean_errors, class_one_c
+# from nonconformist.evaluation import cross_val_score as conformal_cross_val_score
+# from nonconformist.evaluation import ClassIcpCvHelper, RegIcpCvHelper
+# from nonconformist.evaluation import class_avg_c
+# from nonconformist.evaluation import reg_mean_errors, reg_median_size
+# from nonconformist.evaluation import reg_mean_size
 
-from flame.util import utils, get_logger, supress_log
+from flame.util import utils, get_logger
 
 LOG = get_logger(__name__)
 
@@ -1047,8 +1046,6 @@ class BaseEstimator:
             if 'error_model' in conformal_settings:
                 normalizing_id = conformal_settings['error_model']
 
-
-
         normalizers = {'KNN' : RegressorAdapter(
                                 KNeighborsRegressor(
                                     n_neighbors=n_neighbors)),
@@ -1315,6 +1312,10 @@ class BaseEstimator:
         # This dictionary contain all the objects which will be needed
         # for prediction
 
+        # Uncoment to inspect estimator contents 
+        # print (self.estimator.__dict__)
+        # print (self.estimator.estimators_[0].__dict__)
+
         dict_estimator = {'estimator' : self.estimator,
              'version': 1,
              'libraries': utils.module_versions()}
@@ -1346,6 +1347,7 @@ class BaseEstimator:
         try:
             with open(model_pkl, "rb") as input_file:
                 dict_estimator = pickle.load(input_file)
+
         except FileNotFoundError:
             return False, f'No valid model estimator found at: {model_pkl}'
 
