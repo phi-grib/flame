@@ -334,6 +334,10 @@ def action_export(model):
 
     # print (time.time()-t1)
 
+    # touch a file o indicate that the compressed file is ready
+    file = open(os.path.join(current_path,model+'.completed'),'w')
+    file.close()
+
     # return to current directory
     os.chdir(current_path)
 
