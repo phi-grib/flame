@@ -933,12 +933,26 @@ class BaseEstimator:
                 tune_parameters[key] = [None if i == 'default' else i for i in value ]
 
         LOG.info('Computing best hyperparameter values')
-        metric = ""
+        
+        metric = None
         # Select the metric according to the type of model
         if self.param.getVal('quantitative'):
-            metric = 'r2'
+            metric = self.param.getVal('tune_metric_quantitative')
+            if metric is None:
+                metric = 'r2' 
         else:
-            metric = make_scorer(mcc)
+            metric = self.param.getVal('tune_metric_qualitative')
+            if metric is None:
+                metric = 'mcc'
+
+            if metric == 'mcc':
+                metric = make_scorer(mcc)
+
+        tunecv = self.param.getVal('tune_cv_fold')
+        if tunecv is None:
+            tunecv = 3
+
+        LOG.info(f'Scorer:{metric} CV nfold:{tunecv}')
 
         tune_parameters = [tune_parameters]
         # Count computation time
@@ -949,7 +963,8 @@ class BaseEstimator:
         try:
             # setting cv to None will use the default (Kfold, k=5)
             tclf = GridSearchCV(estimator, tune_parameters,
-                                scoring=metric, cv=3, n_jobs=self.cross_jobs)
+                                scoring=metric, cv=tunecv, n_jobs=self.cross_jobs)
+
             tclf.fit(X, Y)
             self.estimator = copy.copy(tclf.best_estimator_)
         except Exception as e:

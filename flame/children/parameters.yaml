@@ -463,6 +463,48 @@ tune:
   comments: It might last long
   group: modeling
 
+tune_metric_quantitative:
+  advanced: regular
+  object_type: string
+  writable: false
+  value: r2
+  options: 
+    - r2
+    - neg_mean_squared_error
+  description: metric used for the GricCV optimization search
+  dependencies: null
+  comments: 
+  group: modeling
+
+tune_metric_qualitative:
+  advanced: regular
+  object_type: string
+  writable: false
+  value: mcc
+  options: 
+    - mcc
+    - balanced_accuracy
+    - f1
+    - f1_weigthed
+  description: metric used for the GridCV optimization search
+  dependencies: null
+  comments: 
+  group: modeling
+
+tune_cv_fold:
+  advanced: regular
+  object_type: int
+  writable: true
+  value: 3
+  options: 
+    - 2
+    - 3
+    - 5
+  description: nFold used in CV for the GridCV optimization search
+  dependencies: null
+  comments: 
+  group: modeling
+
 imbalance:
   advanced: regular
   object_type: string
@@ -629,7 +671,7 @@ RF_optimize:
         - balanced
       description: 
     max_features:
-      object_type: string
+      object_type: list
       writable: false
       value: 
         - sqrt
@@ -641,7 +683,7 @@ RF_optimize:
         - null
       description: 
     n_estimators:
-      object_type: int
+      object_type: list
       writable: true
       value: 
         - 50
@@ -756,7 +798,7 @@ SVM_optimize:
         - balanced
       description: 
     C:
-      object_type: float
+      object_type: list
       writable: true
       value: 
         - 1
@@ -769,7 +811,7 @@ SVM_optimize:
         - 5
       description: 
     coef0:
-      object_type: float
+      object_type: list
       writable: true
       value:
         - 0
@@ -782,7 +824,7 @@ SVM_optimize:
         - 100
       description: 
     degree:
-      object_type: int
+      object_type: list
       writable: true
       value:
         - 1
@@ -795,7 +837,7 @@ SVM_optimize:
         - 5
       description: 
     gamma:
-      object_type: float
+      object_type: list
       writable: true
       value: 
         - auto 
@@ -804,7 +846,7 @@ SVM_optimize:
         - auto
       description: 
     kernel:
-      object_type: string
+      object_type: list
       writable: false
       value: 
         - rbf
@@ -815,7 +857,7 @@ SVM_optimize:
         - poly  
       description: 
     probability:
-      object_type: boolean 
+      object_type: list 
       writable: false
       value: 
         - true
@@ -824,7 +866,7 @@ SVM_optimize:
         - false
       description:
     shrinking: 
-      object_type: boolean
+      object_type: list
       writable: false
       value: 
         - true
@@ -951,7 +993,7 @@ PLSDA_optimize:
   options: null
   value:
     n_components:
-      object_type: int
+      object_type: list
       writable: true
       value:
         - 2
@@ -967,7 +1009,7 @@ PLSDA_optimize:
         - 6
       description: 
     threshold:
-      object_type: float
+      object_type: list
       writable: true
       value:
         - 0.3
@@ -1074,7 +1116,7 @@ XGBOOST_optimize:
         - 6
       description: 
     learning_rate:
-      object_type: float
+      object_type: list
       writable: true
       value: 
         - 1
@@ -1086,7 +1128,7 @@ XGBOOST_optimize:
         - 0.01
       description: 
     n_estimators:
-      object_type: int
+      object_type: list
       writable: true
       value:
         - 50
@@ -1099,7 +1141,7 @@ XGBOOST_optimize:
       description: 
     booster:
       object_type: list
-      writable: true
+      writable: false
       value:
         - gbtree
         - gblinear
