@@ -36,7 +36,7 @@ from flame.stats.crossval import getCrossVal
 
 from sklearn.model_selection import cross_val_predict
 from sklearn.model_selection import GridSearchCV 
-from sklearn.metrics import mean_squared_error, matthews_corrcoef as mcc
+from sklearn.metrics import mean_squared_error, r2_score, matthews_corrcoef as mcc
 from sklearn.metrics import make_scorer
 from sklearn.metrics import confusion_matrix
 from sklearn.neighbors import KNeighborsRegressor
@@ -762,10 +762,11 @@ class BaseEstimator:
             self.scoringR = np.mean(
                 mean_squared_error(Y, Yp)) 
             self.SDEC = np.sqrt(SSY/self.nobj)
-            if SSY0 == 0.0:
-                self.R2 = 0.0
-            else:
-                self.R2 = 1.00 - (SSY/SSY0)
+            # if SSY0 == 0.0:
+            #     self.R2 = 0.0
+            # else:
+            #     self.R2 = 1.00 - (SSY/SSY0)
+            self.R2 = r2_score(Y, Yp)
 
             info.append(('scoringR', 'Scoring P', self.scoringR))
             info.append(('R2', 'Determination coefficient', self.R2))
@@ -782,11 +783,12 @@ class BaseEstimator:
             SSY0_out = np.sum(np.square(Ym - Y))
             SSY_out = np.sum(np.square(Y - y_pred))
             self.scoringP = mean_squared_error(Y, y_pred)
+            self.Q2 = r2_score(Y, y_pred)
             self.SDEP = np.sqrt(SSY_out/(self.nobj))
-            if SSY0_out == 0.0:
-                self.Q2 = 0.0
-            else:
-                self.Q2 = 1.00 - (SSY_out/SSY0_out)
+            # if SSY0_out == 0.0:
+            #     self.Q2 = 0.0
+            # else:
+            #     self.Q2 = 1.00 - (SSY_out/SSY0_out)
 
             info.append(('scoringP', 'Scoring P', self.scoringP))
             info.append(('Q2', 'Determination coefficient in cross-validation', self.Q2))
@@ -952,7 +954,7 @@ class BaseEstimator:
         if tunecv is None:
             tunecv = 3
 
-        LOG.info(f'Scorer:{metric} CV nfold:{tunecv}')
+        LOG.info(f'Scorer:{metric} CV kfold:{tunecv}')
 
         tune_parameters = [tune_parameters]
         # Count computation time

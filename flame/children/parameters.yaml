@@ -582,9 +582,9 @@ ModelValidationP:
   advanced: regular
   object_type: int
   writable: true
-  value: 1
+  value: 2
   options: null
-  description: Size of the test set
+  description: Number of objets out in lpo 
   dependencies: 
     ModelValidationCV: lpo
   comments: 
