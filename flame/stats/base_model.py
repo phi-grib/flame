@@ -35,7 +35,7 @@ from flame.stats.crossval import getCrossVal
 # from flame.stats.scale import center, scale
 
 from sklearn.model_selection import cross_val_predict
-from sklearn.model_selection import GridSearchCV 
+from sklearn.model_selection import GridSearchCV, KFold
 from sklearn.metrics import mean_squared_error, r2_score, matthews_corrcoef as mcc
 from sklearn.metrics import make_scorer
 from sklearn.metrics import confusion_matrix
@@ -249,11 +249,14 @@ class BaseEstimator:
                 SSY0_out = np.sum(np.square(Ym - Ye))
                 SSY_out = np.sum(np.square(Ye - Yp))
                 scoringP = mean_squared_error(Ye, Yp)
-                SDEP = np.sqrt(SSY_out / (nobj))
-                if SSY0_out == 0:
-                    Q2 = 0.0
-                else:
-                    Q2 = 1.00 - (SSY_out / SSY0_out)
+
+                # SDEP = np.sqrt(SSY_out / (nobj))
+                SDEP = np.sqrt(scoringP)
+                # if SSY0_out == 0:
+                #     Q2 = 0.0
+                # else:
+                #     Q2 = 1.00 - (SSY_out / SSY0_out)
+                Q2 = r2_score (Ye, Yp)
 
                 ext_val_results.append(('scoringP', 'Scoring P', scoringP))
                 ext_val_results.append(('Q2', 'Determination coefficient in cross-validation', Q2))
@@ -465,19 +468,17 @@ class BaseEstimator:
         
         # Compute goodness of the fit statistics using recalculated
         # predictions
-        Ym = np.mean(Y)
+        # Ym = np.mean(Y)
         try:
-            SSY0 = np.sum(np.square(Ym-Y))
-            SSY_rec = np.sum(np.square(Y_rec-Y))
+            self.scoringR = mean_squared_error(Y, Y_rec)
+            self.SDEC = np.sqrt(self.scoringR)
+            self.R2 = r2_score(Y, Y_rec)
+            # if SSY0 == 0.0:
+            #     self.R2 = 0.0
+            # else:
+            #     self.R2 = 1.00 - (SSY_rec/SSY0)
 
-            self.scoringR = mean_squared_error(Y, Y_rec) 
-            self.SDEC = np.sqrt(SSY_rec/self.nobj)
-            if SSY0 == 0.0:
-                self.R2 = 0.0
-            else:
-                self.R2 = 1.00 - (SSY_rec/SSY0)
-
-            info.append(('scoringR', 'Scoring P', self.scoringR))
+            info.append(('scoringR', 'Mean Squared Error of the Calculations', self.scoringR))
             info.append(('R2', 'Determination coefficient', self.R2))
             info.append(('SDEC', 'Standard Deviation Error of the Calculations', self.SDEC))
 
@@ -488,15 +489,16 @@ class BaseEstimator:
         # Compute classic Cross-validation quality metrics using inteval mean
         try:
             # SSY0_out = np.sum(np.square(Ym - Y))
-            SSY_pred = np.sum(np.square(Y_pred - Y))
+            # SSY_pred = np.sum(np.square(Y_pred - Y))
             self.scoringP = mean_squared_error(Y, Y_pred)
-            self.SDEP = np.sqrt(SSY_pred/(self.nobj))
-            if SSY0 == 0.0:
-                self.Q2 = 0.0
-            else:
-                self.Q2 = 1.00 - (SSY_pred/SSY0)
+            self.SDEP = np.sqrt(self.scoringP)
+            self.Q2 = r2_score(Y, Y_pred)
+            # if SSY0 == 0.0:
+            #     self.Q2 = 0.0
+            # else:
+            #     self.Q2 = 1.00 - (SSY_pred/SSY0)
 
-            info.append(('scoringP', 'Scoring P', self.scoringP))
+            info.append(('scoringP', 'Mean Squared Error of the Prediction', self.scoringP))
             info.append(('Q2', 'Determination coefficient in cross-validation',self.Q2))
             info.append(('SDEP', 'Standard Deviation Error of the Predictions',self.SDEP))
 
@@ -751,24 +753,22 @@ class BaseEstimator:
             return False, 'prediction error'
 
         # Compute  mean of predicted Y
-        Ym = np.mean(Y)
-        info = []
+        # Ym = np.mean(Y)
 
+        info = []
         # Compute Goodness of the fit metric (adjusted Y)
         try:
-            SSY0 = np.sum(np.square(Ym-Y))
-            SSY = np.sum(np.square(Yp-Y))
-
-            self.scoringR = np.mean(
-                mean_squared_error(Y, Yp)) 
-            self.SDEC = np.sqrt(SSY/self.nobj)
+            # SSY0 = np.sum(np.square(Ym-Y))
+            # SSY = np.sum(np.square(Yp-Y))
+            self.scoringR = np.mean(mean_squared_error(Y, Yp)) 
+            self.SDEC = np.sqrt(self.scoringR)
+            self.R2 = r2_score(Y, Yp)
             # if SSY0 == 0.0:
             #     self.R2 = 0.0
             # else:
             #     self.R2 = 1.00 - (SSY/SSY0)
-            self.R2 = r2_score(Y, Yp)
 
-            info.append(('scoringR', 'Scoring P', self.scoringR))
+            info.append(('scoringR', 'Mean Squared Error of the Calculations', self.scoringR))
             info.append(('R2', 'Determination coefficient', self.R2))
             info.append(('SDEC', 'Standard Deviation Error of the Calculations', self.SDEC))
             LOG.debug(f'Goodness of the fit calculated: {self.scoringR}')
@@ -780,17 +780,17 @@ class BaseEstimator:
             # Get predicted Y
             # y_pred = cross_val_predict(copy.copy(self.estimator), copy.copy(X), copy.copy(Y), cv=self.cv, n_jobs=1)
             y_pred = cross_val_predict(self.estimator, X, Y, cv=self.cv, n_jobs=self.cross_jobs)
-            SSY0_out = np.sum(np.square(Ym - Y))
-            SSY_out = np.sum(np.square(Y - y_pred))
+            # SSY0_out = np.sum(np.square(Ym - Y))
+            # SSY_out = np.sum(np.square(Y - y_pred))
             self.scoringP = mean_squared_error(Y, y_pred)
+            self.SDEP = np.sqrt(self.scoringP)
             self.Q2 = r2_score(Y, y_pred)
-            self.SDEP = np.sqrt(SSY_out/(self.nobj))
             # if SSY0_out == 0.0:
             #     self.Q2 = 0.0
             # else:
             #     self.Q2 = 1.00 - (SSY_out/SSY0_out)
 
-            info.append(('scoringP', 'Scoring P', self.scoringP))
+            info.append(('scoringP', 'Mean Squared Error of the Predictions', self.scoringP))
             info.append(('Q2', 'Determination coefficient in cross-validation', self.Q2))
             info.append(('SDEP', 'Standard Deviation Error of the Predictions', self.SDEP))
 
@@ -844,9 +844,9 @@ class BaseEstimator:
             info.append(('Specificity_f', 'Specificity in fitting', self.specificity_f))
             info.append(('MCC_f', 'Matthews Correlation Coefficient in fitting', self.mcc_f))
    
-            LOG.debug('Computed class prediction for estimator instances')
+            LOG.debug('Computed quality indicators for fitting')
         except Exception as e:
-            return False, f'Error computing class prediction of Yexp with exception: {e}'
+            return False, f'Error computing model quality in fitting: {e}'
 
         # Get cross-validated Y 
         try:
@@ -858,45 +858,32 @@ class BaseEstimator:
         try:
             self.TN, self.FP, self.FN, self.TP = confusion_matrix(
                 Y, y_pred, labels=[0, 1]).ravel()
-        except Exception as e:
-            return False, f'Failed to compute confusion matrix with exception: {e}'
-        try:
             self.sensitivity = (self.TP / (self.TP + self.FN))
-        except Exception as e:
-            LOG.error(f'Failed to compute sensibility with'
-                        f'exception {e}')
-            self.sensitivity = '-'
-        try:
             self.specificity = (self.TN / (self.TN + self.FP))
-        except Exception as e:
-            LOG.error(f'Failed to compute specificity with'
-                        f'exception {e}')
-            self.specificity = '-'
-        try:
-            # Compute Matthews Correlation Coefficient
-            self.mcc = (((self.TP * self.TN) - (self.FP * self.FN)) /
-                        np.sqrt((self.TP + self.FP) * (self.TP + self.FN) *
-                         (self.TN + self.FP) * (self.TN + self.FN)))
+            self.mcc = mcc(Y, y_pred)
             if np.isnan(self.mcc):
                 self.mcc = 0.00
+
+            # self.mcc = (((self.TP * self.TN) - (self.FP * self.FN)) /
+            #             np.sqrt((self.TP + self.FP) * (self.TP + self.FN) *
+            #              (self.TN + self.FP) * (self.TN + self.FN)))
+
+            info.append(('TP', 'True positives in cross-validation', self.TP))
+            info.append(('TN', 'True negatives in cross-validation', self.TN))
+            info.append(('FP', 'False positives in cross-validation', self.FP))
+            info.append(('FN', 'False negatives in cross-validation', self.FN))
+            info.append(('Sensitivity', 'Sensitivity in cross-validation', self.sensitivity))
+            info.append(('Specificity', 'Specificity in cross-validation', self.specificity))
+            info.append(('MCC', 'Matthews Correlation Coefficient in cross-validation', self.mcc))
+            # info.append (('Y_adj', 'Adjusted Y values', Y) ) 
+            # info.append (('Y_adj', 'Adjusted Y values', Yp) )          
+            # info.append (('Y_pred', 'Predicted Y values after cross-validation', y_pred))
+
+            LOG.debug('Computed quality indicators for prediction')
         except Exception as e:
-            LOG.warning(f'Failed to compute Mathews Correlation Coefficient'
-                        f'exception {e}')
-            self.mcc = 0.00
+            return False, f'Error computing model quality in prediction with exception: {e}'
 
-        info.append(('TP', 'True positives in cross-validation', self.TP))
-        info.append(('TN', 'True negatives in cross-validation', self.TN))
-        info.append(('FP', 'False positives in cross-validation', self.FP))
-        info.append(('FN', 'False negatives in cross-validation', self.FN))
-
-        info.append(('Sensitivity', 'Sensitivity in cross-validation', self.sensitivity))
-        info.append(('Specificity', 'Specificity in cross-validation', self.specificity))
-        info.append(('MCC', 'Matthews Correlation Coefficient in cross-validation', self.mcc))
-        # info.append (('Y_adj', 'Adjusted Y values', Y) ) 
-        # info.append (('Y_adj', 'Adjusted Y values', Yp) )          
-        # info.append (('Y_pred', 'Predicted Y values after cross-validation', y_pred))
         LOG.debug(f'Qualitative crossvalidation performed')
-
 
         results = {}
         results ['quality'] = info
@@ -929,7 +916,8 @@ class BaseEstimator:
         range of values for diverse parameters'''
 
         # the default value is represented as 'default' in the YAML parameter file to
-        # avoid problems with empty values and must be replaced by None here        
+        # avoid problems with empty values and must be replaced by None here       
+        
         for key, value in tune_parameters.items():
             if 'default' in value:
                 tune_parameters[key] = [None if i == 'default' else i for i in value ]
@@ -950,32 +938,39 @@ class BaseEstimator:
             if metric == 'mcc':
                 metric = make_scorer(mcc)
 
-        tunecv = self.param.getVal('tune_cv_fold')
-        if tunecv is None:
-            tunecv = 3
+        LOG.info(f'Scorer:{metric}')
 
-        LOG.info(f'Scorer:{metric} CV kfold:{tunecv}')
-
-        tune_parameters = [tune_parameters]
+        # tune_parameters = [tune_parameters]
         # Count computation time
         LOG.debug("Hyperparameter optimization ")
         start = time.time()
         # Consider crossval number to be a parameter, not
         # constant.
         try:
-            # setting cv to None will use the default (Kfold, k=5)
-            tclf = GridSearchCV(estimator, tune_parameters,
-                                scoring=metric, cv=tunecv, n_jobs=self.cross_jobs)
-
+            # print (tune_parameters)
+            tclf = GridSearchCV(estimator, tune_parameters, 
+                                scoring=metric, cv=self.cv, n_jobs=self.cross_jobs)
             tclf.fit(X, Y)
+
+            means = tclf.cv_results_["mean_test_score"]
+            stds = tclf.cv_results_["std_test_score"]
+            for mean, std, params in zip(means, stds, tclf.cv_results_["params"]):
+                LOG.info("%0.3f (+/-%0.03f) for %r" % (mean, std * 2, params))
+
+            # print(self.estimator.get_params())
             self.estimator = copy.copy(tclf.best_estimator_)
+            # print(self.estimator.get_params())
+
         except Exception as e:
             LOG.error(f'Error optimizing hyperparameters with'
             f'exception {e}')
             raise e
         end = time.time()
-        LOG.info(f'best parameters: , {tclf.best_params_}')
-        LOG.debug(f'Best estimator found in {end-start} seconds')
+        LOG.info(f'Best parameters: {tclf.best_params_}')
+        # LOG.info(f'best score: {tclf.best_score_}')
+        # y_pred = cross_val_predict(self.estimator, X, Y, cv=self.cv)
+        # LOG.info (f'validation: {r2_score(Y, y_pred)}')
+        LOG.debug (f'Best estimator found in {end-start} seconds')
         # Remove garbage in memory
         del(tclf)
         gc.collect()

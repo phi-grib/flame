@@ -491,20 +491,6 @@ tune_metric_qualitative:
   comments: 
   group: modeling
 
-tune_cv_fold:
-  advanced: regular
-  object_type: int
-  writable: true
-  value: 3
-  options: 
-    - 2
-    - 3
-    - 5
-  description: nFold used in CV for the GridCV optimization search
-  dependencies: null
-  comments: 
-  group: modeling
-
 imbalance:
   advanced: regular
   object_type: string
@@ -520,8 +506,7 @@ imbalance:
     - rep_edited_KNN
     - all_KNN
     - iht
-  description: "Whether to perform or not sub/over sampling strategies. Imbalance
-  strategies adapted from https://imbalanced-learn.readthedocs.io/en/stable/"
+  description: "Whether to perform or not sub/over sampling strategies. Imbalance strategies adapted from https://imbalanced-learn.readthedocs.io/en/stable/"
   dependencies: null
   comments: 
   group: modeling
