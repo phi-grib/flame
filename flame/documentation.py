@@ -1054,10 +1054,7 @@ class Documentation:
         
         return dict(zip(self.conveyor.getVal("obj_nam"),self.conveyor.getVal("SMILES")))
 
-    # TO DO
-    def connect_api():
-        
-        return False
+
 
     def autocomplete_documentation(self):
         """
