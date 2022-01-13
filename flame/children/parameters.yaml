@@ -483,10 +483,23 @@ tune_metric_qualitative:
   value: mcc
   options: 
     - mcc
+    - recall
+    - precision
     - balanced_accuracy
     - f1
     - f1_weigthed
   description: metric used for the GridCV optimization search
+  dependencies: null
+  comments: 
+  group: modeling
+
+tune_cv_fold:
+  advanced: regular
+  object_type: int
+  writable: true
+  value: 5
+  options: null
+  description: number of fold in the KFold CV used in GridCV optimization search
   dependencies: null
   comments: 
   group: modeling
@@ -545,7 +558,6 @@ ModelValidationCV:
   options: 
     - loo
     - kfold
-    - lpo
   description: Selection of cross-validation method
   dependencies: null
   comments: 
@@ -560,18 +572,6 @@ ModelValidationN:
   description: Number of folds
   dependencies: 
     ModelValidationCV: kfold
-  comments: 
-  group: modeling
-
-ModelValidationP:
-  advanced: regular
-  object_type: int
-  writable: true
-  value: 2
-  options: null
-  description: Number of objets out in lpo 
-  dependencies: 
-    ModelValidationCV: lpo
   comments: 
   group: modeling
 
@@ -593,8 +593,7 @@ RF_parameters:
       object_type: int
       writable: true
       value: null
-      options:
-        - null
+      options: null
       description: The maximum depth of the tree. If None, then nodes are expanded until all leaves are pure or until all leaves contain less than min_samples_split samples
     max_features:
       object_type: string
@@ -606,6 +605,13 @@ RF_parameters:
         - log2
         - null
       description: The maximum depth of the tree. If auto, then max_features=sqrt(n_features). If sqrt, idem as auto. If log2, then max_features=log2(n_features). If None, then max_features=n_features.
+    min_samples_split:
+      object_type: int
+      writable: true
+      value: 2
+      options: null
+      description: The minimum number of samples required to split an internal node (must be an int > 1)
+      min: 1
     n_estimators:
       object_type: int
       writable: true
@@ -651,10 +657,27 @@ RF_optimize:
       value: 
         - default
         - balanced
+      options: null
+      description: 
+    max_depth:
+      object_type: list
+      writable: true
+      value: 
+        - 2
+        - 3
       options:
         - default
         - balanced
       description: 
+    min_samples_split:
+      object_type: list
+      writable: true
+      value: 
+        - 2
+        - 3
+      options: null
+      description: 
+      min: 1
     max_features:
       object_type: list
       writable: false

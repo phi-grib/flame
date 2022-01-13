@@ -34,7 +34,7 @@ from flame.stats.imbalance import *
 from flame.stats.crossval import getCrossVal
 # from flame.stats.scale import center, scale
 
-from sklearn.model_selection import cross_val_predict
+from sklearn.model_selection import cross_val_predict, cross_val_score
 from sklearn.model_selection import GridSearchCV, KFold
 from sklearn.metrics import mean_squared_error, r2_score, matthews_corrcoef as mcc
 from sklearn.metrics import make_scorer
@@ -938,39 +938,46 @@ class BaseEstimator:
             if metric == 'mcc':
                 metric = make_scorer(mcc)
 
-        LOG.info(f'Scorer:{metric}')
+        cv_fold = self.param.getVal('tune_cv_fold')
+        if cv_fold is None:
+            cv_fold = 5
+
+        LOG.info(f'Scorer: {metric} using kfold with: {cv_fold} folds...')
 
         # tune_parameters = [tune_parameters]
         # Count computation time
         LOG.debug("Hyperparameter optimization ")
         start = time.time()
-        # Consider crossval number to be a parameter, not
-        # constant.
+
         try:
             # print (tune_parameters)
             tclf = GridSearchCV(estimator, tune_parameters, 
-                                scoring=metric, cv=self.cv, n_jobs=self.cross_jobs)
+                                scoring=metric, cv=KFold(cv_fold), n_jobs=self.cross_jobs)
             tclf.fit(X, Y)
 
             means = tclf.cv_results_["mean_test_score"]
             stds = tclf.cv_results_["std_test_score"]
             for mean, std, params in zip(means, stds, tclf.cv_results_["params"]):
-                LOG.info("%0.3f (+/-%0.03f) for %r" % (mean, std * 2, params))
+                LOG.info("       %0.3f (+/-%0.03f) for %r" % (mean, std * 2, params))
 
-            # print(self.estimator.get_params())
             self.estimator = copy.copy(tclf.best_estimator_)
-            # print(self.estimator.get_params())
 
         except Exception as e:
             LOG.error(f'Error optimizing hyperparameters with'
             f'exception {e}')
             raise e
+
         end = time.time()
         LOG.info(f'Best parameters: {tclf.best_params_}')
-        # LOG.info(f'best score: {tclf.best_score_}')
+        # LOG.info(f'Best score: {tclf.best_score_}')
+
+        # myscore = cross_val_score(self.estimator, X, Y, scoring=metric, cv=self.cv)
+        # LOG.info (f'mean of scores: {np.mean(myscore)}')
         # y_pred = cross_val_predict(self.estimator, X, Y, cv=self.cv)
         # LOG.info (f'validation: {r2_score(Y, y_pred)}')
+        
         LOG.debug (f'Best estimator found in {end-start} seconds')
+
         # Remove garbage in memory
         del(tclf)
         gc.collect()
