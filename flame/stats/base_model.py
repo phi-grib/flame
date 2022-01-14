@@ -26,13 +26,11 @@ import os
 import time
 import copy
 import gc
-from scipy import stats
 import warnings
 
 from flame.stats.feature_selection import *
 from flame.stats.imbalance import *  
 from flame.stats.crossval import getCrossVal
-# from flame.stats.scale import center, scale
 
 from sklearn.model_selection import cross_val_predict, cross_val_score
 from sklearn.model_selection import GridSearchCV, KFold
@@ -40,13 +38,7 @@ from sklearn.metrics import mean_squared_error, r2_score, matthews_corrcoef as m
 from sklearn.metrics import make_scorer
 from sklearn.metrics import confusion_matrix
 from sklearn.neighbors import KNeighborsRegressor
-# from sklearn.metrics import f1_score
-# from sklearn.preprocessing import MinMaxScaler
-# from sklearn.tree import DecisionTreeClassifier
-# from sklearn.tree import DecisionTreeRegressor
 
-
-# nonconformist imports
 from nonconformist.base import ClassifierAdapter, RegressorAdapter
 from nonconformist.icp import IcpClassifier, IcpRegressor
 from nonconformist.nc import MarginErrFunc
@@ -55,14 +47,6 @@ from nonconformist.nc import ClassifierNc, MarginErrFunc
 from nonconformist.nc import RegressorNc
 from nonconformist.acp import AggregatedCp
 from nonconformist.acp import BootstrapSampler, CrossSampler, RandomSubSampler
-# from nonconformist.acp import BootstrapConformalClassifier
-# from nonconformist.acp import CrossConformalClassifier
-# from nonconformist.evaluation import class_mean_errors, class_one_c
-# from nonconformist.evaluation import cross_val_score as conformal_cross_val_score
-# from nonconformist.evaluation import ClassIcpCvHelper, RegIcpCvHelper
-# from nonconformist.evaluation import class_avg_c
-# from nonconformist.evaluation import reg_mean_errors, reg_median_size
-# from nonconformist.evaluation import reg_mean_size
 
 from flame.util import utils, get_logger
 
@@ -168,7 +152,34 @@ class BaseEstimator:
                 LOG.error(f'Error retrieving cross-validator with exception: {e}')
                 self.conveyor.setError(f'Error retrieving cross-validator with exception: {e}')
 
-    # External validation
+    def quality_cualitative (self, y, yp):
+        TN, FP, FN, TP = confusion_matrix(y, yp, labels=[0, 1]).ravel()
+
+        MCC = mcc(y, yp)
+
+        if np.isnan(MCC):
+            MCC = 0.000
+
+        if (TP+FN) > 0:
+            sensitivity = (TP / float(TP + FN))
+        else:
+            sensitivity = 0.0
+
+        if (TN+FP) > 0:
+            specificity = (TN / float(TN + FP))
+        else:
+            specificity = 0.0
+
+        if (FP + FN + TN + TP) > 0:
+            accuracy = (float(TN + TP) /  float(FP + FN + TN + TP))
+        else:
+            accuracy = 0.0
+
+        total = TP + TN + FP + FN
+
+        return {'TP': float(TP), 'TN': float(TN), 'FP': float(FP), 'FN': float(FN), 'accuracy': float(accuracy), 'total': float(total), 
+            'MCC': float(MCC), 'sensitivity': float(sensitivity), 'specificity': float(specificity) }
+
     def external_validation(self):
         ''' when experimental values are available for the predicted compounds,
         run external validation '''
@@ -204,32 +215,15 @@ class BaseEstimator:
                     LOG.error ("Predicted activity vector is empty")
                     return
 
-                # the use of labels is compulsory to inform the confusion matrix that
-                # it must return a 2x2 confussion matrix. Otherwise it will fail when
-                # a single class is represented (all TP, for example)
-                TN, FP, FN, TP = confusion_matrix(Ye, Yp, labels=[0, 1]).ravel()
+                quality = self.quality_cualitative(Ye, Yp)
 
-                MCC = mcc(Ye, Yp)
-                if np.isnan(MCC):
-                    MCC = 0.000
-
-                if (TP+FN) > 0:
-                    sensitivity = (TP / (TP + FN))
-                else:
-                    sensitivity = 0.0
-
-                if (TN+FP) > 0:
-                    specificity = (TN / (TN + FP))
-                else:
-                    specificity = 0.0
-
-                ext_val_results.append(('TP','True positives in external-validation', float(TP)))
-                ext_val_results.append(('TN','True negatives in external-validation', float(TN)))
-                ext_val_results.append(('FP','False positives in external-validation', float(FP)))
-                ext_val_results.append(('FN','False negatives in external-validation', float(FN)))
-                ext_val_results.append(('Sensitivity', 'Sensitivity in external-validation', float(sensitivity)))
-                ext_val_results.append(('Specificity', 'Specificity in external-validation', float(specificity)))
-                ext_val_results.append(('MCC', 'Mattews Correlation Coefficient in external-validation', float(MCC)))
+                ext_val_results.append(('TP','True positives in external-validation', quality['TP']))
+                ext_val_results.append(('TN','True negatives in external-validation', quality['TN']))
+                ext_val_results.append(('FP','False positives in external-validation', quality['FP']))
+                ext_val_results.append(('FN','False negatives in external-validation', quality['FN']))
+                ext_val_results.append(('Sensitivity', 'Sensitivity in external-validation', quality['sensitivity']))
+                ext_val_results.append(('Specificity', 'Specificity in external-validation', quality['specificity']))
+                ext_val_results.append(('MCC', 'Mattews Correlation Coefficient in external-validation', quality['MCC']))
 
             else:
 
@@ -239,24 +233,14 @@ class BaseEstimator:
                 if Ye.size == 0:
                     LOG.error ("Experimental activity vector is empty")
                     return
+
                 if Yp.size == 0:
                     LOG.error ("Predicted activity vector is empty")
                     return
 
-                Ym = np.mean(Ye)
-                nobj = len(Yp)
-
-                SSY0_out = np.sum(np.square(Ym - Ye))
-                SSY_out = np.sum(np.square(Ye - Yp))
                 scoringP = mean_squared_error(Ye, Yp)
-
-                # SDEP = np.sqrt(SSY_out / (nobj))
-                SDEP = np.sqrt(scoringP)
-                # if SSY0_out == 0:
-                #     Q2 = 0.0
-                # else:
-                #     Q2 = 1.00 - (SSY_out / SSY0_out)
                 Q2 = r2_score (Ye, Yp)
+                SDEP = np.sqrt(scoringP)
 
                 ext_val_results.append(('scoringP', 'Scoring P', scoringP))
                 ext_val_results.append(('Q2', 'Determination coefficient in cross-validation', Q2))
@@ -280,11 +264,7 @@ class BaseEstimator:
                     LOG.error ("Predicted activity vector is empty")
                     return
 
-                c0_correct = 0
-                c1_correct = 0
                 not_predicted = 0
-                c0_incorrect = 0
-                c1_incorrect = 0
 
                 Ye1 = []
                 Yp1 = []
@@ -297,51 +277,21 @@ class BaseEstimator:
                             Yp1.append(0)
                         else:
                             Yp1.append(1)
-
-                        if real == 0 and predicted[0] == True:
-                            c0_correct += 1
-                        if real == 0 and predicted[1] == True:
-                            c0_incorrect += 1
-                        if real == 1 and predicted[1] == True:
-                            c1_correct += 1
-                        if real == 1 and predicted[0] == True:
-                            c1_incorrect += 1
                     else:
                         not_predicted += 1
-                MCC = mcc(Ye1, Yp1)
-                if np.isnan(MCC):
-                    MCC = 0.00
-                TN = c0_correct
-                FP = c0_incorrect
-                TP = c1_correct
-                FN = c1_incorrect
+
                 coverage = float((len(Yp) - not_predicted) / len(Yp))
+                quality = self.quality_cualitative(Ye1, Yp1)
 
-                try:
-                    # Compute accuracy (% of correct predictions)
-                    conformal_accuracy = (float(TN + TP) /  float(FP + FN + TN + TP))
-                except Exception as e:
-                    LOG.error(f'Failed to compute conformal accuracy with exception {e}')
-                    conformal_accuracy = '-'
-                                                            
-                if (TP+FN) > 0:
-                    sensitivity = (TP / (TP + FN))
-                else:
-                    sensitivity = 0.0
-                if (TN+FP) > 0:
-                    specificity = (TN / (TN + FP))
-                else:
-                    specificity = 0.0
-
-                ext_val_results.append(('TP','True positives in external-validation', float(TP)))
-                ext_val_results.append(('TN','True negatives in external-validation', float(TN)))
-                ext_val_results.append(('FP','False positives in external-validation', float(FP)))
-                ext_val_results.append(('FN', 'False negatives in external-validation', float(FN)))
-                ext_val_results.append(('Sensitivity', 'Sensitivity in external-validation', float(sensitivity)))
-                ext_val_results.append(('Specificity', 'Specificity in external-validation', float(specificity)))
-                ext_val_results.append(('MCC', 'Mattews Correlation Coefficient in external-validation', float(MCC)))
-                ext_val_results.append(('Conformal_coverage', 'Conformal coverage in external-validation', float(coverage)))
-                ext_val_results.append(('Conformal_accuracy', 'Conformal accuracy in external-validation', float(conformal_accuracy)))
+                ext_val_results.append(('TP','True positives in external-validation', quality['TP']))
+                ext_val_results.append(('TN','True negatives in external-validation', quality['TN']))
+                ext_val_results.append(('FP','False positives in external-validation', quality ['FP']))
+                ext_val_results.append(('FN', 'False negatives in external-validation', quality['FN']))
+                ext_val_results.append(('Sensitivity', 'Sensitivity in external-validation', quality['sensitivity']))
+                ext_val_results.append(('Specificity', 'Specificity in external-validation', quality['specificity']))
+                ext_val_results.append(('MCC', 'Mattews Correlation Coefficient in external-validation', quality['MCC']))
+                ext_val_results.append(('Conformal_coverage', 'Conformal coverage in external-validation', coverage))
+                ext_val_results.append(('Conformal_accuracy', 'Conformal accuracy in external-validation', quality['accuracy']))
 
             else:
                 # conformal & quantitative
@@ -352,26 +302,17 @@ class BaseEstimator:
                 mean_interval = np.mean(np.abs(Yp_lower) - np.abs(Yp_upper))
                 interval_means = (Yp_lower + Yp_upper) / 2
 
-                inside_interval = (Yp_lower.reshape(-1, 1) <
-                                   Ye) & (Yp_upper.reshape(-1, 1) > Ye)
+                inside_interval = (Yp_lower.reshape(-1, 1) < Ye) & (Yp_upper.reshape(-1, 1) > Ye)
                 accuracy = len(inside_interval)/len(Ye)
-                conformal_accuracy = float("{0:.2f}".format(accuracy))
-                conformal_mean_interval = float(
-                    "{0:.2f}".format(mean_interval))
-                ext_val_results.append(('Conformal_mean_interval', 'Conformal mean interval', conformal_mean_interval))
-                ext_val_results.append(('Conformal_accuracy', 'Conformal accuracy',  conformal_accuracy))
+
+                ext_val_results.append(('Conformal_mean_interval', 'Conformal mean interval', mean_interval))
+                ext_val_results.append(('Conformal_accuracy', 'Conformal accuracy',  accuracy))
+               
                 # Compute classic Cross-validation quality metrics using inteval mean
                 try:
-                    nobj = len(Ye)
-                    Ym = np.mean(Ye)
-                    SSY0_out = np.sum(np.square(Ym - Ye))
-                    SSY_out = np.sum(np.square(Ye - interval_means))
                     scoringP = mean_squared_error(Ye, interval_means)
-                    SDEP = np.sqrt(SSY_out/(nobj))
-                    if SSY0_out == 0.0:
-                        Q2 = 0.0
-                    else:
-                        Q2 = 1.00 - (SSY_out/SSY0_out)
+                    Q2 = r2_score (Ye, interval_means)
+                    SDEP = np.sqrt(scoringP)
 
                     ext_val_results.append(('scoringP', 'Scoring P', scoringP))
                     ext_val_results.append(('Q2', 'Determination coefficient in cross-validation',  Q2))
@@ -408,10 +349,12 @@ class BaseEstimator:
         # Copy Y vector to use it as template to assign predictions
         Y_pred_in = copy.copy(Y).tolist()
         try:
+            prob = 1.0 - self.param.getVal('conformalConfidence')
             for train_index, test_index in self.cv.split(X):
                 # Generate training and test sets
-                X_train, X_test = X[train_index], X[test_index]
-                Y_train, Y_test = Y[train_index], Y[test_index]
+                X_train = X[train_index]
+                X_test = X[test_index]
+                Y_train = Y[train_index]
                 
                 # Create the aggregated conformal regressor.
                 conformal_pred = copy.copy(self.estimator)
@@ -420,7 +363,7 @@ class BaseEstimator:
                 conformal_pred.fit(X_train, Y_train)
 
                 # Perform prediction on test set
-                prediction = conformal_pred.predict(X_test, 1.0 - self.param.getVal('conformalConfidence'))
+                prediction = conformal_pred.predict(X_test, prob)
 
                 # Assign the prediction its original index
                 for index, el in enumerate(test_index):
@@ -436,47 +379,30 @@ class BaseEstimator:
         Y_pred = np.mean(Y_pred_in, axis=1)
         interval_mean_pred = np.mean(np.abs((Y_pred_in[:, 0]) - (Y_pred_in[:, 1])))
 
-        # Get boolean mask of instances
-        #  within the applicability domain.
-        inside_interval_pred = ((Y_pred_in[:, 0].reshape(1, -1)
-                                < Y) & 
-                                (Y_pred_in[:, 1].reshape(1, -1) 
-                                > Y)).reshape(1, -1)
-        inside_interval_rec =  ((Y_rec_in[:, 0].reshape(1, -1)
-                                < Y) & 
-                                (Y_rec_in[:, 1].reshape(1, -1) 
-                                > Y)).reshape(1, -1)
+        # Get boolean mask of instances within the applicability domain.
+        inside_interval_pred = ((Y_pred_in[:, 0].reshape(1, -1) < Y) & 
+                                (Y_pred_in[:, 1].reshape(1, -1) > Y)).reshape(1, -1)
+        inside_interval_rec =  ((Y_rec_in[:, 0].reshape(1, -1) < Y) & 
+                                (Y_rec_in[:, 1].reshape(1, -1) > Y)).reshape(1, -1)
+       
         # Compute the accuracy (number of instances within the AD).
         accuracy_pred = np.sum(inside_interval_pred/len(Y))
         accuracy_rec  = np.sum(inside_interval_rec /len(Y))
 
         #Add quality metrics to results.
         info = []
-        info.append(('Conformal_mean_interval_fitting',
-                     'Conformal mean interval fitting', 
-                     interval_mean_rec))
-        info.append(('Conformal_mean_interval',
-                     'Conformal mean interval', 
-                      interval_mean_pred))
-        info.append(('Conformal_accuracy_fitting', 
-                     'Conformal accuracy fitting', 
-                      accuracy_rec))
-        info.append(('Conformal_accuracy', 
-                     'Conformal accuracy', 
-                      accuracy_pred))
+        info.append(('Conformal_mean_interval_fitting','Conformal mean interval fitting', interval_mean_rec))
+        info.append(('Conformal_mean_interval', 'Conformal mean interval', interval_mean_pred))
+        info.append(('Conformal_accuracy_fitting', 'Conformal accuracy fitting', accuracy_rec))
+        info.append(('Conformal_accuracy', 'Conformal accuracy', accuracy_pred))
 
         
         # Compute goodness of the fit statistics using recalculated
         # predictions
-        # Ym = np.mean(Y)
         try:
             self.scoringR = mean_squared_error(Y, Y_rec)
             self.SDEC = np.sqrt(self.scoringR)
             self.R2 = r2_score(Y, Y_rec)
-            # if SSY0 == 0.0:
-            #     self.R2 = 0.0
-            # else:
-            #     self.R2 = 1.00 - (SSY_rec/SSY0)
 
             info.append(('scoringR', 'Mean Squared Error of the Calculations', self.scoringR))
             info.append(('R2', 'Determination coefficient', self.R2))
@@ -488,15 +414,9 @@ class BaseEstimator:
 
         # Compute classic Cross-validation quality metrics using inteval mean
         try:
-            # SSY0_out = np.sum(np.square(Ym - Y))
-            # SSY_pred = np.sum(np.square(Y_pred - Y))
             self.scoringP = mean_squared_error(Y, Y_pred)
             self.SDEP = np.sqrt(self.scoringP)
             self.Q2 = r2_score(Y, Y_pred)
-            # if SSY0 == 0.0:
-            #     self.Q2 = 0.0
-            # else:
-            #     self.Q2 = 1.00 - (SSY_pred/SSY0)
 
             info.append(('scoringP', 'Mean Squared Error of the Prediction', self.scoringP))
             info.append(('Q2', 'Determination coefficient in cross-validation',self.Q2))
@@ -521,212 +441,102 @@ class BaseEstimator:
         # Make a copy of original matrices.
         X = self.X.copy()
         Y = self.Y.copy()
+
         fit = self.estimator.predict(X, significance = 1.0 - self.param.getVal('conformalConfidence'))
         if fit is None:
             return False, 'prediction error'
-
-        # Total number of class 0 correct predictions.
-        c0_correct_all = 0
-        # Total number of class 0 incorrect predictions.
-        c0_incorrect_all = 0
-        # Total number of class 1 correct predictions.
-        c1_correct_all = 0
-        # Total number of class 1 incorrect predictions
-        c1_incorrect_all = 0
-        # Total number of instances out of the applicability domain.
-        not_predicted_all = 0
 
         info = []
 
         # Copy Y vector to use it as template to assign predictions
         Y_pred = copy.copy(Y).tolist()
         
-        try:
-            for train_index, test_index in self.cv.split(X):
-                # Generate training and test sets
-                X_train, X_test = X[train_index], X[test_index]
-                Y_train, Y_test = Y[train_index], Y[test_index]
+        # try:
 
-                conformal_pred = copy.copy(self.estimator)
-                
-                # Fit the conformal classifier to the data
-                conformal_pred.fit(X_train, Y_train)
-                
-                # Perform prediction on test set
-                prediction = conformal_pred.predict(X_test, 1.0 - self.param.getVal('conformalConfidence'))
-                if prediction is None:
-                    return False, 'prediction error'
+        prob = 1.0 - self.param.getVal('conformalConfidence')
+        for train_index, test_index in self.cv.split(X):
+            # Generate training and test sets
+            X_train = X[train_index]
+            X_test  = X[test_index]
+            Y_train = Y[train_index]
 
-                # Assign the prediction the correct index. 
-                for index, el in enumerate(test_index):
-                    Y_pred[el] = prediction[index]
+            conformal_pred = copy.copy(self.estimator)
             
-            # Iterate over the prediction and check the result
-            for i in range(len(Y_pred)):
-                real = float(Y[i])
-                predicted = Y_pred[i]
-                if predicted[0] != predicted[1]:
-                    if real == 0 and predicted[0] == True:
-                        c0_correct_all += 1
-                    if real == 0 and predicted[1] == True:
-                        c0_incorrect_all += 1
-                    if real == 1 and predicted[1] == True:
-                        c1_correct_all += 1
-                    if real == 1 and predicted[0] == True:
-                        c1_incorrect_all += 1
-                else:
-                    not_predicted_all += 1
+            # Fit the conformal classifier to the data
+            conformal_pred.fit(X_train, Y_train)
             
-            # Get confusion matrix for Y fitted
-            self.TN_f = 0
-            self.FP_f = 0
-            self.TP_f = 0
-            self.FN_f = 0
-            self.not_predicted_all_f = 0
-            for i in range(len(fit)):
-                real = float(Y[i])
-                predicted = fit[i]
-                if predicted[0] != predicted[1]:
-                    if real == 0 and predicted[0] == True:
-                        self.TN_f += 1
-                    if real == 0 and predicted[1] == True:
-                        self.FP_f += 1
-                    if real == 1 and predicted[1] == True:
-                        self.TP_f += 1
-                    if real == 1 and predicted[0] == True:
-                        self.FN_f += 1
+            # Perform prediction on test set
+            prediction = conformal_pred.predict(X_test, prob)
+            if prediction is None:
+                return False, 'prediction error'
+
+            # Assign the prediction the correct index. 
+            for index, el in enumerate(test_index):
+                Y_pred[el] = prediction[index]
+        
+        not_predicted = 0
+        Ye1 = []
+        Yp1 = []
+        for i in range(len(Y_pred)):
+            real = float(Y[i])
+            predicted = Y_pred[i]
+            if predicted[0] != predicted[1]:
+                Ye1.append(real)
+                if predicted[0]:
+                    Yp1.append(0)
                 else:
-                    self.not_predicted_all_f += 1
-        except Exception as e:
-            return False, f'Qualitative conformal validation failed with exception: {e}'
+                    Yp1.append(1)
+            else:
+                not_predicted += 1
 
-        # Get the mean confusion matrix.
-        self.TN = c0_correct_all
-        self.FP = c0_incorrect_all
-        self.TP = c1_correct_all
-        self.FN = c1_incorrect_all
-        not_predicted_all = not_predicted_all
+        quality = self.quality_cualitative(Ye1, Yp1)
 
-        info.append(('TP_f', 'True positives in fitting', self.TP_f))
-        info.append(('TN_f', 'True negatives in fitting', self.TN_f))
-        info.append(('FP_f', 'False positives in fitting', self.FP_f))
-        info.append(('FN_f', 'False negatives in fitting', self.FN_f))
+        not_predicted_f = 0
+        Ye1 = []
+        Yp1 = []
+        for i in range(len(fit)):
+            real = float(Y[i])
+            predicted = fit[i]
+            if predicted[0] != predicted[1]:
+                Ye1.append(real)
+                if predicted[0]:
+                    Yp1.append(0)
+                else:
+                    Yp1.append(1)
+            else:
+                not_predicted_f += 1
 
-        info.append(('TP', 'True positives in cross-validation', self.TP))
-        info.append(('TN', 'True negatives in cross-validation', self.TN))
-        info.append(('FP', 'False positives in cross-validation', self.FP))
-        info.append(('FN', 'False negatives in cross-validation', self.FN))
+        quality_f = self.quality_cualitative(Ye1, Yp1)
 
-        # Compute sensitivity, specificity and MCC for fitting
-        try:
-            self.sensitivity_f = (self.TP_f / (self.TP_f + self.FN_f))
-        except Exception as e:
-            LOG.error(f'Failed to compute sensibility with'
-                        f'exception {e}')
-            self.sensitivity_f = '-'
-        try:
-            self.specificity_f = (self.TN_f / (self.TN_f + self.FP_f))
-        except Exception as e:
-            LOG.error(f'Failed to compute specificity with'
-                        f'exception {e}')
-            self.specificity_f = '-'
-        try:
-            # Compute Matthews Correlation Coefficient
-            self.mcc_f = (((self.TP_f * self.TN_f) - (self.FP_f * self.FN_f)) /
-                        np.sqrt((self.TP_f + self.FP_f) * (self.TP_f + self.FN_f) *
-                         (self.TN_f + self.FP_f) * (self.TN_f + self.FN_f)))
+        # except Exception as e:
+        #     return False, f'Qualitative conformal validation failed with exception: {e}'
 
-            if np.isnan(self.mcc_f):
-                self.mcc_f = 0.000
-                
-        except Exception as e:
-            LOG.error(f'Failed to compute Mathews Correlation Coefficient'
-                        f'exception {e}')
-            self.mcc_f = 0.000
- 
-        # Compute sensitivity, specificity and MCC for cross-validation
-        try:
-            self.sensitivity = (self.TP / (self.TP + self.FN))
-        except Exception as e:
-            LOG.error(f'Failed to compute sensibility with'
-                        f'exception {e}')
-            self.sensitivity = '-'
-        try:
-            self.specificity = (self.TN / (self.TN + self.FP))
-        except Exception as e:
-            LOG.error(f'Failed to compute specificity with'
-                        f'exception {e}')
-            self.specificity = '-'
-        try:
-            # Compute Matthews Correlation Coefficient
-            self.mcc = (((self.TP * self.TN) - (self.FP * self.FN)) /
-                        np.sqrt((self.TP + self.FP) * (self.TP + self.FN) *
-                         (self.TN + self.FP) * (self.TN + self.FN)))
+        info.append(('TP_f', 'True positives in fitting', quality_f['TP']))
+        info.append(('TN_f', 'True negatives in fitting', quality_f['TN']))
+        info.append(('FP_f', 'False positives in fitting', quality_f['FP']))
+        info.append(('FN_f', 'False negatives in fitting', quality_f['FN']))
 
-            if np.isnan(self.mcc):
-                self.mcc = 0.000
-        
-        except Exception as e:
-            LOG.error(f'Failed to compute Mathews Correlation Coefficient'
-                        f'exception {e}')
-            self.mcc = 0.000
+        info.append(('TP', 'True positives in cross-validation', quality['TP']))
+        info.append(('TN', 'True negatives in cross-validation', quality['TN']))
+        info.append(('FP', 'False positives in cross-validation', quality['FP']))
+        info.append(('FN', 'False negatives in cross-validation', quality['FN']))
 
-        info.append(('Sensitivity_f', 'Sensitivity in fitting', self.sensitivity_f))
-        info.append(('Specificity_f', 'Specificity in fitting', self.specificity_f))
-        info.append(('MCC_f', 'Matthews Correlation Coefficient in fitting', self.mcc_f))
+        info.append(('Sensitivity_f', 'Sensitivity in fitting', quality_f['sensitivity']))
+        info.append(('Specificity_f', 'Specificity in fitting', quality_f['specificity']))
+        info.append(('MCC_f', 'Matthews Correlation Coefficient in fitting', quality_f['MCC']))
 
-        info.append(('Sensitivity', 'Sensitivity in cross-validation', self.sensitivity))
-        info.append(('Specificity', 'Specificity in cross-validation', self.specificity))
-        info.append(('MCC', 'Matthews Correlation Coefficient in cross-validation', self.mcc))
-        
-        # Compute coverage (% of compounds inside the applicability domain)
-        # for fitting
-        try:
-            self.conformal_coverage_f = (self.TN_f + self.FP_f + self.TP_f +
-                                        self.FN_f) / ((self.TN_f + self.FP_f +
-                                        self.TP_f + self.FN_f) +
-                                        self.not_predicted_all_f)
-        except Exception as e:
-            LOG.error(f'Failed to compute fitting conformal coverage with'
-                        f'exception {e}')
-            self.conformal_coverage_f = '-'
-        
-        # Compute coverage (% of compounds inside the applicability domain)
-        # for cross-validation
-        try:
-            self.conformal_coverage = (self.TN + self.FP + self.TP +
-                                        self.FN) / ((self.TN + self.FP +
-                                        self.TP + self.FN) +
-                                        not_predicted_all)         
-        except Exception as e:
-            LOG.error(f'Failed to compute cross-validation conformal coverage with'
-                        f'exception {e}')
-            self.conformal_coverage = '-'
-        
-        # Compute fitting accuracy (% of correct predictions)
-        try:
-            self.conformal_accuracy_f = (float(self.TN_f + self.TP_f) /
-                                        float(self.FP_f + self.FN_f + 
-                                            self.TN_f + self.TP_f))
-        except Exception as e:
-            LOG.error(f'Failed to compute fitting conformal accuracy with'
-                        f'exception {e}')
-            self.conformal_accuracy = '-'
+        info.append(('Sensitivity', 'Sensitivity in cross-validation', quality['sensitivity']))
+        info.append(('Specificity', 'Specificity in cross-validation', quality['specificity']))
+        info.append(('MCC', 'Matthews Correlation Coefficient in cross-validation', quality['MCC']))
 
-        # Compute cross-validation accuracy (% of correct predictions)
-        try:
-            self.conformal_accuracy = (float(self.TN + self.TP) /
-                                        float(self.FP + self.FN + 
-                                            self.TN + self.TP))
-        except Exception as e:
-            LOG.error(f'Failed to compute cross-validation conformal accuracy with'
-                        f'exception {e}')
-            self.conformal_accuracy = '-'
-        
-        info.append(('Conformal_coverage_f', 'Conformal coverage in fitting', self.conformal_coverage_f))
-        info.append(('Conformal_accuracy_f', 'Conformal accuracy in fitting', self.conformal_accuracy_f))                                                    
-        info.append(('Conformal_coverage', 'Conformal coverage in cross-validation', self.conformal_coverage))
-        info.append(('Conformal_accuracy', 'Conformal accuracy in cross-validation', self.conformal_accuracy))
+        coverage_f = quality_f['total'] / float (not_predicted_f + quality_f['total'])
+        coverage = quality['total'] / float (not_predicted + quality['total'])
+
+        info.append(('Conformal_coverage_f', 'Conformal coverage in fitting', coverage_f))
+        info.append(('Conformal_accuracy_f', 'Conformal accuracy in fitting', quality_f['accuracy']))                                                    
+        info.append(('Conformal_coverage', 'Conformal coverage in cross-validation', coverage))
+        info.append(('Conformal_accuracy', 'Conformal accuracy in cross-validation', quality['accuracy']))
+
 
         # convert to plain list to avoid problems with JSON serialization of results
         adj_list = fit.tolist()
@@ -752,21 +562,12 @@ class BaseEstimator:
         if Yp is None:
             return False, 'prediction error'
 
-        # Compute  mean of predicted Y
-        # Ym = np.mean(Y)
-
         info = []
         # Compute Goodness of the fit metric (adjusted Y)
         try:
-            # SSY0 = np.sum(np.square(Ym-Y))
-            # SSY = np.sum(np.square(Yp-Y))
             self.scoringR = np.mean(mean_squared_error(Y, Yp)) 
             self.SDEC = np.sqrt(self.scoringR)
             self.R2 = r2_score(Y, Yp)
-            # if SSY0 == 0.0:
-            #     self.R2 = 0.0
-            # else:
-            #     self.R2 = 1.00 - (SSY/SSY0)
 
             info.append(('scoringR', 'Mean Squared Error of the Calculations', self.scoringR))
             info.append(('R2', 'Determination coefficient', self.R2))
@@ -780,24 +581,14 @@ class BaseEstimator:
             # Get predicted Y
             # y_pred = cross_val_predict(copy.copy(self.estimator), copy.copy(X), copy.copy(Y), cv=self.cv, n_jobs=1)
             y_pred = cross_val_predict(self.estimator, X, Y, cv=self.cv, n_jobs=self.cross_jobs)
-            # SSY0_out = np.sum(np.square(Ym - Y))
-            # SSY_out = np.sum(np.square(Y - y_pred))
             self.scoringP = mean_squared_error(Y, y_pred)
             self.SDEP = np.sqrt(self.scoringP)
             self.Q2 = r2_score(Y, y_pred)
-            # if SSY0_out == 0.0:
-            #     self.Q2 = 0.0
-            # else:
-            #     self.Q2 = 1.00 - (SSY_out/SSY0_out)
 
             info.append(('scoringP', 'Mean Squared Error of the Predictions', self.scoringP))
             info.append(('Q2', 'Determination coefficient in cross-validation', self.Q2))
             info.append(('SDEP', 'Standard Deviation Error of the Predictions', self.SDEP))
 
-            # newy.append (
-            #     ('Y_adj', 'Recalculated Y values', Yp) )          
-            # newy.append (
-            #     ('Y_pred', 'Predicted Y values (after cross-validation)', y_pred) )  
             LOG.debug(f'Squared-Q calculated: {self.scoringP}')
 
         except Exception as e:
@@ -828,21 +619,15 @@ class BaseEstimator:
 
         # Get confusion matrix for predicted Y
         try:
-            self.TN_f, self.FP_f,\
-            self.FN_f, self.TP_f = confusion_matrix(Y, Yp, labels=[0, 1]).ravel()
-            self.sensitivity_f = (self.TP_f / (self.TP_f + self.FN_f))
-            self.specificity_f = (self.TN_f / (self.TN_f + self.FP_f))
-            self.mcc_f = mcc(Y, Yp)
-            if np.isnan(self.mcc_f):
-                self.mcc_f = 0.00
+            quality_f = self.quality_cualitative (Y, Yp)
 
-            info.append(('TP_f', 'True positives in fitting', self.TP_f))
-            info.append(('TN_f', 'True negatives in fitting', self.TN_f))
-            info.append(('FP_f', 'False positives in fitting', self.FP_f))
-            info.append(('FN_f', 'False negatives in fitting', self.FN_f))
-            info.append(('Sensitivity_f', 'Sensitivity in fitting', self.sensitivity_f))
-            info.append(('Specificity_f', 'Specificity in fitting', self.specificity_f))
-            info.append(('MCC_f', 'Matthews Correlation Coefficient in fitting', self.mcc_f))
+            info.append(('TP_f', 'True positives in fitting', quality_f['TP']))
+            info.append(('TN_f', 'True negatives in fitting', quality_f['TN']))
+            info.append(('FP_f', 'False positives in fitting', quality_f['FP']))
+            info.append(('FN_f', 'False negatives in fitting', quality_f['FN']))
+            info.append(('Sensitivity_f', 'Sensitivity in fitting', quality_f['sensitivity']))
+            info.append(('Specificity_f', 'Specificity in fitting', quality_f['specificity']))
+            info.append(('MCC_f', 'Matthews Correlation Coefficient in fitting', quality_f['MCC']))
    
             LOG.debug('Computed quality indicators for fitting')
         except Exception as e:
@@ -856,28 +641,15 @@ class BaseEstimator:
 
         # Get confusion matrix
         try:
-            self.TN, self.FP, self.FN, self.TP = confusion_matrix(
-                Y, y_pred, labels=[0, 1]).ravel()
-            self.sensitivity = (self.TP / (self.TP + self.FN))
-            self.specificity = (self.TN / (self.TN + self.FP))
-            self.mcc = mcc(Y, y_pred)
-            if np.isnan(self.mcc):
-                self.mcc = 0.00
+            quality = self.quality_cualitative (Y, y_pred)
 
-            # self.mcc = (((self.TP * self.TN) - (self.FP * self.FN)) /
-            #             np.sqrt((self.TP + self.FP) * (self.TP + self.FN) *
-            #              (self.TN + self.FP) * (self.TN + self.FN)))
-
-            info.append(('TP', 'True positives in cross-validation', self.TP))
-            info.append(('TN', 'True negatives in cross-validation', self.TN))
-            info.append(('FP', 'False positives in cross-validation', self.FP))
-            info.append(('FN', 'False negatives in cross-validation', self.FN))
-            info.append(('Sensitivity', 'Sensitivity in cross-validation', self.sensitivity))
-            info.append(('Specificity', 'Specificity in cross-validation', self.specificity))
-            info.append(('MCC', 'Matthews Correlation Coefficient in cross-validation', self.mcc))
-            # info.append (('Y_adj', 'Adjusted Y values', Y) ) 
-            # info.append (('Y_adj', 'Adjusted Y values', Yp) )          
-            # info.append (('Y_pred', 'Predicted Y values after cross-validation', y_pred))
+            info.append(('TP', 'True positives in cross-validation', quality['TP']))
+            info.append(('TN', 'True negatives in cross-validation', quality['TN']))
+            info.append(('FP', 'False positives in cross-validation', quality['FP']))
+            info.append(('FN', 'False negatives in cross-validation', quality['FN']))
+            info.append(('Sensitivity', 'Sensitivity in cross-validation', quality['sensitivity']))
+            info.append(('Specificity', 'Specificity in cross-validation', quality['specificity']))
+            info.append(('MCC', 'Matthews Correlation Coefficient in cross-validation', quality['MCC']))
 
             LOG.debug('Computed quality indicators for prediction')
         except Exception as e:
