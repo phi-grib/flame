@@ -153,6 +153,8 @@ class BaseEstimator:
                 self.conveyor.setError(f'Error retrieving cross-validator with exception: {e}')
 
     def quality_cualitative (self, y, yp):
+        ''' convenience function to compute quality indexes for 
+        cualitative models '''
         TN, FP, FN, TP = confusion_matrix(y, yp, labels=[0, 1]).ravel()
 
         MCC = mcc(y, yp)
@@ -179,6 +181,17 @@ class BaseEstimator:
 
         return {'TP': float(TP), 'TN': float(TN), 'FP': float(FP), 'FN': float(FN), 'accuracy': float(accuracy), 'total': float(total), 
             'MCC': float(MCC), 'sensitivity': float(sensitivity), 'specificity': float(specificity) }
+
+    def quality_quantitative (self, y, yp):
+        ''' convenience function to compute quality indexes for 
+        quantitative models '''
+
+        MSE = mean_squared_error(y, yp)
+
+        R2 = r2_score (y, yp)
+
+        return {'R2': R2, 'MSE': MSE, 'SDEP': np.sqrt(MSE)}
+
 
     def external_validation(self):
         ''' when experimental values are available for the predicted compounds,
@@ -238,13 +251,11 @@ class BaseEstimator:
                     LOG.error ("Predicted activity vector is empty")
                     return
 
-                scoringP = mean_squared_error(Ye, Yp)
-                Q2 = r2_score (Ye, Yp)
-                SDEP = np.sqrt(scoringP)
+                quality = self.quality_quantitative(Ye, Yp)
 
-                ext_val_results.append(('scoringP', 'Scoring P', scoringP))
-                ext_val_results.append(('Q2', 'Determination coefficient in cross-validation', Q2))
-                ext_val_results.append(('SDEP', 'Standard Deviation Error of the Predictions', SDEP))
+                ext_val_results.append(('scoringP', 'Mean Squared Error of the Predictions', quality['MSE']))
+                ext_val_results.append(('Q2', 'Determination coefficient in cross-validation', quality['R2']))
+                ext_val_results.append(('SDEP', 'Standard Deviation Error of the Predictions', quality['SDEP']))
 
         else:
             # conformal external validation
@@ -310,13 +321,11 @@ class BaseEstimator:
                
                 # Compute classic Cross-validation quality metrics using inteval mean
                 try:
-                    scoringP = mean_squared_error(Ye, interval_means)
-                    Q2 = r2_score (Ye, interval_means)
-                    SDEP = np.sqrt(scoringP)
+                    quality = self.quality_quantitative(Ye, interval_means)
 
-                    ext_val_results.append(('scoringP', 'Scoring P', scoringP))
-                    ext_val_results.append(('Q2', 'Determination coefficient in cross-validation',  Q2))
-                    ext_val_results.append(('SDEP', 'Standard Deviation Error of the Predictions',  SDEP))
+                    ext_val_results.append(('scoringP', 'Mean Squared Error of the Predictions', quality['MSE']))
+                    ext_val_results.append(('Q2', 'Determination coefficient in cross-validation', quality['R2']))
+                    ext_val_results.append(('SDEP', 'Standard Deviation Error of the Predictions', quality['SDEP']))
 
                 except Exception as e:
                     LOG.error(f'Error in external validation with exception {e}')
@@ -400,29 +409,25 @@ class BaseEstimator:
         # Compute goodness of the fit statistics using recalculated
         # predictions
         try:
-            self.scoringR = mean_squared_error(Y, Y_rec)
-            self.SDEC = np.sqrt(self.scoringR)
-            self.R2 = r2_score(Y, Y_rec)
+            quality = self.quality_quantitative(Y, Y_rec)
 
-            info.append(('scoringR', 'Mean Squared Error of the Calculations', self.scoringR))
-            info.append(('R2', 'Determination coefficient', self.R2))
-            info.append(('SDEC', 'Standard Deviation Error of the Calculations', self.SDEC))
+            info.append(('scoringR', 'Mean Squared Error of the Calculations', quality['MSE']))
+            info.append(('R2', 'Determination coefficient', quality['R2']))
+            info.append(('SDEC', 'Standard Deviation Error of the Calculations', quality['SDEP']))
 
-            LOG.debug(f'Goodness of the fit calculated: {self.scoringR}')
+            LOG.debug(f"R2: {quality['R2']}")
         except Exception as e:
             return False, f'Error computing goodness of fit with exception: {e}'
 
         # Compute classic Cross-validation quality metrics using inteval mean
         try:
-            self.scoringP = mean_squared_error(Y, Y_pred)
-            self.SDEP = np.sqrt(self.scoringP)
-            self.Q2 = r2_score(Y, Y_pred)
+            quality = self.quality_quantitative(Y, Y_pred)
 
-            info.append(('scoringP', 'Mean Squared Error of the Prediction', self.scoringP))
-            info.append(('Q2', 'Determination coefficient in cross-validation',self.Q2))
-            info.append(('SDEP', 'Standard Deviation Error of the Predictions',self.SDEP))
+            info.append(('scoringP', 'Mean Squared Error of the Prediction', quality['MSE']))
+            info.append(('Q2', 'Determination coefficient in cross-validation',quality['R2']))
+            info.append(('SDEP', 'Standard Deviation Error of the Predictions',quality['SDEP']))
 
-            LOG.debug(f'Squared-Q calculated: {self.scoringP}')
+            LOG.debug(f"Q2: {quality['R2']}")
 
         except Exception as e:
             return False, f'Error cross-validating the estimator with exception {e}'
@@ -565,32 +570,28 @@ class BaseEstimator:
         info = []
         # Compute Goodness of the fit metric (adjusted Y)
         try:
-            self.scoringR = np.mean(mean_squared_error(Y, Yp)) 
-            self.SDEC = np.sqrt(self.scoringR)
-            self.R2 = r2_score(Y, Yp)
+            quality = self.quality_quantitative(Y, Yp)
 
-            info.append(('scoringR', 'Mean Squared Error of the Calculations', self.scoringR))
-            info.append(('R2', 'Determination coefficient', self.R2))
-            info.append(('SDEC', 'Standard Deviation Error of the Calculations', self.SDEC))
-            LOG.debug(f'Goodness of the fit calculated: {self.scoringR}')
+            info.append(('scoringR', 'Mean Squared Error of the Calculations', quality['MSE']))
+            info.append(('R2', 'Determination coefficient', quality['R2']))
+            info.append(('SDEC', 'Standard Deviation Error of the Calculations', quality['SDEP']))
+
+            LOG.debug(f"R2: {quality['R2']}")
         except Exception as e:
             return False, f'Error computing goodness of fit with exception: {e}'
 
         # Compute Cross-validation quality metrics
         try:
             # Get predicted Y
-            # y_pred = cross_val_predict(copy.copy(self.estimator), copy.copy(X), copy.copy(Y), cv=self.cv, n_jobs=1)
             y_pred = cross_val_predict(self.estimator, X, Y, cv=self.cv, n_jobs=self.cross_jobs)
-            self.scoringP = mean_squared_error(Y, y_pred)
-            self.SDEP = np.sqrt(self.scoringP)
-            self.Q2 = r2_score(Y, y_pred)
 
-            info.append(('scoringP', 'Mean Squared Error of the Predictions', self.scoringP))
-            info.append(('Q2', 'Determination coefficient in cross-validation', self.Q2))
-            info.append(('SDEP', 'Standard Deviation Error of the Predictions', self.SDEP))
+            quality = self.quality_quantitative(Y, y_pred)
 
-            LOG.debug(f'Squared-Q calculated: {self.scoringP}')
+            info.append(('scoringP', 'Mean Squared Error of the Predictions', quality['MSE']))
+            info.append(('Q2', 'Determination coefficient in cross-validation', quality['R2']))
+            info.append(('SDEP', 'Standard Deviation Error of the Predictions', quality['SDEP']))
 
+            LOG.debug(f"Q2: {quality['R2']}")
         except Exception as e:
             return False, f'Error cross-validating the estimator with exception: {e}'
               
