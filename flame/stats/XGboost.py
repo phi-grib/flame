@@ -59,6 +59,12 @@ class XGBOOST(BaseEstimator):
             LOG.error(f'Error initializing BaseEstimator parent class with exception: {e}')
             return
 
+        try:
+            import xgboost as xgb
+            xgb.set_config(verbosity=0)
+        except:
+            LOG.error ('XGboost not found, please revise your environment')
+
         # Load estimator parameters        
         self.estimator_parameters = self.param.getDict('XGBOOST_parameters')
 
