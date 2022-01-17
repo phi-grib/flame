@@ -23,6 +23,7 @@
 import numpy as np
 import pickle
 import os
+import time
 
 from flame.stats.RF import RF
 from flame.stats.SVM import SVM
@@ -425,11 +426,14 @@ class Apply:
             return
 
         # try to load model previously built
-        LOG.debug(f'Loading model from pickle file')
+        start = time.time()
+        LOG.debug('Loading model from pickle file...')
         success, results = model.load_model()
+        end = time.time()
+        LOG.debug(f'Model loaded with message "{results}" in {(end-start):.2f} seconds')
 
         if not success:
-            self.conveyor.setError(f'Failed to load model estimator, with error "{result}"')
+            self.conveyor.setError(f'Failed to load model estimator, with error "{results}"')
             return 
 
         # project the X matrix into the model and save predictions in self.conveyor

@@ -415,7 +415,7 @@ class BaseEstimator:
             info.append(('R2', 'Determination coefficient', quality['R2']))
             info.append(('SDEC', 'Standard Deviation Error of the Calculations', quality['SDEP']))
 
-            LOG.debug(f"R2: {quality['R2']}")
+            LOG.debug(f"R2: {quality['R2']:.4f}")
         except Exception as e:
             return False, f'Error computing goodness of fit with exception: {e}'
 
@@ -427,7 +427,7 @@ class BaseEstimator:
             info.append(('Q2', 'Determination coefficient in cross-validation',quality['R2']))
             info.append(('SDEP', 'Standard Deviation Error of the Predictions',quality['SDEP']))
 
-            LOG.debug(f"Q2: {quality['R2']}")
+            LOG.debug(f"Q2: {quality['R2']:.4f}")
 
         except Exception as e:
             return False, f'Error cross-validating the estimator with exception {e}'
@@ -576,7 +576,7 @@ class BaseEstimator:
             info.append(('R2', 'Determination coefficient', quality['R2']))
             info.append(('SDEC', 'Standard Deviation Error of the Calculations', quality['SDEP']))
 
-            LOG.debug(f"R2: {quality['R2']}")
+            LOG.debug(f"R2: {quality['R2']:.4f}")
         except Exception as e:
             return False, f'Error computing goodness of fit with exception: {e}'
 
@@ -591,7 +591,7 @@ class BaseEstimator:
             info.append(('Q2', 'Determination coefficient in cross-validation', quality['R2']))
             info.append(('SDEP', 'Standard Deviation Error of the Predictions', quality['SDEP']))
 
-            LOG.debug(f"Q2: {quality['R2']}")
+            LOG.debug(f"Q2: {quality['R2']:.4f}")
         except Exception as e:
             return False, f'Error cross-validating the estimator with exception: {e}'
               
@@ -749,7 +749,7 @@ class BaseEstimator:
         # y_pred = cross_val_predict(self.estimator, X, Y, cv=self.cv)
         # LOG.info (f'validation: {r2_score(Y, y_pred)}')
         
-        LOG.debug (f'Best estimator found in {end-start} seconds')
+        LOG.debug (f'Best estimator found in {(end-start):.2f} seconds')
 
         # Remove garbage in memory
         del(tclf)
