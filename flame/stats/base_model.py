@@ -400,9 +400,9 @@ class BaseEstimator:
 
         #Add quality metrics to results.
         info = []
-        info.append(('Conformal_mean_interval_fitting','Conformal mean interval fitting', interval_mean_rec))
+        info.append(('Conformal_mean_interval_f','Conformal mean interval in fitting', interval_mean_rec))
         info.append(('Conformal_mean_interval', 'Conformal mean interval', interval_mean_pred))
-        info.append(('Conformal_accuracy_fitting', 'Conformal accuracy fitting', accuracy_rec))
+        info.append(('Conformal_accuracy_f', 'Conformal accuracy in fitting', accuracy_rec))
         info.append(('Conformal_accuracy', 'Conformal accuracy', accuracy_pred))
 
         
