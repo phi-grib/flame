@@ -350,9 +350,9 @@ class Combo (BaseEstimator):
             error_top_right = 1.0 - error_top_left
 
             # gather array of confidences for low models
-            error_low = [i for i in self.conveyor.getVal('ensemble_confidence')]
+            error_low = np.array([i for i in self.conveyor.getVal('ensemble_confidence')])
             if None in error_low:
-                error_low = [error_top for i in range(self.nvarx)]
+                error_low = np.array([error_top for i in range(self.nvarx)])
             else:
                 error_low = 1.0 - error_low
 
