@@ -1,7 +1,6 @@
 from flame.documentation import Documentation
 from flame.util import utils,get_logger 
 import os
-from flame.conveyor import Conveyor
 from rdkit import Chem,DataStructs
 import pickle
 
@@ -54,7 +53,7 @@ def verify_prediction (endpoint, version=None):
 
 # def verify_model(endpoint, version= None):
 #     doc = Documentation(endpoint, version)
-#     list_of_mols = doc.get_mols() #lista de mols
+#     list_of_mols = doc.get_mols()
 #     print("Total: ",len(list_of_mols))
 #     api = utils.connect_api()
 #     count = 1
@@ -117,15 +116,15 @@ def get_verification(endpoint,version):
     '''
     Retrieves the model verification if it exists
     '''
-    result_verification = False
+    verification = False
     meta_path = utils.model_path(endpoint, version)
     verification_file = os.path.join(meta_path, 'verification.pkl')
 
     if os.path.isfile(verification_file):
         file = open(verification_file,"rb")
-        result_verification = pickle.load(file)
+        verification = pickle.load(file)
         file.close()
-        return True,result_verification
+        return True,verification
 
     return False
 
