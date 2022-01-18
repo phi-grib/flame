@@ -32,6 +32,7 @@ from flame.conveyor import Conveyor
 from flame.parameters import Parameters
 from rdkit.Chem import AllChem
 import hashlib
+from datetime import date
 
 
 
@@ -108,6 +109,7 @@ class Documentation:
             self.load_results()
             self.assign_parameters()
             self.assign_results()
+            self.autocomplete_documentation()
             self.setVal('md5',self.idataHash())
 
     def safe_copy (inputfile):
@@ -735,7 +737,7 @@ class Documentation:
 
         model_info = self.conveyor.getVal('model_build_info')
         validation = self.conveyor.getVal('model_valid_info')
-
+        # print(model_info)
 
         # The code below to filter the hyperparameters to be 
         # reported.
@@ -1031,6 +1033,88 @@ class Documentation:
         # use picke as a buffered object, neccesary to generate the hexdigest
         p = pickle.dumps(idata_params)
         return hashlib.md5(p).hexdigest()
+
+        
+    def empty_fields(self):
+        '''
+        This function checks which fields do not contain values 
+        '''
+        emptyfields = []
+        for ik in self.fields:
+            v = self.fields[ik]
+            if 'value' in v:
+                ivalue = v['value']
+                if isinstance(ivalue,dict):
+                    for intk in ivalue:
+                        intv = ivalue[intk]
+                        if not isinstance(intv,dict):
+                            iivalue = intv
+                            if iivalue is None or len(str(iivalue)) is 0:
+                                emptyfields.append(intk)
+
+                        else:
+                            intv = ivalue[intk]
+                            iivalue = ''
+                            if intv["value"] is None or len(str(intv["value"])) is 0:
+                                emptyfields.append(intk)
+                  
+                else:
+                     if ivalue is None or len(str(ivalue)) is 0:
+                        emptyfields.append(ik)
+                        
+        return emptyfields
+    
+    def get_mols(self):
+        
+        return dict(zip(self.conveyor.getVal("obj_nam"),self.conveyor.getVal("SMILES")))
+
+
+
+    def autocomplete_documentation(self):
+        """
+        Auto complete fields in model documentation
+        """
+        #ID, Model identifier.
+        self.fields['ID']['value'] = utils.getModelID(self.model,self.version, 'model')[1]
+        #Version
+        self.fields['Version']['value'] = str(self.version)
+        #Date, Date of model development and Date of QMRF.
+        today = date.today().strftime("%B %d, %Y")
+
+        self.fields['Date']['value'] = today
+        self.fields['Date_of_QMRF']['value'] = today
+
+        #format, Format used(SDF,TSV)
+        if self.parameters.getVal('input_type') == 'data':
+            self.fields['Data_info']['value']['format']['value'] = 'TSV'
+        else:
+            self.fields['Data_info']['value']['format']['value'] = 'SDF'
+        #Algorithm, type: QSAR.
+        self.fields['Algorithm']['value']['type']['value'] = 'QSAR'
+        #Model, Main modelling program, version, description and license.
+        software = "Flame, 1.0rc2, GLP v3"
+        fieldsapplysoftware = ['model','descriptors','applicability_domain']
+
+        for field in fieldsapplysoftware:
+            if field == 'applicability_domain':
+                self.fields['Software']['value'][field]['value'] = "For conformal models only: "+software
+            else:
+                self.fields['Software']['value'][field]['value'] = software
+
+        ### TO DO ###
+        # descriptors: AUTO(list descriptors).
+        # initial number: AUTO (# descriptors) .
+        # selection method: AUTO (feature selection, if applied, NO otherwhise) .
+        # selection: AUTO (final # descriptors if applied, no otherwise).
+        
+        
+        
+
+         
+
+
+        
+        
         
 
 
