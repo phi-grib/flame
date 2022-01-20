@@ -24,7 +24,7 @@
 
 from copy import copy
 from flame.stats.base_model import BaseEstimator
-
+import numpy as np
 
 from sklearn.cross_decomposition import PLSCanonical, PLSRegression, CCA
 from sklearn.model_selection import cross_val_predict
@@ -181,7 +181,17 @@ class PLSR(BaseEstimator):
 
         # Fit estimator to the data
         self.regularBuild(X, Y)
-        # self.estimator.fit(X, Y)
+        
+        # The model coefficients can be easily extracted and stored for building 
+        # confidential models. These coefficients can be used to predict the properties of
+        # new compounds, simply by multiplying the X ( X @ coef ), as shown below
+        # coef = self.estimator.coef_
+        # print (coef)
+        # yp = self.estimator.predict(X)
+        # yp2 = X @ coef 
+        # yp2 += np.mean(Y)
+        # yp2 = np.reshape(yp2, (self.nobj))
+        # print (yp, yp2)
 
         if not self.param.getVal('conformal'):
             return True, results
