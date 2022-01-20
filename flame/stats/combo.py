@@ -24,6 +24,7 @@ import numpy as np
 import copy
 import yaml
 import os
+import pickle
 from sklearn.metrics import mean_squared_error
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import matthews_corrcoef
@@ -32,7 +33,7 @@ from flame.stats.base_model import BaseEstimator
 from flame.util import utils, get_logger
 
 LOG = get_logger(__name__)
-SIMULATION_SIZE = 500
+SIMULATION_SIZE = 1000
 
 class Combo (BaseEstimator):
     """
@@ -103,6 +104,7 @@ class Combo (BaseEstimator):
                 self.scoringR = np.mean(
                     mean_squared_error(Y, Yp)) 
                 self.SDEC = np.sqrt(SSY/self.nobj)
+
                 if SSY0 == 0.00:
                     self.R2 = 0.0
                 else:
@@ -336,22 +338,23 @@ class Combo (BaseEstimator):
             CI_vals = self.conveyor.getVal('ensemble_ci')
 
             # conformal error of the top model
-
-            error_top = 1.0 - self.param.getVal('conformalConfidence') 
+            error_top = self.param.getVal('conformalConfidence') 
             
             # conformal confidence default is 0.8
             if error_top is None:
                 error_top = 0.2  # fallback!!! we asume a default confidence of 80%
+            else:
+                error_top = 1.0 - error_top
 
             error_top_left  = error_top /2.0
             error_top_right = 1.0 - error_top_left
 
             # gather array of confidences for low models
-            error_low = [(1.0 - i) for i in self.conveyor.getVal('ensemble_confidence')]
-            if error_low is None:
-                error_low = [error_top for i in range(self.nvarx)]
-            elif None in error_low:
-                error_low = [error_top for i in range(self.nvarx)]
+            error_low = np.array([i for i in self.conveyor.getVal('ensemble_confidence')])
+            if None in error_low:
+                error_low = np.array([error_top for i in range(self.nvarx)])
+            else:
+                error_low = 1.0 - error_low
 
             zcoeff = []
             for ierror in error_low:
@@ -509,6 +512,7 @@ class mean (Combo):
 
         computeCI, CIparams = self.getConfidence ()
         if computeCI:
+
             ############################################
             ##
             ##  Compute CI
@@ -540,7 +544,16 @@ class mean (Combo):
                 for i in range (self.nvarx):
                     cirange = CI_vals[j,i*2+1] - CI_vals[j,i*2]
                     sd = cirange * zcoeff[i]
-                    w[i] = 1.0/np.square(sd)
+
+                    # if sd is very small (<1^10-9) or zero the weight would be absurdly
+                    # high or infinite. In these case, avoid weighting this variable assigning 
+                    # a sd = 1.00 
+                    if (sd < 1.e-9):
+                        w[i] = 1.0
+                    else:
+                        w[i] = 1.0/np.square(sd)
+
+                # print (cirange)
 
                 ws = np.sum(w)
 
@@ -974,6 +987,207 @@ class matrix (Combo):
             sval = [np.array(yarray)]
             yarray = self.postprocess(sval)[0] 
 
+
+        return yarray
+
+
+class external_model (Combo):
+    """
+       Predict output using a pre-computed estimator
+
+    """
+    def __init__(self, X, Y, parameters, conveyor):
+        Combo.__init__(self, X, Y, parameters, conveyor)
+        self.model_path = parameters.getVal('model_path')
+        self.method_name = 'external model'
+
+    def preprocess (self, X):
+        ''' transform to customize input values, before looking into the table '''
+
+        # ***** MOVE TO OVERRIDING FUNCTIONS *******
+        # avoid extrapolating. In polynomial models this can be very dangerous
+
+        return X
+
+    def postprocess (self, varray):
+        ''' transform to customize output values, after they were extracted from the table 
+            input is an array of np.arrays
+            For simple predictions, it only contains a single value
+            For simulations, it contains the low, up and mean values of the CI
+        '''
+        return varray
+
+    def meta_load (self):
+        ''' transform to customize the external estimator loading '''
+
+        # ***** MOVE TO OVERRIDING FUNCTIONS *******
+
+        # load estimator
+        estimator_path = os.path.join(self.model_path,'meta-estimator.pkl')
+        with open(estimator_path, 'rb') as f:
+            estimator_dict = pickle.load(f)
+        
+        self.estimator = estimator_dict['estimador']
+        self.transform = estimator_dict['transformador']
+        
+        # assign metainformation to every variable
+        extended_var_names = self.conveyor.getVal('var_nam')
+        est_names = estimator_dict['var_names']
+
+        # compute a mask to reorder input values on prediction
+        var_names = [ i.split(':')[1] for i in extended_var_names]
+
+        self.var_mask = []
+        for i in est_names:
+            if i in var_names:
+                self.var_mask.append (var_names.index(i))
+            else:
+                LOG.error ('incompatible models!!!')
+                raise
+
+        print ('var_names', var_names)
+        print ('ext var_names', estimator_dict['var_names'])
+        print ('mask:', self.var_mask)
+
+    def meta_predict(self, x):
+        ''' transform to customize how the external estimator will predict using the input x '''
+        # ***** MOVE TO OVERRIDING FUNCTIONS *******
+
+        ordered_x = x[0,[self.var_mask]]
+        xp = self.transform.transform(ordered_x)
+        return self.estimator.predict(xp)[0]
+
+
+    def predict(self, X):
+        ''' return a prediction obtained by looking up a table of preprocessed values
+            The input X values are converted to the matrix indexes
+            When all the X values have an associated error, run a simulation to estimate the
+            output error 
+        '''
+        # obtain dimensions of X matrix
+        self.nobj, self.nvarx = np.shape(X)
+
+        # apply custom modifications to the input values
+        X = self.preprocess (X)
+
+        # this is the array of predicted Y values 
+        yarray = []
+
+        self.meta_load()        
+
+        # ***** MOVE TO OVERRIDING FUNCTIONS *******
+        X = np.clip(X, -3.3, 0.3)
+
+        # TODO!!!!!
+        # sd of the variability due to the population
+        ysd = 40
+
+        # if all the original methods contain CI run a simulation to compute the CI for the 
+        # output values and return the mean, the 5% percentil and 95% percentil of the values obtained 
+        computeCI, CIparams = self.getConfidence ()
+        if computeCI:
+            ############################################
+            ##
+            ##  Compute CI
+            ##
+            ############################################
+
+            CI_vals      = CIparams[0]
+            zcoeff       = CIparams[1]
+            error_top_left  = CIparams[2]
+            error_top_right = CIparams[3]
+
+            cilow = []
+            ciupp = []
+            cimean = []
+
+            # make sure the random numbers are reproducible
+            np.random.seed(2324)
+
+            # Ylog = []
+            for j in range (self.nobj):
+                ymulti = []
+                for m in range (SIMULATION_SIZE):
+                    
+                    # add random noise to the X array, using the CI to 
+                    # estimate how wide is the distribution 
+                    x = copy.copy(X[j])
+                    for i in range (self.nvarx):
+                        #ci range is the width of the CI
+                        cirange = CI_vals[j,i*2+1] - CI_vals[j,i*2]
+
+                        # the CI were estimated as +/- z * SE
+                        sd = cirange * zcoeff[i]
+
+                        # now we add normal random noise, with mean 0 and SD = sd
+                        x[i]+=np.random.normal(0.0,sd)
+
+                    yy = self.meta_predict(x.reshape(1, -1))
+
+
+                    # add random noise to simulate population variability
+                    yy +=np.random.normal(0.0,ysd)
+
+                    ymulti.append (yy)
+
+                ymulti_array = np.array(ymulti)
+                
+                # obtain percentiles to estimate the left and right part of the CI 
+                #
+                # We make no assumptions about the distribution shape, but if it is skewed
+                # the CI can be assymetric
+                # TODO: check the distribution and apply log or other transforms when appropriate
+
+                cilow.append (np.percentile(ymulti_array,error_top_left*100 ,interpolation='linear'))
+                ciupp.append (np.percentile(ymulti_array,error_top_right*100 ,interpolation='linear'))
+                cimean.append(np.percentile(ymulti_array,50,interpolation='linear'))
+            
+            cival = [cilow, ciupp, cimean]
+
+            cival = self.postprocess (cival)
+
+            self.conveyor.addVal(cival[0], 
+                        'lower_limit', 
+                        'Lower limit', 
+                        'confidence',
+                        'objs',
+                        'Lower limit of the conformal prediction'
+                    )
+
+            self.conveyor.addVal(cival[1], 
+                        'upper_limit', 
+                        'Upper limit', 
+                        'confidence',
+                        'objs',
+                        'Upper limit of the conformal prediction'
+                    )
+
+            # copy to yarray because this is what is returned in either case
+            yarray = np.array(cival[2])
+
+        else:
+
+            ############################################
+            ##
+            ##  Compute single predictions
+            ##
+            ############################################
+
+            # For each object look up in the vmatrix, by transforming the input X variables
+            # into indexes and then extracting the corresponding values
+            for j in range (self.nobj):
+                x = copy.copy(X[j])
+                yy = self.meta_predict(x.reshape(1, -1))
+
+                # xp = self.transform.transform(x.reshape(1, -1))
+                # yy = self.estimator.predict(xp)[0]
+                yarray.append (yy)
+
+            sval = [np.array(yarray)]
+        
+            yarray = self.postprocess(sval)[0] 
+
+            print (yarray)
 
         return yarray
             

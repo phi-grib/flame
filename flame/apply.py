@@ -23,13 +23,14 @@
 import numpy as np
 import pickle
 import os
+import time
 
 from flame.stats.RF import RF
 from flame.stats.SVM import SVM
 from flame.stats.GNB import GNB
 from flame.stats.PLSR import PLSR
 from flame.stats.PLSDA import PLSDA
-from flame.stats.combo import median, mean, majority, logicalOR, matrix
+from flame.stats.combo import median, mean, majority, logicalOR, matrix, external_model
 
 from sklearn.metrics import mean_squared_error, matthews_corrcoef as mcc
 from sklearn.metrics import f1_score
@@ -48,8 +49,19 @@ class Apply:
         self.param = parameters
         self.conveyor = conveyor
 
-
-
+        # registered method should be defined in the constructor, so the overrided
+        # childs can enrich the methods
+        self.registered_methods = [('RF', RF),
+                        ('SVM', SVM),
+                        ('GNB', GNB),
+                        ('PLSR', PLSR),
+                        ('PLSDA', PLSDA),
+                        ('median', median),
+                        ('mean', mean),
+                        ('majority', majority),
+                        ('logicalOR', logicalOR),
+                        ('matrix', matrix),
+                        ('external_model', external_model)]
 
     # def external_validation(self):
     #     ''' when experimental values are available for the predicted compounds,
@@ -345,21 +357,21 @@ class Apply:
 
         '''
 
-        # expand with new methods here:
-        registered_methods = [('RF', RF),
-                              ('SVM', SVM),
-                              ('GNB', GNB),
-                              ('PLSR', PLSR),
-                              ('PLSDA', PLSDA),
-                              ('median', median),
-                              ('mean', mean),
-                              ('majority', majority),
-                              ('logicalOR', logicalOR),
-                              ('matrix', matrix)]
+        # # expand with new methods here:
+        # registered_methods = [('RF', RF),
+        #                       ('SVM', SVM),
+        #                       ('GNB', GNB),
+        #                       ('PLSR', PLSR),
+        #                       ('PLSDA', PLSDA),
+        #                       ('median', median),
+        #                       ('mean', mean),
+        #                       ('majority', majority),
+        #                       ('logicalOR', logicalOR),
+        #                       ('matrix', matrix)]
 
         if self.param.getVal('model') == 'XGBOOST':
             from flame.stats.XGboost import XGBOOST
-            registered_methods.append( ('XGBOOST', XGBOOST))
+            self.registered_methods.append( ('XGBOOST', XGBOOST))
 
         # assume X matrix is present in 'xmatrix'
         X = self.conveyor.getVal("xmatrix")
@@ -392,7 +404,7 @@ class Apply:
 
         # instantiate an appropriate child of base_model
         model = None
-        for imethod in registered_methods:
+        for imethod in self.registered_methods:
             if imethod[0] == self.param.getVal('model'):
 
                 # we instantiate the subtype of base_model, 
@@ -414,11 +426,14 @@ class Apply:
             return
 
         # try to load model previously built
-        LOG.debug(f'Loading model from pickle file')
+        start = time.time()
+        LOG.debug('Loading model from pickle file...')
         success, results = model.load_model()
+        end = time.time()
+        LOG.debug(f'Model loaded with message "{results}" in {(end-start):.2f} seconds')
 
         if not success:
-            self.conveyor.setError(f'Failed to load model estimator, with error "{result}"')
+            self.conveyor.setError(f'Failed to load model estimator, with error "{results}"')
             return 
 
         # project the X matrix into the model and save predictions in self.conveyor

@@ -36,5 +36,6 @@ def getCrossVal(cv, rs, n, p):
 
     if cv == 'lpo':
         from sklearn.model_selection import LeavePOut 
+        print ('*******************',p)
         return LeavePOut(int(p))
 

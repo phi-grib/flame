@@ -32,6 +32,9 @@ import string
 import hashlib
 import pathlib
 import numpy as np
+import codecs
+import string
+import re 
 
 from flame.util import get_logger
 from knowledgehub.api import KnowledgeHubAPI
@@ -306,6 +309,28 @@ def predictions_repository_path():
     if success:
         return config['predictions_repository_path']
 
+def safe_copy (inputfile, outputfile):
+    ''' this function makes sure that the input file contains only printable chars
+        RDKit is very sensitive to the presence of non utf-8 chars and for this reason
+        this pre-filter is needed
+    '''
+
+    characters_to_keep = string.printable #printable us-ascii only
+    search_regex = re.compile("[^%s]" % (re.escape(characters_to_keep)))
+
+    read_stream  = codecs.open(inputfile ,'r',encoding='utf-8', errors='ignore') 
+    write_stream = codecs.open(outputfile,'w',encoding='utf-8', errors='ignore')
+ 
+    buffer = 'start'                                                        
+    buffer_size = 512*1024 # size in bytes. -1 for loading whole file in 
+
+    while  buffer: # empty string evaluates as False. Any other string as True.
+        buffer = read_stream.read(buffer_size)
+        write_stream.write(search_regex.sub('?', buffer))
+
+    read_stream.close()
+    write_stream.close()
+
 def md5sum(filename, blocksize=65536):
     '''
     Returns the MD5 sum of the file given as argument
@@ -406,10 +431,11 @@ def module_versions ():
 
     from rdkit import __version__ as rdkit_ver
     from sklearn import __version__ as sklearn_ver
+    from xgboost import __version__ as xgboost_ver
     from nonconformist import __version__ as nonconformist_ver
     from flame import __version__ as flame_ver
 
-    return {'rdkit':rdkit_ver, 'sklearn':sklearn_ver, 'nonconformist':nonconformist_ver, 'flame': flame_ver}
+    return {'rdkit':rdkit_ver, 'sklearn':sklearn_ver, 'xgboost':xgboost_ver, 'nonconformist':nonconformist_ver, 'flame': flame_ver}
 
 def compatible_modules (ext_libraries):
     ''' compares a set of library versions (typically retrieved for a stored estimator) with current library versions '''
@@ -418,15 +444,16 @@ def compatible_modules (ext_libraries):
 
     for ilib in int_libraries:
     
-        # if any current library is not included in the external set return false
+        # if a current library is not included in the external skip the comparison
         if ilib not in ext_libraries:
-            return False, f'missing library "{ilib}"'
+            continue
+            # return False, f'missing library "{ilib}"'
     
         # if any versions dont match return false
         #TODO: include a more smart set of rules to prevent warnings with minor release updates 
         if int_libraries[ilib] != ext_libraries[ilib]:
             return False, f'internal library "{ilib}:{int_libraries[ilib]}" '\
-                            f'does not match imported library "{ilib}:{ext_libraries[ilib]}"'
+                          f'does not match imported library "{ilib}:{ext_libraries[ilib]}"'
     
     return True, 'OK'
 

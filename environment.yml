@@ -19,7 +19,7 @@ dependencies:
   - python-docx
   - openpyxl
   - pip:
-     - xgboost
+     - xgboost==1.4.2
      - django==2.2.8
      - djangorestframework
      - django-cors-headers

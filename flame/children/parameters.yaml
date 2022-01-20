@@ -463,6 +463,47 @@ tune:
   comments: It might last long
   group: modeling
 
+tune_metric_quantitative:
+  advanced: regular
+  object_type: string
+  writable: false
+  value: r2
+  options: 
+    - r2
+    - neg_mean_squared_error
+  description: metric used for the GricCV optimization search
+  dependencies: null
+  comments: 
+  group: modeling
+
+tune_metric_qualitative:
+  advanced: regular
+  object_type: string
+  writable: false
+  value: mcc
+  options: 
+    - mcc
+    - recall
+    - precision
+    - balanced_accuracy
+    - f1
+    - f1_weigthed
+  description: metric used for the GridCV optimization search
+  dependencies: null
+  comments: 
+  group: modeling
+
+tune_cv_fold:
+  advanced: regular
+  object_type: int
+  writable: true
+  value: 5
+  options: null
+  description: number of fold in the KFold CV used in GridCV optimization search
+  dependencies: null
+  comments: 
+  group: modeling
+
 imbalance:
   advanced: regular
   object_type: string
@@ -478,8 +519,7 @@ imbalance:
     - rep_edited_KNN
     - all_KNN
     - iht
-  description: "Whether to perform or not sub/over sampling strategies. Imbalance
-  strategies adapted from https://imbalanced-learn.readthedocs.io/en/stable/"
+  description: "Whether to perform or not sub/over sampling strategies. Imbalance strategies adapted from https://imbalanced-learn.readthedocs.io/en/stable/"
   dependencies: null
   comments: 
   group: modeling
@@ -518,7 +558,6 @@ ModelValidationCV:
   options: 
     - loo
     - kfold
-    - lpo
   description: Selection of cross-validation method
   dependencies: null
   comments: 
@@ -533,18 +572,6 @@ ModelValidationN:
   description: Number of folds
   dependencies: 
     ModelValidationCV: kfold
-  comments: 
-  group: modeling
-
-ModelValidationP:
-  advanced: regular
-  object_type: int
-  writable: true
-  value: 1
-  options: null
-  description: Size of the test set
-  dependencies: 
-    ModelValidationCV: lpo
   comments: 
   group: modeling
 
@@ -566,8 +593,7 @@ RF_parameters:
       object_type: int
       writable: true
       value: null
-      options:
-        - null
+      options: null
       description: The maximum depth of the tree. If None, then nodes are expanded until all leaves are pure or until all leaves contain less than min_samples_split samples
     max_features:
       object_type: string
@@ -579,6 +605,13 @@ RF_parameters:
         - log2
         - null
       description: The maximum depth of the tree. If auto, then max_features=sqrt(n_features). If sqrt, idem as auto. If log2, then max_features=log2(n_features). If None, then max_features=n_features.
+    min_samples_split:
+      object_type: int
+      writable: true
+      value: 2
+      options: null
+      description: The minimum number of samples required to split an internal node (must be an int > 1)
+      min: 1
     n_estimators:
       object_type: int
       writable: true
@@ -624,12 +657,29 @@ RF_optimize:
       value: 
         - default
         - balanced
+      options: null
+      description: 
+    max_depth:
+      object_type: list
+      writable: true
+      value: 
+        - 2
+        - 3
       options:
         - default
         - balanced
       description: 
+    min_samples_split:
+      object_type: list
+      writable: true
+      value: 
+        - 2
+        - 3
+      options: null
+      description: 
+      min: 1
     max_features:
-      object_type: string
+      object_type: list
       writable: false
       value: 
         - sqrt
@@ -641,7 +691,7 @@ RF_optimize:
         - null
       description: 
     n_estimators:
-      object_type: int
+      object_type: list
       writable: true
       value: 
         - 50
@@ -756,7 +806,7 @@ SVM_optimize:
         - balanced
       description: 
     C:
-      object_type: float
+      object_type: list
       writable: true
       value: 
         - 1
@@ -769,7 +819,7 @@ SVM_optimize:
         - 5
       description: 
     coef0:
-      object_type: float
+      object_type: list
       writable: true
       value:
         - 0
@@ -782,7 +832,7 @@ SVM_optimize:
         - 100
       description: 
     degree:
-      object_type: int
+      object_type: list
       writable: true
       value:
         - 1
@@ -795,7 +845,7 @@ SVM_optimize:
         - 5
       description: 
     gamma:
-      object_type: float
+      object_type: list
       writable: true
       value: 
         - auto 
@@ -804,7 +854,7 @@ SVM_optimize:
         - auto
       description: 
     kernel:
-      object_type: string
+      object_type: list
       writable: false
       value: 
         - rbf
@@ -815,7 +865,7 @@ SVM_optimize:
         - poly  
       description: 
     probability:
-      object_type: boolean 
+      object_type: list 
       writable: false
       value: 
         - true
@@ -824,7 +874,7 @@ SVM_optimize:
         - false
       description:
     shrinking: 
-      object_type: boolean
+      object_type: list
       writable: false
       value: 
         - true
@@ -951,7 +1001,7 @@ PLSDA_optimize:
   options: null
   value:
     n_components:
-      object_type: int
+      object_type: list
       writable: true
       value:
         - 2
@@ -967,7 +1017,7 @@ PLSDA_optimize:
         - 6
       description: 
     threshold:
-      object_type: float
+      object_type: list
       writable: true
       value:
         - 0.3
@@ -1074,7 +1124,7 @@ XGBOOST_optimize:
         - 6
       description: 
     learning_rate:
-      object_type: float
+      object_type: list
       writable: true
       value: 
         - 1
@@ -1086,7 +1136,7 @@ XGBOOST_optimize:
         - 0.01
       description: 
     n_estimators:
-      object_type: int
+      object_type: list
       writable: true
       value:
         - 50
@@ -1099,7 +1149,7 @@ XGBOOST_optimize:
       description: 
     booster:
       object_type: list
-      writable: true
+      writable: false
       value:
         - gbtree
         - gblinear

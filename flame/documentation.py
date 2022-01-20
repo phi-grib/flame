@@ -475,7 +475,8 @@ class Documentation:
                                 end = (count)+(len(ivalue)-1)
 
                                 for intk in ivalue:
-                                    label_ik = intk.replace('_',' ')
+                                    # label_ik = intk.replace('_',' ')
+                                    label_ik = intk.replace('_f', '').replace('_', ' ')
                                     ws[f'B{count}'] = label_ik
                                     ws[f'B{count}'].style = Label
                                     
@@ -643,7 +644,9 @@ class Documentation:
                             icount = 0
                             # iterate keys assuming existence of value and description
                             for intk in ivalue:
-                                label_ik = intk.replace('_', ' ')
+
+                                # label_ik = intk.replace('_',' ')
+                                label_ik = intk.replace('_f', '').replace('_', ' ')
 
                                 irow = itable.rows[icount]
                                 irow.cells[0].width=wicol1
@@ -715,12 +718,23 @@ class Documentation:
             Assign result values to documentation fields
         '''
         # Accepted validation keys
+        # allowed = ['Conformal_accuracy', 'Conformal_mean_interval',
+        #            'Conformal_coverage', 'Conformal_accuracy',
+        #            'Q2', 'SDEP', 
+        #            'SensitivityPred', 'SpecificityPred', 'MCCpred']
+        # gof_allowed = ['R2', 'SDEC', 'scoringR'
+        #                'Sensitivity', 'Specificity', 'MCC']
+
         allowed = ['Conformal_accuracy', 'Conformal_mean_interval',
-                   'Conformal_coverage', 'Conformal_accuracy',
-                   'Q2', 'SDEP', 
-                   'SensitivityPred', 'SpecificityPred', 'MCCpred']
-        gof_allowed = ['R2', 'SDEC', 'scoringR'
-                       'Sensitivity', 'Specificity', 'MCC']
+                   'Conformal_coverage', 
+                   'Q2', 'SDEP', 'scoringP'
+                   'Sensitivity', 'Specificity', 'MCC']
+
+        gof_allowed = ['Conformal_accuracy_f', 'Conformal_mean_interval_f',
+                       'Conformal_coverage_f', 
+                       'R2', 'SDEC', 'scoringR'
+                       'Sensitivity_f', 'Specificity_f', 'MCC_f']
+
         model_info = self.conveyor.getVal('model_build_info')
         validation = self.conveyor.getVal('model_valid_info')
         # print(model_info)

@@ -20,6 +20,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Flame. If not, see <http://www.gnu.org/licenses/>.
 
+from logging import ERROR
 import os
 import sys
 import pickle
@@ -27,12 +28,12 @@ import shutil
 import tempfile
 # import multiprocessing as mp
 from joblib import Parallel, delayed
-import pathlib
 
 import numpy as np
 from rdkit import Chem
 
 from standardiser import standardise
+
 
 import flame.chem.sdfileutils as sdfutils
 import flame.chem.compute_md as computeMD
@@ -66,6 +67,13 @@ class Idata:
         # parent class calling idata
         self.param = parameters
         self.conveyor = conveyor
+
+        self.registered_methods = dict([('RDKit_properties', computeMD._RDKit_properties),
+                                   ('morganFP', computeMD._RDKit_morganFPS),
+                                   ('substructureFP', computeMD._RDKit_patternFPS),
+                                   ('rdkFP', computeMD._RDKit_rdkFPS),
+                                   ('RDKit_md', computeMD._RDKit_descriptors),
+                                   ('custom', self.computeMD_custom)])
 
         # self.format can inform if we are running in ghost mode
         # as part of an ensemble (low ensemble models)
@@ -332,6 +340,11 @@ class Idata:
         filename, fileext = os.path.splitext(ifile)
         ofile = filename + '_std' + fileext
         LOG.debug(f'writing standarized molecules to {ofile}')
+
+        if 'chEMBL' in method:
+            from chembl_structure_pipeline import standardizer as embl
+            from chembl_structure_pipeline import checker
+
         with open(ofile, 'w') as fo:
             mcount = 0
             # merror = 0
@@ -385,8 +398,8 @@ class Idata:
                     # Get allowed penalty score from parameters
                     score = self.param.getDict('normalize_settings')['score']
 
-                    from chembl_structure_pipeline import standardizer as embl
-                    from chembl_structure_pipeline import checker
+                    # from chembl_structure_pipeline import standardizer as embl
+                    # from chembl_structure_pipeline import checker
                     
                     try:
                         parent = embl.standardize_molblock(Chem.MolToMolBlock(m))
@@ -419,7 +432,15 @@ class Idata:
                         continue
 
                 # in any case, write parent plus internal ID (flameID)
+                # try:
+                #     fo.write(parent)
+                # except:
+                #     LOG.error (f'unable to write {name} for molecule #{mcount}')
+                #     success_list[mcount]=False
+                #     mcount += 1
+                #     continue
                 fo.write(parent)
+                
 
                 # *** discarded method to control errors ****
                 # flameID = 'fl%0.10d' % mcount
@@ -468,7 +489,7 @@ class Idata:
 
         return success_list, ofile
 
-    def computeMD_custom(self, ifile):
+    def computeMD_custom(self, ifile, **kwargs):
         '''
         Empty method for computing molecular descriptors.
 
@@ -482,7 +503,7 @@ class Idata:
 
         example:    return True, combined
         '''
-        return False, 'not implemented'
+        return False, 'custom MD not implemented'
 
     def computeMD(self, ifile: str, methods: list):
         '''
@@ -508,19 +529,19 @@ class Idata:
 
         md_settings = self.param.getDict('MD_settings')
 
-        registered_methods = dict([('RDKit_properties', computeMD._RDKit_properties),
-                                   ('morganFP', computeMD._RDKit_morganFPS),
-                                   ('substructureFP', computeMD._RDKit_patternFPS),
-                                   ('rdkFP', computeMD._RDKit_rdkFPS),
-                                   ('RDKit_md', computeMD._RDKit_descriptors),
-                                   ('custom', self.computeMD_custom)])
+        # registered_methods = dict([('RDKit_properties', computeMD._RDKit_properties),
+        #                            ('morganFP', computeMD._RDKit_morganFPS),
+        #                            ('substructureFP', computeMD._RDKit_patternFPS),
+        #                            ('rdkFP', computeMD._RDKit_rdkFPS),
+        #                            ('RDKit_md', computeMD._RDKit_descriptors),
+        #                            ('custom', self.computeMD_custom)])
 
         fingerprint_list = ['rdkFP','morganFP','substructreFP']  # update with any other fingerprint method
 
         # check if input methods are members of registered methods
-        if not all(m in registered_methods for m in methods):
+        if not all(m in self.registered_methods for m in methods):
             # find the non member methods
-            no_recog_meth = [m for m in methods if m not in registered_methods]
+            no_recog_meth = [m for m in methods if m not in self.registered_methods]
 
             if len(no_recog_meth) == len(methods):
                 # then no md method is correct... so error
@@ -540,7 +561,7 @@ class Idata:
         combined = {}
         for method in methods:
             # success, results = registered_methods[method](ifile)
-            success, results = registered_methods[method](ifile, **md_settings)
+            success, results = self.registered_methods[method](ifile, **md_settings)
 
             if not success:  # if computing returns False in status
                 return success, results
@@ -983,23 +1004,22 @@ class Idata:
         version of Run for molecular input
 
         '''
+        # copy the input file to a temp file which will be cleaned at the end
+        temp_path = tempfile.mkdtemp()
+        lfile = os.path.join(temp_path, os.path.basename(self.ifile))
+        utils.safe_copy(self.ifile, lfile)
 
+        LOG.debug (f'Safe copy {self.ifile} to {lfile}')
+        
         # extract useful information from file
-
-        success_inform = self.extractInformation(self.ifile)
+        success_inform = self.extractInformation(lfile)
         if self.conveyor.getError():
             return
 
         nobj = self.conveyor.getVal('obj_num')
         ncpu = min(nobj, self.param.getVal('numCPUs'))
 
-        # copy the input file to a temp file which will be cleaned at the end
-        temp_path = tempfile.mkdtemp()
-        shutil.copy(self.ifile, temp_path)
-        lfile = os.path.join(temp_path, os.path.basename(self.ifile))
-
-        # Execute the workflow in 1 or n CPUs
-        
+        # Execute the workflow in 1 or n CPUs        
         if ncpu > 1:
             LOG.debug('Entering molecule workflow for {} cpus'.format(ncpu))
             success, results = sdfutils.split_SDFile(lfile, ncpu)
@@ -1034,7 +1054,7 @@ class Idata:
         # series processing (1 or n CPUs) can produce a success == False if
         # any of the series/pieces contains an error. Abort the processing...
         if not success:
-            self.conveyor.setError('error in workflow processing')
+            self.conveyor.setError(f'Error in workflow processing: {results}')
             return
 
         # check if any molecule failed to complete the workflow and then
@@ -1102,6 +1122,13 @@ class Idata:
             self.conveyor.setError(f'{self.ifile} not found')
             return
 
+        # check that the input file is not a SDFile. This is a very common mistake
+        extension = os.path.splitext(self.ifile)[1]
+        if extension == '.sdf':
+            self.conveyor.setError('Input file must be a properly formated TSV, not a SDFile')
+            return
+
+
         #  Reading TSV by hand
         with open(self.ifile, 'r') as fi:
 
@@ -1162,8 +1189,9 @@ class Idata:
                         masked = [ x for x, z in zip(value_list, mask) if z==1 ]
                         value_array = np.array(masked, dtype=np.float64)
 
-                        if index == 1:  # for the fist row, just copy the value list to the xmatrix
+                        if index == 1:  # for the fist row, copy the value list to the xmatrix, but reshape it as a 2D array
                             xmatrix = value_array
+                            xmatrix = xmatrix.reshape(1,xmatrix.shape[0])
                         else:
                             xmatrix = np.vstack((xmatrix, value_array))
                     except Exception as e:
@@ -1171,9 +1199,22 @@ class Idata:
                         return
                         
         obj_num = index - 1  # the first line are variable names 
-        LOG.debug('loaded TSV with shape {} '.format(xmatrix.shape))
-        LOG.debug('creating ymatrix from column {}'.format(activity_param))
+        xmatrix_shape = xmatrix.shape
+        print (xmatrix_shape)
+
+        LOG.debug(f'loaded TSV with shape {xmatrix_shape}')
+        LOG.debug(f'creating ymatrix from column {activity_param}')
         
+        # if the input file is not properly formatted or is an incorrect type, the shape can be wrong
+        # it can be one-dimension or some of the dimensions can be zero
+        if len(xmatrix_shape) == 2 :
+            if xmatrix_shape[0] == 0 or xmatrix_shape[1] == 0:
+                self.conveyor.setError(f'Unable to process input TSV. Wrong dimensions. Input shape is: {xmatrix_shape}')
+                return
+        else:
+            self.conveyor.setError(f'Unable to process input TSV. Not a 2D matrix. Input shape is: {xmatrix_shape}')
+            return
+
         if iActivity != -1:
             self.conveyor.addVal( np.array(ymatrix), 'ymatrix', 'Activity', 'decoration',
                              'objs', 'Biological anotation to be predicted by the model')

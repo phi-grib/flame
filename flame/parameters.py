@@ -421,6 +421,7 @@ class Parameters:
         'feature_selection', 'feature_number', 'mol_batch',  
         'ensemble_names','ensemble_versions', 
         'similarity_metric', 'similarity_cutoff_num', 'similarity_cutoff_distance',
+        'tune_metric_quantitative', 'tune_metric_qualitative', 'tune_cv_fold',
         'numCPUs', 'verbose_error', 'modelingToolkit', 
         'endpoint', 'model_path', 
         #'md5', 
