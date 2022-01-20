@@ -132,6 +132,7 @@ class XGBOOST(BaseEstimator):
                     self.estimator = XGBClassifier(**self.estimator_parameters)
 
                 self.estimator.fit(X, Y)
+                self.feature_importances = self.estimator.feature_importances_
                 LOG.debug (self.estimator)
 
             except Exception as e:

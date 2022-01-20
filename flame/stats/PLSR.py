@@ -25,19 +25,10 @@
 from copy import copy
 from flame.stats.base_model import BaseEstimator
 
-from nonconformist.base import ClassifierAdapter, RegressorAdapter
-from nonconformist.acp import AggregatedCp
-from nonconformist.acp import BootstrapSampler, RandomSubSampler, CrossSampler
-from nonconformist.icp import IcpClassifier, IcpRegressor
-from nonconformist.nc import ClassifierNc, MarginErrFunc, RegressorNc
-from nonconformist.nc import AbsErrorErrFunc, RegressorNormalizer
-
-import numpy as np
 
 from sklearn.cross_decomposition import PLSCanonical, PLSRegression, CCA
 from sklearn.model_selection import cross_val_predict
 from sklearn.metrics import r2_score
-from sklearn.neighbors import KNeighborsRegressor
 
 from flame.util import get_logger
 LOG = get_logger(__name__)

@@ -130,6 +130,7 @@ class BaseEstimator:
         self.X = X
         self.Y = Y
         self.nobj, self.nvarx = np.shape(X)
+        self.feature_importances = None
 
         self.cross_jobs = -1
         if utils.isSingleThread():
@@ -734,6 +735,8 @@ class BaseEstimator:
                 LOG.info("       %0.3f (+/-%0.03f) for %r" % (mean, std * 2, params))
 
             self.estimator = copy.copy(tclf.best_estimator_)
+            if hasattr(self.estimator, 'feature_importances_'):
+                self.feature_importances = self.estimator.feature_importances_
 
         except Exception as e:
             LOG.error(f'Error optimizing hyperparameters with'
@@ -900,6 +903,21 @@ class BaseEstimator:
                 # Fit estimator to the data
                 self.estimator.fit(X, Y)
 
+                first = True
+                features = None
+                for p in self.estimator.predictors:
+                    inner_estimator = p.nc_function.model.model
+                    if hasattr(inner_estimator, 'feature_importances_'):    
+                        fi = p.nc_function.model.model.feature_importances_
+                        if first:
+                            features = np.array(fi)
+                            first = False
+                        else:
+                            features = np.vstack((features,fi))
+                
+                if features is not None:
+                    self.feature_importances = np.mean (features, 0)
+
             except Exception as e:
                 return False, f'Exception building conformal estimator with exception {e}'
 
@@ -956,6 +974,10 @@ class BaseEstimator:
                 # Calibrate the data
                 self.estimator.calibrate (X[idx_cal, :], Y[idx_cal])
 
+                inner_estimator = self.estimator.nc_function.model.model
+                if hasattr(inner_estimator, 'feature_importances_'):    
+                    self.feature_importances = inner_estimator.feature_importances_
+                    
             except Exception as e:
                 return False, f'Exception building conformal estimator with exception {e}'
 

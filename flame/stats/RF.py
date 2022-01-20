@@ -132,6 +132,7 @@ class RF(BaseEstimator):
                                         **self.estimator_parameters)
 
                 self.estimator.fit(X, Y)
+                self.feature_importances = self.estimator.feature_importances_
 
             except Exception as e:
                 return False, f'Exception building RF estimator with exception {e}'
