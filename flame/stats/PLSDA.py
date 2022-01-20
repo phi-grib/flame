@@ -232,14 +232,14 @@ class PLSDA(BaseEstimator):
                 # as the sklearn estimator does not have this key
                 self.estimator = PLS_da(**self.estimator_parameters)
             except Exception as e:
-                LOG.error(f'Error at PLS_da instantiation with '
-                          f'exception {e}')
-                return False, f'Error at PLS_da instantiation with exception {e}'
+                LOG.error(f'Error at PLS_da with exception {e}')
+                return False, f'Error at PLS_da with exception {e}'
 
             # results.append(('model', 'model type', 'PLSDA qualitative'))
 
         # Fit estimator to the data
-        self.estimator.fit(X, Y)
+        self.regularBuild (X, Y)
+        # self.estimator.fit(X, Y)
 
         return True, results
 

@@ -176,12 +176,12 @@ class PLSR(BaseEstimator):
                 # as the sklearn estimator does not have this key
                 self.estimator = PLS_r(**self.estimator_parameters)
             except Exception as e:
-                LOG.error(f'Error at PLS_r instantiation with '
-                          f'exception {e}')
-                return False, f'Error at PLS_da instantiation with exception {e}'
+                LOG.error(f'Error at PLS_r with exception {e}')
+                return False, f'Error at PLS_r with exception {e}'
 
         # Fit estimator to the data
-        self.estimator.fit(X, Y)
+        self.regularBuild(X, Y)
+        # self.estimator.fit(X, Y)
 
         if not self.param.getVal('conformal'):
             return True, results
@@ -229,32 +229,3 @@ class PLSR(BaseEstimator):
         self.estimator.fit(X, Y)
         LOG.info(f'Estimator best parameters: {self.estimator.get_params()}')
         return True, 'OK'
-
-#### Overriding of parent methods
-
-    # def CF_quantitative_validation(self):
-    #     ''' performs validation for conformal quantitative models '''
-
-    # def CF_qualitative_validation(self):
-    #     ''' performs validation for conformal qualitative models '''
-
-    # def quantitativeValidation(self):
-    #     ''' performs validation for quantitative models '''
-
-    # def qualitativeValidation(self):
-    #     ''' performs validation for qualitative models '''
-
-    # def validate(self):
-    #     ''' Validates the model and computes suitable model quality scoring values'''
-
-    # def optimize(self, X, Y, estimator, tune_parameters):
-    #     ''' optimizes a model using a grid search over a range of values for diverse parameters'''
-
-    # def regularProject(self, Xb, results):
-    #     ''' projects a collection of query objects in a regular model, for obtaining predictions '''
-
-    # def conformalProject(self, Xb, results):
-    #     ''' projects a collection of query objects in a conformal model, for obtaining predictions '''
-
-    # def project(self, Xb, results):
-    #     ''' Uses the X matrix provided as argument to predict Y'''

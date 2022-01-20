@@ -131,8 +131,10 @@ class XGBOOST(BaseEstimator):
 
                     self.estimator = XGBClassifier(**self.estimator_parameters)
 
-                self.estimator.fit(X, Y)
-                self.feature_importances = self.estimator.feature_importances_
+                # self.estimator.fit(X, Y)
+                # self.feature_importances = self.estimator.feature_importances_
+                self.regularBuild(X,Y)
+
                 LOG.debug (self.estimator)
 
             except Exception as e:
@@ -147,40 +149,3 @@ class XGBOOST(BaseEstimator):
             return True, results
         else:
             return False, error
-
-
-## Overriding of parent methods
-
-    # def CF_quantitative_validation(self):
-    #     ''' performs validation for conformal quantitative models '''
-
-
-    # def CF_qualitative_validation(self):
-    #     ''' performs validation for conformal qualitative models '''
-
-
-    # def quantitativeValidation(self):
-    #     ''' performs validation for quantitative models '''
-
-    # def qualitativeValidation(self):
-    #     ''' performs validation for qualitative models '''
-
-
-    # def validate(self):
-    #     ''' Validates the model and computes suitable model quality scoring values'''
-
-
-    # def optimize(self, X, Y, estimator, tune_parameters):
-    #     ''' optimizes a model using a grid search over a range of values for diverse parameters'''
-
-
-    # def regularProject(self, Xb, results):
-    #     ''' projects a collection of query objects in a regular model, for obtaining predictions '''
-
-
-    # def conformalProject(self, Xb, results):
-    #     ''' projects a collection of query objects in a conformal model, for obtaining predictions '''
-
-
-    # def project(self, Xb, results):
-    #     ''' Uses the X matrix provided as argument to predict Y'''
