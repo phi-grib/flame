@@ -22,7 +22,8 @@
 
 __modules__ = None
 
-import os
+import os 
+from dotenv import load_dotenv
 import sys
 import yaml
 import random
@@ -33,6 +34,9 @@ import pathlib
 import numpy as np
 
 from flame.util import get_logger
+from knowledgehub.api import KnowledgeHubAPI
+
+load_dotenv()
 
 LOG = get_logger(__name__)
 
@@ -439,4 +443,25 @@ def isFingerprint (md):
         if md in fplist:
             return True
     
-    return False 
+    return False
+
+
+def connect_api():
+    
+    api = KnowledgeHubAPI(server='TEST', client_secret=os.getenv('CLIENT_SECRET'))
+    api.login(os.getenv("USER_TEST"),os.getenv('PSWD_TEST'))
+
+    return api
+
+
+
+def getSmilesByAPI(api,name):
+    
+    try:
+        smiles = api.ChemistryService().getCompoundByName(name)
+    except:
+        smiles = 0
+            
+    return smiles
+        
+     
