@@ -923,8 +923,8 @@ PLSR_parameters:
       description: Number of latent variables to extract
     optimize:
       object_type: string
-      writable: true
-      value: manual
+      writable: false
+      value: auto
       options: 
         - manual
         - auto
@@ -987,7 +987,7 @@ PLSDA_parameters:
       description: Number of latent variables to extract
     optimize:
       object_type: string
-      writable: true
+      writable: false
       value: manual
       options: 
         - manual
