@@ -324,6 +324,15 @@ class Learn:
                 'vars',
                 'Information about the relative importance of the model variables')
 
+        if hasattr(model, 'feature_importances_method'):
+            self.conveyor.addVal(
+                model.feature_importances_method,
+                'feature_importances_method',
+                'feature importances_method',
+                'method',
+                'single',
+                'Method used to compute the relative importance of the model variables')
+
         # validate model
         if self.param.getVal('input_type') == 'model_ensemble':
             validation_method = 'ensemble validation'
