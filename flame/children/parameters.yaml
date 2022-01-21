@@ -504,6 +504,19 @@ tune_cv_fold:
   comments: 
   group: modeling
 
+feature_importances_method:
+  advanced: advanced
+  object_type: string
+  writable: false
+  value: internal
+  options: 
+    - internal
+    - permutation 
+  description: Method used to compute the model feature importances.
+  dependencies: null
+  comments: permutation setting can be very time consuming 
+  group: preferences
+
 imbalance:
   advanced: regular
   object_type: string
@@ -910,8 +923,8 @@ PLSR_parameters:
       description: Number of latent variables to extract
     optimize:
       object_type: string
-      writable: true
-      value: manual
+      writable: false
+      value: auto
       options: 
         - manual
         - auto
@@ -974,7 +987,7 @@ PLSDA_parameters:
       description: Number of latent variables to extract
     optimize:
       object_type: string
-      writable: true
+      writable: false
       value: manual
       options: 
         - manual

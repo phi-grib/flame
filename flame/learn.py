@@ -315,6 +315,24 @@ class Learn:
                     'single',
                     'Information about the model building')
 
+        if hasattr(model, 'feature_importances'):
+            self.conveyor.addVal(
+                model.feature_importances,
+                'feature_importances',
+                'feature importances',
+                'method',
+                'vars',
+                'Information about the relative importance of the model variables')
+
+        if hasattr(model, 'feature_importances_method'):
+            self.conveyor.addVal(
+                model.feature_importances_method,
+                'feature_importances_method',
+                'feature importances_method',
+                'method',
+                'single',
+                'Method used to compute the relative importance of the model variables')
+
         # validate model
         if self.param.getVal('input_type') == 'model_ensemble':
             validation_method = 'ensemble validation'
@@ -329,6 +347,7 @@ class Learn:
         # model_validation_results is a dictionary which contains model_validation_info and 
         # (optionally) Y_adj and Y_pred, depending on the model type    
         
+
         self.conveyor.addVal(
             model_validation_results['quality'],
             'model_valid_info',

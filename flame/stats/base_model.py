@@ -38,6 +38,7 @@ from sklearn.metrics import mean_squared_error, r2_score, matthews_corrcoef as m
 from sklearn.metrics import make_scorer
 from sklearn.metrics import confusion_matrix
 from sklearn.neighbors import KNeighborsRegressor
+from sklearn.inspection import permutation_importance
 
 from nonconformist.base import ClassifierAdapter, RegressorAdapter
 from nonconformist.icp import IcpClassifier, IcpRegressor
@@ -130,6 +131,8 @@ class BaseEstimator:
         self.X = X
         self.Y = Y
         self.nobj, self.nvarx = np.shape(X)
+        self.feature_importances = None
+        self.feature_importances_method = ''
 
         self.cross_jobs = -1
         if utils.isSingleThread():
@@ -664,6 +667,7 @@ class BaseEstimator:
         results ['Y_pred'] = y_pred
         return True, results
 
+
     def validate(self):
         ''' Validates the model and computes suitable
          model quality scoring values'''
@@ -684,6 +688,32 @@ class BaseEstimator:
 
         return success, results
 
+    def featureImportancesEstimation (self, estimator):
+        ''' Computes feature importances for the give estimator using 
+        either the internal estimator attibutes (available only for RF and XGBoost) or the
+        permutation method (computer intensive, but available for any estimator)'''
+
+        if (self.param.getVal("feature_importances_method") == "permutation"):
+            method = 'permutation'
+            # default metric is r2 for quantitative and MCC for qualitative 
+            metric = make_scorer(mcc)     
+            if self.param.getVal("quantitative"):
+                metric = "r2"
+                method += ' with r2 scorer'
+            else:
+                method += ' with MCC scorer'
+
+            # note defaults n_repeats = 10 and use of all CPUs n_jobs=-1
+            r = permutation_importance(estimator, self.X, self.Y, n_repeats=10, scoring=metric, random_state=46, n_jobs=self.cross_jobs)
+            return r.importances_mean, method
+
+        # only for RF and XGBoost
+        if hasattr(estimator, 'feature_importances_'):  
+            method = 'internal'
+            return estimator.feature_importances_ , method
+
+        return None, 'not computed'
+          
     def optimize(self, X, Y, estimator, tune_parameters):
         ''' optimizes a model using a grid search over a 
         range of values for diverse parameters'''
@@ -740,7 +770,6 @@ class BaseEstimator:
             f'exception {e}')
             raise e
 
-        end = time.time()
         LOG.info(f'Best parameters: {tclf.best_params_}')
         # LOG.info(f'Best score: {tclf.best_score_}')
 
@@ -749,13 +778,16 @@ class BaseEstimator:
         # y_pred = cross_val_predict(self.estimator, X, Y, cv=self.cv)
         # LOG.info (f'validation: {r2_score(Y, y_pred)}')
         
-        LOG.debug (f'Best estimator found in {(end-start):.2f} seconds')
+        LOG.debug (f'Best estimator found in {(time.time()-start):.2f} seconds')
+
+        LOG.info ('Estimating feature importances')
+        start = time.time ()
+        self.feature_importances, self.feature_importances_method = self.featureImportancesEstimation(self.estimator)
+        LOG.info (f'Feature importances computed in {time.time()-start :.3f} seconds using {self.feature_importances_method}')
 
         # Remove garbage in memory
         del(tclf)
         gc.collect()
-
-    # Projection section
 
     def regularProject(self, Xb):
         ''' projects a collection of query objects in a regular model,
@@ -783,6 +815,16 @@ class BaseEstimator:
                         'result', 'objs',
                         'Results of the prediction', 'main')
 
+
+    def regularBuild (self, X, Y):
+        ''' convenience method including fitting and feature importances estimation'''
+
+        self.estimator.fit(X, Y)
+        
+        LOG.info ('Estimating feature importances')
+        start = time.time ()
+        self.feature_importances, self.feature_importances_method = self.featureImportancesEstimation(self.estimator)
+        LOG.info (f'Feature importances computed in {time.time()-start :.3f} seconds using {self.feature_importances_method}')
 
     def conformalBuild (self, X, Y):
         ''' uses self.estimator_temp to build a conformal estimator with the parameters defined in
@@ -900,6 +942,27 @@ class BaseEstimator:
                 # Fit estimator to the data
                 self.estimator.fit(X, Y)
 
+                LOG.info ('Estimating feature importances')
+                start = time.time ()
+                first = True
+                features = None
+                for p in self.estimator.predictors:
+                    inner_estimator = p.nc_function.model.model
+                    if hasattr(inner_estimator, 'feature_importances_'):    
+                        # fi = p.nc_function.model.model.feature_importances_
+                        fi, method = self.featureImportancesEstimation(inner_estimator)
+                        if first:
+                            features = np.array(fi)
+                            first = False
+                            self.feature_importances_method = method
+                        else:
+                            features = np.vstack((features,fi))
+                
+                if features is not None:
+                    self.feature_importances = np.mean (features, 0)
+
+                LOG.info (f'Feature importances computed in {time.time()-start :.3f} seconds using {self.feature_importances_method}')
+
             except Exception as e:
                 return False, f'Exception building conformal estimator with exception {e}'
 
@@ -956,6 +1019,12 @@ class BaseEstimator:
                 # Calibrate the data
                 self.estimator.calibrate (X[idx_cal, :], Y[idx_cal])
 
+                inner_estimator = self.estimator.nc_function.model.model
+                LOG.info ('Estimating feature importances')
+                start = time.time ()
+                self.feature_importances, self.feature_importances_method = self.featureImportancesEstimation(inner_estimator)
+                LOG.info (f'Feature importances computed in {time.time()-start :.3f} seconds using {self.feature_importances_method}')
+                    
             except Exception as e:
                 return False, f'Exception building conformal estimator with exception {e}'
 

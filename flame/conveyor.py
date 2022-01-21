@@ -219,13 +219,17 @@ class Conveyor:
 
         white_keys  = self.objectKeys()
         white_keys += self.singleKeys()
+        white_keys += ['var_nam', 'feature_importances']
 
         if xdata or (self.getMeta('input_type') == 'model_ensemble') :
-            white_keys += ['xmatrix', 'var_nam']
+            white_keys += ['xmatrix']
 
         #print (white_keys)
 
         for key in white_keys:
+            if not key in self.data:
+                continue
+
             value = self.data[key]
 
             if key in ['model_build_info', 'model_valid_info']:
