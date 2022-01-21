@@ -727,12 +727,12 @@ class Documentation:
 
         allowed = ['Conformal_accuracy', 'Conformal_mean_interval',
                    'Conformal_coverage', 
-                   'Q2', 'SDEP', 'scoringP'
+                   'Q2', 'SDEP', 'scoringP',
                    'Sensitivity', 'Specificity', 'MCC']
 
         gof_allowed = ['Conformal_accuracy_f', 'Conformal_mean_interval_f',
                        'Conformal_coverage_f', 
-                       'R2', 'SDEC', 'scoringR'
+                       'R2', 'SDEC', 'scoringR',
                        'Sensitivity_f', 'Specificity_f', 'MCC_f']
 
         model_info = self.conveyor.getVal('model_build_info')
