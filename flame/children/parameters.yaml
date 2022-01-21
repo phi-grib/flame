@@ -918,17 +918,8 @@ PLSR_parameters:
       object_type: int
       writable: true
       value: 2
-      options: 
-        - null
+      options: null
       description: Number of latent variables to extract
-    optimize:
-      object_type: string
-      writable: false
-      value: auto
-      options: 
-        - manual
-        - auto
-      description: 
   description: PLSR Parameters. See https://scikit-learn.org/ for further reference
   dependencies: 
     model: PLSR
@@ -946,17 +937,16 @@ PLSR_optimize:
       object_type: list
       writable: true
       value: 
-        - 1
         - 2
         - 3
         - 4
         - 5
       options: 
-        - 1
         - 2
         - 3
         - 4
         - 5
+        - 6
       description: 
   description: PLSR optimize parameters
   dependencies: 
@@ -985,14 +975,6 @@ PLSDA_parameters:
       options: 
         - null
       description: Number of latent variables to extract
-    optimize:
-      object_type: string
-      writable: false
-      value: manual
-      options: 
-        - manual
-        - auto
-      description: 
     threshold:
       object_type: float
       writable: true
@@ -1022,17 +1004,17 @@ PLSDA_optimize:
         - 4
         - 5
       options: 
-        - 1
         - 2
         - 3
         - 4
         - 5
-        - 6
       description: 
     threshold:
       object_type: list
       writable: true
       value:
+        - 0.2
+        - 0.25
         - 0.3
         - 0.35 
         - 0.4
@@ -1041,10 +1023,9 @@ PLSDA_optimize:
         - 0.55
         - 0.6
         - 0.65
-      options: 
-        - 0.4
-        - 0.5
-        - 0.6
+        - 0.7
+        - 0.75
+      options: None
       description: 
   description: PLSDA optimize parameters
   dependencies: 
