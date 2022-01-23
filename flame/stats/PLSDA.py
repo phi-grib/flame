@@ -83,7 +83,6 @@ class PLS_da(PLSRegression):
         self.threshold = threshold
         self.estimator_set = None
 
-    # Overwrites parent class predict
     def predict(self, X, copy=True):
 
         threshold = self.threshold
@@ -97,23 +96,22 @@ class PLS_da(PLSRegression):
         return results
 
     def fit (self, X, Y):
-
         super(PLS_da, self).fit(X,Y)
 
         if self.estimator_set != None:
             return
 
+        # build a set of 10 additional cv estimators
+        # that will be used to compute prediction probabilities 
         param = self.get_params()
-
         nobj, nvarx = np.shape (X)
 
         splits = min (10, nobj)
-
         strtfdKFold = StratifiedKFold(n_splits=splits)
         kfold = strtfdKFold.split(X, Y)
         
         self.estimator_set = []
-        for k, (train, test) in enumerate(kfold):
+        for (train, test) in kfold:
             estimatori = PLS_da (**param)
             super(PLS_da, estimatori).fit(X[train], Y[train])
             self.estimator_set.append(estimatori)
@@ -126,9 +124,9 @@ class PLS_da(PLSRegression):
             results = iestimator.predict(X)
             for i in range (nobj):
                 if results [i] < self.threshold:
-                    proba[i,0]+=1
+                    proba[i,0]+=1 # increment class 0
                 else:
-                    proba[i,1]+=1
+                    proba[i,1]+=1 # increment class 1
 
         return proba / len(self.estimator_set)
 
@@ -189,7 +187,6 @@ class PLSDA(BaseEstimator):
         #     return 
 
 
-
     def build(self):
         '''Build a new PLSDA model with the X and Y numpy matrices '''
 
@@ -242,11 +239,6 @@ class PLSDA(BaseEstimator):
             return True, results
 
         self.estimator_temp = self.estimator
-        
-        # approach predict proba by building a set of 10 estimators by CV
-        # PROBA
-
-
         
         success, error = self.conformalBuild(X, Y)
         
