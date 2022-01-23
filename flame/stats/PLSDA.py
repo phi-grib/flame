@@ -26,7 +26,7 @@
 # To ignore warnings comming from data precision in Cross-validation
 # Study more in deep
 
-from copy import copy
+import copy
 from flame.stats.base_model import BaseEstimator
 
 import numpy as np
@@ -35,6 +35,7 @@ from sklearn.metrics import make_scorer
 from sklearn.model_selection import cross_val_predict
 from sklearn.metrics import matthews_corrcoef as mcc 
 from sklearn.cross_decomposition import PLSRegression
+from sklearn.model_selection import StratifiedKFold
 
 import warnings
 warnings.filterwarnings('ignore')
@@ -75,26 +76,61 @@ class PLS_da(PLSRegression):
                                         scale=scale, max_iter=max_iter,
                                         tol=tol, copy=copy)
         except Exception as e:
-            LOG.error(f'Error initializing PLSRegression parent class with exception: {e}')
             self.conveyor.setError(f'Error initializing PLSRegression parent class with exception: {e}')
             return 
 
         # Cut-off for class assignation
         self.threshold = threshold
+        self.estimator_set = None
 
     # Overwrites parent class predict
     def predict(self, X, copy=True):
 
         threshold = self.threshold
         if threshold is None:
-            return super(PLS_da, self).predict(X, copy=True).ravel()
+            return super(PLS_da, self).predict(X, copy).ravel()
 
-        results = super(PLS_da, self).predict(X, copy=True).ravel()
+        results = super(PLS_da, self).predict(X, copy).ravel()
         results[results < threshold] = 0
         results[results >= threshold] = 1
         results = results.astype(dtype=float)
         return results
 
+    def fit (self, X, Y):
+
+        super(PLS_da, self).fit(X,Y)
+
+        if self.estimator_set != None:
+            return
+
+        param = self.get_params()
+
+        nobj, nvarx = np.shape (X)
+
+        splits = min (10, nobj)
+
+        strtfdKFold = StratifiedKFold(n_splits=splits)
+        kfold = strtfdKFold.split(X, Y)
+        
+        self.estimator_set = []
+        for k, (train, test) in enumerate(kfold):
+            estimatori = PLS_da (**param)
+            super(PLS_da, estimatori).fit(X[train], Y[train])
+            self.estimator_set.append(estimatori)
+
+    def predict_proba(self, X):
+        nobj, nvarx = np.shape (X)
+
+        proba = np.zeros((nobj,2), dtype=int)
+        for iestimator in self.estimator_set:
+            results = iestimator.predict(X)
+            for i in range (nobj):
+                if results [i] < self.threshold:
+                    proba[i,0]+=1
+                else:
+                    proba[i,1]+=1
+
+        return proba / len(self.estimator_set)
 
 class PLSDA(BaseEstimator):
     """
@@ -148,10 +184,11 @@ class PLSDA(BaseEstimator):
             return 
 
         # 'PLS_da' object has no attribute 'predict_proba', required for conformal models
-        if self.param.getVal('conformal'):
-            LOG.error('Conformal prediction no implemented in PLSDA yet')
-            self.conveyor.setError('Conformal prediction no implemented in PLSDA yet')
-            return 
+        # if self.param.getVal('conformal'):
+        #     self.conveyor.setError('Conformal prediction no implemented in PLSDA yet')
+        #     return 
+
+
 
     def build(self):
         '''Build a new PLSDA model with the X and Y numpy matrices '''
@@ -201,4 +238,19 @@ class PLSDA(BaseEstimator):
         # Fit estimator to the data
         self.regularBuild (X, Y)
 
-        return True, results
+        if not self.param.getVal('conformal'):
+            return True, results
+
+        self.estimator_temp = self.estimator
+        
+        # approach predict proba by building a set of 10 estimators by CV
+        # PROBA
+
+
+        
+        success, error = self.conformalBuild(X, Y)
+        
+        if success:
+            return True, results
+        else:
+            return False, error

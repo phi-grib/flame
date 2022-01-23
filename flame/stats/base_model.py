@@ -890,81 +890,81 @@ class BaseEstimator:
             #########################################################################
             ###   ACP
             #########################################################################
-            try:
+            # try:
                 # Conformal regressor
-                if self.param.getVal('quantitative'):
-                    LOG.info("Building Quantitative Aggregated Conformal model")
-                    LOG.info(f"Using {sampler_id} sampler, " \
-                            +f"{aggregation_f} aggregator " \
-                            +f"and {normalizing_id} normalizer")
-                    LOG.info(f"Aggregation of {n_predictors} models")
+            if self.param.getVal('quantitative'):
+                LOG.info("Building Quantitative Aggregated Conformal model")
+                LOG.info(f"Using {sampler_id} sampler, " \
+                        +f"{aggregation_f} aggregator " \
+                        +f"and {normalizing_id} normalizer")
+                LOG.info(f"Aggregation of {n_predictors} models")
 
-                    # Normalizing model (lambda)
-                    normalizing_model = normalizers[normalizing_id]
+                # Normalizing model (lambda)
+                normalizing_model = normalizers[normalizing_id]
 
-                    if normalizing_model is not None:
-                        normalizer = RegressorNormalizer( self.estimator_temp,
-                                                        normalizing_model,
-                                                        AbsErrorErrFunc())
-                    else:
-                        normalizer = None
-
-                    self.estimator = AggregatedCp(
-                                        IcpRegressor(
-                                            RegressorNc(
-                                                RegressorAdapter(self.estimator_temp), 
-                                                    AbsErrorErrFunc(), 
-                                                normalizer
-                                            )
-                                        ),
-                                        sampler=sampler, 
-                                        aggregation_func=aggregation_f,
-                                        n_models=n_predictors)
-
-                # Conformal classifier
+                if normalizing_model is not None:
+                    normalizer = RegressorNormalizer( self.estimator_temp,
+                                                    normalizing_model,
+                                                    AbsErrorErrFunc())
                 else:
-                    LOG.info("Building Qualitative Aggregated Conformal model")
-                    LOG.info(f"Using {sampler_id} sampler, " \
-                            +f"{aggregation_f} aggregator ")
-                    LOG.info(f"Aggregation of {n_predictors} models" )
+                    normalizer = None
 
-                    self.estimator = AggregatedCp(
-                                        IcpClassifier(
-                                            ClassifierNc(
-                                                ClassifierAdapter(self.estimator_temp),
-                                                    MarginErrFunc()
-                                            )
-                                        ),
-                                        sampler=sampler, 
-                                        aggregation_func=aggregation_f,
-                                        n_models=n_predictors)
+                self.estimator = AggregatedCp(
+                                    IcpRegressor(
+                                        RegressorNc(
+                                            RegressorAdapter(self.estimator_temp), 
+                                                AbsErrorErrFunc(), 
+                                            normalizer
+                                        )
+                                    ),
+                                    sampler=sampler, 
+                                    aggregation_func=aggregation_f,
+                                    n_models=n_predictors)
 
-                # Fit estimator to the data
-                self.estimator.fit(X, Y)
+            # Conformal classifier
+            else:
+                LOG.info("Building Qualitative Aggregated Conformal model")
+                LOG.info(f"Using {sampler_id} sampler, " \
+                        +f"{aggregation_f} aggregator ")
+                LOG.info(f"Aggregation of {n_predictors} models" )
 
-                LOG.info ('Estimating feature importances')
-                start = time.time ()
-                first = True
-                features = None
-                for p in self.estimator.predictors:
-                    inner_estimator = p.nc_function.model.model
-                    if hasattr(inner_estimator, 'feature_importances_'):    
-                        # fi = p.nc_function.model.model.feature_importances_
-                        fi, method = self.featureImportancesEstimation(inner_estimator)
-                        if first:
-                            features = np.array(fi)
-                            first = False
-                            self.feature_importances_method = method
-                        else:
-                            features = np.vstack((features,fi))
-                
-                if features is not None:
-                    self.feature_importances = np.mean (features, 0)
+                self.estimator = AggregatedCp(
+                                    IcpClassifier(
+                                        ClassifierNc(
+                                            ClassifierAdapter(self.estimator_temp),
+                                                MarginErrFunc()
+                                        )
+                                    ),
+                                    sampler=sampler, 
+                                    aggregation_func=aggregation_f,
+                                    n_models=n_predictors)
 
-                LOG.info (f'Feature importances computed in {time.time()-start :.3f} seconds using {self.feature_importances_method}')
+            # Fit estimator to the data
+            self.estimator.fit(X, Y)
 
-            except Exception as e:
-                return False, f'Exception building conformal estimator with exception {e}'
+            LOG.info ('Estimating feature importances')
+            start = time.time ()
+            first = True
+            features = None
+            for p in self.estimator.predictors:
+                inner_estimator = p.nc_function.model.model
+                if hasattr(inner_estimator, 'feature_importances_'):    
+                    # fi = p.nc_function.model.model.feature_importances_
+                    fi, method = self.featureImportancesEstimation(inner_estimator)
+                    if first:
+                        features = np.array(fi)
+                        first = False
+                        self.feature_importances_method = method
+                    else:
+                        features = np.vstack((features,fi))
+            
+            if features is not None:
+                self.feature_importances = np.mean (features, 0)
+
+            LOG.info (f'Feature importances computed in {time.time()-start :.3f} seconds using {self.feature_importances_method}')
+
+            # except Exception as e:
+            #     return False, f'Exception building conformal estimator with exception {e}'
 
         else :
             #########################################################################
