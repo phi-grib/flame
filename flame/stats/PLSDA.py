@@ -104,17 +104,31 @@ class PLS_da(PLSRegression):
         # build a set of 10 additional cv estimators
         # that will be used to compute prediction probabilities 
         param = self.get_params()
-        nobj, nvarx = np.shape (X)
 
-        splits = min (10, nobj)
-        strtfdKFold = StratifiedKFold(n_splits=splits)
-        kfold = strtfdKFold.split(X, Y)
-        
+        np.random.seed(46)
+
+        splits = min (10, Y.size)
+
         self.estimator_set = []
-        for (train, test) in kfold:
-            estimatori = PLS_da (**param)
-            super(PLS_da, estimatori).fit(X[train], Y[train])
-            self.estimator_set.append(estimatori)
+
+        n_selected = 0
+
+        while n_selected < splits:
+            train = np.random.choice(Y.size,int(Y.size*0.7), replace=False)
+
+            # make sure that Y train contains compounds from both class 0 and 1
+            if len(np.unique(Y[train])) > 1: 
+                n_selected += 1
+                estimatori = PLS_da (**param)
+                super(PLS_da, estimatori).fit(X[train], Y[train])
+                self.estimator_set.append(estimatori)
+
+        # strtfdKFold = StratifiedKFold(n_splits=splits)
+        # kfold = strtfdKFold.split(X, Y)
+        # for (train, test) in kfold:
+        #     estimatori = PLS_da (**param)
+        #     super(PLS_da, estimatori).fit(X[train], Y[train])
+        #     self.estimator_set.append(estimatori)
 
     def predict_proba(self, X):
         nobj, nvarx = np.shape (X)
@@ -237,6 +251,13 @@ class PLSDA(BaseEstimator):
 
         if not self.param.getVal('conformal'):
             return True, results
+
+        # from sklearn.calibration import calibration_curve
+        # prepro = self.estimator.predict_proba(X)[:, 1]
+        # binned_true_p, binned_predict_p = calibration_curve(Y, prepro, n_bins=10)
+        # with open('pproba.txt','w') as f:
+        #     for i, j in zip (binned_true_p, binned_predict_p):
+        #         f.write (f'{i} \t {j}\n')
 
         self.estimator_temp = self.estimator
         
