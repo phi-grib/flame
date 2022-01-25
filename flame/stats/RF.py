@@ -98,6 +98,7 @@ class RF(BaseEstimator):
         results.append(('model','model type','RF'))
 
         conformal = self.param.getVal('conformal')
+
         # If tune then call gridsearch to optimize the estimator
         if self.param.getVal('tune'):
 
@@ -131,8 +132,6 @@ class RF(BaseEstimator):
                     self.estimator = RandomForestClassifier(
                                         **self.estimator_parameters)
 
-                # self.estimator.fit(X, Y)
-                # self.feature_importances = self.estimator.feature_importances_
                 self.regularBuild(X, Y)
 
             except Exception as e:
