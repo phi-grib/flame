@@ -23,26 +23,17 @@
 # along with Flame.  If not, see <http://www.gnu.org/licenses/>.
 
 
-# To ignore warnings comming from data precision in Cross-validation
-# Study more in deep
-
-import copy
-from flame.stats.base_model import BaseEstimator
-
 import numpy as np
 
-from sklearn.metrics import make_scorer
-from sklearn.model_selection import cross_val_predict
-from sklearn.metrics import matthews_corrcoef as mcc 
+from flame.stats.base_model import BaseEstimator
+
 from sklearn.cross_decomposition import PLSRegression
-from sklearn.model_selection import StratifiedKFold
 
 import warnings
 warnings.filterwarnings('ignore')
 
 from flame.util import get_logger
 LOG = get_logger(__name__)
-
 
 class PLS_da(PLSRegression):
     """
@@ -69,7 +60,7 @@ class PLS_da(PLSRegression):
     """
 
     def __init__(self, n_components=2, scale=False, max_iter=500,
-                 tol=1e-6, copy=True, threshold=None):
+                 tol=1e-6, copy=True, threshold=None, conformal=False):
         # Initialize parent class
         try:
             super(PLS_da, self).__init__(n_components=n_components,
@@ -82,9 +73,9 @@ class PLS_da(PLSRegression):
         # Cut-off for class assignation
         self.threshold = threshold
         self.estimator_set = None
+        self.conformal = conformal
 
     def predict(self, X, copy=True):
-
         threshold = self.threshold
         if threshold is None:
             return super(PLS_da, self).predict(X, copy).ravel()
@@ -97,6 +88,9 @@ class PLS_da(PLSRegression):
 
     def fit (self, X, Y):
         super(PLS_da, self).fit(X,Y)
+
+        if self.conformal is False:
+            return
 
         if self.estimator_set != None:
             return
@@ -120,6 +114,8 @@ class PLS_da(PLSRegression):
             if len(np.unique(Y[train])) > 1: 
                 n_selected += 1
                 estimatori = PLS_da (**param)
+                
+                # we fit a PLSregressor, not a PLS_da! please note 
                 super(PLS_da, estimatori).fit(X[train], Y[train])
                 self.estimator_set.append(estimatori)
 
@@ -142,7 +138,7 @@ class PLS_da(PLSRegression):
                 else:
                     proba[i,1]+=1 # increment class 1
 
-        return proba / len(self.estimator_set)
+        return proba / float(len(self.estimator_set)) 
 
 class PLSDA(BaseEstimator):
     """
@@ -213,9 +209,12 @@ class PLSDA(BaseEstimator):
         results.append(('nvarx', 'number of predictor variables', self.nvarx))
         results.append(('model', 'model type', 'PLSDA'))
 
+        # in case of conformal models, compute an estimator set to compute prediction probabilities
+        self.estimator_parameters['conformal'] = self.param.getVal('conformal')
+
         if 'optimize' in self.estimator_parameters:
             self.estimator_parameters.pop("optimize") 
-
+            
         if self.param.getVal('tune'):
 
             opt_param = self.param.getDict('PLSDA_optimize')
@@ -224,7 +223,6 @@ class PLSDA(BaseEstimator):
             if 'tol' in opt_param:
                 opt_param['tol'] = [0.000006]
     
-
             # Optimize estimator using sklearn-gridsearch
             LOG.info('Optimizing PLSDA using SK-LearnGridSearch')
             try:
@@ -234,17 +232,12 @@ class PLSDA(BaseEstimator):
             except Exception as e:
                 return False, f'Error performing SK-LearnGridSearch on PLSDA estimator with exception {e}'
 
-                
-            # results.append(('model', 'model type', 'PLSDA qualitative (optimized)'))
-
         else:
             LOG.info('Building Qualitative PLSDA with no optimization')
             try:
                 self.estimator = PLS_da(**self.estimator_parameters)
             except Exception as e:
                 return False, f'Error at PLS_da with exception {e}'
-
-            # results.append(('model', 'model type', 'PLSDA qualitative'))
 
         # Fit estimator to the data
         self.regularBuild (X, Y)

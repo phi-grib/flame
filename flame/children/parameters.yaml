@@ -907,13 +907,6 @@ PLSR_parameters:
   writable: false
   options: null
   value:
-    tol:
-      object_type: float
-      writable: true
-      value: 0.000006
-      options:
-        - null
-      description: Tolerance used in the iterative algorithm default 1e-06
     n_components: 
       object_type: int
       writable: true
@@ -961,13 +954,6 @@ PLSDA_parameters:
   writable: false
   options: null
   value:
-    tol:
-      object_type: float
-      writable: true
-      value: 0.000006
-      options:
-        - null
-      description: Tolerance used in the iterative algorithm default 1e-06
     n_components:
       object_type: int
       writable: true
