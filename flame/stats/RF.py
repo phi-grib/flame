@@ -27,6 +27,9 @@ from flame.stats.base_model import BaseEstimator
 from flame.util import get_logger
 LOG = get_logger(__name__)
 
+import warnings
+warnings.filterwarnings('ignore')
+
 class RF(BaseEstimator):
     """
         This class inherits from BaseEstimator and wraps SKLEARN

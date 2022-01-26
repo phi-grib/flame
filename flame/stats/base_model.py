@@ -53,8 +53,10 @@ from flame.util import utils, get_logger
 
 LOG = get_logger(__name__)
 
-with warnings.catch_warnings():
-    warnings.simplefilter("ignore")
+# with warnings.catch_warnings():
+#     warnings.simplefilter("ignore")
+
+warnings.filterwarnings('ignore')
 
 class BaseEstimator:
     """
@@ -714,13 +716,23 @@ class BaseEstimator:
 
         return None, 'not computed'
           
-    def optimize(self, X, Y, estimator, tune_parameters):
+    def optimize(self, X, Y, estimator, raw_parameters):
         ''' optimizes a model using a grid search over a 
         range of values for diverse parameters'''
 
+        # if the list is not set, is empty or is not a list, just remove the key
+        tune_parameters = {}        
+        for key, value in raw_parameters.items():
+            if value is None:
+                continue  
+            if not isinstance(value, list):
+                continue
+            if len(value)==0:  
+                continue
+            tune_parameters[key] = value
+
         # the default value is represented as 'default' in the YAML parameter file to
         # avoid problems with empty values and must be replaced by None here       
-        
         for key, value in tune_parameters.items():
             if 'default' in value:
                 tune_parameters[key] = [None if i == 'default' else i for i in value ]
