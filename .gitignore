@@ -123,23 +123,19 @@ flame/spaces/
 flame/old_models/
 similarity/
 
-*.tsv
-flame/*.yaml
+spaces/*
 
-# compressed files
+*.tsv
 *.tgz
+flame/*.yaml
 
 #pytest
 .pytest_cache/
 
 #config file
 flame/config.yaml
-flame/config.yml
+config.yaml
 
 flame/pca-scores12.png
 flame/models/CACO2/dev/parameters.yaml
 flame/stats/modelPCA.npy
-flame/config.yaml
-flame/config.yaml
-
-spaces/*
