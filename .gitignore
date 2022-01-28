@@ -133,6 +133,7 @@ flame/*.yaml
 .pytest_cache/
 
 #config file
+flame/flame/config.yaml
 flame/config.yaml
 config.yaml
 
