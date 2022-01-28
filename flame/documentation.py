@@ -475,8 +475,8 @@ class Documentation:
                                 end = (count)+(len(ivalue)-1)
 
                                 for intk in ivalue:
-                                    # label_ik = intk.replace('_',' ')
-                                    label_ik = intk.replace('_f', '').replace('_', ' ')
+                                    label_ik = intk.replace('_',' ')
+                                    # label_ik = intk.replace('_f', '').replace('_', ' ')
                                     ws[f'B{count}'] = label_ik
                                     ws[f'B{count}'].style = Label
                                     
@@ -645,8 +645,8 @@ class Documentation:
                             # iterate keys assuming existence of value and description
                             for intk in ivalue:
 
-                                # label_ik = intk.replace('_',' ')
-                                label_ik = intk.replace('_f', '').replace('_', ' ')
+                                label_ik = intk.replace('_',' ')
+                                # label_ik = intk.replace('_f', '').replace('_', ' ')
 
                                 irow = itable.rows[icount]
                                 irow.cells[0].width=wicol1
