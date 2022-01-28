@@ -21,14 +21,15 @@
 # along with Flame. If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import time
+# import time
 import shutil
 import tarfile
 import pickle
 import yaml
 import json
 import pathlib
-import numpy as np
+import tempfile
+# import numpy as np
 from flame.util import utils, get_logger 
 from flame.conveyor import Conveyor
 
@@ -374,12 +375,24 @@ def action_info(model, version, output='text'):
             return False, {'code':1, 'message': 'Empty model label'}
         return False, 'Empty model label'
 
-    meta_path = utils.model_path(model, version)
 
+    meta_path = utils.model_path(model, version)
     # Check that both the meta and the results file are present
     # return error code 0 if not
     meta_file = os.path.join(meta_path, 'model-meta.pkl')
     if not os.path.isfile(meta_file):
+
+        # this file is created uppon task abortion
+        error_file = os.path.join(tempfile.gettempdir(),'building_'+model)
+        if os.path.isfile(error_file):
+            with open(error_file, 'r') as f:
+                error_text = f.read()
+            f.close()
+            os.remove(error_file)
+            if output != 'text':
+                return False, {'code':1, 'message': error_text}
+            return False, 'model building task aborted'  
+            
         if output != 'text':
             return False, {'code':0, 'message': 'Info file not found'}
         return False, 'Info file not found'
