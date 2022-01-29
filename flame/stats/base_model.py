@@ -833,6 +833,11 @@ class BaseEstimator:
 
         self.estimator.fit(X, Y)
         
+        # in case of conformal models, do not estimate feature importances, these will
+        # be computed latter with the conformal estimator
+        if self.param.getVal('conformal'):
+            return
+
         LOG.info ('Estimating feature importances')
         start = time.time ()
         self.feature_importances, self.feature_importances_method = self.featureImportancesEstimation(self.estimator)

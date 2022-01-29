@@ -135,8 +135,6 @@ class XGBOOST(BaseEstimator):
                 # self.feature_importances = self.estimator.feature_importances_
                 self.regularBuild(X,Y)
 
-                LOG.debug (self.estimator)
-
             except Exception as e:
                 return False, f'Exception building XGBOOST estimator with exception {e}'
 
