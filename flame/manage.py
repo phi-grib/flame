@@ -783,12 +783,24 @@ def action_predictions_result (label, output='text'):
         
         - (True, object) with the results otherwyse
     '''
+
+    # this file is created uppon task abortion
+    error_file = os.path.join(tempfile.gettempdir(),'predicting_'+label)
+    if os.path.isfile(error_file):
+        with open(error_file, 'r') as f:
+            error_text = f.read()
+        f.close()
+        os.remove(error_file)
+
+        if output != 'text':
+            return False, {'code':1, 'message': error_text}
+        return False, 'model prediction task aborted' 
+
     # get de model repo path
     predictions_path = pathlib.Path(utils.predictions_repository_path())
-
     label_path = predictions_path.joinpath(label)
-
     if not os.path.isdir(label_path):
+
         if output != 'text':
             return False, {'code':0, 'message': f'directory {label_path} not found'}
         print (f'directory {label_path} not found')
@@ -796,17 +808,6 @@ def action_predictions_result (label, output='text'):
 
     result_path = label_path.joinpath('prediction-results.pkl')
     if not result_path.is_file():
-
-        # this file is created uppon task abortion
-        error_file = os.path.join(tempfile.gettempdir(),'predicting_'+label)
-        if os.path.isfile(error_file):
-            with open(error_file, 'r') as f:
-                error_text = f.read()
-            f.close()
-            os.remove(error_file)
-            if output != 'text':
-                return False, {'code':1, 'message': error_text}
-            return False, 'model prediction task aborted' 
 
         if output != 'text':
             return False, {'code':0, 'message': f'predictions not found for {label} directory'}
