@@ -1092,14 +1092,13 @@ class Documentation:
         #Algorithm, type: QSAR.
         self.fields['Algorithm']['value']['type']['value'] = 'QSAR'
         #Model, Main modelling program, version, description and license.
-        software = "Flame, 1.0rc2, GLP v3"
+        software = "Flame, 1.0rc3"
         fieldsapplysoftware = ['model','descriptors','applicability_domain']
 
         for field in fieldsapplysoftware:
             if field == 'applicability_domain':
-                self.fields['Software']['value'][field]['value'] = "For conformal models only: "+software
-            else:
-                self.fields['Software']['value'][field]['value'] = software
+                if self.parameters.getVal('conformal'):
+                    self.fields['Software']['value'][field]['value'] = software
 
         ### TO DO ###
         # descriptors: AUTO(list descriptors).
