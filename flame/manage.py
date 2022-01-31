@@ -1011,7 +1011,7 @@ def action_refresh (model=None, version=None):
         LOG.info (f'   refreshing model: {itask[0]}   version: {itask[1]} ({task_list.index(itask)+1} of {len(task_list)})...')
 
         # dissable LOG output
-        logging.disable(logging.ERROR)
+        # logging.disable(logging.ERROR)
 
 
         # update parameters

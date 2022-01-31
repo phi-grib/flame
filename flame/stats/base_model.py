@@ -53,12 +53,10 @@ from flame.util import utils, get_logger
 
 LOG = get_logger(__name__)
 
-# with warnings.catch_warnings():
-#     warnings.simplefilter("ignore")
-
 warnings.filterwarnings('ignore')
 
 class BaseEstimator:
+
     """
     Estimator parent class, contains all attributes methods shared
      by different algorithms.Particular implementation of these 
@@ -965,15 +963,13 @@ class BaseEstimator:
                 features = None
                 for p in self.estimator.predictors:
                     inner_estimator = p.nc_function.model.model
-                    if hasattr(inner_estimator, 'feature_importances_'):    
-                        # fi = p.nc_function.model.model.feature_importances_
-                        fi, method = self.featureImportancesEstimation(inner_estimator)
-                        if first:
-                            features = np.array(fi)
-                            first = False
-                            self.feature_importances_method = method
-                        else:
-                            features = np.vstack((features,fi))
+                    fi, method = self.featureImportancesEstimation(inner_estimator)
+                    if first:
+                        features = np.array(fi)
+                        first = False
+                        self.feature_importances_method = method
+                    else:
+                        features = np.vstack((features,fi))
                 
                 if features is not None:
                     self.feature_importances = np.mean (features, 0)
