@@ -1099,6 +1099,9 @@ class Documentation:
             if field == 'applicability_domain':
                 if self.parameters.getVal('conformal'):
                     self.fields['Software']['value'][field]['value'] = software
+            else:
+                self.fields['Software']['value'][field]['value'] = software
+
 
         ### TO DO ###
         # descriptors: AUTO(list descriptors).
