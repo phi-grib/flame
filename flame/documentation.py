@@ -1064,7 +1064,8 @@ class Documentation:
                         
         return emptyfields
     
-    def get_mols(self):
+    def get_smiles(self):
+        '''Returns a dictionary with the fields:{(key)name:(value)SMILES}'''
         
         return dict(zip(self.conveyor.getVal("obj_nam"),self.conveyor.getVal("SMILES")))
 

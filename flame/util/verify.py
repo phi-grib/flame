@@ -77,23 +77,23 @@ def verify_prediction (endpoint, version=None):
 def verify_model(endpoint, version= None):
       ''' TO DO'''
       doc = Documentation(endpoint, version)
-      list_mols = doc.get_mols()
+      smiles_list = doc.get_smiles()
       api = utils.connect_api()
       count = 1
       invalid = []
-      for mol in list_mols:
-          toxhub_smiles = utils.getSmilesByAPI(api,mol)
+      for drugname in smiles_list:
+          toxhub_smiles = utils.getSmilesByAPI(api,drugname)
           if toxhub_smiles:
-              fp1,fp2 = Chem.RDKFingerprint(Chem.MolFromSmiles(list_mols[mol])),Chem.RDKFingerprint(Chem.MolFromSmiles(toxhub_smiles))
+              fp1,fp2 = Chem.RDKFingerprint(Chem.MolFromSmiles(smiles_list[drugname])),Chem.RDKFingerprint(Chem.MolFromSmiles(toxhub_smiles))
               similarity = DataStructs.TanimotoSimilarity(fp1,fp2)
               if similarity < 0.99:
-                  invalid.append({'namedrug':mol,'input_smiles':list_mols[mol],'toxhub_smiles':toxhub_smiles,'similarity':similarity}) 
+                  invalid.append({'drugname':drugname,'input_smiles':smiles_list[drugname],'toxhub_smiles':toxhub_smiles,'similarity':similarity}) 
           else:
-              print(count,". Not found:",mol)
+              print(count,". Not found:",drugname)
               count +=1
 
       if invalid:
-          return True,{'status':'Failed','comments':'The chemical structure of the following drugs is different from that obtained in ToxHub.','Information':invalidMols}
+          return True,{'status':'Failed','comments':'The chemical structure of the following drugs is different from that obtained in ToxHub.','Information':invalid}
 
       return True,{'status':'Passed','comments':'','Information':[]}
 
@@ -107,7 +107,7 @@ def inspection_model():
 # 4-Examination of Executive summary
 
 def executive_summary():
-    
+
     return None
     
 
