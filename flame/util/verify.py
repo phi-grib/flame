@@ -1,3 +1,26 @@
+#! -*- coding: utf-8 -*-
+
+# Description    Verification process
+#
+# Authors:       Manuel Pastor (manuel.pastor@upf.edu)
+#                Adrian Cabrera
+#
+# Copyright 2018 Manuel Pastor
+#
+# This file is part of Flame
+#
+# Flame is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation version 3.
+#
+# Flame is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Flame. If not, see <http://www.gnu.org/licenses/>.
+
 from flame.documentation import Documentation
 from flame.util import utils,get_logger 
 import os
@@ -7,6 +30,7 @@ import pickle
 
 LOG = get_logger(__name__)
 
+# 1-Data cheking: Documentation
 def verify_documentation (endpoint, version=None):
     '''
       Check that the required fields are completed
@@ -30,19 +54,18 @@ def verify_documentation (endpoint, version=None):
         result = {'status':'Failed','comments':'fields not completed','Information':fields}
     else:
         result = {'status':'Passed','comments':'All fields required are completed','Information':[]}
-
+    
     return True,result
-
-
+    
+# 1-Data cheking: data
 # Manually verification
-# TO DO
 def verify_data (endpoint, version=None):
+    '''TO DO'''
     return True, {'status':'Passed','comments':'','Information':['Manually verification',]}
 
-
-# TO DO
+# 1-Data cheking: prediction
 def verify_prediction (endpoint, version=None):
-    
+    ''' TO DO '''
     meta_path = utils.model_path(endpoint, version)
     training_file = os.path.join(meta_path, 'training_series')
     if not os.path.isfile(training_file):
@@ -50,66 +73,91 @@ def verify_prediction (endpoint, version=None):
 
     return True, {'status':'Passed','comments':'','Information':[]}
 
+# 2- Model testing
+def verify_model(endpoint, version= None):
+      ''' TO DO'''
+      doc = Documentation(endpoint, version)
+      list_mols = doc.get_mols()
+      api = utils.connect_api()
+      count = 1
+      invalid = []
+      for mol in list_mols:
+          toxhub_smiles = utils.getSmilesByAPI(api,mol)
+          if toxhub_smiles:
+              fp1,fp2 = Chem.RDKFingerprint(Chem.MolFromSmiles(list_mols[mol])),Chem.RDKFingerprint(Chem.MolFromSmiles(toxhub_smiles))
+              similarity = DataStructs.TanimotoSimilarity(fp1,fp2)
+              if similarity < 0.99:
+                  invalid.append({'namedrug':mol,'input_smiles':list_mols[mol],'toxhub_smiles':toxhub_smiles,'similarity':similarity}) 
+          else:
+              print(count,". Not found:",mol)
+              count +=1
 
-# def verify_model(endpoint, version= None):
-#     doc = Documentation(endpoint, version)
-#     list_of_mols = doc.get_mols()
-#     print("Total: ",len(list_of_mols))
-#     api = utils.connect_api()
-#     count = 1
-#     countInvalidMols = 1
+      if invalid:
+          return True,{'status':'Failed','comments':'The chemical structure of the following drugs is different from that obtained in ToxHub.','Information':invalidMols}
 
-#     invalidMols = {}
-#     for mol in list_of_mols:
-#         apiSmile = utils.getSmilesByAPI(api,mol)
-#         aux_smile = apiSmile
-#         if apiSmile:
-#             localSmile,apiSmile = Chem.MolFromSmiles(list_of_mols[mol]),Chem.MolFromSmiles(apiSmile)
-#             fp1,fp2 = Chem.RDKFingerprint(localSmile),Chem.RDKFingerprint(apiSmile)
+      return True,{'status':'Passed','comments':'','Information':[]}
 
-#             if DataStructs.TanimotoSimilarity(fp1,fp2) < 0.99:
-#                 invalidMols[mol] = [list_of_mols[mol],aux_smile]
-#                 countInvalidMols += 1
-#         else:
-#             print(count,". Not found:",mol)
-#             count +=1
 
-#     print("Similarity below 0.99: ",countInvalidMols)         
-#     return True,{'status':'Passed','comments':'','Information':invalidMols}
+# 3-Inspection of Model
+
+def inspection_model():
+
+    return None
+
+# 4-Examination of Executive summary
+
+def executive_summary():
+    
+    return None
+    
 
 def verify (endpoint, version=None):
-    
     result = {}
+    # 1- Data cheking: Documentation
     success,  result['documentation'] = verify_documentation (endpoint, version)
-    #success, result['model'] = verify_model(endpoint, version)
-
+    
     if not success:
         return False, result
-
+    # 1- Data cheking: data
     success, result['data'] = verify_data (endpoint, version)
 
     if not success:
         return False, result
-
+    # 1- Data cheking: prediction
     success, result['prediction'] = verify_prediction (endpoint, version)
 
     if not success:
         return False, result
+
+    # save datacheking data
+    datacheking = {'Data cheking':result}
+
+    result = {}
+
+    # 2- Model testing
+    success, result['model'] = verify_model(endpoint, version)
+    if not  success:
+        return False, result
     
-
-
+    # save model testing data
+    modeltesting = {'Model testing': result}
+    
+    
+    datacheking.update(modeltesting) # concatenates the dictionary of data cheking and the dictionary of model testing
+    
     meta_path = utils.model_path(endpoint, version)
     verification_file = os.path.join(meta_path, 'verification.pkl')
 
     #Save in the model folder verification.pkl
     file = open(verification_file,"wb")
-    pickle.dump(result,file)
+    pickle.dump(datacheking,file)
     file.close()
     LOG.info(f'Save verification.pkl file \n')
 
-    show_result(result)
+    # show first step of verification process
+    show_result(datacheking['Data cheking'])
 
-    return True, result
+    return True, datacheking
 
 
 def get_verification(endpoint,version):
@@ -128,21 +176,21 @@ def get_verification(endpoint,version):
 
     return False
 
-
-
+#pending changes: improve scalability
+#currently it is only useful for the first step of verification.
 def show_result(result):
-    '''
-    Shows the model verification in the terminal
-    '''
-    if result:
-        # HEADERS
-        print("{:<18}{:<10}{:<40}{:<10}".format('Stage','Status','Comments','Information'),"\n")
+     '''
+     Shows the model verification in the terminal
+     '''
+     if result:
+         # HEADERS
+         print("{:<18}{:<10}{:<40}{:<10}".format('Stage','Status','Comments','Information'),"\n")
         
-        for x in result:
-            information = " ".join(result[x]['Information'])
-            print("{:<18}{:<10}{:<40}{:<10}".format(x,result[x]['status'],result[x]['comments'],information))
-    else:
-        LOG.error("Unable to print verification result")
+         for x in result:
+             information = " ".join(result[x]['Information'])
+             print("{:<18}{:<10}{:<40}{:<10}".format(x,result[x]['status'],result[x]['comments'],information))
+     else:
+         LOG.error("Unable to print verification result")
     
 
     
