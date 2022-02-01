@@ -134,7 +134,8 @@ class SVM(BaseEstimator):
 
                     self.estimator = svm.SVC(**self.estimator_parameters)
 
-                self.estimator.fit(X, Y)
+                # self.estimator.fit(X, Y)
+                self.regularBuild (X, Y)
 
             except Exception as e:
                 return False, f'Exception building SVM estimator with exception {e}'

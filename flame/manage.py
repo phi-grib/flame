@@ -21,14 +21,15 @@
 # along with Flame. If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import time
+# import time
 import shutil
 import tarfile
 import pickle
 import yaml
 import json
 import pathlib
-import numpy as np
+import tempfile
+# import numpy as np
 from flame.util import utils, get_logger 
 from flame.conveyor import Conveyor
 
@@ -374,12 +375,24 @@ def action_info(model, version, output='text'):
             return False, {'code':1, 'message': 'Empty model label'}
         return False, 'Empty model label'
 
-    meta_path = utils.model_path(model, version)
 
+    meta_path = utils.model_path(model, version)
     # Check that both the meta and the results file are present
     # return error code 0 if not
     meta_file = os.path.join(meta_path, 'model-meta.pkl')
     if not os.path.isfile(meta_file):
+
+        # this file is created uppon task abortion
+        error_file = os.path.join(tempfile.gettempdir(),'building_'+model)
+        if os.path.isfile(error_file):
+            with open(error_file, 'r') as f:
+                error_text = f.read()
+            f.close()
+            os.remove(error_file)
+            if output != 'text':
+                return False, {'code':1, 'message': error_text}
+            return False, 'model building task aborted'  
+            
         if output != 'text':
             return False, {'code':0, 'message': 'Info file not found'}
         return False, 'Info file not found'
@@ -770,12 +783,24 @@ def action_predictions_result (label, output='text'):
         
         - (True, object) with the results otherwyse
     '''
+
+    # this file is created uppon task abortion
+    error_file = os.path.join(tempfile.gettempdir(),'predicting_'+label)
+    if os.path.isfile(error_file):
+        with open(error_file, 'r') as f:
+            error_text = f.read()
+        f.close()
+        os.remove(error_file)
+
+        if output != 'text':
+            return False, {'code':1, 'message': error_text}
+        return False, 'model prediction task aborted' 
+
     # get de model repo path
     predictions_path = pathlib.Path(utils.predictions_repository_path())
-
     label_path = predictions_path.joinpath(label)
-
     if not os.path.isdir(label_path):
+
         if output != 'text':
             return False, {'code':0, 'message': f'directory {label_path} not found'}
         print (f'directory {label_path} not found')
@@ -783,6 +808,7 @@ def action_predictions_result (label, output='text'):
 
     result_path = label_path.joinpath('prediction-results.pkl')
     if not result_path.is_file():
+
         if output != 'text':
             return False, {'code':0, 'message': f'predictions not found for {label} directory'}
         print (f'predictions not found for {label} directory')
@@ -891,6 +917,7 @@ def action_refresh (model=None, version=None):
 
     import flame.context as context
     from flame.parameters import Parameters
+    from flame.documentation import Documentation
     import logging
 
 
@@ -964,13 +991,19 @@ def action_refresh (model=None, version=None):
     
     LOG.info ("This can take some time, please be patient...")
 
+    source_dir = os.path.dirname(os.path.abspath(__file__)) 
+    children_dir = os.path.join (source_dir, 'children')
+    master_parameters = os.path.join (children_dir, 'parameters.yaml') 
+    master_documentation = os.path.join (children_dir, 'documentation.yaml') 
+
     # now send the build command for each task
     for itask in task_list:
+
+        destinat_path = utils.model_path(itask[0],0)        # dev
 
         if itask[1] != 0:
             # move version to /dev for building
             original_path = utils.model_path(itask[0],itask[1]) # veri  
-            destinat_path = utils.model_path(itask[0],0)        # dev
             security_path = destinat_path+'_security'           # dev_sec
             shutil.move (destinat_path, security_path)          # dev --> dev_sec
             shutil.move (original_path, destinat_path)          # veri --> dev
@@ -980,9 +1013,44 @@ def action_refresh (model=None, version=None):
         # dissable LOG output
         logging.disable(logging.ERROR)
 
+        # update parameters
+        dump_parameters = os.path.join (destinat_path, 'parameters_dump.yaml')
+        success, param = action_parameters(itask[0], 0, oformat='bin')
+        if success:
+            param_yaml = param.dumpYAML()
+            with open (dump_parameters,'w') as f:
+                for line in param_yaml:
+                    f.write (line+'\n')
+        else:
+            LOG.info ('   ERROR: unable to merge parameters for model: {itask[0]}   version: {itask[1]}')
+            dump_parameters = None
+
+        original_parameters = os.path.join (destinat_path, 'parameters.yaml')       
+        shutil.copy (master_parameters, original_parameters)
+
+        #update documentation
+        dump_documentation = os.path.join (destinat_path, 'documentation_dump.yaml')
+        success, documentation = action_documentation(itask[0], 0, doc_file= None, oformat='bin')
+
+        original_documentation = os.path.join (destinat_path, 'documentation.yaml')       
+        shutil.copy (master_documentation, original_documentation)
+
+        if success:
+            documentation_yaml = documentation.dumpYAML()
+            with open (dump_documentation,'w') as f:
+                for line in documentation_yaml:
+                    line = line.encode("ascii", "ignore")
+                    line = line.decode("ascii", "ignore")
+                    f.write (line+'\n')
+            s2, documentation = action_documentation(itask[0], 0, doc_file= None, oformat='bin')
+            s3, r3 = documentation.delta(itask[0], 0, dump_documentation)
+        else:
+            LOG.info ('   ERROR: unable to merge documentation for model: {itask[0]}   version: {itask[1]}')
+
+        # rebuild the model
         command_build = {'endpoint': itask[0], 
                          'infile': None, 
-                         'param_file': None,
+                         'param_file': dump_parameters,
                          'incremental': False}
 
         success, results = context.build_cmd(command_build)

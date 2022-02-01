@@ -475,8 +475,8 @@ class Documentation:
                                 end = (count)+(len(ivalue)-1)
 
                                 for intk in ivalue:
-                                    # label_ik = intk.replace('_',' ')
-                                    label_ik = intk.replace('_f', '').replace('_', ' ')
+                                    label_ik = intk.replace('_',' ')
+                                    # label_ik = intk.replace('_f', '').replace('_', ' ')
                                     ws[f'B{count}'] = label_ik
                                     ws[f'B{count}'].style = Label
                                     
@@ -645,8 +645,8 @@ class Documentation:
                             # iterate keys assuming existence of value and description
                             for intk in ivalue:
 
-                                # label_ik = intk.replace('_',' ')
-                                label_ik = intk.replace('_f', '').replace('_', ' ')
+                                label_ik = intk.replace('_',' ')
+                                # label_ik = intk.replace('_f', '').replace('_', ' ')
 
                                 irow = itable.rows[icount]
                                 irow.cells[0].width=wicol1
@@ -727,12 +727,12 @@ class Documentation:
 
         allowed = ['Conformal_accuracy', 'Conformal_mean_interval',
                    'Conformal_coverage', 
-                   'Q2', 'SDEP', 'scoringP'
+                   'Q2', 'SDEP', 'scoringP',
                    'Sensitivity', 'Specificity', 'MCC']
 
         gof_allowed = ['Conformal_accuracy_f', 'Conformal_mean_interval_f',
                        'Conformal_coverage_f', 
-                       'R2', 'SDEC', 'scoringR'
+                       'R2', 'SDEC', 'scoringR',
                        'Sensitivity_f', 'Specificity_f', 'MCC_f']
 
         model_info = self.conveyor.getVal('model_build_info')
@@ -1093,14 +1093,16 @@ class Documentation:
         #Algorithm, type: QSAR.
         self.fields['Algorithm']['value']['type']['value'] = 'QSAR'
         #Model, Main modelling program, version, description and license.
-        software = "Flame, 1.0rc2, GLP v3"
+        software = "Flame, 1.0rc3"
         fieldsapplysoftware = ['model','descriptors','applicability_domain']
 
         for field in fieldsapplysoftware:
             if field == 'applicability_domain':
-                self.fields['Software']['value'][field]['value'] = "For conformal models only: "+software
+                if self.parameters.getVal('conformal'):
+                    self.fields['Software']['value'][field]['value'] = software
             else:
                 self.fields['Software']['value'][field]['value'] = software
+
 
         ### TO DO ###
         # descriptors: AUTO(list descriptors).

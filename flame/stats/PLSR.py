@@ -22,26 +22,11 @@
 # You should have received a copy of the GNU General Public License
 # along with Flame.  If not, see <http://www.gnu.org/licenses/>.
 
-from copy import copy
 from flame.stats.base_model import BaseEstimator
-
-from nonconformist.base import ClassifierAdapter, RegressorAdapter
-from nonconformist.acp import AggregatedCp
-from nonconformist.acp import BootstrapSampler, RandomSubSampler, CrossSampler
-from nonconformist.icp import IcpClassifier, IcpRegressor
-from nonconformist.nc import ClassifierNc, MarginErrFunc, RegressorNc
-from nonconformist.nc import AbsErrorErrFunc, RegressorNormalizer
-
-import numpy as np
-
-from sklearn.cross_decomposition import PLSCanonical, PLSRegression, CCA
-from sklearn.model_selection import cross_val_predict
-from sklearn.metrics import r2_score
-from sklearn.neighbors import KNeighborsRegressor
+from sklearn.cross_decomposition import PLSRegression
 
 from flame.util import get_logger
 LOG = get_logger(__name__)
-
 
 class PLS_r(PLSRegression):
     """
@@ -72,7 +57,6 @@ class PLS_r(PLSRegression):
         results = super(PLS_r, self).predict(X, copy=True).ravel()
         return results
 
-
 class PLSR(BaseEstimator):
     """
         This class inherits from BaseEstimator and wraps SKLEARN
@@ -94,10 +78,6 @@ class PLSR(BaseEstimator):
         build(X)
             Instance the estimator optimizing it
             if tune=true.
-
-        optimize( X, Y, estimator, tune_parameters)
-            Gridsearch specially designed for PLSR.
-            Optimizes number of variables
         
     """
     def __init__(self, X, Y, parameters, conveyor):
@@ -106,12 +86,15 @@ class PLSR(BaseEstimator):
             BaseEstimator.__init__(self,X, Y, parameters, conveyor)
             LOG.debug('Initialize BaseEstimator parent class')
         except Exception as e:
-            LOG.error(f'Error initializing BaseEstimator parent class with exception: {e}')
             self.conveyor.setError(f'Error initializing BaseEstimator parent class with exception: {e}')
             return
 
         # Load estimator parameters
         self.estimator_parameters = self.param.getDict('PLSR_parameters')
+        
+        # Solves back-comptibility issue
+        if 'optimize' in self.estimator_parameters:
+            self.estimator_parameters.pop('optimize')
 
         # Scale is hard-coded to False for making use of external scalers        
         self.estimator_parameters['scale'] = False
@@ -120,7 +103,6 @@ class PLSR(BaseEstimator):
 
         # Check if the model is quantitative
         if not self.param.getVal('quantitative'):
-            LOG.error('PLSR only applies to quantitative data')
             self.conveyor.setError('PLSR only applies to quantitative data')
             return
 
@@ -137,133 +119,43 @@ class PLSR(BaseEstimator):
 
         if self.param.getVal('tune'):
 
-            # Optimize estimator using sklearn-gridsearch
-            if self.estimator_parameters['optimize'] == 'auto':
-                try:
+            LOG.info('Optimizing PLSR estimator')
+            try:
+                self.estimator = PLS_r(**self.estimator_parameters)
+                self.optimize(X, Y, self.estimator, self.param.getDict('PLSR_optimize'))
 
-                    LOG.info('Optimizing PLSR using SK-LearnGridSearch')
-
-                    # Remove optimize key from parameter dictionary
-                    # to avoid sklearn estimator error (unexpected keyword)
-                    self.estimator_parameters.pop("optimize")   
-
-                    super(PLSR, self).optimize(X, Y, PLS_r(
-                        **self.estimator_parameters), 
-                        self.param.getDict('PLSR_optimize'))
-
-                except Exception as e:
-                    LOG.error(f'Error performing SK-LearnGridSearch'
-                              f' on PLSR estimator with exception {e}')
-                    return False, f'Error performing SK-LearnGridSearch on PLSR estimator with exception {e}'
-
-            # Optimize using flame implementation (recommended)
-            elif self.estimator_parameters['optimize'] == 'manual':
-
-                LOG.info('Optimizing PLSR using manual method')
-
-                # Remove optimize key from parameter dictionary
-                # to avoid sklearn estimator error (unexpected keyword)
-                self.estimator_parameters.pop("optimize")   
-
-                success, message = self.optimize(X, Y, PLS_r(
-                    **self.estimator_parameters), 
-                    self.param.getDict('PLSR_optimize'))
-
-                if not success:
-                    return False, message
-
-            else: 
-                LOG.error('Type of tune not recognized, check the input')
-                return False, 'Type of tune not recognized, check the input'    
+            except Exception as e:
+                return False, f'Exception optimizing PLS estimator with exception {e}'
 
         else:
             LOG.info('Building Quantitative PLSR with no optimization')
             try:
-                # Remove optimize key from parameters to avoid error
-                self.estimator_parameters.pop("optimize") 
-
-                # as the sklearn estimator does not have this key
                 self.estimator = PLS_r(**self.estimator_parameters)
+
             except Exception as e:
-                LOG.error(f'Error at PLS_r instantiation with '
-                          f'exception {e}')
-                return False, f'Error at PLS_da instantiation with exception {e}'
+                return False, f'Error at PLS_r with exception {e}'
 
         # Fit estimator to the data
-        self.estimator.fit(X, Y)
+        self.regularBuild(X, Y)
+        
+        # The model coefficients can be easily extracted and stored for building 
+        # confidential models. These coefficients can be used to predict the properties of
+        # new compounds, simply by multiplying the X ( X @ coef ), as shown below
+        # coef = self.estimator.coef_
+        # print (coef)
+        # yp = self.estimator.predict(X)
+        # yp2 = X @ coef 
+        # yp2 += np.mean(Y)
+        # yp2 = np.reshape(yp2, (self.nobj))
+        # print (yp, yp2)
 
         if not self.param.getVal('conformal'):
             return True, results
 
         self.estimator_temp = self.estimator
         success, error = self.conformalBuild(X, Y)
+        
         if success:
             return True, results
         else:
             return False, error
-
-    def optimize(self, X, Y, estimator, tune_parameters):
-        ''' optimizes a model using a grid search over a 
-        range of values for diverse parameters'''
- 
-        # Max number of latent variables
-        latent_variables = tune_parameters['n_components']
-        
-        # Best r2
-        r2 = 0
-        estimator0 = None
-        
-        # List to add r2 for each number of latent variables
-        list_latent = []
-        try:
-            for n_comp in latent_variables:
-                r2_0 = 0
-                estimator.set_params(**{"n_components": n_comp})
-                # y_pred = cross_val_predict(estimator, X, Y, cv=self.cv, n_jobs=-1)
-                y_pred = cross_val_predict(estimator, X, Y, cv=self.cv, n_jobs=self.cross_jobs)
-                
-                r2_0 = r2_score(Y, y_pred)
-
-                # Update estimator0 to best current estimator
-                if r2_0 >= r2 or estimator0 == None:
-                    r2 = r2_0
-                    estimator0 = copy(estimator)
-
-                list_latent.append([n_comp, r2_0])
-        except Exception as e:
-            return False, f'Error optimizing PLSR with exception {e}'
-
-        self.estimator = estimator0
-
-        self.estimator.fit(X, Y)
-        LOG.info(f'Estimator best parameters: {self.estimator.get_params()}')
-        return True, 'OK'
-
-#### Overriding of parent methods
-
-    # def CF_quantitative_validation(self):
-    #     ''' performs validation for conformal quantitative models '''
-
-    # def CF_qualitative_validation(self):
-    #     ''' performs validation for conformal qualitative models '''
-
-    # def quantitativeValidation(self):
-    #     ''' performs validation for quantitative models '''
-
-    # def qualitativeValidation(self):
-    #     ''' performs validation for qualitative models '''
-
-    # def validate(self):
-    #     ''' Validates the model and computes suitable model quality scoring values'''
-
-    # def optimize(self, X, Y, estimator, tune_parameters):
-    #     ''' optimizes a model using a grid search over a range of values for diverse parameters'''
-
-    # def regularProject(self, Xb, results):
-    #     ''' projects a collection of query objects in a regular model, for obtaining predictions '''
-
-    # def conformalProject(self, Xb, results):
-    #     ''' projects a collection of query objects in a conformal model, for obtaining predictions '''
-
-    # def project(self, Xb, results):
-    #     ''' Uses the X matrix provided as argument to predict Y'''

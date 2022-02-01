@@ -86,9 +86,12 @@ class GNB(BaseEstimator):
 
         # Build estimator
         LOG.info('Building GaussianNB model')
-        self.estimator = GaussianNB(**self.estimator_parameters)
+        try:
+            self.estimator = GaussianNB(**self.estimator_parameters)
 
-        self.estimator.fit(X, Y)
+            self.regularBuild (X, Y)
+        except Exception as e:
+            return False, f'Exception building GNB estimator with exception {e}'
 
         if not self.param.getVal('conformal'):
             return True, results

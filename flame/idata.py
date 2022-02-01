@@ -1080,7 +1080,6 @@ class Idata:
         for i, (inform, workflow) in enumerate(zip(success_inform,
                                                    success_workflow)):
             if workflow and not inform:
-
                 LOG.critical(f'Molecule #{i} is `None` in Rdkit'
                              ' but appears to be processed. This means that'
                              ' there is a serious workflow issue and the '
