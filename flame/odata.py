@@ -278,9 +278,9 @@ class Odata():
         ####
         #print (self.results)
 
-        if self.conveyor.isKey('p0'):
-            output_predictions = open("predictions_pvalues.tsv", "w")
-            output_predictions.write("name\tprediction\tpvalue0\tpvalue1\n")
+        # if self.conveyor.isKey('p0'):
+        #     output_predictions = open("predictions_pvalues.tsv", "w")
+        #     output_predictions.write("name\tprediction\tpvalue0\tpvalue1\n")
 
         if 'ghost' not in self.format:
             self.print_result(('obj_num','number of objects',self.conveyor.getVal('obj_num')))
@@ -302,13 +302,13 @@ class Odata():
 
                     if self.conveyor.isKey('p0'):        
                        output = f'{nams[i]}\t{vals[i]:.4f}\t{pval1[i]:.4f}\t{pval2[i]:.4f}\n'
-                       output_predictions.write(output)
+                    #    output_predictions.write(output)
                     else:
                        output = f'{nams[i]}\t{vals[i]:.4f}'
                     print(output)
         
-                if self.conveyor.isKey('p0'):        
-                    output_predictions.close()
+                # if self.conveyor.isKey('p0'):        
+                #     output_predictions.close()
 
         ###
         # 3. molecular descriptors file in TSV format [optional]
