@@ -1084,17 +1084,33 @@ def action_refresh (model=None, version=None, GUI=False):
     return True, 'OK'
 
 def action_refresh_test (model=None):
-    token_file = os.path.join(tempfile.gettempdir(),'refreshing_'+model)
 
+    token_file = os.path.join(tempfile.gettempdir(),'refreshing_'+model)
+    
+    # check fist the presence of an error token. It it exists, return error  
+    error_file = os.path.join(tempfile.gettempdir(),'refreshing_error_'+model)
+    if os.path.isfile(error_file):
+        with (error_file,'r') as f:
+            content = f.read()
+        os.remove(error_file)
+    
+        if os.path.isfile(token_file):
+            os.remove(token_file)
+
+        return {'status': 'aborted', 'message': content} 
+
+    # if token file does not exist assume it is too early
     if not os.path.isfile(token_file):
-        return 'Starting...'
+        return {'status': 'working', 'message': 'starting'}
 
     with open(token_file, 'r') as f:
         content = f.read()
+        
+    if content != 'ready':
+        return {'status': 'working', 'message': content}
+    
+    os.remove(token_file)
+    return {'status': 'ready', 'message': 'OK'}
 
-    if content == 'ready':
-        os.remove(token_file)
-
-    return content
 
 
