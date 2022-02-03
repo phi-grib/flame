@@ -803,7 +803,13 @@ class BaseEstimator:
         ''' projects a collection of query objects in a regular model,
          for obtaining predictions '''
 
-        Yp = self.estimator.predict(Xb)
+        if self.param.getVal('confidential'):
+            model_file_path = utils.model_path(self.param.getVal('endpoint'), 0)
+            model_file_name = os.path.join (model_file_path,'confidential_model.yaml')
+            Yp = self.estimator.cpredict(Xb, model_file_name)
+        else:   
+            Yp = self.estimator.predict(Xb)
+
         if Yp is None:
             return False, 'prediction error'
 
@@ -1161,9 +1167,9 @@ class BaseEstimator:
     def project(self, Xb):
         ''' Uses the X matrix provided as argument to predict Y'''
 
-        if self.estimator == None:
-            self.conveyor.setError('failed to load classifier')
-            return
+        # if self.estimator == None:
+        #     self.conveyor.setError('failed to load classifier')
+        #     return
         
         # Apply variable mask to prediction vector/matrix
         # if self.param.getVal("feature_selection"):

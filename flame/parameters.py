@@ -412,7 +412,7 @@ class Parameters:
     def dumpYAML (self):
         yaml_out = []
 
-        order = ['input_type', 'quantitative', 'SDFile_activity', 'SDFile_name', 'SDFile_id',
+        order = ['input_type', 'quantitative', 'confidential', 'SDFile_activity', 'SDFile_name', 'SDFile_id',
         'SDFile_experimental', 'SDFile_complementary', 'normalize_method', 'ionize_method', 'convert3D_method', 
         'computeMD_method', 'model', 'modelAutoscaling', 'tune', 'conformal', 
         'conformalConfidence', 'ModelValidationCV', 'ModelValidationN', 

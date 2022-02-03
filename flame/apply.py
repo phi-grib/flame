@@ -24,6 +24,7 @@ import numpy as np
 import pickle
 import os
 import time
+import yaml
 
 from flame.stats.RF import RF
 from flame.stats.SVM import SVM
@@ -292,6 +293,22 @@ class Apply:
     #                                  'single',
     #                                  'External validation results')
 
+    def cpreprocess (self, X):
+        ''' preprocesing for confidential models'''
+
+        path = utils.model_path(self.param.getVal('endpoint'), 0)
+        cmeta = os.path.join(path, 'confidential_preprocess.yaml')
+        with open(cmeta, 'r') as f:
+            cmodel = yaml.safe_load (f)
+        
+        X = X.astype(float)
+        X -= np.array(cmodel['xmean'])
+        
+        if self.param.getVal('modelAutoscaling') == 'StandardScaler':
+            X *= np.array(cmodel['wg']) 
+
+        return True, X
+
     def preprocess(self, X):
         ''' This function loads the scaler and variable mask from a pickle file 
         and apply them to the X matrix passed as an argument'''
@@ -395,7 +412,11 @@ class Apply:
             return
             
         # Load scaler and variable mask and preprocess the data
-        success, result = self.preprocess(X)
+        if self.param.getVal('confidential'):
+            success, result = self.cpreprocess(X)
+        else:
+            success, result = self.preprocess(X)
+
         if not success:
             self.conveyor.setError(result)
             return          
@@ -425,12 +446,13 @@ class Apply:
         if self.conveyor.getError():
             return
 
-        # try to load model previously built
-        start = time.time()
-        LOG.debug('Loading model from pickle file...')
-        success, results = model.load_model()
-        end = time.time()
-        LOG.debug(f'Model loaded with message "{results}" in {(end-start):.2f} seconds')
+        if not self.param.getVal('confidential'):
+            # try to load model previously built
+            start = time.time()
+            LOG.debug('Loading model from pickle file...')
+            success, results = model.load_model()
+            end = time.time()
+            LOG.debug(f'Model loaded with message "{results}" in {(end-start):.2f} seconds')
 
         if not success:
             self.conveyor.setError(f'Failed to load model estimator, with error "{results}"')

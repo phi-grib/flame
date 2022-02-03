@@ -1273,7 +1273,7 @@ confidential:
   description: "Confidentiality of the model. If True flame will remove all
                 structures from build and prediction process"
   dependencies: null
-  comments: "WARNING: TO IMPLEMENT" 
+  comments: 
   group: preferences
 
 

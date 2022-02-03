@@ -225,12 +225,19 @@ def getModelID (model, version, object_type='model'):
     path = model_path(model, version)
     meta = os.path.join(path, object_type+'-meta.pkl')
 
-    try:
-        with open(meta, 'rb') as handle:
-            modelID = pickle.load(handle)
-        return True, modelID
-    except:
-        return False, f'Unable to load modelID from {meta}'
+    if os.path.isfile(meta):
+        try:
+            with open(meta, 'rb') as handle:
+                modelID = pickle.load(handle)
+            return True, modelID
+        except:
+            return False, f'Unable to load modelID from {meta}'
+    else:
+        cmeta = os.path.join(path, 'confidential_model.yaml')
+        with open(cmeta, 'r') as f:
+            cmodel = yaml.safe_load (f)
+        return True, cmodel['modelID']
+
 
 def space_repository_path():
     '''

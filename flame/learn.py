@@ -24,6 +24,7 @@
 import os
 import pickle
 import numpy as np
+import yaml
 
 from sklearn.preprocessing import MinMaxScaler 
 from sklearn.preprocessing import StandardScaler 
@@ -77,6 +78,29 @@ class Learn:
 
         self.conveyor.setError ('Not implemented')
 
+    def cpreprocess (self):
+        ''' preprocesing for confidential models'''
+
+        cpre = {}
+        xmean= np.mean(self.X, axis=0)
+        self.X = self.X.astype(float)
+        self.X -= np.array(xmean)
+
+        if self.param.getVal('modelAutoscaling') == 'StandardScaler':
+            st = np.std(self.X, axis=0, ddof=1)
+            wg = [1.0/sti if sti > 1.0e-7 else 0.00 for sti in st]
+            wg = np.array(wg)
+            self.X *= wg 
+            cpre['wg'] = wg.tolist()
+
+        cpre['xmean'] = xmean.tolist()
+
+        model_file_path = utils.model_path(self.param.getVal('endpoint'), 0)
+        model_file_name = os.path.join (model_file_path, 'confidential_preprocess.yaml')
+        with open(model_file_name, 'w') as f:
+            yaml.dump (cpre, f)
+
+        return True, 'OK'
 
     def preprocess(self):
         ''' 
@@ -252,7 +276,11 @@ class Learn:
                 return
 
         # pre-process data
-        success, message = self.preprocess()
+        if self.param.getVal('confidential'):
+            success, message = self.cpreprocess()
+        else:                
+            success, message = self.preprocess()
+
         if not success:
             self.conveyor.setError(message)
             return

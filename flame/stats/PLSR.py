@@ -24,6 +24,10 @@
 
 from flame.stats.base_model import BaseEstimator
 from sklearn.cross_decomposition import PLSRegression
+import numpy as np
+from flame.util import utils
+import os.path
+import yaml
 
 from flame.util import get_logger
 LOG = get_logger(__name__)
@@ -51,11 +55,24 @@ class PLS_r(PLSRegression):
             to the established threshold
         
     """
+
     def predict(self, X, copy=True):
         # Apply ravel to the list of predictions so a vector is 
         # returned instead of a matrix
+
         results = super(PLS_r, self).predict(X, copy=True).ravel()
         return results
+
+    def cpredict (self, X, model_file_name):
+
+        nobj, nvar = np.shape(X)
+
+        with open(model_file_name, 'r') as f:
+            cmodel = yaml.safe_load (f)
+
+        yp = X @ np.array(cmodel['coef']) 
+        yp += cmodel['ymean']
+        return np.reshape(yp, nobj)
 
 class PLSR(BaseEstimator):
     """
@@ -105,6 +122,10 @@ class PLSR(BaseEstimator):
         if not self.param.getVal('quantitative'):
             self.conveyor.setError('PLSR only applies to quantitative data')
             return
+        
+        # For confidential models, create an empty estimator
+        if self.param.getVal('confidential'):
+            self.estimator = PLS_r(**self.estimator_parameters)
 
     def build(self):
 
@@ -138,6 +159,23 @@ class PLSR(BaseEstimator):
         # Fit estimator to the data
         self.regularBuild(X, Y)
         
+        if self.param.getVal ('confidential'):
+
+            nobj, nvar = np.shape(X)
+
+            cmodel = {}
+            cmodel['modelID'] = '007'
+            cmodel['method'] = 'PLSR'
+            cmodel['coef'] = self.estimator.coef_.tolist()
+            cmodel['ymean'] = np.mean(Y).tolist()
+
+            model_file_path = utils.model_path(self.param.getVal('endpoint'), 0)
+            model_file_name = os.path.join (model_file_path, 'confidential_model.yaml')
+            with open(model_file_name, 'w') as f:
+                yaml.dump (cmodel, f)
+
+            return True, results
+
         # The model coefficients can be easily extracted and stored for building 
         # confidential models. These coefficients can be used to predict the properties of
         # new compounds, simply by multiplying the X ( X @ coef ), as shown below
@@ -159,3 +197,10 @@ class PLSR(BaseEstimator):
             return True, results
         else:
             return False, error
+
+    # def predict (self, X, copy=True):
+
+    #     if self.param.getVal('confidential'):
+    #         return self.cpredict (X)
+
+    #     return (PLS_r).predict (X,copy)
