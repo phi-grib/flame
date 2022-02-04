@@ -909,7 +909,7 @@ def action_prediction_template(model, version=None):
     return True, 'Prediction template created'
 
 
-def action_refresh (model=None, version=None):
+def action_refresh (model=None, version=None, GUI=False):
     '''
     Rebuild one or many models making use of existing parameter files and
     locally stored training series. 
@@ -917,9 +917,14 @@ def action_refresh (model=None, version=None):
 
     import flame.context as context
     from flame.parameters import Parameters
-    from flame.documentation import Documentation
+    # from flame.documentation import Documentation
     import logging
 
+    if GUI:
+        token_file = os.path.join(tempfile.gettempdir(),'refreshing_'+model)
+        # update token file with content 'working'    
+        with open(token_file, 'w') as f:
+            f.write('Analyzing and sorting models...')
 
     # list endpoints relevant for the arguments
     if model is not None:
@@ -931,6 +936,7 @@ def action_refresh (model=None, version=None):
     # list versions relevant for the arguments
     task_list = []
     for imodel in model_list:
+
         if version is not None:
             task_list.append( (imodel, version) )
         else:
@@ -1009,6 +1015,9 @@ def action_refresh (model=None, version=None):
             shutil.move (original_path, destinat_path)          # veri --> dev
 
         LOG.info (f'   refreshing model: {itask[0]}   version: {itask[1]} ({task_list.index(itask)+1} of {len(task_list)})...')
+        if GUI:
+            with open(token_file, 'w') as f:
+                f.write(f'model: {itask[0]} version: {itask[1]} ({task_list.index(itask)+1} of {len(task_list)})')
 
         # dissable LOG output
         logging.disable(logging.ERROR)
@@ -1067,4 +1076,41 @@ def action_refresh (model=None, version=None):
 
     LOG.info ("Model refreshing task finished")
 
+    if GUI:
+        # update token file with status 'ready'
+        with open(token_file, 'w') as f:
+            f.write('ready')
+
     return True, 'OK'
+
+def action_refresh_test (model=None):
+
+    token_file = os.path.join(tempfile.gettempdir(),'refreshing_'+model)
+    
+    # check fist the presence of an error token. It it exists, return error  
+    error_file = os.path.join(tempfile.gettempdir(),'refreshing_error_'+model)
+    if os.path.isfile(error_file):
+        with (error_file,'r') as f:
+            content = f.read()
+        os.remove(error_file)
+    
+        if os.path.isfile(token_file):
+            os.remove(token_file)
+
+        return {'status': 'aborted', 'message': content} 
+
+    # if token file does not exist assume it is too early
+    if not os.path.isfile(token_file):
+        return {'status': 'working', 'message': 'starting'}
+
+    with open(token_file, 'r') as f:
+        content = f.read()
+        
+    if content != 'ready':
+        return {'status': 'working', 'message': content}
+    
+    os.remove(token_file)
+    return {'status': 'ready', 'message': 'OK'}
+
+
+
