@@ -85,12 +85,12 @@ class Build:
             if original_method != 'PLSR':
                 self.param.setVal('model', 'PLSR')
                 LOG.info (f'CONFIDENTIALITY AUDIT: the model was set to PLSR, '
-                'the original method {original_method} was not suitable to build confidential models')
+                f'the original method {original_method} was not suitable to build confidential models')
         else:
             if original_method != 'PLSDA':
                 self.param.setVal('model', 'PLSDA')
                 LOG.info (f'CONFIDENTIALITY AUDIT: the model was set to PLSDA, '
-                'the original method {original_method} was not suitable to build confidential models')
+                f'the original method {original_method} was not suitable to build confidential models')
         
         if self.param.getVal('output_similar'):
             self.param.setVal('output_similar', False)
