@@ -25,7 +25,7 @@ from flame.documentation import Documentation
 from flame.util import utils,get_logger 
 import os
 from rdkit import Chem,DataStructs
-import pickle
+import yaml
 
 
 LOG = get_logger(__name__)
@@ -146,13 +146,12 @@ def verify (endpoint, version=None):
     datacheking.update(modeltesting) # concatenates the dictionary of data cheking and the dictionary of model testing
     
     meta_path = utils.model_path(endpoint, version)
-    verification_file = os.path.join(meta_path, 'verification.pkl')
-
-    #Save in the model folder verification.pkl
-    file = open(verification_file,"wb")
-    pickle.dump(datacheking,file)
-    file.close()
-    LOG.info(f'Save verification.pkl file \n')
+    verification_path = os.path.join(meta_path, 'verification.yaml')
+    
+    #Save in the model folder verification.yaml
+    with open(verification_path,'w') as file:
+        yaml.dump(datacheking,file)
+    
 
     # show first step of verification process
     show_result(datacheking['Data cheking'])
@@ -166,12 +165,12 @@ def get_verification(endpoint,version):
     '''
     verification = False
     meta_path = utils.model_path(endpoint, version)
-    verification_file = os.path.join(meta_path, 'verification.pkl')
+    verification_path = os.path.join(meta_path, 'verification.yaml')
 
-    if os.path.isfile(verification_file):
-        file = open(verification_file,"rb")
-        verification = pickle.load(file)
-        file.close()
+    if os.path.isfile(verification_path):
+        with open(verification_path,'r') as file:
+            verification = yaml.load(file,Loader=yaml.FullLoader)
+            
         return True,verification
 
     return False
