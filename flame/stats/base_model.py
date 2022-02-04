@@ -334,6 +334,14 @@ class BaseEstimator:
                     LOG.error(f'Error in external validation with exception {e}')
                     return
 
+        # check to prevent the presence of nan, which are not serializable and generate GUI errors
+        for i,iq in enumerate(ext_val_results):
+            if np.isnan(iq[2]):
+                new_tuple = (iq[0],iq[1],0.00)
+                ext_val_results.pop(i)
+                ext_val_results.append(new_tuple)
+
+
         self.conveyor.addVal( ext_val_results,
                                 'external-validation',
                                 'external validation',
@@ -685,6 +693,14 @@ class BaseEstimator:
                 success, results = self.CF_quantitative_validation()
             else:
                 success, results = self.CF_qualitative_validation()
+
+        if success:
+            # check to prevent the presence of nan, which are not serializable and generate GUI errors
+            for i,iq in enumerate(results['quality']):
+                if np.isnan(iq[2]):
+                    new_tuple = (iq[0],iq[1],0.00)
+                    results['quality'].pop(i)
+                    results['quality'].append(new_tuple)
 
         return success, results
 
