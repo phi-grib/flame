@@ -1026,14 +1026,24 @@ GNB_parameters:
   writable: false
   options: null
   value:
-    priors:
-      object_type: list
+    prior_negative:
+      object_type: float
       writable: true
       value: null
       options:
-        - null
-      description: 
-
+      description: prior probability for class 0
+    prior_positive:
+      object_type: float
+      writable: true
+      value: null
+      options:
+      description: prior probability for class 1
+    var_smoothing:
+      object_type: float
+      writable: true
+      value: null
+      options:
+      description: Lorenzian variance smoothing factor
   description: GNB Parameters. See https://scikit-learn.org/ for further reference
   dependencies: 
     model: GNB

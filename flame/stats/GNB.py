@@ -23,6 +23,7 @@
 # along with Flame.  If not, see <http://www.gnu.org/licenses/>.
 
 from sklearn.naive_bayes import GaussianNB
+import numpy as np
 
 from flame.stats.base_model import BaseEstimator
 from flame.util import get_logger
@@ -64,7 +65,23 @@ class GNB(BaseEstimator):
             return
 
         # Load estimator parameters                
-        self.estimator_parameters = self.param.getDict('GNB_parameters')
+        GNB_parameters = self.param.getDict('GNB_parameters')
+        priors = [0.0, 0.0]
+        if 'prior_negative' in GNB_parameters and GNB_parameters['prior_negative'] != None:
+            priors[0] = GNB_parameters['prior_negative']
+        if 'prior_positive' in GNB_parameters and GNB_parameters['prior_positive'] != None:
+            priors[1] = GNB_parameters['prior_positive'] 
+        
+        self.estimator_parameters = {}
+        if GNB_parameters['var_smoothing'] is not None:
+            self.estimator_parameters['var_smoothing'] = GNB_parameters['var_smoothing']
+
+        if priors[0]!=0.0 and priors[1]!=0.0:
+            if priors[0]+priors[1] != 1.0:
+                LOG.error(f'GNB: the sum of the priors should be 1. priors set to {priors[0], priors[1]} ')
+                priors[1] = 1.0 - priors[0]
+            self.estimator_parameters['priors'] = priors
+            # self.param.setInnerVal('GNB_parameters','priors',priors)
 
         if self.param.getVal('quantitative'):
             self.conveyor.setError('GNB only applies to qualitative data')
