@@ -274,8 +274,13 @@ def action_import(model):
     with tarfile.open(importfile, 'r:gz') as tar:
         tar.extractall(base_path)
 
-    # get libraries
+    # when importing a single version we need to clone the last folder to 'dev'
+    inner_dirs = os.listdir(base_path)
 
+    if not 'dev' in inner_dirs:
+        shutil.copytree(os.path.join(base_path, inner_dirs[-1]), os.path.join(base_path, 'dev'))
+
+    # get libraries
     message = f'Endpoint {endpoint} imported OK'
     compatible = True
     for x in os.listdir(base_path):
@@ -302,7 +307,7 @@ def action_import(model):
     return True, message
 
 
-def action_export(model):
+def action_export(model, version=0):
     '''
     Exports the whole model tree indicated in the argument as a single
     tarball file with the same name.
@@ -315,23 +320,30 @@ def action_export(model):
     compressedfile = os.path.join(current_path,model+'.tgz')
 
     base_path = utils.model_tree_path(model)
-
     if not os.path.isdir(base_path):
         return False, 'Unable to export, endpoint directory not found'
 
     # change to model repository to tar the file from there
     os.chdir(base_path)
 
-    itemend = os.listdir()
-    itemend.sort()
-
-    # t1 = time.time()
-
-    with tarfile.open(compressedfile, 'w:gz') as tar:
-        for iversion in itemend:
-            if not os.path.isdir(iversion):
-                continue
+    # single version export
+    if version != 0:
+        with tarfile.open(compressedfile, 'w:gz') as tar:
+            iversion = f'ver{version:06d}'
+            print (iversion)
             tar.add(iversion)
+
+    else:
+        itemend = os.listdir()
+        itemend.sort()
+
+        # t1 = time.time()
+
+        with tarfile.open(compressedfile, 'w:gz') as tar:
+            for iversion in itemend:
+                if not os.path.isdir(iversion):
+                    continue
+                tar.add(iversion)
 
     # print (time.time()-t1)
 

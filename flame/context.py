@@ -455,7 +455,7 @@ def manage_cmd(args):
         elif args.action == 'list':
             success, results = manage.action_list(args.endpoint)
         elif args.action == 'export':
-            success, results = manage.action_export(args.endpoint)
+            success, results = manage.action_export(args.endpoint, version)
         elif args.action == 'info':
             success, results = manage.action_info(args.endpoint, version)
         elif args.action == 'refresh':
