@@ -986,13 +986,14 @@ class BaseEstimator:
                 for p in self.estimator.predictors:
                     inner_estimator = p.nc_function.model.model
                     fi, method = self.featureImportancesEstimation(inner_estimator)
-                    if first:
-                        features = np.array(fi)
-                        first = False
-                        self.feature_importances_method = method
-                    else:
-                        features = np.vstack((features,fi))
-                
+                    if fi is not None:
+                        if first:
+                            features = np.array(fi)
+                            first = False
+                            self.feature_importances_method = method
+                        else:
+                            features = np.vstack((features,fi))
+                    
                 if features is not None:
                     self.feature_importances = np.mean (features, 0)
 
