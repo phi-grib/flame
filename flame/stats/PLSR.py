@@ -164,8 +164,13 @@ class PLSR(BaseEstimator):
             nobj, nvar = np.shape(X)
 
             cmodel = {}
-            cmodel['modelID'] = '007'
-            cmodel['method'] = 'PLSR'
+            cmodel['nobj'] = nobj
+            cmodel['nvarx'] = nvar
+            cmodel['modelID'] = self.conveyor.getMeta('modelID')
+            cmodel['quantitative'] = True
+            cmodel['model'] = 'PLSR'
+            cmodel['conformal'] = self.param.getVal('conformal')
+            cmodel['conformal_confidence'] = self.param.getVal('conformal_confidence')
             cmodel['coef'] = self.estimator.coef_.tolist()
             cmodel['ymean'] = np.mean(Y).tolist()
 

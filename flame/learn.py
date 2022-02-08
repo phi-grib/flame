@@ -452,6 +452,14 @@ class Learn:
 
         # TODO: compute AD (when applicable)
 
+        if self.param.getVal('confidential'):
+            confidential_model = os.path.join (self.param.getVal('model_path'), 'confidential_model.yaml')
+            conf_validation = {}
+            for item in model_validation_results['quality']:
+                conf_validation[item[0]]=float(item[2])
+            with open(confidential_model, 'a') as f:
+                yaml.dump (conf_validation, f)
+
         LOG.info('Model finished successfully')
 
         # save model
