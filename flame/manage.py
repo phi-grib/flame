@@ -338,6 +338,7 @@ def action_import(model):
             model_type_info += [('ensemble_names','',[])]  
             model_type_info += [('ensemble_versions','',[])]  
             model_type_info += [('confidential','',True)]  
+            model_type_info += [('secret','',True)]  
 
             conveyor = Conveyor()
             conveyor.addMeta('modelID', cmodel['modelID'])
@@ -526,7 +527,7 @@ def action_info(model, version, output='text'):
         conf_file = os.path.join (meta_path, 'confidential_model.yaml' )
         if os.path.isfile(conf_file):
 
-            confidential_info = ['conformal_confidence', 'modelID', 'quantitative', 'model']      
+            confidential_info = ['confidential', 'nobj', 'nvarx', 'conformal', 'conformal_confidence', 'modelID', 'quantitative', 'model']      
             try:      
                 with open(conf_file, 'r') as fc:
                     cmodel = yaml.safe_load (fc)

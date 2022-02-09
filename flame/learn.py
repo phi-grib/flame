@@ -289,6 +289,8 @@ class Learn:
         model_type_info = []
         model_type_info.append(('quantitative', 'True if the endpoint is quantitative', self.param.getVal('quantitative')))
         model_type_info.append(('conformal', 'True if the endpoint is conformal', self.param.getVal('conformal')))
+        model_type_info.append(('confidential', 'True if the model is confidential', self.param.getVal('confidential')))
+        model_type_info.append(('secret', 'True for barebone models exported by a confidential models', False))
         model_type_info.append(('ensemble', 'True if the model is an ensemble of models', self.param.getVal('input_type') == 'model_ensemble'))
         model_type_info.append(('ensemble_names', 'List of ensemble models', self.param.getVal('ensemble_names')))
         model_type_info.append(('ensemble_versions', 'List of ensemble versions', self.param.getVal('ensemble_versions')))

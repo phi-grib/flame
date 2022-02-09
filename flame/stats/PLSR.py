@@ -169,6 +169,8 @@ class PLSR(BaseEstimator):
             cmodel['modelID'] = self.conveyor.getMeta('modelID')
             cmodel['quantitative'] = True
             cmodel['model'] = 'PLSR'
+            cmodel['confidential'] = True
+            cmodel['secret'] = True
             cmodel['conformal'] = self.param.getVal('conformal')
             cmodel['conformal_confidence'] = self.param.getVal('conformal_confidence')
             cmodel['coef'] = self.estimator.coef_.tolist()
