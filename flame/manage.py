@@ -527,7 +527,8 @@ def action_info(model, version, output='text'):
         conf_file = os.path.join (meta_path, 'confidential_model.yaml' )
         if os.path.isfile(conf_file):
 
-            confidential_info = ['confidential', 'nobj', 'nvarx', 'conformal', 'conformal_confidence', 'modelID', 'quantitative', 'model']      
+            confidential_info = ['confidential', 'secret', 'nobj', 'nvarx', 
+            'conformal', 'conformal_confidence', 'modelID', 'quantitative', 'model']      
             try:      
                 with open(conf_file, 'r') as fc:
                     cmodel = yaml.safe_load (fc)
