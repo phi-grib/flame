@@ -334,6 +334,14 @@ class BaseEstimator:
                     LOG.error(f'Error in external validation with exception {e}')
                     return
 
+        # check to prevent the presence of nan, which are not serializable and generate GUI errors
+        for i,iq in enumerate(ext_val_results):
+            if np.isnan(iq[2]):
+                new_tuple = (iq[0],iq[1],0.00)
+                ext_val_results.pop(i)
+                ext_val_results.append(new_tuple)
+
+
         self.conveyor.addVal( ext_val_results,
                                 'external-validation',
                                 'external validation',
@@ -686,6 +694,14 @@ class BaseEstimator:
             else:
                 success, results = self.CF_qualitative_validation()
 
+        if success:
+            # check to prevent the presence of nan, which are not serializable and generate GUI errors
+            for i,iq in enumerate(results['quality']):
+                if np.isnan(iq[2]):
+                    new_tuple = (iq[0],iq[1],0.00)
+                    results['quality'].pop(i)
+                    results['quality'].append(new_tuple)
+
         return success, results
 
     def featureImportancesEstimation (self, estimator):
@@ -803,7 +819,13 @@ class BaseEstimator:
         ''' projects a collection of query objects in a regular model,
          for obtaining predictions '''
 
-        Yp = self.estimator.predict(Xb)
+        if self.param.getVal('confidential'):
+            model_file_path = utils.model_path(self.param.getVal('endpoint'), 0)
+            model_file_name = os.path.join (model_file_path,'confidential_model.yaml')
+            Yp = self.estimator.cpredict(Xb, model_file_name)
+        else:   
+            Yp = self.estimator.predict(Xb)
+
         if Yp is None:
             return False, 'prediction error'
 
@@ -964,13 +986,14 @@ class BaseEstimator:
                 for p in self.estimator.predictors:
                     inner_estimator = p.nc_function.model.model
                     fi, method = self.featureImportancesEstimation(inner_estimator)
-                    if first:
-                        features = np.array(fi)
-                        first = False
-                        self.feature_importances_method = method
-                    else:
-                        features = np.vstack((features,fi))
-                
+                    if fi is not None:
+                        if first:
+                            features = np.array(fi)
+                            first = False
+                            self.feature_importances_method = method
+                        else:
+                            features = np.vstack((features,fi))
+                    
                 if features is not None:
                     self.feature_importances = np.mean (features, 0)
 
@@ -1161,9 +1184,9 @@ class BaseEstimator:
     def project(self, Xb):
         ''' Uses the X matrix provided as argument to predict Y'''
 
-        if self.estimator == None:
-            self.conveyor.setError('failed to load classifier')
-            return
+        # if self.estimator == None:
+        #     self.conveyor.setError('failed to load classifier')
+        #     return
         
         # Apply variable mask to prediction vector/matrix
         # if self.param.getVal("feature_selection"):

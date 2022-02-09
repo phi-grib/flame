@@ -760,12 +760,10 @@ class Documentation:
 
         self.fields['Data_info'][sub_label]['training_set_size']['value'] = \
             model_info[0][2]
-        
-        self.fields['Data_info'][sub_label]['training_set_size']['value'] = \
-            model_info[0][2]
 
         self.fields['Descriptors'][sub_label]['final_number']['value'] = \
             model_info[1][2]
+
         self.fields['Descriptors'][sub_label]['ratio']['value'] = \
             '{:0.2f}'.format(model_info[1][2]/model_info[0][2])
         

@@ -24,6 +24,7 @@
 import os
 import pickle
 import numpy as np
+import yaml
 
 from sklearn.preprocessing import MinMaxScaler 
 from sklearn.preprocessing import StandardScaler 
@@ -77,6 +78,29 @@ class Learn:
 
         self.conveyor.setError ('Not implemented')
 
+    def cpreprocess (self):
+        ''' preprocesing for confidential models'''
+
+        cpre = {}
+        xmean= np.mean(self.X, axis=0)
+        self.X = self.X.astype(float)
+        self.X -= np.array(xmean)
+
+        if self.param.getVal('modelAutoscaling') == 'StandardScaler':
+            st = np.std(self.X, axis=0, ddof=1)
+            wg = [1.0/sti if sti > 1.0e-7 else 0.00 for sti in st]
+            wg = np.array(wg)
+            self.X *= wg 
+            cpre['wg'] = wg.tolist()
+
+        cpre['xmean'] = xmean.tolist()
+
+        model_file_path = utils.model_path(self.param.getVal('endpoint'), 0)
+        model_file_name = os.path.join (model_file_path, 'confidential_preprocess.yaml')
+        with open(model_file_name, 'w') as f:
+            yaml.dump (cpre, f)
+
+        return True, 'OK'
 
     def preprocess(self):
         ''' 
@@ -252,7 +276,11 @@ class Learn:
                 return
 
         # pre-process data
-        success, message = self.preprocess()
+        if self.param.getVal('confidential'):
+            success, message = self.cpreprocess()
+        else:                
+            success, message = self.preprocess()
+
         if not success:
             self.conveyor.setError(message)
             return
@@ -261,6 +289,8 @@ class Learn:
         model_type_info = []
         model_type_info.append(('quantitative', 'True if the endpoint is quantitative', self.param.getVal('quantitative')))
         model_type_info.append(('conformal', 'True if the endpoint is conformal', self.param.getVal('conformal')))
+        model_type_info.append(('confidential', 'True if the model is confidential', self.param.getVal('confidential')))
+        model_type_info.append(('secret', 'True for barebone models exported by a confidential models', False))
         model_type_info.append(('ensemble', 'True if the model is an ensemble of models', self.param.getVal('input_type') == 'model_ensemble'))
         model_type_info.append(('ensemble_names', 'List of ensemble models', self.param.getVal('ensemble_names')))
         model_type_info.append(('ensemble_versions', 'List of ensemble versions', self.param.getVal('ensemble_versions')))
@@ -423,6 +453,14 @@ class Learn:
             generateManifoldSpace(self.X, self.param, self.conveyor)
 
         # TODO: compute AD (when applicable)
+
+        if self.param.getVal('confidential'):
+            confidential_model = os.path.join (self.param.getVal('model_path'), 'confidential_model.yaml')
+            conf_validation = {}
+            for item in model_validation_results['quality']:
+                conf_validation[item[0]]=float(item[2])
+            with open(confidential_model, 'a') as f:
+                yaml.dump (conf_validation, f)
 
         LOG.info('Model finished successfully')
 
