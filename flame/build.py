@@ -92,10 +92,6 @@ class Build:
                 LOG.info (f'CONFIDENTIALITY AUDIT: the model was set to PLSDA, '
                 f'the original method {original_method} was not suitable to build confidential models')
         
-        if self.param.getVal('output_similar'):
-            self.param.setVal('output_similar', False)
-            LOG.info (f'CONFIDENTIALITY AUDIT: output_similar option was dissabled, since it is not compatible with confidential models')
-
         parameters_file_path = utils.model_path(self.model, 0)
         parameters_file_name = os.path.join (parameters_file_path,
                                             'parameters.yaml')

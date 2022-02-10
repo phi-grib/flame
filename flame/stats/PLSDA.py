@@ -23,8 +23,10 @@
 # along with Flame.  If not, see <http://www.gnu.org/licenses/>.
 
 
+import os
+import yaml
 import numpy as np
-
+from flame.util import utils
 from flame.stats.base_model import BaseEstimator
 
 from sklearn.cross_decomposition import PLSRegression
@@ -78,12 +80,32 @@ class PLS_da(PLSRegression):
     def predict(self, X, copy=True):
         threshold = self.threshold
         if threshold is None:
-            return super(PLS_da, self).predict(X, copy).ravel()
+            threshold = 0.5
+            # return super(PLS_da, self).predict(X, copy).ravel()
 
         results = super(PLS_da, self).predict(X, copy).ravel()
         results[results < threshold] = 0
         results[results >= threshold] = 1
         results = results.astype(dtype=float)
+        return results
+
+    def cpredict (self, X, model_file_name):
+
+        nobj, nvar = np.shape(X)
+
+        with open(model_file_name, 'r') as f:
+            cmodel = yaml.safe_load (f)
+        
+        threshold = cmodel['thresold']
+
+        results = X @ np.array(cmodel['coef']) 
+        results  += cmodel['ymean']
+        results = np.reshape(results, nobj)
+        
+        results[results < threshold] = 0
+        results[results >= threshold] = 1
+        results = results.astype(dtype=float)
+
         return results
 
     def fit (self, X, Y):
@@ -186,10 +208,19 @@ class PLSDA(BaseEstimator):
 
         self.name = "PLSDA"
 
+        if 'threshold' in self.estimator_parameters:
+            self.threshold = self.estimator_parameters['threshold']
+        else:
+            self.threshold = 0.5
+
         if self.param.getVal('quantitative'):
             LOG.error('PLSDA only applies to qualitative data')
             self.conveyor.setError('PLSDA only applies to qualitative data')
             return 
+
+        # For confidential models, create an empty estimator
+        if self.param.getVal('confidential'):
+            self.estimator = PLS_da(**self.estimator_parameters)
 
         # 'PLS_da' object has no attribute 'predict_proba', required for conformal models
         # if self.param.getVal('conformal'):
@@ -241,6 +272,32 @@ class PLSDA(BaseEstimator):
 
         # Fit estimator to the data
         self.regularBuild (X, Y)
+
+        if self.param.getVal ('confidential'):
+
+            nobj, nvar = np.shape(X)
+
+            cmodel = {}
+            cmodel['nobj'] = nobj
+            cmodel['nvarx'] = nvar
+            cmodel['modelID'] = self.conveyor.getMeta('modelID')
+            cmodel['quantitative'] = False
+            cmodel['model'] = 'PLSDA'
+            cmodel['confidential'] = True
+            cmodel['secret'] = True
+            cmodel['conformal'] = self.param.getVal('conformal')
+            cmodel['conformal_confidence'] = self.param.getVal('conformal_confidence')
+            cmodel['coef'] = self.estimator.coef_.tolist()
+            cmodel['ymean'] = np.mean(Y).tolist()
+            cmodel['threshold'] = self.threshold
+
+            model_file_path = utils.model_path(self.param.getVal('endpoint'), 0)
+            model_file_name = os.path.join (model_file_path, 'confidential_model.yaml')
+            with open(model_file_name, 'w') as f:
+                yaml.dump (cmodel, f)
+
+            return True, results
+
 
         if not self.param.getVal('conformal'):
             return True, results

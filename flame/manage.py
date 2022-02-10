@@ -324,13 +324,6 @@ def action_import(model):
             model_building_info += [('nvarx','',cmodel['nvarx'])] 
             model_building_info += [('model','',cmodel['model'])]
 
-            model_validation_info = [('R2','',cmodel['R2'])] 
-            model_validation_info += [('Q2','',cmodel['Q2'])]
-            model_validation_info += [('SDEC','',cmodel['SDEC'])]
-            model_validation_info += [('SDEP','',cmodel['SDEP'])]
-            model_validation_info += [('scoringP','',cmodel['scoringP'])]
-            model_validation_info += [('scoringR','',cmodel['scoringR'])]
-
             model_type_info =  [('quantitative','',cmodel['quantitative'])] 
             model_type_info += [('conformal','',cmodel['conformal'])] 
             model_type_info += [('conformal_confidence','',cmodel['conformal_confidence'])]
@@ -339,6 +332,29 @@ def action_import(model):
             model_type_info += [('ensemble_versions','',[])]  
             model_type_info += [('confidential','',True)]  
             model_type_info += [('secret','',True)]  
+
+            if cmodel['quantitative']:
+                model_validation_info = [('R2','',cmodel['R2'])] 
+                model_validation_info += [('Q2','',cmodel['Q2'])]
+                model_validation_info += [('SDEC','',cmodel['SDEC'])]
+                model_validation_info += [('SDEP','',cmodel['SDEP'])]
+                model_validation_info += [('scoringP','',cmodel['scoringP'])]
+                model_validation_info += [('scoringR','',cmodel['scoringR'])]
+            else:
+                model_validation_info = [('MCC_f','',cmodel['MCC_f'])] 
+                model_validation_info += [('MCC','',cmodel['MCC'])] 
+                model_validation_info += [('Sensitivity_f','',cmodel['Sensitivity_f'])]
+                model_validation_info += [('Sensitivity','',cmodel['Sensitivity'])]
+                model_validation_info += [('Specificity_f','',cmodel['Specificity_f'])]
+                model_validation_info += [('Specificity','',cmodel['Specificity'])]
+                model_validation_info += [('FP_f','',cmodel['FP_f'])]
+                model_validation_info += [('FP','',cmodel['FP'])]
+                model_validation_info += [('FN_f','',cmodel['FN_f'])]
+                model_validation_info += [('FN','',cmodel['FN'])]
+                model_validation_info += [('TP_f','',cmodel['TP_f'])]
+                model_validation_info += [('TP','',cmodel['TP'])]
+                model_validation_info += [('TN_f','',cmodel['TN_f'])]
+                model_validation_info += [('TN','',cmodel['TN'])]
 
             conveyor = Conveyor()
             conveyor.addMeta('modelID', cmodel['modelID'])
