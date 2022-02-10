@@ -96,7 +96,7 @@ class PLS_da(PLSRegression):
         with open(model_file_name, 'r') as f:
             cmodel = yaml.safe_load (f)
         
-        threshold = cmodel['thresold']
+        threshold = cmodel['threshold']
 
         results = X @ np.array(cmodel['coef']) 
         results  += cmodel['ymean']
@@ -274,6 +274,11 @@ class PLSDA(BaseEstimator):
         self.regularBuild (X, Y)
 
         if self.param.getVal ('confidential'):
+
+            if self.param.getVal('tune'):
+                new_param = self.estimator.get_params()
+                if 'threshold' in new_param:
+                    self.threshold = new_param['threshold']
 
             nobj, nvar = np.shape(X)
 
