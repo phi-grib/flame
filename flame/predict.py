@@ -122,6 +122,10 @@ class Predict:
                 LOG.debug(f'Failed to compute MDs')
                 self.conveyor.setError(f'Failed to compute MDs')
 
+        # for confidential models avoid searching similar compounds
+        if self.param.getVal('confidential'):
+            self.param.setVal('output_similar', False)
+
         if not self.conveyor.getError():
             if self.param.getVal('output_similar') is True:
 
