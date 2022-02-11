@@ -220,6 +220,9 @@ class PLSDA(BaseEstimator):
 
         # For confidential models, create an empty estimator
         if self.param.getVal('confidential'):
+            if 'optimize' in self.estimator_parameters:
+                self.estimator_parameters.pop("optimize") 
+                
             self.estimator = PLS_da(**self.estimator_parameters)
 
         # 'PLS_da' object has no attribute 'predict_proba', required for conformal models
