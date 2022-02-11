@@ -385,6 +385,16 @@ def action_import(model):
             with open(results_file_name, 'wb') as handle:
                 conveyor.save (handle)
 
+            meta_file_name = os.path.join(version_path,'model-meta.pkl')
+            with open(meta_file_name, 'wb') as handle:
+                pickle.dump (cmodel['modelID'], handle)
+                pickle.dump (None, handle)
+                pickle.dump (None, handle)
+                pickle.dump (model_building_info, handle)
+                pickle.dump (model_validation_info, handle)
+                pickle.dump (model_type_info, handle)
+
+
         # clone the version in dev
         shutil.copytree(version_path, os.path.join(base_path, 'dev'))
         LOG.info (f'Cloning version {version} to version 0 ...')
@@ -522,42 +532,24 @@ def action_info(model, version, output='text'):
             return False, {'code':1, 'message': 'Empty model label'}
         return False, 'Empty model label'
 
-
-    meta_path = utils.model_path(model, version)
     # Check that both the meta and the results file are present
     # return error code 0 if not
+    meta_path = utils.model_path(model, version)
     meta_file = os.path.join(meta_path, 'model-meta.pkl')
     if not os.path.isfile(meta_file):
 
         # this file is created uppon task abortion
         error_file = os.path.join(tempfile.gettempdir(),'building_'+model)
         if os.path.isfile(error_file):
+
             with open(error_file, 'r') as f:
                 error_text = f.read()
-            f.close()
+
             os.remove(error_file)
             if output != 'text':
                 return False, {'code':1, 'message': error_text}
             return False, 'model building task aborted'  
         
-        conf_file = os.path.join (meta_path, 'confidential_model.yaml' )
-        if os.path.isfile(conf_file):
-
-            confidential_info = ['confidential', 'secret', 'nobj', 'nvarx', 
-            'conformal', 'conformal_confidence', 'modelID', 'quantitative', 'model']      
-            try:      
-                with open(conf_file, 'r') as fc:
-                    cmodel = yaml.safe_load (fc)
-            except:
-                return False, 'Not found'
-            info = [('confidential','unique model ID', True)]
-
-            for ielement in confidential_info:
-                if ielement in cmodel:
-                    info+=[(ielement, 'na', cmodel[ielement] )]
-
-            return True, info
-
         # return error
         if output != 'text':
             return False, {'code':0, 'message': 'Info file not found'}
@@ -628,7 +620,7 @@ def action_results(model, version=None, ouput_variables=False):
     if not os.path.isfile(results_file):
         return False, {'code':0, 'message': 'Results file not found'}
 
-    from flame.conveyor import Conveyor
+
     conveyor = Conveyor()
 
     with open(results_file, 'rb') as handle:
