@@ -29,15 +29,15 @@ import yaml
 from sklearn.preprocessing import MinMaxScaler 
 from sklearn.preprocessing import StandardScaler 
 from sklearn.preprocessing import RobustScaler
+from flame.stats import feature_selection
+from flame.stats.imbalance import run_imbalance  
 
 from flame.stats.RF import RF
 from flame.stats.SVM import SVM
 from flame.stats.GNB import GNB
 from flame.stats.PLSR import PLSR
 from flame.stats.PLSDA import PLSDA
-from flame.stats import feature_selection
 from flame.stats.combo import median, mean, majority, logicalOR, matrix
-from flame.stats.imbalance import run_imbalance  
 from flame.graph.graph import generateManifoldSpace, generatePCASpace
 
 from flame.util import utils, get_logger
@@ -63,11 +63,10 @@ class Learn:
 
         self.X = self.conveyor.getVal('xmatrix')
         self.Y = self.conveyor.getVal('ymatrix')
+        self.nobj, self.nvarx = np.shape(self.X)
 
         # Preprocessing variables
         self.scaler = None
-        self.variable_mask = None
-
 
 
     def run_custom(self):
@@ -103,115 +102,106 @@ class Learn:
         return True, 'OK'
 
     def preprocess(self):
-        ''' 
-        This function scales the X matrix and selects features 
-        The scaler and the variable mask are saved in a pickl file 
+        ''' Preprocessing workflow. 
+        
+        It includes three steps:
+
+        1. imbalance: selects objects
+            only for qualitative endpoints
+            returns an object mask
+            calls conveyor.mask_objects
+        
+        2. feature selection: selects variables
+            if there is a scaler, a copy of the X matrix must be pre-scaled
+            returns a variable mask
+            calls conveyor.mask_variables
+        
+        3. scaler
+            called last
+
+        the variable mask and the scaled are saved in a pickl
         '''
-
-        # Perform subsampling on the majority class. Consider to move.
-        # Only for qualitative endpoints.
+        ###################################################################################
+        ## STEP 1. SUBSAMPLING
+        ###################################################################################
         if self.param.getVal("imbalance") is not None and not self.param.getVal("quantitative"):
-            success, mask = run_imbalance(self.param.getVal('imbalance'), self.X, self.Y)
+            
+            success, objmask = run_imbalance(self.param.getVal('imbalance'), self.X, self.Y)
             if not success:
-                return False, mask
+                return False, objmask
 
-            LOG.info(f'{self.param.getVal("imbalance")} performed')
+            # ammend object variables
+            objnum = np.count_nonzero(objmask==1)
+            self.X = self.X[objmask==1]
+            self.Y = self.Y[objmask==1]
+            self.nobj= objnum
 
-            # print (mask)
-
-            # ammend object already copied in the object
-            self.X = self.X[mask==1]
-            self.Y = self.Y[mask==1]
-
-            # ammend conveyor elements representing arrays of objects
-            # as well as obj_num and xmatrix
-            objnum = len(mask[mask==1])
+            # ammend conveyor
             self.conveyor.setVal('obj_num', objnum)
+            self.conveyor.mask_objects(objmask)
+            
+            LOG.info(f'{self.param.getVal("imbalance")} performed')
             LOG.info(f'Number of objects after sampling: {objnum}')
 
-            # arrays of objects in conveyor
-            objkeys = self.conveyor.objectKeys()
-            
-            for ikey in objkeys: 
-                ilist = self.conveyor.getVal(ikey)
-
-                # keys are experim or ymatrix are numpy arrays
-                # if 'numpy.ndarray' in str(type(ilist)):
-                if isinstance(ilist, np.ndarray):
-                    ilist = ilist[mask==1]
-
-                # other keys are regular list
-                else:
-                    len_list = len(ilist)
-                    red_len_list = len_list-1
-
-                    # elements are removed in reverse order, so the removed
-                    # elements do not change the indexes of the remaining 
-                    # items to be deleted
-                    for i in range(len_list):
-                        ireverse = red_len_list-i
-                        if mask[ireverse] == 0:
-                            del ilist[ireverse]
-
-                self.conveyor.setVal(ikey, ilist)
-            
-            # update also xmatrix, since it is labeled as vars
-            self.conveyor.addVal(self.X, 'xmatrix', 'X matrix',
-                'method', 'vars', 'Molecular descriptors')
-
-
-        # Run scaling.
-        self.scaler = None
-
+        ###################################################################################
+        ## INITIALIZE SCALER
+        ###################################################################################
         scale_method = self.param.getVal('modelAutoscaling')
-        
+
         # prevent the scaling of input which must be binary or with preserved values
-        non_scale_list = ['majority','logicalOR','matrix']
-        if self.param.getVal('model') in non_scale_list and scale_method is not None:
-            LOG.info(f"Method '{self.param.getVal('model')}' is incompatible with '{scale_method}' scaler. Forced to 'None'")
-            scale_method = None
-
         if scale_method is not None:
-            try:
-                scaler = None
+            non_scale_list = ['majority','logicalOR','matrix']
+
+            if self.param.getVal('model') in non_scale_list:
+                scale_method = None
+                LOG.info(f"Method '{self.param.getVal('model')}' is incompatible with '{scale_method}' scaler. Forced to 'None'")
+
+            if scale_method is not None:
                 if scale_method == 'StandardScaler':
-                    scaler = StandardScaler()
-
+                    self.scaler = StandardScaler()
                 elif scale_method == 'MinMaxScaler':
-                    scaler = MinMaxScaler(copy=True, feature_range=(0,1))
-
+                    self.scaler = MinMaxScaler(copy=True, feature_range=(0,1))
                 elif scale_method == 'RobustScaler':
-                    scaler = RobustScaler()
-
+                    self.scaler = RobustScaler()
                 else:
                     return False, 'Scaler not recognized'
 
-                if scaler is not None:
-
-                    LOG.info(f'Data scaled with method: {scale_method}')
-
-                    # The scaler is saved so it can be used later
-                    # to prediction instances.
-                    self.scaler = scaler.fit(self.X)
-
-                    # Scale the data.
-                    self.X = scaler.transform(self.X)
-
-            except Exception as e:
-                return False, f'Unable to perform scaling with exception: {e}'
+            LOG.debug(f'scaler :{scale_method} initialized')
           
+        ###################################################################################
+        ## STEP 2. FEATURE SELECTION
+        ###################################################################################
         # Run feature selection. Move to a instance method.
-        if self.param.getVal("feature_selection"):
-            # TODO: implement feature selection with other scalers
-            self.variable_mask, self.scaler = \
-                                feature_selection.run_feature_selection(
-                                            self.X, self.Y, self.scaler,
-                                            self.param)
-            self.X = self.X[:, self.variable_mask]
+        varmask = None
+        feature_selection_method = self.param.getVal("feature_selection")
 
-        # Set the new number of instances/variables
-        # if sampling/feature selection performed
-        self.nobj, self.nvarx = np.shape(self.X)
+        if feature_selection_method is not None:
+            num_features = self.param.getVal("feature_number")
+            quantitative = self.param.getVal("quantitative")
+            X_copy = self.X.copy()
+            Y_copy = self.Y.copy()
+
+            if self.scaler is not None:
+                self.scaler = self.scaler.fit(X_copy)
+                X_copy = self.scaler.transform(X_copy)
+
+            success, varmask = feature_selection.run_feature_selection(X_copy, Y_copy, 
+                feature_selection_method, num_features, quantitative)
+
+            LOG.debug(f'Feature selection :{feature_selection_method} finished')
+
+            if not success:
+                return False, varmask
+
+            # ammend local variables
+            varnum = np.count_nonzero(varmask==1)
+            self.X = self.X[:, varmask]
+            self.nvarx = varnum
+            
+            # ammend conveyor
+            self.conveyor.mask_variables(varmask)
+
+            LOG.info(f'Feature selection method: {feature_selection_method} completed. Selected {varnum} features')
 
         # Check X and Y integrity.
         if (self.nobj == 0) or (self.nvarx == 0):
@@ -221,20 +211,31 @@ class Learn:
             self.failed = True
             return False, 'No activity values'
 
-        # This dictionary contain all the objects which will be needed
-        # for prediction
+        ###################################################################################
+        ## STEP 3. APPLY SCALER
+        ###################################################################################
+        if self.scaler is not None:
+            self.scaler = self.scaler.fit(self.X)
+            self.X = self.scaler.transform(self.X)
+
+            LOG.info(f'Data scaled with method: {scale_method}')
+
+        ###################################################################################
+        ## SAVE
+        ###################################################################################
+        self.conveyor.addVal(self.X, 'xmatrix', 'X matrix', 'method', 'vars', 'Molecular descriptors')
+
         prepro = {'scaler':self.scaler,\
-                  'variable_mask':self.variable_mask,\
+                  'variable_mask': varmask,\
                   'version':1}
 
-        prepro_pkl_path = os.path.join(self.param.getVal('model_path'),
-                                      'preprocessing.pkl')
+        prepro_pkl_path = os.path.join(self.param.getVal('model_path'),'preprocessing.pkl')
         
         with open(prepro_pkl_path, 'wb') as handle:
-            pickle.dump(prepro, handle, 
-                        protocol=pickle.HIGHEST_PROTOCOL)
+            pickle.dump(prepro, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
-        LOG.debug('Model saved as:{}'.format(prepro_pkl_path))
+        LOG.debug('Preprocesing saved as:{}'.format(prepro_pkl_path))
+
         return True, 'OK'
 
 
@@ -275,15 +276,21 @@ class Learn:
                 self.conveyor.setError(yresult)
                 return
 
+        # print (np.shape(self.X))
+
         # pre-process data
         if self.param.getVal('confidential'):
             success, message = self.cpreprocess()
-        else:                
-            success, message = self.preprocess()
+        # else:                
+        #     success, message = self.preprocess()
 
-        if not success:
-            self.conveyor.setError(message)
-            return
+        # if not success:
+        #     self.conveyor.setError(message)
+        #     return
+
+        # print (np.shape(self.X))
+        # print (self.conveyor.getVal('var_nam'))
+
 
         # collect model information from parameters
         model_type_info = []

@@ -69,7 +69,6 @@ def simple_subsampling (Y):
                 if j in positives_sub:
                     mask[i] = 1
                 j=j+1
-
     return True, mask
 
 
@@ -78,39 +77,36 @@ def near_miss1(X, Y):
     nm1 = NearMiss(version=1)
     nm1.fit_resample(X, Y)
     indexes = nm1.sample_indices_
-    mask = []
-    for i in range(len(X)):
+    nobj = len(Y)
+    mask = np.zeros(nobj, dtype=int)
+    for i in range(nobj):
         if i in indexes:
-            mask.append(1)
-        else:
-            mask.append(0)
-    return True, np.asarray(mask)
+            mask[i]=1
+    return True, mask
 
 def near_miss2(X, Y):
     from imblearn.under_sampling import NearMiss
     nm1 = NearMiss(version=2)
     nm1.fit_resample(X, Y)
     indexes = nm1.sample_indices_
-    mask = []
-    for i in range(len(X)):
+    nobj = len(Y)
+    mask = np.zeros(nobj, dtype=int)
+    for i in range(nobj):
         if i in indexes:
-            mask.append(1)
-        else:
-            mask.append(0)
-    return True, np.asarray(mask)
+            mask[i] = 1
+    return True, mask
 
 def near_miss3(X, Y):
     from imblearn.under_sampling import NearMiss
     nm1 = NearMiss(version=3)
     nm1.fit_resample(X, Y)
     indexes = nm1.sample_indices_
-    mask = []
-    for i in range(len(X)):
+    nobj = len(Y)
+    mask = np.zeros(nobj, dtype=int)
+    for i in range(nobj):
         if i in indexes:
-            mask.append(1)
-        else:
-            mask.append(0)
-    return True, np.asarray(mask)
+            mask[i] = 1
+    return True, mask
 
 
 def edited_KNN(X, Y):
@@ -118,26 +114,24 @@ def edited_KNN(X, Y):
     enn = EditedNearestNeighbours()
     enn.fit_resample(X, Y)
     indexes = enn.sample_indices_
-    mask = []
-    for i in range(len(X)):
+    nobj = len(Y)
+    mask = np.zeros(nobj, dtype=int)
+    for i in range(nobj):
         if i in indexes:
-            mask.append(1)
-        else:
-            mask.append(0)
-    return True, np.asarray(mask)
+            mask[i] = 1
+    return True, mask
 
 def rep_edited_KNN(X, Y):
     from imblearn.under_sampling import RepeatedEditedNearestNeighbours
     renn = RepeatedEditedNearestNeighbours()
     renn.fit_resample(X, Y)
     indexes = renn.sample_indices_
-    mask = []
-    for i in range(len(X)):
+    nobj = len(Y)
+    mask = np.zeros(nobj, dtype=int)
+    for i in range(nobj):
         if i in indexes:
-            mask.append(1)
-        else:
-            mask.append(0)
-    return True, np.asarray(mask)
+            mask[i] = 1
+    return True, mask
 
 
 def all_KNN(X, Y):
@@ -145,13 +139,13 @@ def all_KNN(X, Y):
     allknn = AllKNN()
     allknn.fit_resample(X, Y)
     indexes = allknn.sample_indices_
-    mask = []
-    for i in range(len(X)):
+    nobj = len(Y)
+    mask = np.zeros(nobj, dtype=int)
+    for i in range(nobj):
         if i in indexes:
-            mask.append(1)
-        else:
-            mask.append(0)
-    return True, np.asarray(mask)
+            mask[i] = 1
+    return True, mask
+
 
 
 def iht(X, Y):
@@ -163,13 +157,12 @@ def iht(X, Y):
     Y = np.array(Y, dtype=int)
     iht.fit_resample(X, Y)
     indexes = iht.sample_indices_
-    mask = []
-    for i in range(len(X)):
+    nobj = len(Y)
+    mask = np.zeros(nobj, dtype=int)
+    for i in range(nobj):
         if i in indexes:
-            mask.append(1)
-        else:
-            mask.append(0)
-    return True, np.asarray(mask)
+            mask[i] = 1
+    return True, mask
 
 
 def run_imbalance(method, X, Y):

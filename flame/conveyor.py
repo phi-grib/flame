@@ -189,6 +189,15 @@ class Conveyor:
                 object_elements.append(i['key'])
 
         return object_elements
+
+    def varKeys (self):
+        ''' returns data keys containing variables values '''
+        var_elements = []
+        for i in self.manifest:
+            if i['dimension'] == 'vars':
+                var_elements.append(i['key'])
+
+        return var_elements
     
     def singleKeys (self):
         ''' returns data keys containing single values '''
@@ -277,3 +286,69 @@ class Conveyor:
             return((i[0], i[1], i[2].tolist()) )
 
         return i
+
+    def mask_objects (self, mask):
+
+        # self.setVal('obj_num', np.count_nonzero(mask==1) )
+
+        # arrays of objects in conveyor
+        objkeys = self.objectKeys()
+        
+        for ikey in objkeys: 
+            ilist = self.getVal(ikey)
+
+            # keys are experim or ymatrix are numpy arrays
+            # if 'numpy.ndarray' in str(type(ilist)):
+            if isinstance(ilist, np.ndarray):
+                ilist = ilist[mask==1]
+
+            # other keys are regular list
+            else:
+                len_list = len(ilist)
+                red_len_list = len_list-1
+
+                # elements are removed in reverse order, so the removed
+                # elements do not change the indexes of the remaining 
+                # items to be deleted
+                for i in range(len_list):
+                    ireverse = red_len_list-i
+                    if mask[ireverse] == 0:
+                        del ilist[ireverse]
+
+            self.setVal(ikey, ilist)
+
+    def mask_variables (self, mask):
+
+        # self.setVal('nvarx', np.count_nonzero(mask==1) )
+
+        # arrays of objects in conveyor
+        varkeys = self.varKeys()
+        
+        for ikey in varkeys: 
+            ilist = self.getVal(ikey)
+            if (len(np.shape(ilist))>1):
+                continue
+
+            # keys are experim or ymatrix are numpy arrays
+            # if 'numpy.ndarray' in str(type(ilist)):
+            if isinstance(ilist, np.ndarray):
+
+                print ('*************', ikey, np.shape(ilist))
+
+                ilist = ilist[mask==1]
+
+            # other keys are regular list
+            else:
+                len_list = len(ilist)
+                red_len_list = len_list-1
+
+                # elements are removed in reverse order, so the removed
+                # elements do not change the indexes of the remaining 
+                # items to be deleted
+                for i in range(len_list):
+                    ireverse = red_len_list-i
+                    if mask[ireverse] == 0:
+                        del ilist[ireverse]
+
+            self.setVal(ikey, ilist)
+
