@@ -325,7 +325,6 @@ class Idata:
         ## SAVE
         ###################################################################################
         self.conveyor.addVal(X, 'xmatrix', 'X matrix', 'method', 'vars', 'Molecular descriptors')
-        LOG.info(f'X matrix preprocessed: {np.shape(X)}')
 
         if confidential:
             if wg is None:
@@ -383,8 +382,6 @@ class Idata:
             except FileNotFoundError:
                 return False, f'No valid preprocessing tools found at: {prepro_file}'
 
-
-
         else:
             prepro_file = os.path.join(self.param.getVal('model_path'), 'preprocessing.pkl')
             LOG.debug(f'Loading model from pickle file, path: {prepro_file}')
@@ -394,12 +391,11 @@ class Idata:
             except FileNotFoundError:
                 return False, f'No valid preprocessing tools found at: {prepro_file}'
 
-        # Load rest of info in an extensible way
-        # This allows to add new variables keeping
         # Retro-compatibility
         varmask = None
         if 'variable_mask' in dict_prepro.keys():
             varmask = dict_prepro['variable_mask']
+            varmask = np.array(varmask)
 
         feature_selection_method = self.param.getVal('feature_selection')
         if feature_selection_method is not None:
@@ -407,14 +403,13 @@ class Idata:
                 return False, 'Inconsistency error. Feature is True in parameter file but no variable mask loaded'
 
             # ammend local variables
-            varnum = np.count_nonzero(varmask==1)
             X = X[:, varmask]
-            
+            varnum = np.count_nonzero(varmask==1)
+
             # ammend conveyor
             self.conveyor.mask_variables(varmask)
 
             LOG.info(f'Feature selection method: {feature_selection_method} completed. Selected {varnum} features')
-
 
         if confidential:
             # centering is compulsory    
@@ -422,6 +417,9 @@ class Idata:
             X -= mean
 
         scaling_method =self.param.getVal('modelAutoscaling')
+        if (utils.isFingerprint(self.param.getVal('computeMD_method'))):
+            scaling_method = None
+
         if scaling_method is not None:
 
             # Load rest of info in an extensible way
@@ -445,7 +443,6 @@ class Idata:
                     X = scaler.transform(X)
 
         self.conveyor.addVal(X, 'xmatrix', 'X matrix', 'method', 'vars', 'Molecular descriptors')
-        LOG.info(f'X matrix preprocessed: {np.shape(X)}')
 
         return True, 'OK'
 

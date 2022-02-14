@@ -22,14 +22,14 @@
 # along with Flame.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import pickle
+# import pickle
 import numpy as np
 import yaml
 
-from sklearn.preprocessing import MinMaxScaler 
-from sklearn.preprocessing import StandardScaler 
-from sklearn.preprocessing import RobustScaler
-from flame.stats import feature_selection
+# from sklearn.preprocessing import MinMaxScaler 
+# from sklearn.preprocessing import StandardScaler 
+# from sklearn.preprocessing import RobustScaler
+# from flame.stats import feature_selection
 from flame.stats.imbalance import run_imbalance  
 
 from flame.stats.RF import RF
@@ -77,166 +77,166 @@ class Learn:
 
         self.conveyor.setError ('Not implemented')
 
-    def cpreprocess (self):
-        ''' preprocesing for confidential models'''
+    # def cpreprocess (self):
+    #     ''' preprocesing for confidential models'''
 
-        cpre = {}
-        xmean= np.mean(self.X, axis=0)
-        self.X = self.X.astype(float)
-        self.X -= np.array(xmean)
+    #     cpre = {}
+    #     xmean= np.mean(self.X, axis=0)
+    #     self.X = self.X.astype(float)
+    #     self.X -= np.array(xmean)
 
-        if self.param.getVal('modelAutoscaling') == 'StandardScaler':
-            st = np.std(self.X, axis=0, ddof=1)
-            wg = [1.0/sti if sti > 1.0e-7 else 0.00 for sti in st]
-            wg = np.array(wg)
-            self.X *= wg 
-            cpre['wg'] = wg.tolist()
+    #     if self.param.getVal('modelAutoscaling') == 'StandardScaler':
+    #         st = np.std(self.X, axis=0, ddof=1)
+    #         wg = [1.0/sti if sti > 1.0e-7 else 0.00 for sti in st]
+    #         wg = np.array(wg)
+    #         self.X *= wg 
+    #         cpre['wg'] = wg.tolist()
 
-        cpre['xmean'] = xmean.tolist()
+    #     cpre['xmean'] = xmean.tolist()
 
-        model_file_path = utils.model_path(self.param.getVal('endpoint'), 0)
-        model_file_name = os.path.join (model_file_path, 'confidential_preprocess.yaml')
-        with open(model_file_name, 'w') as f:
-            yaml.dump (cpre, f)
+    #     model_file_path = utils.model_path(self.param.getVal('endpoint'), 0)
+    #     model_file_name = os.path.join (model_file_path, 'confidential_preprocess.yaml')
+    #     with open(model_file_name, 'w') as f:
+    #         yaml.dump (cpre, f)
 
-        return True, 'OK'
+    #     return True, 'OK'
 
-    def preprocess(self):
-        ''' Preprocessing workflow. 
+    # def preprocess(self):
+    #     ''' Preprocessing workflow. 
         
-        It includes three steps:
+    #     It includes three steps:
 
-        1. imbalance: selects objects
-            only for qualitative endpoints
-            returns an object mask
-            calls conveyor.mask_objects
+    #     1. imbalance: selects objects
+    #         only for qualitative endpoints
+    #         returns an object mask
+    #         calls conveyor.mask_objects
         
-        2. feature selection: selects variables
-            if there is a scaler, a copy of the X matrix must be pre-scaled
-            returns a variable mask
-            calls conveyor.mask_variables
+    #     2. feature selection: selects variables
+    #         if there is a scaler, a copy of the X matrix must be pre-scaled
+    #         returns a variable mask
+    #         calls conveyor.mask_variables
         
-        3. scaler
-            called last
+    #     3. scaler
+    #         called last
 
-        the variable mask and the scaled are saved in a pickl
-        '''
-        ###################################################################################
-        ## STEP 1. SUBSAMPLING
-        ###################################################################################
-        if self.param.getVal("imbalance") is not None and not self.param.getVal("quantitative"):
+    #     the variable mask and the scaled are saved in a pickl
+    #     '''
+    #     ###################################################################################
+    #     ## STEP 1. SUBSAMPLING
+    #     ###################################################################################
+    #     if self.param.getVal("imbalance") is not None and not self.param.getVal("quantitative"):
             
-            success, objmask = run_imbalance(self.param.getVal('imbalance'), self.X, self.Y)
-            if not success:
-                return False, objmask
+    #         success, objmask = run_imbalance(self.param.getVal('imbalance'), self.X, self.Y)
+    #         if not success:
+    #             return False, objmask
 
-            # ammend object variables
-            objnum = np.count_nonzero(objmask==1)
-            self.X = self.X[objmask==1]
-            self.Y = self.Y[objmask==1]
-            self.nobj= objnum
+    #         # ammend object variables
+    #         objnum = np.count_nonzero(objmask==1)
+    #         self.X = self.X[objmask==1]
+    #         self.Y = self.Y[objmask==1]
+    #         self.nobj= objnum
 
-            # ammend conveyor
-            self.conveyor.setVal('obj_num', objnum)
-            self.conveyor.mask_objects(objmask)
+    #         # ammend conveyor
+    #         self.conveyor.setVal('obj_num', objnum)
+    #         self.conveyor.mask_objects(objmask)
             
-            LOG.info(f'{self.param.getVal("imbalance")} performed')
-            LOG.info(f'Number of objects after sampling: {objnum}')
+    #         LOG.info(f'{self.param.getVal("imbalance")} performed')
+    #         LOG.info(f'Number of objects after sampling: {objnum}')
 
-        ###################################################################################
-        ## INITIALIZE SCALER
-        ###################################################################################
-        scale_method = self.param.getVal('modelAutoscaling')
+    #     ###################################################################################
+    #     ## INITIALIZE SCALER
+    #     ###################################################################################
+    #     scale_method = self.param.getVal('modelAutoscaling')
 
-        # prevent the scaling of input which must be binary or with preserved values
-        if scale_method is not None:
-            non_scale_list = ['majority','logicalOR','matrix']
+    #     # prevent the scaling of input which must be binary or with preserved values
+    #     if scale_method is not None:
+    #         non_scale_list = ['majority','logicalOR','matrix']
 
-            if self.param.getVal('model') in non_scale_list:
-                scale_method = None
-                LOG.info(f"Method '{self.param.getVal('model')}' is incompatible with '{scale_method}' scaler. Forced to 'None'")
+    #         if self.param.getVal('model') in non_scale_list:
+    #             scale_method = None
+    #             LOG.info(f"Method '{self.param.getVal('model')}' is incompatible with '{scale_method}' scaler. Forced to 'None'")
 
-            if scale_method is not None:
-                if scale_method == 'StandardScaler':
-                    self.scaler = StandardScaler()
-                elif scale_method == 'MinMaxScaler':
-                    self.scaler = MinMaxScaler(copy=True, feature_range=(0,1))
-                elif scale_method == 'RobustScaler':
-                    self.scaler = RobustScaler()
-                else:
-                    return False, 'Scaler not recognized'
+    #         if scale_method is not None:
+    #             if scale_method == 'StandardScaler':
+    #                 self.scaler = StandardScaler()
+    #             elif scale_method == 'MinMaxScaler':
+    #                 self.scaler = MinMaxScaler(copy=True, feature_range=(0,1))
+    #             elif scale_method == 'RobustScaler':
+    #                 self.scaler = RobustScaler()
+    #             else:
+    #                 return False, 'Scaler not recognized'
 
-            LOG.debug(f'scaler :{scale_method} initialized')
+    #         LOG.debug(f'scaler :{scale_method} initialized')
           
-        ###################################################################################
-        ## STEP 2. FEATURE SELECTION
-        ###################################################################################
-        # Run feature selection. Move to a instance method.
-        varmask = None
-        feature_selection_method = self.param.getVal("feature_selection")
+    #     ###################################################################################
+    #     ## STEP 2. FEATURE SELECTION
+    #     ###################################################################################
+    #     # Run feature selection. Move to a instance method.
+    #     varmask = None
+    #     feature_selection_method = self.param.getVal("feature_selection")
 
-        if feature_selection_method is not None:
-            num_features = self.param.getVal("feature_number")
-            quantitative = self.param.getVal("quantitative")
-            X_copy = self.X.copy()
-            Y_copy = self.Y.copy()
+    #     if feature_selection_method is not None:
+    #         num_features = self.param.getVal("feature_number")
+    #         quantitative = self.param.getVal("quantitative")
+    #         X_copy = self.X.copy()
+    #         Y_copy = self.Y.copy()
 
-            if self.scaler is not None:
-                self.scaler = self.scaler.fit(X_copy)
-                X_copy = self.scaler.transform(X_copy)
+    #         if self.scaler is not None:
+    #             self.scaler = self.scaler.fit(X_copy)
+    #             X_copy = self.scaler.transform(X_copy)
 
-            success, varmask = feature_selection.run_feature_selection(X_copy, Y_copy, 
-                feature_selection_method, num_features, quantitative)
+    #         success, varmask = feature_selection.run_feature_selection(X_copy, Y_copy, 
+    #             feature_selection_method, num_features, quantitative)
 
-            LOG.debug(f'Feature selection :{feature_selection_method} finished')
+    #         LOG.debug(f'Feature selection :{feature_selection_method} finished')
 
-            if not success:
-                return False, varmask
+    #         if not success:
+    #             return False, varmask
 
-            # ammend local variables
-            varnum = np.count_nonzero(varmask==1)
-            self.X = self.X[:, varmask]
-            self.nvarx = varnum
+    #         # ammend local variables
+    #         varnum = np.count_nonzero(varmask==1)
+    #         self.X = self.X[:, varmask]
+    #         self.nvarx = varnum
             
-            # ammend conveyor
-            self.conveyor.mask_variables(varmask)
+    #         # ammend conveyor
+    #         self.conveyor.mask_variables(varmask)
 
-            LOG.info(f'Feature selection method: {feature_selection_method} completed. Selected {varnum} features')
+    #         LOG.info(f'Feature selection method: {feature_selection_method} completed. Selected {varnum} features')
 
-        # Check X and Y integrity.
-        if (self.nobj == 0) or (self.nvarx == 0):
-            return False, 'No objects/variables in the matrix'
+    #     # Check X and Y integrity.
+    #     if (self.nobj == 0) or (self.nvarx == 0):
+    #         return False, 'No objects/variables in the matrix'
 
-        if len(self.Y) == 0:
-            self.failed = True
-            return False, 'No activity values'
+    #     if len(self.Y) == 0:
+    #         self.failed = True
+    #         return False, 'No activity values'
 
-        ###################################################################################
-        ## STEP 3. APPLY SCALER
-        ###################################################################################
-        if self.scaler is not None:
-            self.scaler = self.scaler.fit(self.X)
-            self.X = self.scaler.transform(self.X)
+    #     ###################################################################################
+    #     ## STEP 3. APPLY SCALER
+    #     ###################################################################################
+    #     if self.scaler is not None:
+    #         self.scaler = self.scaler.fit(self.X)
+    #         self.X = self.scaler.transform(self.X)
 
-            LOG.info(f'Data scaled with method: {scale_method}')
+    #         LOG.info(f'Data scaled with method: {scale_method}')
 
-        ###################################################################################
-        ## SAVE
-        ###################################################################################
-        self.conveyor.addVal(self.X, 'xmatrix', 'X matrix', 'method', 'vars', 'Molecular descriptors')
+    #     ###################################################################################
+    #     ## SAVE
+    #     ###################################################################################
+    #     self.conveyor.addVal(self.X, 'xmatrix', 'X matrix', 'method', 'vars', 'Molecular descriptors')
 
-        prepro = {'scaler':self.scaler,\
-                  'variable_mask': varmask,\
-                  'version':1}
+    #     prepro = {'scaler':self.scaler,\
+    #               'variable_mask': varmask,\
+    #               'version':1}
 
-        prepro_pkl_path = os.path.join(self.param.getVal('model_path'),'preprocessing.pkl')
+    #     prepro_pkl_path = os.path.join(self.param.getVal('model_path'),'preprocessing.pkl')
         
-        with open(prepro_pkl_path, 'wb') as handle:
-            pickle.dump(prepro, handle, protocol=pickle.HIGHEST_PROTOCOL)
+    #     with open(prepro_pkl_path, 'wb') as handle:
+    #         pickle.dump(prepro, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
-        LOG.debug('Preprocesing saved as:{}'.format(prepro_pkl_path))
+    #     LOG.debug('Preprocesing saved as:{}'.format(prepro_pkl_path))
 
-        return True, 'OK'
+    #     return True, 'OK'
 
 
     def run_internal(self):
@@ -277,20 +277,6 @@ class Learn:
                 return
 
         # print (np.shape(self.X))
-
-        # pre-process data
-        # if self.param.getVal('confidential'):
-        #     success, message = self.cpreprocess()
-        # else:                
-        #     success, message = self.preprocess()
-
-        # if not success:
-        #     self.conveyor.setError(message)
-        #     return
-
-        # print (np.shape(self.X))
-        # print (self.conveyor.getVal('var_nam'))
-
 
         # collect model information from parameters
         model_type_info = []
