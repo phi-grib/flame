@@ -219,23 +219,21 @@ class Idata:
         scale_method = self.param.getVal('modelAutoscaling')
         confidential = self.param.getVal ('confidential')
         scaler = None
-        wg = None
-        xmean = None
 
         # prevent the scaling of input which must be binary or with preserved values
         if confidential :
             xmean= np.mean(X, axis=0)
+            wg = None
             if scale_method == 'StandardScaler':
                 st = np.std(X, axis=0, ddof=1)
                 wg = [1.0/sti if sti > 1.0e-7 else 0.00 for sti in st]
                 wg = np.array(wg)
 
-            # centering is compulsory
+            # centering is compulsory in PLS
             X = X.astype(float) 
             X -= np.array(xmean)
 
         if scale_method is not None:
-            # non_scale_list = ['majority','logicalOR','matrix']
 
             if self.param.getVal('model') in non_scale_list:
                 scale_method = None
@@ -297,7 +295,8 @@ class Idata:
             # ammend xmean and wg
             if confidential:
                 xmean = xmean[varmask==1]
-                wg = wg[varmask==1]
+                if wg is not None:
+                    wg = wg[varmask==1]
 
             LOG.info(f'Feature selection method: {feature_selection_method} completed. Selected {varnum} features')
 
@@ -327,23 +326,20 @@ class Idata:
         self.conveyor.addVal(X, 'xmatrix', 'X matrix', 'method', 'vars', 'Molecular descriptors')
 
         if confidential:
-            if wg is None:
-                wg = np.array(wg)
-            if xmean is None:
-                xmean = np.array(wg)
+            prepro = { 'mean': xmean.tolist() }
+            
+            if wg is not None:
+                prepro['wg'] = wg.tolist() 
 
-            prepro = { 'wg': wg.tolist(), 'mean': xmean.tolist() }
             if varmask is not None:
-                varmask = np.array(varmask)
                 prepro['variable_mask'] = varmask.tolist()
 
             prepro_path = os.path.join(self.param.getVal('model_path'),'confidential_preprocess.yaml')            
             with open(prepro_path, 'w') as f:
                 yaml.dump (prepro, f)
         else:
-            prepro = {'scaler': scaler,\
-                      'variable_mask': varmask,\
-                      'version':1}
+            prepro = {'scaler': scaler,'variable_mask': varmask, 'version':1}
+
             prepro_path = os.path.join(self.param.getVal('model_path'),'preprocessing.pkl')            
             with open(prepro_path, 'wb') as handle:
                 pickle.dump(prepro, handle, protocol=pickle.HIGHEST_PROTOCOL)
@@ -359,7 +355,7 @@ class Idata:
 
         X = self.conveyor.getVal('xmatrix')
         # Y = self.conveyor.getVal('ymatrix')
-        nobj, nvarx = np.shape(X)
+        # nobj, nvarx = np.shape(X)
 
         confidential = self.param.getVal('confidential')
         if confidential:
@@ -393,9 +389,8 @@ class Idata:
 
         # Retro-compatibility
         varmask = None
-        if 'variable_mask' in dict_prepro.keys():
-            varmask = dict_prepro['variable_mask']
-            varmask = np.array(varmask)
+        if 'variable_mask' in dict_prepro:
+            varmask = np.array(dict_prepro['variable_mask'])
 
         feature_selection_method = self.param.getVal('feature_selection')
         if feature_selection_method is not None:
@@ -430,7 +425,7 @@ class Idata:
                     X *= wg
             else:
                 scaler = None
-                if 'scaler' in dict_prepro.keys():
+                if 'scaler' in dict_prepro:
                     scaler = dict_prepro['scaler']
 
                 # Check consistency between parameter file and pickle info
@@ -438,7 +433,6 @@ class Idata:
                     # methods like majority and matrix are forced to avoid scaling  
                     if (self.param.getVal('model') not in non_scale_list) and (utils.isFingerprint(self.param.getVal('computeMD_method')) is False):   
                         return False, f'Inconsistency error. Scaling method {scaling_method} defined but no scaler loaded'
-                
                 else:
                     X = scaler.transform(X)
 
@@ -1251,6 +1245,7 @@ class Idata:
 
         LOG.debug('(@ammend_objects) going to remove these'
                   'indexes from manifest: {}'.format(remove_index))
+
         self.conveyor.setVal('obj_num', obj_num)
 
         objkeys = self.conveyor.objectKeys()

@@ -71,11 +71,11 @@ ionize_method:
   value: null
   options:
     - null
-    - moka
+    - Moka (not implemented)
   description: Selection of a ionization method
   dependencies: 
     input_type: molecule
-  comments: 
+  comments: No method implemented so far
   group: data
 
 quantitative:
@@ -543,7 +543,7 @@ feature_selection:
   options: 
     - null
     - Kbest
-  description: Whether to perform or not feature selection
+  description: Feature selection based on univariate statistics (F for quantitative, Chi square for qualitative)
   dependencies: null
   comments: 
   group: modeling
@@ -555,7 +555,7 @@ feature_number:
   value: auto
   options: 
     - auto
-  description: Number of features to keep
+  description: Number of features to keep or auto for selecting 10% of objects
   dependencies: 
     feature_selection: Kbest
   comments: 
