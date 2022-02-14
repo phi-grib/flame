@@ -279,8 +279,8 @@ class Learn:
         # print (np.shape(self.X))
 
         # pre-process data
-        if self.param.getVal('confidential'):
-            success, message = self.cpreprocess()
+        # if self.param.getVal('confidential'):
+        #     success, message = self.cpreprocess()
         # else:                
         #     success, message = self.preprocess()
 

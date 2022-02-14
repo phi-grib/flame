@@ -140,8 +140,11 @@ class Build:
             LOG.warning ('Idata child architecture mismatch, defaulting to Idata parent')
             idata = Idata(self.param, self.conveyor, input_source)
         idata.run() 
-        idata.preprocess_create()
         LOG.debug(f'idata child {type(idata).__name__} completed `run()`')
+
+        success, results = idata.preprocess_create()
+        if not success:
+            self.conveyor.setError(results)
 
         if not self.conveyor.getError():
             # check there is a suitable X and Y

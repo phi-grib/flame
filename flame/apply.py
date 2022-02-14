@@ -171,17 +171,15 @@ class Apply:
             self.conveyor.setError('Failed to generate MDs')
             return
             
+        # TODO: support confidential preprocessing
         # Load scaler and variable mask and preprocess the data
-        if self.param.getVal('confidential'):
-            success, result = self.cpreprocess(X)
-        else:
-            success, result = self.preprocess(X)
-
-        if not success:
-            self.conveyor.setError(result)
-            return          
-
-        X = result
+        # if self.param.getVal('confidential'):
+        #     success, result = self.cpreprocess(X)
+        #     if not success:
+        #         self.conveyor.setError(result)
+        #         return          
+            
+        #     X = result
 
         # instantiate an appropriate child of base_model
         model = None
@@ -214,9 +212,9 @@ class Apply:
             end = time.time()
             LOG.debug(f'Model loaded with message "{results}" in {(end-start):.2f} seconds')
 
-        if not success:
-            self.conveyor.setError(f'Failed to load model estimator, with error "{results}"')
-            return 
+            if not success:
+                self.conveyor.setError(f'Failed to load model estimator, with error "{results}"')
+                return 
 
         # project the X matrix into the model and save predictions in self.conveyor
         model.project(X)

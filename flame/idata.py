@@ -24,6 +24,7 @@ from logging import ERROR
 import os
 import sys
 import pickle
+import yaml
 import shutil
 import tempfile
 # import multiprocessing as mp
@@ -48,6 +49,7 @@ from flame.util import utils, get_logger, supress_log
 
 LOG = get_logger(__name__)
 
+non_scale_list = ['majority','logicalOR','matrix']
 
 class Idata:
 
@@ -215,22 +217,41 @@ class Idata:
         ## INITIALIZE SCALER
         ###################################################################################
         scale_method = self.param.getVal('modelAutoscaling')
+        confidential = self.param.getVal ('confidential')
+        scaler = None
+        wg = None
+        xmean = None
 
         # prevent the scaling of input which must be binary or with preserved values
+        if confidential :
+            xmean= np.mean(X, axis=0)
+            if scale_method == 'StandardScaler':
+                st = np.std(X, axis=0, ddof=1)
+                wg = [1.0/sti if sti > 1.0e-7 else 0.00 for sti in st]
+                wg = np.array(wg)
+
+            # centering is compulsory
+            X = X.astype(float) 
+            X -= np.array(xmean)
+
         if scale_method is not None:
-            non_scale_list = ['majority','logicalOR','matrix']
+            # non_scale_list = ['majority','logicalOR','matrix']
 
             if self.param.getVal('model') in non_scale_list:
                 scale_method = None
                 LOG.info(f"Method '{self.param.getVal('model')}' is incompatible with '{scale_method}' scaler. Forced to 'None'")
 
+            if utils.isFingerprint(self.param.getVal('computeMD_method')):
+                scale_method = None
+                LOG.info(f"Fingerprint descriptors cannot be scaled. Scaled method forced to 'None'")
+
             if scale_method is not None:
                 if scale_method == 'StandardScaler':
-                    self.scaler = StandardScaler()
+                    scaler = StandardScaler()
                 elif scale_method == 'MinMaxScaler':
-                    self.scaler = MinMaxScaler(copy=True, feature_range=(0,1))
+                    scaler = MinMaxScaler(copy=True, feature_range=(0,1))
                 elif scale_method == 'RobustScaler':
-                    self.scaler = RobustScaler()
+                    scaler = RobustScaler()
                 else:
                     return False, 'Scaler not recognized'
 
@@ -249,9 +270,13 @@ class Idata:
             X_copy = X.copy()
             Y_copy = Y.copy()
 
-            if self.scaler is not None:
-                self.scaler = self.scaler.fit(X_copy)
-                X_copy = self.scaler.transform(X_copy)
+            if scaler is not None:
+                if confidential:
+                    if scale_method == 'StandardScaler':
+                        X_copy *= wg 
+                else:
+                    scaler = scaler.fit(X_copy)
+                    X_copy = scaler.transform(X_copy)
 
             success, varmask = feature_selection.run_feature_selection(X_copy, Y_copy, 
                 feature_selection_method, num_features, quantitative)
@@ -269,6 +294,11 @@ class Idata:
             # ammend conveyor
             self.conveyor.mask_variables(varmask)
 
+            # ammend xmean and wg
+            if confidential:
+                xmean = xmean[varmask==1]
+                wg = wg[varmask==1]
+
             LOG.info(f'Feature selection method: {feature_selection_method} completed. Selected {varnum} features')
 
         # Check X and Y integrity.
@@ -282,9 +312,12 @@ class Idata:
         ###################################################################################
         ## STEP 3. APPLY SCALER
         ###################################################################################
-        if self.scaler is not None:
-            self.scaler = self.scaler.fit(X)
-            X = self.scaler.transform(X)
+        if scaler is not None:
+            if confidential:
+                X *= wg 
+            else:
+                scaler = scaler.fit(X)
+                X = scaler.transform(X)
 
             LOG.info(f'Data scaled with method: {scale_method}')
 
@@ -292,22 +325,129 @@ class Idata:
         ## SAVE
         ###################################################################################
         self.conveyor.addVal(X, 'xmatrix', 'X matrix', 'method', 'vars', 'Molecular descriptors')
+        LOG.info(f'X matrix preprocessed: {np.shape(X)}')
 
-        prepro = {'scaler':self.scaler,\
-                  'variable_mask': varmask,\
-                  'version':1}
+        if confidential:
+            if wg is None:
+                wg = np.array(wg)
+            if xmean is None:
+                xmean = np.array(wg)
 
-        prepro_pkl_path = os.path.join(self.param.getVal('model_path'),'preprocessing.pkl')
-        
-        with open(prepro_pkl_path, 'wb') as handle:
-            pickle.dump(prepro, handle, protocol=pickle.HIGHEST_PROTOCOL)
+            prepro = { 'wg': wg.tolist(), 'mean': xmean.tolist() }
+            if varmask is not None:
+                varmask = np.array(varmask)
+                prepro['variable_mask'] = varmask.tolist()
 
-        LOG.debug('Preprocesing saved as:{}'.format(prepro_pkl_path))
+            prepro_path = os.path.join(self.param.getVal('model_path'),'confidential_preprocess.yaml')            
+            with open(prepro_path, 'w') as f:
+                yaml.dump (prepro, f)
+        else:
+            prepro = {'scaler': scaler,\
+                      'variable_mask': varmask,\
+                      'version':1}
+            prepro_path = os.path.join(self.param.getVal('model_path'),'preprocessing.pkl')            
+            with open(prepro_path, 'wb') as handle:
+                pickle.dump(prepro, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+        LOG.debug('Preprocesing saved as:{}'.format(prepro_path))
 
         return True, 'OK'
 
 
+    def preprocess_apply (self):
+        ''' This function loads the scaler and variable mask from a pickle file 
+        and apply them to the X matrix passed as an argument'''
 
+        X = self.conveyor.getVal('xmatrix')
+        # Y = self.conveyor.getVal('ymatrix')
+        nobj, nvarx = np.shape(X)
+
+        confidential = self.param.getVal('confidential')
+        if confidential:
+            mean = None
+            wg = None
+
+            prepro_file = os.path.join(self.param.getVal('model_path'),'confidential_preprocess.yaml')    
+            LOG.debug(f'Loading model from yaml file, path: {prepro_file}')
+
+            try:
+                with open(prepro_file, 'r') as f:
+                    dict_prepro = yaml.safe_load (f)
+    
+                if 'mean' in dict_prepro:
+                    mean = np.array(dict_prepro['mean'])
+                
+                if 'wg' in dict_prepro:
+                    wg = np.array(dict_prepro['wg'])
+
+            except FileNotFoundError:
+                return False, f'No valid preprocessing tools found at: {prepro_file}'
+
+
+
+        else:
+            prepro_file = os.path.join(self.param.getVal('model_path'), 'preprocessing.pkl')
+            LOG.debug(f'Loading model from pickle file, path: {prepro_file}')
+            try:
+                with open(prepro_file, "rb") as input_file:
+                    dict_prepro = pickle.load(input_file)
+            except FileNotFoundError:
+                return False, f'No valid preprocessing tools found at: {prepro_file}'
+
+        # Load rest of info in an extensible way
+        # This allows to add new variables keeping
+        # Retro-compatibility
+        varmask = None
+        if 'variable_mask' in dict_prepro.keys():
+            varmask = dict_prepro['variable_mask']
+
+        feature_selection_method = self.param.getVal('feature_selection')
+        if feature_selection_method is not None:
+            if varmask is None:
+                return False, 'Inconsistency error. Feature is True in parameter file but no variable mask loaded'
+
+            # ammend local variables
+            varnum = np.count_nonzero(varmask==1)
+            X = X[:, varmask]
+            
+            # ammend conveyor
+            self.conveyor.mask_variables(varmask)
+
+            LOG.info(f'Feature selection method: {feature_selection_method} completed. Selected {varnum} features')
+
+
+        if confidential:
+            # centering is compulsory    
+            X = X.astype(float)
+            X -= mean
+
+        scaling_method =self.param.getVal('modelAutoscaling')
+        if scaling_method is not None:
+
+            # Load rest of info in an extensible way
+            # This allows to add new variables keeping
+            # Retro-compatibility
+            if confidential :
+                if scaling_method == 'StandardScaler':
+                    X *= wg
+            else:
+                scaler = None
+                if 'scaler' in dict_prepro.keys():
+                    scaler = dict_prepro['scaler']
+
+                # Check consistency between parameter file and pickle info
+                if scaler is None:
+                    # methods like majority and matrix are forced to avoid scaling  
+                    if (self.param.getVal('model') not in non_scale_list) and (utils.isFingerprint(self.param.getVal('computeMD_method')) is False):   
+                        return False, f'Inconsistency error. Scaling method {scaling_method} defined but no scaler loaded'
+                
+                else:
+                    X = scaler.transform(X)
+
+        self.conveyor.addVal(X, 'xmatrix', 'X matrix', 'method', 'vars', 'Molecular descriptors')
+        LOG.info(f'X matrix preprocessed: {np.shape(X)}')
+
+        return True, 'OK'
 
     def extractInformation(self, ifile):
         '''
@@ -1349,7 +1489,6 @@ class Idata:
                         
         obj_num = index - 1  # the first line are variable names 
         xmatrix_shape = xmatrix.shape
-        print (xmatrix_shape)
 
         LOG.debug(f'loaded TSV with shape {xmatrix_shape}')
         LOG.debug(f'creating ymatrix from column {activity_param}')

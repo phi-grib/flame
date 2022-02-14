@@ -105,9 +105,13 @@ class Space:
 
     def _buildFingerprint (self):
         t1 = time.time()
+        print ('_buildFingerprint', np.shape(self.X))
         Xbit = [DataStructs.cDataStructs.CreateFromBitString("".join(i.astype(str))) for i in self.X]
+        
         LOG.info (f'{self.nobj} fingerprints converted in time: {time.time()-t1:.4f} secs')
         self.X = Xbit
+        print ('_buildFingerprint', np.shape(self.X))
+        
         self.Dmax = 1.0
         return
 
@@ -152,7 +156,10 @@ class Space:
 
     def _searchFingerprint (self, cutoff, numsel, metric):
 
-        LOG.info ('searching for similar compounds using Tanimoto similarity')
+        LOG.info ('Searching for similar compounds using Tanimoto similarity')
+        
+        LOG.info (f'X is {np.shape(self.X)}')
+        LOG.info (f'Xref is {np.shape(self.Xref)}')
 
         results = []
 
@@ -399,15 +406,14 @@ class Space:
             metric = 'smarts'
 
         self.metric = metric
-        
+
         if self.isFingerprint:
             if 'substructureFP' in self.MDs:
                 return self._searchSubStructure (numsel, metric)
             return self._searchFingerprint (cutoff, numsel, metric)
-        else:
-            return self._searchMD (cutoff, numsel, metric)
 
-        return False, 'unexpected condition'
+        return self._searchMD (cutoff, numsel, metric)
+
 
 
     def save_space(self):

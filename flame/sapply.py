@@ -113,13 +113,13 @@ class Sapply:
 
         '''
 
-        if self.param.getVal('input_type') != "smarts":
-            # Load scaler and variable mask and preprocess the data
-            success, result = self.preprocess(self.X)
-            if not success:
-                self.conveyor.setError(result)
-                return
-            self.X = result
+        # if self.param.getVal('input_type') != "smarts":
+        #     # Load scaler and variable mask and preprocess the data
+        #     success, result = self.preprocess(self.X)
+        #     if not success:
+        #         self.conveyor.setError(result)
+        #         return
+        #     self.X = result
 
         # instances space object
         space = Space(self.param, self.conveyor)
