@@ -699,8 +699,17 @@ class Documentation:
         
         if self.parameters.getVal('input_type')=='molecule':
             self.setInnerVal('Algorithm','descriptors', self.parameters.getVal('computeMD_method'))
+            cv_method = f'{self.parameters.getVal("ModelValidationCV")} ({str(self.parameters.getVal("ModelValidationN"))})'
+            self.setInnerVal('Algorithm','cross-validation', cv_method)
+            features = self.parameters.getVal("feature_selection")
+            if features is not None:
+                features += f' ({self.parameters.getVal("feature_number")})'
+            self.setInnerVal('Descriptors','descriptors', self.parameters.getVal('computeMD_method'))
+            self.setInnerVal('Descriptors','scaling', self.parameters.getVal('modelAutoscaling'))
+            self.setInnerVal('Descriptors','selection_method', features)
+
         elif self.parameters.getVal('input_type')=='model_ensemble':
-            self.setInnerVal('Algorithm','descriptors', 'ensemble models')
+            self.setInnerVal('Descriptors','descriptors', 'ensemble models')
 
         if self.parameters.getVal('conformal'):
             self.setInnerVal('AD_method', 'name', 'conformal prediction')

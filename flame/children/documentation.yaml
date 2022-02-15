@@ -156,6 +156,9 @@ Algorithm:
     descriptors:
       value: null
       description: 'Name of descriptor package/s used'
+    cross-validation:
+      value: null
+      description: 'Cross-validation method used for internal validation'
 
 Software:
   level: 2
@@ -179,7 +182,10 @@ Descriptors:
   value:
     descriptors:
       value: null
-      description: 'Descriptors used, list'
+      description: 'List of descriptors used'
+    scaling:
+      value: null
+      description: 'Scaling applied to the descriptors'
     initial_number: 
       value: null
       description: 'Initial number of descriptors'
