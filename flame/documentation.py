@@ -1082,8 +1082,11 @@ class Documentation:
         #Date, Date of model development and Date of QMRF.
         today = date.today().strftime("%B %d, %Y")
 
-        self.fields['Date']['value'] = today
-        self.fields['Date_of_QMRF']['value'] = today
+        if not self.fields['Date']['value']:
+            self.fields['Date']['value'] = today
+        
+        if not self.fields['Date_of_QMRF']['value']:
+            self.fields['Date_of_QMRF']['value'] = today
 
         #format, Format used(SDF,TSV)
         if self.parameters.getVal('input_type') == 'data':
