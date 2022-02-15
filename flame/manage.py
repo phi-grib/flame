@@ -361,6 +361,7 @@ def action_import(model):
             conveyor.addMeta('endpoint', endpoint)
             conveyor.addMeta('version', version)
             conveyor.addMeta('quantitative', True)
+            conveyor.addMeta('secret', True)
 
             conveyor.addVal (model_building_info,
                     'model_build_info',

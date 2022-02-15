@@ -332,9 +332,6 @@ class Conveyor:
             # keys are experim or ymatrix are numpy arrays
             # if 'numpy.ndarray' in str(type(ilist)):
             if isinstance(ilist, np.ndarray):
-
-                print ('*************', ikey, np.shape(ilist))
-
                 ilist = ilist[mask==1]
 
             # other keys are regular list
