@@ -797,6 +797,7 @@ class BaseEstimator:
             raise e
 
         LOG.info(f'Best parameters: {tclf.best_params_}')
+        LOG.debug (f'Best estimator found in {(time.time()-start):.2f} seconds')
         # LOG.info(f'Best score: {tclf.best_score_}')
 
         # myscore = cross_val_score(self.estimator, X, Y, scoring=metric, cv=self.cv)
@@ -804,16 +805,18 @@ class BaseEstimator:
         # y_pred = cross_val_predict(self.estimator, X, Y, cv=self.cv)
         # LOG.info (f'validation: {r2_score(Y, y_pred)}')
         
-        LOG.debug (f'Best estimator found in {(time.time()-start):.2f} seconds')
+        # Remove garbage in memory. Useful????
+        del(tclf)
+        gc.collect()
+
+        if self.param.getVal('conformal'):
+            return 
 
         LOG.info ('Estimating feature importances')
         start = time.time ()
         self.feature_importances, self.feature_importances_method = self.featureImportancesEstimation(self.estimator)
         LOG.info (f'Feature importances computed in {time.time()-start :.3f} seconds using {self.feature_importances_method}')
 
-        # Remove garbage in memory
-        del(tclf)
-        gc.collect()
 
     def regularProject(self, Xb):
         ''' projects a collection of query objects in a regular model,
