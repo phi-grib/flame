@@ -219,9 +219,10 @@ class Idata:
         scale_method = self.param.getVal('modelAutoscaling')
         confidential = self.param.getVal ('confidential')
         scaler = None
+        fingerprint = utils.isFingerprint(self.param.getVal('computeMD_method'))
 
         # prevent the scaling of input which must be binary or with preserved values
-        if confidential :
+        if confidential:
             xmean= np.mean(X, axis=0)
             wg = None
             if scale_method == 'StandardScaler':
@@ -229,17 +230,13 @@ class Idata:
                 wg = [1.0/sti if sti > 1.0e-7 else 0.00 for sti in st]
                 wg = np.array(wg)
 
-            # centering is compulsory in PLS
-            X = X.astype(float) 
-            X -= np.array(xmean)
-
         if scale_method is not None:
 
             if self.param.getVal('model') in non_scale_list:
                 scale_method = None
                 LOG.info(f"Method '{self.param.getVal('model')}' is incompatible with '{scale_method}' scaler. Forced to 'None'")
 
-            if utils.isFingerprint(self.param.getVal('computeMD_method')):
+            if fingerprint:
                 scale_method = None
                 LOG.info(f"Fingerprint descriptors cannot be scaled. Scaled method forced to 'None'")
 
@@ -271,6 +268,8 @@ class Idata:
             if scaler is not None:
                 if confidential:
                     if scale_method == 'StandardScaler':
+                        X_copy = X_copy.astype(float) 
+                        X_copy -= np.array(xmean)
                         X_copy *= wg 
                 else:
                     scaler = scaler.fit(X_copy)
@@ -300,20 +299,19 @@ class Idata:
 
             LOG.info(f'Feature selection method: {feature_selection_method} completed. Selected {varnum} features')
 
-        # Check X and Y integrity.
+        # Sanity check 
         if (nobj == 0) or (nvarx == 0):
             return False, 'No objects/variables in the matrix'
-
-        if len(Y) == 0:
-            self.failed = True
-            return False, 'No activity values'
 
         ###################################################################################
         ## STEP 3. APPLY SCALER
         ###################################################################################
         if scaler is not None:
             if confidential:
-                X *= wg 
+                if scale_method == 'StandardScaler':
+                    X = X.astype(float) 
+                    X -= np.array(xmean)
+                    X *= wg 
             else:
                 scaler = scaler.fit(X)
                 X = scaler.transform(X)
@@ -354,8 +352,6 @@ class Idata:
         and apply them to the X matrix passed as an argument'''
 
         X = self.conveyor.getVal('xmatrix')
-        # Y = self.conveyor.getVal('ymatrix')
-        # nobj, nvarx = np.shape(X)
 
         confidential = self.param.getVal('confidential')
         if confidential:
@@ -406,23 +402,21 @@ class Idata:
 
             LOG.info(f'Feature selection method: {feature_selection_method} completed. Selected {varnum} features')
 
-        if confidential:
-            # centering is compulsory    
-            X = X.astype(float)
-            X -= mean
-
+        fingerprint = utils.isFingerprint(self.param.getVal('computeMD_method'))
         scaling_method =self.param.getVal('modelAutoscaling')
-        if (utils.isFingerprint(self.param.getVal('computeMD_method'))):
+
+        if fingerprint:
             scaling_method = None
 
         if scaling_method is not None:
-
-            # Load rest of info in an extensible way
-            # This allows to add new variables keeping
-            # Retro-compatibility
             if confidential :
                 if scaling_method == 'StandardScaler':
+                    X = X.astype(float)
+                    X -= mean
                     X *= wg
+
+                    LOG.info(f'Data scaled with method: {scaling_method}')
+                
             else:
                 scaler = None
                 if 'scaler' in dict_prepro:
@@ -431,10 +425,12 @@ class Idata:
                 # Check consistency between parameter file and pickle info
                 if scaler is None:
                     # methods like majority and matrix are forced to avoid scaling  
-                    if (self.param.getVal('model') not in non_scale_list) and (utils.isFingerprint(self.param.getVal('computeMD_method')) is False):   
+                    if (self.param.getVal('model') not in non_scale_list) and (not fingerprint):   
                         return False, f'Inconsistency error. Scaling method {scaling_method} defined but no scaler loaded'
                 else:
                     X = scaler.transform(X)
+                    
+                    LOG.info(f'Data scaled with method: {scaling_method}')
 
         self.conveyor.addVal(X, 'xmatrix', 'X matrix', 'method', 'vars', 'Molecular descriptors')
 

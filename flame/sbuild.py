@@ -114,6 +114,11 @@ class Sbuild:
             LOG.debug(f'idata child {type(idata).__name__} completed `run()`')
 
         if not self.conveyor.getError():
+            success, results = idata.preprocess_create()
+            if not success:
+                self.conveyor.setError(results)
+
+        if not self.conveyor.getError():
             # check there is a suitable X and Y
             if not self.conveyor.isKey ('xmatrix'):
                 self.conveyor.setError(f'Failed to compute MDs')
