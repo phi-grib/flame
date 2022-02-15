@@ -24,6 +24,7 @@ from logging import ERROR
 import os
 import sys
 import pickle
+import yaml
 import shutil
 import tempfile
 # import multiprocessing as mp
@@ -34,6 +35,11 @@ from rdkit import Chem
 
 from standardiser import standardise
 
+from sklearn.preprocessing import MinMaxScaler 
+from sklearn.preprocessing import StandardScaler 
+from sklearn.preprocessing import RobustScaler
+from flame.stats import feature_selection
+from flame.stats.imbalance import run_imbalance  
 
 import flame.chem.sdfileutils as sdfutils
 import flame.chem.compute_md as computeMD
@@ -43,6 +49,7 @@ from flame.util import utils, get_logger, supress_log
 
 LOG = get_logger(__name__)
 
+non_scale_list = ['majority','logicalOR','matrix']
 
 class Idata:
 
@@ -158,6 +165,280 @@ class Idata:
                 os.dup2(self.stderr_save, self.stderr_fileno)   
             except:
                 pass
+
+    def preprocess_create (self):
+        ''' Preprocessing workflow. 
+        
+        It includes three steps:
+
+        1. imbalance: selects objects
+            only for qualitative endpoints
+            returns an object mask
+            calls conveyor.mask_objects
+        
+        2. feature selection: selects variables
+            if there is a scaler, a copy of the X matrix must be pre-scaled
+            returns a variable mask
+            calls conveyor.mask_variables
+        
+        3. scaler
+            called last
+
+        the variable mask and the scaled are saved in a pickl
+        '''
+
+        X = self.conveyor.getVal('xmatrix')
+        Y = self.conveyor.getVal('ymatrix')
+        nobj, nvarx = np.shape(X)
+
+        ###################################################################################
+        ## STEP 1. SUBSAMPLING
+        ###################################################################################
+        if self.param.getVal("imbalance") is not None and not self.param.getVal("quantitative"):
+            
+            success, objmask = run_imbalance(self.param.getVal('imbalance'), X, Y)
+            if not success:
+                return False, objmask
+
+            # ammend object variables
+            objnum = np.count_nonzero(objmask==1)
+            X = X[objmask==1]
+            Y = Y[objmask==1]
+            nobj= objnum
+
+            # ammend conveyor
+            self.conveyor.setVal('obj_num', objnum)
+            self.conveyor.mask_objects(objmask)
+            
+            LOG.info(f'{self.param.getVal("imbalance")} performed')
+            LOG.info(f'Number of objects after sampling: {objnum}')
+
+        ###################################################################################
+        ## INITIALIZE SCALER
+        ###################################################################################
+        scale_method = self.param.getVal('modelAutoscaling')
+        confidential = self.param.getVal ('confidential')
+        scaler = None
+
+        # prevent the scaling of input which must be binary or with preserved values
+        if confidential :
+            xmean= np.mean(X, axis=0)
+            wg = None
+            if scale_method == 'StandardScaler':
+                st = np.std(X, axis=0, ddof=1)
+                wg = [1.0/sti if sti > 1.0e-7 else 0.00 for sti in st]
+                wg = np.array(wg)
+
+            # centering is compulsory in PLS
+            X = X.astype(float) 
+            X -= np.array(xmean)
+
+        if scale_method is not None:
+
+            if self.param.getVal('model') in non_scale_list:
+                scale_method = None
+                LOG.info(f"Method '{self.param.getVal('model')}' is incompatible with '{scale_method}' scaler. Forced to 'None'")
+
+            if utils.isFingerprint(self.param.getVal('computeMD_method')):
+                scale_method = None
+                LOG.info(f"Fingerprint descriptors cannot be scaled. Scaled method forced to 'None'")
+
+            if scale_method is not None:
+                if scale_method == 'StandardScaler':
+                    scaler = StandardScaler()
+                elif scale_method == 'MinMaxScaler':
+                    scaler = MinMaxScaler(copy=True, feature_range=(0,1))
+                elif scale_method == 'RobustScaler':
+                    scaler = RobustScaler()
+                else:
+                    return False, 'Scaler not recognized'
+
+            LOG.debug(f'scaler :{scale_method} initialized')
+          
+        ###################################################################################
+        ## STEP 2. FEATURE SELECTION
+        ###################################################################################
+        # Run feature selection. Move to a instance method.
+        varmask = None
+        feature_selection_method = self.param.getVal("feature_selection")
+
+        if feature_selection_method is not None:
+            num_features = self.param.getVal("feature_number")
+            quantitative = self.param.getVal("quantitative")
+            X_copy = X.copy()
+            Y_copy = Y.copy()
+
+            if scaler is not None:
+                if confidential:
+                    if scale_method == 'StandardScaler':
+                        X_copy *= wg 
+                else:
+                    scaler = scaler.fit(X_copy)
+                    X_copy = scaler.transform(X_copy)
+
+            success, varmask = feature_selection.run_feature_selection(X_copy, Y_copy, 
+                feature_selection_method, num_features, quantitative)
+
+            LOG.debug(f'Feature selection :{feature_selection_method} finished')
+
+            if not success:
+                return False, varmask
+
+            # ammend local variables
+            varnum = np.count_nonzero(varmask==1)
+            X = X[:, varmask]
+            nvarx = varnum
+            
+            # ammend conveyor
+            self.conveyor.mask_variables(varmask)
+
+            # ammend xmean and wg
+            if confidential:
+                xmean = xmean[varmask==1]
+                if wg is not None:
+                    wg = wg[varmask==1]
+
+            LOG.info(f'Feature selection method: {feature_selection_method} completed. Selected {varnum} features')
+
+        # Check X and Y integrity.
+        if (nobj == 0) or (nvarx == 0):
+            return False, 'No objects/variables in the matrix'
+
+        if len(Y) == 0:
+            self.failed = True
+            return False, 'No activity values'
+
+        ###################################################################################
+        ## STEP 3. APPLY SCALER
+        ###################################################################################
+        if scaler is not None:
+            if confidential:
+                X *= wg 
+            else:
+                scaler = scaler.fit(X)
+                X = scaler.transform(X)
+
+            LOG.info(f'Data scaled with method: {scale_method}')
+
+        ###################################################################################
+        ## SAVE
+        ###################################################################################
+        self.conveyor.addVal(X, 'xmatrix', 'X matrix', 'method', 'vars', 'Molecular descriptors')
+
+        if confidential:
+            prepro = { 'mean': xmean.tolist() }
+            
+            if wg is not None:
+                prepro['wg'] = wg.tolist() 
+
+            if varmask is not None:
+                prepro['variable_mask'] = varmask.tolist()
+
+            prepro_path = os.path.join(self.param.getVal('model_path'),'confidential_preprocess.yaml')            
+            with open(prepro_path, 'w') as f:
+                yaml.dump (prepro, f)
+        else:
+            prepro = {'scaler': scaler,'variable_mask': varmask, 'version':1}
+
+            prepro_path = os.path.join(self.param.getVal('model_path'),'preprocessing.pkl')            
+            with open(prepro_path, 'wb') as handle:
+                pickle.dump(prepro, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+        LOG.debug('Preprocesing saved as:{}'.format(prepro_path))
+
+        return True, 'OK'
+
+
+    def preprocess_apply (self):
+        ''' This function loads the scaler and variable mask from a pickle file 
+        and apply them to the X matrix passed as an argument'''
+
+        X = self.conveyor.getVal('xmatrix')
+        # Y = self.conveyor.getVal('ymatrix')
+        # nobj, nvarx = np.shape(X)
+
+        confidential = self.param.getVal('confidential')
+        if confidential:
+            mean = None
+            wg = None
+
+            prepro_file = os.path.join(self.param.getVal('model_path'),'confidential_preprocess.yaml')    
+            LOG.debug(f'Loading model from yaml file, path: {prepro_file}')
+
+            try:
+                with open(prepro_file, 'r') as f:
+                    dict_prepro = yaml.safe_load (f)
+    
+                if 'mean' in dict_prepro:
+                    mean = np.array(dict_prepro['mean'])
+                
+                if 'wg' in dict_prepro:
+                    wg = np.array(dict_prepro['wg'])
+
+            except FileNotFoundError:
+                return False, f'No valid preprocessing tools found at: {prepro_file}'
+
+        else:
+            prepro_file = os.path.join(self.param.getVal('model_path'), 'preprocessing.pkl')
+            LOG.debug(f'Loading model from pickle file, path: {prepro_file}')
+            try:
+                with open(prepro_file, "rb") as input_file:
+                    dict_prepro = pickle.load(input_file)
+            except FileNotFoundError:
+                return False, f'No valid preprocessing tools found at: {prepro_file}'
+
+        # Retro-compatibility
+        varmask = None
+        if 'variable_mask' in dict_prepro:
+            varmask = np.array(dict_prepro['variable_mask'])
+
+        feature_selection_method = self.param.getVal('feature_selection')
+        if feature_selection_method is not None:
+            if varmask is None:
+                return False, 'Inconsistency error. Feature is True in parameter file but no variable mask loaded'
+
+            # ammend local variables
+            X = X[:, varmask]
+            varnum = np.count_nonzero(varmask==1)
+
+            # ammend conveyor
+            self.conveyor.mask_variables(varmask)
+
+            LOG.info(f'Feature selection method: {feature_selection_method} completed. Selected {varnum} features')
+
+        if confidential:
+            # centering is compulsory    
+            X = X.astype(float)
+            X -= mean
+
+        scaling_method =self.param.getVal('modelAutoscaling')
+        if (utils.isFingerprint(self.param.getVal('computeMD_method'))):
+            scaling_method = None
+
+        if scaling_method is not None:
+
+            # Load rest of info in an extensible way
+            # This allows to add new variables keeping
+            # Retro-compatibility
+            if confidential :
+                if scaling_method == 'StandardScaler':
+                    X *= wg
+            else:
+                scaler = None
+                if 'scaler' in dict_prepro:
+                    scaler = dict_prepro['scaler']
+
+                # Check consistency between parameter file and pickle info
+                if scaler is None:
+                    # methods like majority and matrix are forced to avoid scaling  
+                    if (self.param.getVal('model') not in non_scale_list) and (utils.isFingerprint(self.param.getVal('computeMD_method')) is False):   
+                        return False, f'Inconsistency error. Scaling method {scaling_method} defined but no scaler loaded'
+                else:
+                    X = scaler.transform(X)
+
+        self.conveyor.addVal(X, 'xmatrix', 'X matrix', 'method', 'vars', 'Molecular descriptors')
+
+        return True, 'OK'
 
     def extractInformation(self, ifile):
         '''
@@ -964,6 +1245,7 @@ class Idata:
 
         LOG.debug('(@ammend_objects) going to remove these'
                   'indexes from manifest: {}'.format(remove_index))
+
         self.conveyor.setVal('obj_num', obj_num)
 
         objkeys = self.conveyor.objectKeys()
@@ -1199,7 +1481,6 @@ class Idata:
                         
         obj_num = index - 1  # the first line are variable names 
         xmatrix_shape = xmatrix.shape
-        print (xmatrix_shape)
 
         LOG.debug(f'loaded TSV with shape {xmatrix_shape}')
         LOG.debug(f'creating ymatrix from column {activity_param}')

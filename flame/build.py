@@ -92,6 +92,11 @@ class Build:
                 LOG.info (f'CONFIDENTIALITY AUDIT: the model was set to PLSDA, '
                 f'the original method {original_method} was not suitable to build confidential models')
         
+        if self.param.getVal('conformal'):
+            self.param.setVal('conformal', False)
+            LOG.info ('CONFIDENTIALITY AUDIT: conformal was set to False. '
+            'Conformal models are not supported for now in confidential models')
+
         parameters_file_path = utils.model_path(self.model, 0)
         parameters_file_name = os.path.join (parameters_file_path,
                                             'parameters.yaml')
@@ -141,6 +146,11 @@ class Build:
             idata = Idata(self.param, self.conveyor, input_source)
         idata.run() 
         LOG.debug(f'idata child {type(idata).__name__} completed `run()`')
+
+        if not self.conveyor.getError():
+            success, results = idata.preprocess_create()
+            if not success:
+                self.conveyor.setError(results)
 
         if not self.conveyor.getError():
             # check there is a suitable X and Y

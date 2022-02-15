@@ -312,8 +312,8 @@ def build_cmd(arguments, output_format=None):
                     return False, 'Unable to copy input file to model directory'
 
         # check that the local copy of the input file exists
-        if not os.path.isfile(lfile):
-            return False, 'No training series found'
+        # if not os.path.isfile(lfile):
+        #     return False, 'No training series found'
 
         # run the model with the input file
         success, results = build.run(lfile)

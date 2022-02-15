@@ -46,6 +46,9 @@ class Slearn:
         The scaler and the variable mask are saved in a pickl file 
         '''
  
+        LOG.info ('********************* preprocess slearn')
+        LOG.info (self.param.getVal('modelAutoscaling'))
+
         self.scaler = None
         
         # update if other fingerprints are added
@@ -107,10 +110,10 @@ class Slearn:
         '''
 
         # pre-process data
-        success, message = self.preprocess()
-        if not success:
-            self.conveyor.setError(message)
-            return
+        # success, message = self.preprocess()
+        # if not success:
+        #     self.conveyor.setError(message)
+        #     return
 
         # instances space object
         space = Space(self.param, self.conveyor)

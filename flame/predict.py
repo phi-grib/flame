@@ -117,6 +117,11 @@ class Predict:
         LOG.debug(f'idata child {type(idata).__name__} completed `run()`')
 
         if not self.conveyor.getError():
+            success, results = idata.preprocess_apply()
+            if not success:
+                self.conveyor.setError(results)
+
+        if not self.conveyor.getError():
             # make sure there is X data
             if not self.conveyor.isKey('xmatrix'):
                 LOG.debug(f'Failed to compute MDs')

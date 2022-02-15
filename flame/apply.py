@@ -21,10 +21,10 @@
 # along with Flame.  If not, see <http://www.gnu.org/licenses/>.
 
 import numpy as np
-import pickle
-import os
+# import pickle
+# import yaml
+# import os
 import time
-import yaml
 
 from flame.stats.RF import RF
 from flame.stats.SVM import SVM
@@ -65,77 +65,77 @@ class Apply:
                         ('external_model', external_model)]
 
 
-    def cpreprocess (self, X):
-        ''' preprocesing for confidential models'''
+    # def cpreprocess (self, X):
+    #     ''' preprocesing for confidential models'''
 
-        path = utils.model_path(self.param.getVal('endpoint'), 0)
-        cmeta = os.path.join(path, 'confidential_preprocess.yaml')
-        with open(cmeta, 'r') as f:
-            cmodel = yaml.safe_load (f)
+    #     path = utils.model_path(self.param.getVal('endpoint'), 0)
+    #     cmeta = os.path.join(path, 'confidential_preprocess.yaml')
+    #     with open(cmeta, 'r') as f:
+    #         cmodel = yaml.safe_load (f)
         
-        X = X.astype(float)
-        X -= np.array(cmodel['xmean'])
+    #     X = X.astype(float)
+    #     X -= np.array(cmodel['xmean'])
         
-        if self.param.getVal('modelAutoscaling') == 'StandardScaler':
-            X *= np.array(cmodel['wg']) 
+    #     if self.param.getVal('modelAutoscaling') == 'StandardScaler':
+    #         X *= np.array(cmodel['wg']) 
 
-        return True, X
+    #     return True, X
 
-    def preprocess(self, X):
-        ''' This function loads the scaler and variable mask from a pickle file 
-        and apply them to the X matrix passed as an argument'''
+    # def preprocess(self, X):
+    #     ''' This function loads the scaler and variable mask from a pickle file 
+    #     and apply them to the X matrix passed as an argument'''
 
-        prepro_file = os.path.join(self.param.getVal('model_path'), 'preprocessing.pkl')
+    #     prepro_file = os.path.join(self.param.getVal('model_path'), 'preprocessing.pkl')
 
-        LOG.debug(f'Loading model from pickle file, path: {prepro_file}')
-        try:
-            with open(prepro_file, "rb") as input_file:
-                dict_prepro = pickle.load(input_file)
-        except FileNotFoundError:
-            return False, f'No valid preprocessing tools found at: {prepro_file}'
+    #     LOG.debug(f'Loading model from pickle file, path: {prepro_file}')
+    #     try:
+    #         with open(prepro_file, "rb") as input_file:
+    #             dict_prepro = pickle.load(input_file)
+    #     except FileNotFoundError:
+    #         return False, f'No valid preprocessing tools found at: {prepro_file}'
 
-        # Load version
-        self.version = dict_prepro['version']
+    #     # Load version
+    #     self.version = dict_prepro['version']
 
-        # check if the pickle was created with a compatible version
-        # currently 1
-        if self.version is not 1:
-            return False, 'Incompatible preprocessing version'   
+    #     # check if the pickle was created with a compatible version
+    #     # currently 1
+    #     if self.version is not 1:
+    #         return False, 'Incompatible preprocessing version'   
     
-        # Load rest of info in an extensible way
-        # This allows to add new variables keeping
-        # Retro-compatibility
-        self.variable_mask = None
-        if 'variable_mask' in dict_prepro.keys():
-            self.variable_mask = dict_prepro['variable_mask']
+    #     # Load rest of info in an extensible way
+    #     # This allows to add new variables keeping
+    #     # Retro-compatibility
+    #     self.variable_mask = None
+    #     if 'variable_mask' in dict_prepro.keys():
+    #         self.variable_mask = dict_prepro['variable_mask']
 
-        if self.param.getVal('feature_selection') and self.variable_mask is None:
-            return False, 'Inconsistency error. Feature is True in parameter file but no variable mask loaded'
+    #     if self.param.getVal('feature_selection') and self.variable_mask is None:
+    #         return False, 'Inconsistency error. Feature is True in parameter file but no variable mask loaded'
 
-        # apply variable_mask
-        if self.param.getVal("feature_selection"):
-            X = X[:, self.variable_mask]
+    #     # apply variable_mask
+    #     if self.param.getVal("feature_selection"):
+    #         X = X[:, self.variable_mask]
 
-        if self.param.getVal('modelAutoscaling') is None:
-            return True, X
+    #     if self.param.getVal('modelAutoscaling') is None:
+    #         return True, X
 
-        # Load rest of info in an extensible way
-        # This allows to add new variables keeping
-        # Retro-compatibility
-        self.scaler = None
-        if 'scaler' in dict_prepro.keys():
-            self.scaler = dict_prepro['scaler']
+    #     # Load rest of info in an extensible way
+    #     # This allows to add new variables keeping
+    #     # Retro-compatibility
+    #     self.scaler = None
+    #     if 'scaler' in dict_prepro.keys():
+    #         self.scaler = dict_prepro['scaler']
 
-        # Check consistency between parameter file and pickle info
-        non_scale_list = ['majority','logicalOR','matrix']
-        if self.scaler is None:
-            # methods like majority and matrix are forced to avoid scaling 
-            if self.param.getVal('model') in non_scale_list:   
-                return True, X
-            else:
-                return False, 'Inconsistency error. Scaling method defined but no Scaler loaded'
+    #     # Check consistency between parameter file and pickle info
+    #     non_scale_list = ['majority','logicalOR','matrix']
+    #     if self.scaler is None:
+    #         # methods like majority and matrix are forced to avoid scaling 
+    #         if self.param.getVal('model') in non_scale_list:   
+    #             return True, X
+    #         else:
+    #             return False, 'Inconsistency error. Scaling method defined but no Scaler loaded'
         
-        return True, self.scaler.transform(X)
+    #     return True, self.scaler.transform(X)
 
     def run_internal(self): 
         ''' 
@@ -171,17 +171,15 @@ class Apply:
             self.conveyor.setError('Failed to generate MDs')
             return
             
+        # TODO: support confidential preprocessing
         # Load scaler and variable mask and preprocess the data
-        if self.param.getVal('confidential'):
-            success, result = self.cpreprocess(X)
-        else:
-            success, result = self.preprocess(X)
-
-        if not success:
-            self.conveyor.setError(result)
-            return          
-
-        X = result
+        # if self.param.getVal('confidential'):
+        #     success, result = self.cpreprocess(X)
+        #     if not success:
+        #         self.conveyor.setError(result)
+        #         return          
+            
+        #     X = result
 
         # instantiate an appropriate child of base_model
         model = None
@@ -214,9 +212,9 @@ class Apply:
             end = time.time()
             LOG.debug(f'Model loaded with message "{results}" in {(end-start):.2f} seconds')
 
-        if not success:
-            self.conveyor.setError(f'Failed to load model estimator, with error "{results}"')
-            return 
+            if not success:
+                self.conveyor.setError(f'Failed to load model estimator, with error "{results}"')
+                return 
 
         # project the X matrix into the model and save predictions in self.conveyor
         model.project(X)

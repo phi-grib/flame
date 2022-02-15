@@ -152,7 +152,7 @@ class Space:
 
     def _searchFingerprint (self, cutoff, numsel, metric):
 
-        LOG.info ('searching for similar compounds using Tanimoto similarity')
+        LOG.info ('Searching for similar compounds using Tanimoto similarity')
 
         results = []
 
@@ -170,6 +170,8 @@ class Space:
 
             #TODO Check speed BulkTanimoto
             # for each compound in the space
+
+
             for j, jvector in enumerate(self.Xref):
 
                 d = DataStructs.FingerprintSimilarity(ifp,jvector, metric=DataStructs.TanimotoSimilarity)
@@ -399,15 +401,14 @@ class Space:
             metric = 'smarts'
 
         self.metric = metric
-        
+
         if self.isFingerprint:
             if 'substructureFP' in self.MDs:
                 return self._searchSubStructure (numsel, metric)
             return self._searchFingerprint (cutoff, numsel, metric)
-        else:
-            return self._searchMD (cutoff, numsel, metric)
 
-        return False, 'unexpected condition'
+        return self._searchMD (cutoff, numsel, metric)
+
 
 
     def save_space(self):
