@@ -471,6 +471,23 @@ class Idata:
         success_list = []
         obj_num = 0
 
+        # preload the candidate name labels
+        sdf_field = []
+        sdf_name =self.param.getVal('SDFile_name')
+        if ',' in sdf_name:
+            sdf_field = [x.strip() for x in sdf_name.split(',')] 
+        elif isinstance(sdf_name, str):
+            sdf_field = [sdf_name]
+        elif isinstance(sdf_name, list):
+            sdf_field = sdf_name.copy() 
+        sdf_field.append('_Name')
+
+        # preload the parameters in a variable to avoid getting this value for every mol
+        sdf_id = self.param.getVal('SDFile_id')
+        sdf_co = self.param.getVal('SDFile_complementary')
+        sdf_ex = self.param.getVal('SDFile_experimental')
+        sdf_ac = self.param.getVal('SDFile_activity')
+
         # Iterate for every molecule inside the SDFile
         for mol in suppl:
 
@@ -484,33 +501,34 @@ class Idata:
 
             # extract the molecule name, using a sdfileutils algorithm 
             name = sdfutils.getName(
-                mol, count=obj_num, field=self.param.getVal('SDFile_name'))
+                # mol, count=obj_num, field=self.param.getVal('SDFile_name'))
+                mol, count=obj_num, field=sdf_field)
 
             # extracts molecule ID value, if any.
             idv = ''    
-            if self.param.getVal('SDFile_id') is not None:
-                if isinstance (self.param.getVal('SDFile_id'),str):
-                    idv = sdfutils.getStr(mol, self.param.getVal('SDFile_id'))
+            if sdf_id is not None:
+                if isinstance (sdf_id,str):
+                    idv = sdfutils.getStr(mol, sdf_id)
 
             # extracts complementary information, if any.
             cmp = ''    
-            if self.param.getVal('SDFile_complementary') is not None:
-                if isinstance (self.param.getVal('SDFile_complementary'),str):
-                    cmp = sdfutils.getStr(mol, self.param.getVal('SDFile_complementary'))
+            if sdf_co is not None:
+                if isinstance (sdf_co,str):
+                    cmp = sdfutils.getStr(mol, sdf_co)
 
             # extracts biological information (activity) which is used as dependent variable
             # for the model training and is provided as a prediction for new compounds
             bio = None
-            if self.param.getVal('SDFile_activity') is not None:
-                bio = sdfutils.getVal(mol, self.param.getVal('SDFile_activity'))
+            if sdf_ac is not None:
+                bio = sdfutils.getVal(mol, sdf_ac)
             
             # extracts experimental information, if any.
             # note that experimental information is used only in prediction, as a value
             # which overrides any model predicted value
             exp = None    
-            if self.param.getVal('SDFile_experimental') is not None:
-                if isinstance (self.param.getVal('SDFile_experimental'),str):
-                    exp = sdfutils.getVal(mol, self.param.getVal('SDFile_experimental'))
+            if sdf_ex is not None:
+                if isinstance (sdf_ex,str):
+                    exp = sdfutils.getVal(mol, sdf_ex)
 
             # generates a SMILES
             sml = None
@@ -622,29 +640,35 @@ class Idata:
             from chembl_structure_pipeline import standardizer as embl
             from chembl_structure_pipeline import checker
 
+        # preload the candidate name labels
+        sdf_field = []
+        sdf_name =self.param.getVal('SDFile_name')
+        if ',' in sdf_name:
+            sdf_field = [x.strip() for x in sdf_name.split(',')] 
+        elif isinstance(sdf_name, str):
+            sdf_field = [sdf_name]
+        elif isinstance(sdf_name, list):
+            sdf_field = sdf_name.copy() 
+        sdf_field.append('_Name')
+
         with open(ofile, 'w') as fo:
             mcount = 0
-            # merror = 0
-            for m in suppl:
 
+            for m in suppl:
                 # molecule not recognised by RDKit
                 if m is None:
                     LOG.error('Unable to process molecule'
                               f' #{mcount+1} in {ifile}')
                     continue
 
-                name = sdfutils.getName(m, count=mcount,
-                                    field=self.param.getVal('SDFile_name'))
+                name = sdfutils.getName(m, count=mcount, field=sdf_field)
 
                 parent = None
 
                 if 'standardize' in method:
                     try:
-
                         parent = standardise.run(Chem.MolToMolBlock(m))
-
                     except standardise.StandardiseException as e:
-
                         if e.name == "no_non_salt":
                             # very commong warning, use parent mol and proceed
                             LOG.debug(f'"No non salt error" found. Skiped standardize for mol'

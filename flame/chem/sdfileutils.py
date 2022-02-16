@@ -132,7 +132,7 @@ def split_SDFile(ifile, num_chunks):
     return True, (temp_files_name, temp_files_size)
 
 
-def getName(mol, count=1, field=None):
+def getName(mol, count=1, field=['_Name']):
     ''' returns a name for the mol object provided as argument
         Names are extracted from the SDFile fields, using the list of
         fields provided
@@ -143,18 +143,18 @@ def getName(mol, count=1, field=None):
     '''
     name = ''
 
-    candidates = []
-    if field:
-        if isinstance(field, list):
-            # if we do not deep copy, the original 
-            # name list is modified and grows without limits
-            candidates = field.copy()
-        elif isinstance(field, str):
-            candidates = [field]
+    # candidates = []
+    # if field:
+    #     if isinstance(field, list):
+    #         # if we do not deep copy, the original 
+    #         # name list is modified and grows without limits
+    #         candidates = field.copy()
+    #     elif isinstance(field, str):
+    #         candidates = [field]
 
-    candidates.append('_Name')
+    # candidates.append('_Name')
 
-    for iname in candidates:
+    for iname in field:
         if mol.HasProp(iname):
             # in some cases the name contains not UTF-8 codes producing errors
             try:
