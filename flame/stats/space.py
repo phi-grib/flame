@@ -407,10 +407,10 @@ class Space:
 
         if self.isFingerprint:
             if 'substructureFP' in self.MDs:
-                return True, self._searchSubStructure (numsel, metric)
-            return True, self._searchFingerprint (cutoff, numsel, metric)
+                return self._searchSubStructure (numsel, metric)
+            return self._searchFingerprint (cutoff, numsel, metric)
 
-        return True, self._searchMD (cutoff, numsel, metric)
+        return self._searchMD (cutoff, numsel, metric)
 
 
 
