@@ -25,9 +25,6 @@
 from flame.stats.base_model import BaseEstimator
 from sklearn.cross_decomposition import PLSRegression
 import numpy as np
-from flame.util import utils
-import os.path
-import yaml
 
 from flame.util import get_logger
 LOG = get_logger(__name__)
@@ -55,24 +52,22 @@ class PLS_r(PLSRegression):
             to the established threshold
         
     """
-
+    def inject (self, cmodel):
+        self.exo_coef = np.array(cmodel['coef']) 
+        self.exo_y = cmodel['ymean']
+        
     def predict(self, X, copy=True):
+
+        # if this is a confidential model, use the injected coefficients
+        if hasattr(self,'exo_coef'):
+            nobj = np.shape(X)[0]
+            yp = X @ self.exo_coef 
+            yp += self.exo_y
+            return np.reshape(yp, nobj)
+
         # Apply ravel to the list of predictions so a vector is 
         # returned instead of a matrix
-
-        results = super(PLS_r, self).predict(X, copy=True).ravel()
-        return results
-
-    def cpredict (self, X, model_file_name):
-
-        nobj, nvar = np.shape(X)
-
-        with open(model_file_name, 'r') as f:
-            cmodel = yaml.safe_load (f)
-
-        yp = X @ np.array(cmodel['coef']) 
-        yp += cmodel['ymean']
-        return np.reshape(yp, nobj)
+        return super(PLS_r, self).predict(X, copy=True).ravel()
 
 class PLSR(BaseEstimator):
     """
@@ -159,41 +154,6 @@ class PLSR(BaseEstimator):
         # Fit estimator to the data
         self.regularBuild(X, Y)
         
-        if self.param.getVal ('confidential'):
-
-            nobj, nvar = np.shape(X)
-
-            cmodel = {}
-            cmodel['nobj'] = nobj
-            cmodel['nvarx'] = nvar
-            cmodel['modelID'] = self.conveyor.getMeta('modelID')
-            cmodel['quantitative'] = True
-            cmodel['model'] = 'PLSR'
-            cmodel['confidential'] = True
-            cmodel['secret'] = True
-            cmodel['conformal'] = self.param.getVal('conformal')
-            cmodel['conformal_confidence'] = self.param.getVal('conformal_confidence')
-            cmodel['coef'] = self.estimator.coef_.tolist()
-            cmodel['ymean'] = np.mean(Y).tolist()
-
-            model_file_path = utils.model_path(self.param.getVal('endpoint'), 0)
-            model_file_name = os.path.join (model_file_path, 'confidential_model.yaml')
-            with open(model_file_name, 'w') as f:
-                yaml.dump (cmodel, f)
-
-            return True, results
-
-        # The model coefficients can be easily extracted and stored for building 
-        # confidential models. These coefficients can be used to predict the properties of
-        # new compounds, simply by multiplying the X ( X @ coef ), as shown below
-        # coef = self.estimator.coef_
-        # print (coef)
-        # yp = self.estimator.predict(X)
-        # yp2 = X @ coef 
-        # yp2 += np.mean(Y)
-        # yp2 = np.reshape(yp2, (self.nobj))
-        # print (yp, yp2)
-
         if not self.param.getVal('conformal'):
             return True, results
 
@@ -202,12 +162,5 @@ class PLSR(BaseEstimator):
         
         if success:
             return True, results
-        else:
-            return False, error
 
-    # def predict (self, X, copy=True):
-
-    #     if self.param.getVal('confidential'):
-    #         return self.cpredict (X)
-
-    #     return (PLS_r).predict (X,copy)
+        return False, error

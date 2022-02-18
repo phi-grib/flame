@@ -92,6 +92,7 @@ class Build:
                 LOG.info (f'CONFIDENTIALITY AUDIT: the model was set to PLSDA, '
                 f'the original method {original_method} was not suitable to build confidential models')
         
+        # TODO: conformal support
         if self.param.getVal('conformal'):
             self.param.setVal('conformal', False)
             LOG.info ('CONFIDENTIALITY AUDIT: conformal was set to False. '

@@ -204,17 +204,17 @@ class Apply:
         if self.conveyor.getError():
             return
 
-        if not self.param.getVal('confidential'):
+        # if not self.param.getVal('confidential'):
             # try to load model previously built
-            start = time.time()
-            LOG.debug('Loading model from pickle file...')
-            success, results = model.load_model()
-            end = time.time()
-            LOG.debug(f'Model loaded with message "{results}" in {(end-start):.2f} seconds')
+        start = time.time()
+        LOG.debug('Loading model from pickle file...')
+        success, results = model.load_model()
+        end = time.time()
+        LOG.debug(f'Model loaded with message "{results}" in {(end-start):.2f} seconds')
 
-            if not success:
-                self.conveyor.setError(f'Failed to load model estimator, with error "{results}"')
-                return 
+        if not success:
+            self.conveyor.setError(f'Failed to load model estimator, with error "{results}"')
+            return 
 
         # project the X matrix into the model and save predictions in self.conveyor
         model.project(X)

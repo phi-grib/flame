@@ -21,6 +21,7 @@
 # along with Flame.  If not, see <http://www.gnu.org/licenses/>.
 
 import pickle
+import yaml
 import numpy as np
 import os
 import time
@@ -822,12 +823,7 @@ class BaseEstimator:
         ''' projects a collection of query objects in a regular model,
          for obtaining predictions '''
 
-        if self.param.getVal('confidential'):
-            model_file_path = utils.model_path(self.param.getVal('endpoint'), 0)
-            model_file_name = os.path.join (model_file_path,'confidential_model.yaml')
-            Yp = self.estimator.cpredict(Xb, model_file_name)
-        else:   
-            Yp = self.estimator.predict(Xb)
+        Yp = self.estimator.predict(Xb)
 
         if Yp is None:
             return False, 'prediction error'
@@ -1187,20 +1183,6 @@ class BaseEstimator:
     def project(self, Xb):
         ''' Uses the X matrix provided as argument to predict Y'''
 
-        # if self.estimator == None:
-        #     self.conveyor.setError('failed to load classifier')
-        #     return
-        
-        # Apply variable mask to prediction vector/matrix
-        # if self.param.getVal("feature_selection"):
-        #     Xb = Xb[:, self.variable_mask]
-        # Scale prediction vector/matrix
-        # if self.param.getVal('modelAutoscaling'):
-            # Xb = Xb-self.mux
-            # Xb = Xb*self.wgx
-            # Xb = self.scaler.transform(Xb)
-        # Select the type of projection
-
         if not self.param.getVal('conformal'):
             self.regularProject(Xb)
         else:
@@ -1209,13 +1191,45 @@ class BaseEstimator:
     def save_model(self):
         ''' This function saves estimator and scaler in a pickle file '''
 
-        # This dictionary contain all the objects which will be needed
-        # for prediction
-
         # Uncoment to inspect estimator contents 
         # print (self.estimator.__dict__)
         # print (self.estimator.estimators_[0].__dict__)
 
+        # for confidential models, save extra info required to secret models
+        if self.param.getVal ('confidential'):
+
+            nobj, nvar = np.shape(self.X)
+
+            cmodel = {}
+            cmodel['nobj'] = nobj
+            cmodel['nvarx'] = nvar
+            cmodel['modelID'] = self.conveyor.getMeta('modelID')
+            cmodel['quantitative'] = True
+            cmodel['model'] = 'PLSR'  # now this is the ONLY method
+            cmodel['confidential'] = True
+            cmodel['secret'] = True
+            cmodel['conformal'] = self.param.getVal('conformal')
+            cmodel['conformal_confidence'] = self.param.getVal('conformal_confidence')
+            cmodel['coef'] = self.estimator.coef_.tolist()
+            cmodel['ymean'] = np.mean(self.Y).tolist()
+
+            model_file_path = utils.model_path(self.param.getVal('endpoint'), 0)
+            model_file_name = os.path.join (model_file_path, 'confidential_model.yaml')
+            
+            conf_validation = {}
+            for item in self.conveyor.getVal('model_valid_info'):
+                conf_validation[item[0]]=float(item[2])
+
+            with open(model_file_name, 'w') as f:
+                yaml.dump (conf_validation, f)
+                yaml.dump (cmodel, f)
+
+            LOG.debug(f'Model saved in confidential mode as:{model_file_name}')
+
+            return
+
+        # for regular models dave a dictionary with the estimator and other information
+        # required for prediction
         dict_estimator = {'estimator' : self.estimator,
              'version': 1,
              'libraries': utils.module_versions()}
@@ -1225,7 +1239,7 @@ class BaseEstimator:
         with open(model_pkl, 'wb') as handle:
             pickle.dump(dict_estimator, handle, protocol=pickle.HIGHEST_PROTOCOL)
         
-        LOG.debug('Model saved as:{}'.format(model_pkl))
+        LOG.debug(f'Model saved as:{model_pkl}')
 
         # Add estimator parameters to Conveyor
         params = dict()
@@ -1242,6 +1256,21 @@ class BaseEstimator:
     def load_model(self):
         ''' This function loads estimator and scaler in a pickle file '''
 
+        # for confidential models, load minimal model description from a yaml
+        if self.param.getVal('confidential'):
+
+            model_file_path = utils.model_path(self.param.getVal('endpoint'), 0)
+            model_file_name = os.path.join (model_file_path,'confidential_model.yaml')
+            with open(model_file_name, 'r') as f:
+                cmodel = yaml.safe_load (f)
+            
+            # note that the child basemodel should initialize an empty
+            # estimator, allowing to inject the information required to predict
+            self.estimator.inject(cmodel)
+            
+            return True, 'model loaded'
+
+        # for regular models, load estimator from a pickl file
         model_pkl = os.path.join(self.param.getVal('model_path'),'estimator.pkl')
         LOG.debug(f'Loading model from pickle file, path: {model_pkl}')
         try:
