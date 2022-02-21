@@ -58,6 +58,7 @@ class PLS_da(PLSRegression):
         
     """
     
+    #TODO: investigate the need of injecting threshold as well
     def inject (self, cmodel):
         self.exo_coef = np.array(cmodel['coef']) 
         self.exo_y = cmodel['ymean']
