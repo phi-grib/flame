@@ -23,10 +23,7 @@
 # along with Flame.  If not, see <http://www.gnu.org/licenses/>.
 
 
-import os
-import yaml
 import numpy as np
-from flame.util import utils
 from flame.stats.base_model import BaseEstimator
 
 from sklearn.cross_decomposition import PLSRegression
@@ -85,7 +82,6 @@ class PLS_da(PLSRegression):
         threshold = self.threshold
         if threshold is None:
             threshold = 0.5
-            # return super(PLS_da, self).predict(X, copy).ravel()
 
         # if this is a confidential model, use the injected coefficients
         if hasattr(self,'exo_coef'):
@@ -98,25 +94,6 @@ class PLS_da(PLSRegression):
         yp[yp < threshold] = 0
         yp[yp >= threshold] = 1
         return yp.astype(dtype=float)
-
-    # def cpredict (self, X, model_file_name):
-
-    #     nobj, nvar = np.shape(X)
-
-    #     with open(model_file_name, 'r') as f:
-    #         cmodel = yaml.safe_load (f)
-        
-    #     threshold = cmodel['threshold']
-
-    #     results = X @ np.array(cmodel['coef']) 
-    #     results  += cmodel['ymean']
-    #     results = np.reshape(results, nobj)
-        
-    #     results[results < threshold] = 0
-    #     results[results >= threshold] = 1
-    #     results = results.astype(dtype=float)
-
-    #     return results
 
     def fit (self, X, Y):
         super(PLS_da, self).fit(X,Y)
@@ -286,37 +263,6 @@ class PLSDA(BaseEstimator):
 
         # Fit estimator to the data
         self.regularBuild (X, Y)
-
-        # if self.param.getVal ('confidential'):
-
-        #     if self.param.getVal('tune'):
-        #         new_param = self.estimator.get_params()
-        #         if 'threshold' in new_param:
-        #             self.threshold = new_param['threshold']
-
-        #     nobj, nvar = np.shape(X)
-
-        #     cmodel = {}
-        #     cmodel['nobj'] = nobj
-        #     cmodel['nvarx'] = nvar
-        #     cmodel['modelID'] = self.conveyor.getMeta('modelID')
-        #     cmodel['quantitative'] = False
-        #     cmodel['model'] = 'PLSDA'
-        #     cmodel['confidential'] = True
-        #     cmodel['secret'] = True
-        #     cmodel['conformal'] = self.param.getVal('conformal')
-        #     cmodel['conformal_confidence'] = self.param.getVal('conformal_confidence')
-        #     cmodel['coef'] = self.estimator.coef_.tolist()
-        #     cmodel['ymean'] = np.mean(Y).tolist()
-        #     cmodel['threshold'] = self.threshold
-
-        #     model_file_path = utils.model_path(self.param.getVal('endpoint'), 0)
-        #     model_file_name = os.path.join (model_file_path, 'confidential_model.yaml')
-        #     with open(model_file_name, 'w') as f:
-        #         yaml.dump (cmodel, f)
-
-        #     return True, results
-
 
         if not self.param.getVal('conformal'):
             return True, results
