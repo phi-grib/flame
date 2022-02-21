@@ -60,6 +60,10 @@ class PLS_da(PLSRegression):
             to the established threshold
         
     """
+    
+    def inject (self, cmodel):
+        self.exo_coef = np.array(cmodel['coef']) 
+        self.exo_y = cmodel['ymean']
 
     def __init__(self, n_components=2, scale=False, max_iter=500,
                  tol=1e-6, copy=True, threshold=None, conformal=False):
@@ -83,30 +87,36 @@ class PLS_da(PLSRegression):
             threshold = 0.5
             # return super(PLS_da, self).predict(X, copy).ravel()
 
-        results = super(PLS_da, self).predict(X, copy).ravel()
-        results[results < threshold] = 0
-        results[results >= threshold] = 1
-        results = results.astype(dtype=float)
-        return results
+        # if this is a confidential model, use the injected coefficients
+        if hasattr(self,'exo_coef'):
+            nobj = np.shape(X)[0]
+            yp = X @ self.exo_coef 
+            yp += self.exo_y
+            yp = np.reshape(yp, nobj)
+        else:
+            yp = super(PLS_da, self).predict(X, copy).ravel()
+        yp[yp < threshold] = 0
+        yp[yp >= threshold] = 1
+        return yp.astype(dtype=float)
 
-    def cpredict (self, X, model_file_name):
+    # def cpredict (self, X, model_file_name):
 
-        nobj, nvar = np.shape(X)
+    #     nobj, nvar = np.shape(X)
 
-        with open(model_file_name, 'r') as f:
-            cmodel = yaml.safe_load (f)
+    #     with open(model_file_name, 'r') as f:
+    #         cmodel = yaml.safe_load (f)
         
-        threshold = cmodel['threshold']
+    #     threshold = cmodel['threshold']
 
-        results = X @ np.array(cmodel['coef']) 
-        results  += cmodel['ymean']
-        results = np.reshape(results, nobj)
+    #     results = X @ np.array(cmodel['coef']) 
+    #     results  += cmodel['ymean']
+    #     results = np.reshape(results, nobj)
         
-        results[results < threshold] = 0
-        results[results >= threshold] = 1
-        results = results.astype(dtype=float)
+    #     results[results < threshold] = 0
+    #     results[results >= threshold] = 1
+    #     results = results.astype(dtype=float)
 
-        return results
+    #     return results
 
     def fit (self, X, Y):
         super(PLS_da, self).fit(X,Y)
@@ -149,7 +159,7 @@ class PLS_da(PLSRegression):
         #     self.estimator_set.append(estimatori)
 
     def predict_proba(self, X):
-        nobj, nvarx = np.shape (X)
+        nobj = np.shape (X)[0]
 
         proba = np.zeros((nobj,2), dtype=int)
         for iestimator in self.estimator_set:
@@ -202,6 +212,10 @@ class PLSDA(BaseEstimator):
 
         # Load estimator parameters
         self.estimator_parameters = self.param.getDict('PLSDA_parameters')
+
+        # Solves back-comptibility issue
+        if 'optimize' in self.estimator_parameters:
+            self.estimator_parameters.pop("optimize") 
         
         # Scale is hard-coded to False for making use of external scalers        
         self.estimator_parameters['scale'] = False
@@ -214,15 +228,11 @@ class PLSDA(BaseEstimator):
             self.threshold = 0.5
 
         if self.param.getVal('quantitative'):
-            LOG.error('PLSDA only applies to qualitative data')
             self.conveyor.setError('PLSDA only applies to qualitative data')
             return 
 
         # For confidential models, create an empty estimator
-        if self.param.getVal('confidential'):
-            if 'optimize' in self.estimator_parameters:
-                self.estimator_parameters.pop("optimize") 
-                
+        if self.param.getVal('confidential'):                
             self.estimator = PLS_da(**self.estimator_parameters)
 
         # 'PLS_da' object has no attribute 'predict_proba', required for conformal models
@@ -246,8 +256,8 @@ class PLSDA(BaseEstimator):
         # in case of conformal models, compute an estimator set to compute prediction probabilities
         self.estimator_parameters['conformal'] = self.param.getVal('conformal')
 
-        if 'optimize' in self.estimator_parameters:
-            self.estimator_parameters.pop("optimize") 
+        # if 'optimize' in self.estimator_parameters:
+        #     self.estimator_parameters.pop("optimize") 
             
         if self.param.getVal('tune'):
 
@@ -258,7 +268,7 @@ class PLSDA(BaseEstimator):
                 opt_param['tol'] = [0.000006]
     
             # Optimize estimator using sklearn-gridsearch
-            LOG.info('Optimizing PLSDA using SK-LearnGridSearch')
+            LOG.info('Optimizing PLSDA estimator')
             try:
                 self.estimator = PLS_da (**self.estimator_parameters)
                 super(PLSDA, self).optimize(X, Y, self.estimator, opt_param)
@@ -270,41 +280,42 @@ class PLSDA(BaseEstimator):
             LOG.info('Building Qualitative PLSDA with no optimization')
             try:
                 self.estimator = PLS_da(**self.estimator_parameters)
+            
             except Exception as e:
                 return False, f'Error at PLS_da with exception {e}'
 
         # Fit estimator to the data
         self.regularBuild (X, Y)
 
-        if self.param.getVal ('confidential'):
+        # if self.param.getVal ('confidential'):
 
-            if self.param.getVal('tune'):
-                new_param = self.estimator.get_params()
-                if 'threshold' in new_param:
-                    self.threshold = new_param['threshold']
+        #     if self.param.getVal('tune'):
+        #         new_param = self.estimator.get_params()
+        #         if 'threshold' in new_param:
+        #             self.threshold = new_param['threshold']
 
-            nobj, nvar = np.shape(X)
+        #     nobj, nvar = np.shape(X)
 
-            cmodel = {}
-            cmodel['nobj'] = nobj
-            cmodel['nvarx'] = nvar
-            cmodel['modelID'] = self.conveyor.getMeta('modelID')
-            cmodel['quantitative'] = False
-            cmodel['model'] = 'PLSDA'
-            cmodel['confidential'] = True
-            cmodel['secret'] = True
-            cmodel['conformal'] = self.param.getVal('conformal')
-            cmodel['conformal_confidence'] = self.param.getVal('conformal_confidence')
-            cmodel['coef'] = self.estimator.coef_.tolist()
-            cmodel['ymean'] = np.mean(Y).tolist()
-            cmodel['threshold'] = self.threshold
+        #     cmodel = {}
+        #     cmodel['nobj'] = nobj
+        #     cmodel['nvarx'] = nvar
+        #     cmodel['modelID'] = self.conveyor.getMeta('modelID')
+        #     cmodel['quantitative'] = False
+        #     cmodel['model'] = 'PLSDA'
+        #     cmodel['confidential'] = True
+        #     cmodel['secret'] = True
+        #     cmodel['conformal'] = self.param.getVal('conformal')
+        #     cmodel['conformal_confidence'] = self.param.getVal('conformal_confidence')
+        #     cmodel['coef'] = self.estimator.coef_.tolist()
+        #     cmodel['ymean'] = np.mean(Y).tolist()
+        #     cmodel['threshold'] = self.threshold
 
-            model_file_path = utils.model_path(self.param.getVal('endpoint'), 0)
-            model_file_name = os.path.join (model_file_path, 'confidential_model.yaml')
-            with open(model_file_name, 'w') as f:
-                yaml.dump (cmodel, f)
+        #     model_file_path = utils.model_path(self.param.getVal('endpoint'), 0)
+        #     model_file_name = os.path.join (model_file_path, 'confidential_model.yaml')
+        #     with open(model_file_name, 'w') as f:
+        #         yaml.dump (cmodel, f)
 
-            return True, results
+        #     return True, results
 
 
         if not self.param.getVal('conformal'):
@@ -318,10 +329,9 @@ class PLSDA(BaseEstimator):
         #         f.write (f'{i} \t {j}\n')
 
         self.estimator_temp = self.estimator
-        
         success, error = self.conformalBuild(X, Y)
         
         if success:
             return True, results
-        else:
-            return False, error
+
+        return False, error

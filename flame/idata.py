@@ -332,6 +332,7 @@ class Idata:
             if varmask is not None:
                 prepro['variable_mask'] = varmask.tolist()
 
+            yaml.add_representer(float, utils.float_representer)
             prepro_path = os.path.join(self.param.getVal('model_path'),'confidential_preprocess.yaml')            
             with open(prepro_path, 'w') as f:
                 yaml.dump (prepro, f)

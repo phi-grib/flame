@@ -56,6 +56,7 @@ LOG = get_logger(__name__)
 
 warnings.filterwarnings('ignore')
 
+
 class BaseEstimator:
 
     """
@@ -792,6 +793,7 @@ class BaseEstimator:
 
             self.estimator = copy.copy(tclf.best_estimator_)
 
+
         except Exception as e:
             LOG.error(f'Error optimizing hyperparameters with'
             f'exception {e}')
@@ -1188,6 +1190,7 @@ class BaseEstimator:
         else:
             self.conformalProject(Xb)
     
+
     def save_model(self):
         ''' This function saves estimator and scaler in a pickle file '''
 
@@ -1203,11 +1206,11 @@ class BaseEstimator:
             cmodel = {}
             cmodel['nobj'] = nobj
             cmodel['nvarx'] = nvar
-            cmodel['modelID'] = self.conveyor.getMeta('modelID')
-            cmodel['quantitative'] = True
-            cmodel['model'] = 'PLSR'  # now this is the ONLY method
-            cmodel['confidential'] = True
             cmodel['secret'] = True
+            cmodel['confidential'] = True
+            cmodel['model'] = self.param.getVal('model')
+            cmodel['quantitative'] = self.param.getVal('quantitative')
+            cmodel['modelID'] = self.conveyor.getMeta('modelID')
             cmodel['conformal'] = self.param.getVal('conformal')
             cmodel['conformal_confidence'] = self.param.getVal('conformal_confidence')
             cmodel['coef'] = self.estimator.coef_.tolist()
@@ -1220,6 +1223,7 @@ class BaseEstimator:
             for item in self.conveyor.getVal('model_valid_info'):
                 conf_validation[item[0]]=float(item[2])
 
+            yaml.add_representer(float, utils.float_representer)
             with open(model_file_name, 'w') as f:
                 yaml.dump (conf_validation, f)
                 yaml.dump (cmodel, f)

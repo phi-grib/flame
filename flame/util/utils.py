@@ -46,6 +46,10 @@ def isSingleThread ():
             return config['single_thread']
     return False
 
+def float_representer(dumper, value):
+    # text = '{0:.6f}'.format(value)
+    return dumper.represent_scalar(u'tag:yaml.org,2002:float', f'{value:.6f}')
+
 def read_config():
     '''
     Reads configuration file "config.yaml" and checks
