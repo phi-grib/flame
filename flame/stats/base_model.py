@@ -135,6 +135,7 @@ class BaseEstimator:
         self.nobj, self.nvarx = np.shape(X)
         self.feature_importances = None
         self.feature_importances_method = ''
+        self.optimized_parameters = {}
 
         self.cross_jobs = -1
         if utils.isSingleThread():
@@ -799,6 +800,7 @@ class BaseEstimator:
             f'exception {e}')
             raise e
 
+        self.optimized_parameters = tclf.best_params_ 
         LOG.info(f'Best parameters: {tclf.best_params_}')
         LOG.debug (f'Best estimator found in {(time.time()-start):.2f} seconds')
         # LOG.info(f'Best score: {tclf.best_score_}')
@@ -1216,6 +1218,9 @@ class BaseEstimator:
             cmodel['coef'] = self.estimator.coef_.tolist()
             cmodel['ymean'] = np.mean(self.Y).tolist()
 
+            if 'threshold' in self.optimized_parameters:
+                cmodel['threshold'] = self.optimized_parameters['threshold']
+
             model_file_path = utils.model_path(self.param.getVal('endpoint'), 0)
             model_file_name = os.path.join (model_file_path, 'confidential_model.yaml')
             
@@ -1234,6 +1239,7 @@ class BaseEstimator:
 
         # for regular models dave a dictionary with the estimator and other information
         # required for prediction
+
         dict_estimator = {'estimator' : self.estimator,
              'version': 1,
              'libraries': utils.module_versions()}

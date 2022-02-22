@@ -63,6 +63,10 @@ class PLS_da(PLSRegression):
         self.exo_coef = np.array(cmodel['coef']) 
         self.exo_y = cmodel['ymean']
 
+        # only present in case of optimization
+        if 'threshold' in cmodel:
+            self.threshold = cmodel['threshold']
+
     def __init__(self, n_components=2, scale=False, max_iter=500,
                  tol=1e-6, copy=True, threshold=None, conformal=False):
         # Initialize parent class
@@ -81,6 +85,7 @@ class PLS_da(PLSRegression):
 
     def predict(self, X, copy=True):
         threshold = self.threshold
+        
         if threshold is None:
             threshold = 0.5
 
