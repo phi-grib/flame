@@ -1065,12 +1065,15 @@ class Documentation:
         return emptyfields
     
     def get_smiles(self):
-        '''Returns a dictionary with the fields:{(key)name:(value)SMILES}'''
+        ''''''
         
-        return dict(zip(self.conveyor.getVal("obj_nam"),self.conveyor.getVal("SMILES")))
-
-
-
+        #dict(zip(self.conveyor.getVal("obj_nam"),self.conveyor.getVal("SMILES")))
+        return self.conveyor.getVal("SMILES")
+    
+    def get_names(self):
+        ''''''
+        return self.conveyor.getVal("obj_nam")
+    
     def autocomplete_documentation(self):
         """
         Auto complete fields in model documentation
