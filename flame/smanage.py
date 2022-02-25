@@ -393,6 +393,7 @@ def action_searches_result (label, output='text'):
 
     results = iconveyor.getVal('search_results')
     names = iconveyor.getVal('obj_nam')
+
     if iconveyor.isKey('SMILES'):
         smiles = iconveyor.getVal('SMILES')
     if len (results) != len (names):

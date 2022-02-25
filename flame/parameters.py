@@ -412,7 +412,7 @@ class Parameters:
     def dumpYAML (self):
         yaml_out = []
 
-        order = ['input_type', 'quantitative', 'SDFile_activity', 'SDFile_name', 'SDFile_id',
+        order = ['input_type', 'quantitative', 'confidential', 'SDFile_activity', 'SDFile_name', 'SDFile_id',
         'SDFile_experimental', 'SDFile_complementary', 'normalize_method', 'ionize_method', 'convert3D_method', 
         'computeMD_method', 'model', 'modelAutoscaling', 'tune', 'conformal', 
         'conformalConfidence', 'ModelValidationCV', 'ModelValidationN', 
@@ -475,7 +475,10 @@ class Parameters:
                                             iioptio = f' {toptio}'
 
                                 if isinstance (iivalue, float):
-                                    iivalue =  f'{iivalue:f}'
+                                    if iivalue == 0.0 or iivalue>1e-5:
+                                        iivalue =  f'{iivalue:.5f}'
+                                    else:
+                                        iivalue =  f'{iivalue:.10f}'
                                 elif iivalue is None:
                                     iivalue = ''
 
@@ -501,7 +504,11 @@ class Parameters:
                 ### end compatibility
 
                 if isinstance (ivalue, float):
-                    ivalue =  f'{ivalue:f}'
+                    # ivalue =  f'{ivalue:f}'
+                    if ivalue == 0.0 or ivalue>1e-5:
+                        ivalue =  f'{ivalue:.5f}'
+                    else:
+                        ivalue =  f'{ivalue:.10f}'
                 elif ivalue is None:
                     ivalue = ''
 

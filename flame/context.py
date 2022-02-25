@@ -312,8 +312,8 @@ def build_cmd(arguments, output_format=None):
                     return False, 'Unable to copy input file to model directory'
 
         # check that the local copy of the input file exists
-        if not os.path.isfile(lfile):
-            return False, 'No training series found'
+        # if not os.path.isfile(lfile):
+        #     return False, 'No training series found'
 
         # run the model with the input file
         success, results = build.run(lfile)
@@ -455,7 +455,7 @@ def manage_cmd(args):
         elif args.action == 'list':
             success, results = manage.action_list(args.endpoint)
         elif args.action == 'export':
-            success, results = manage.action_export(args.endpoint)
+            success, results = manage.action_export(args.endpoint, version)
         elif args.action == 'info':
             success, results = manage.action_info(args.endpoint, version)
         elif args.action == 'refresh':

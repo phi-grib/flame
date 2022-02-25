@@ -92,6 +92,7 @@ class Predict:
 
         # path to endpoint
         endpoint = utils.model_path(self.model, self.version)
+        
         # if not os.path.isdir(endpoint):
         #     self.conveyor.setError(f'Unable to find model {self.model}, version {self.version}')
         #     #LOG.error(f'Unable to find model {self.model}')
@@ -117,10 +118,20 @@ class Predict:
         LOG.debug(f'idata child {type(idata).__name__} completed `run()`')
 
         if not self.conveyor.getError():
+            success, results = idata.preprocess_apply()
+            if not success:
+                self.conveyor.setError(results)
+
+        if not self.conveyor.getError():
             # make sure there is X data
             if not self.conveyor.isKey('xmatrix'):
                 LOG.debug(f'Failed to compute MDs')
                 self.conveyor.setError(f'Failed to compute MDs')
+
+        # for secret models avoid searching similar compounds
+        space_pkl = os.path.join(endpoint,'space.pkl')
+        if not os.path.isfile(space_pkl):
+            self.param.setVal('output_similar', False)
 
         if not self.conveyor.getError():
             if self.param.getVal('output_similar') is True:

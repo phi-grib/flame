@@ -73,7 +73,37 @@ class Build:
         if output_format is not None:
             if output_format not in self.param.getVal('output_format'):
                 self.param.appVal('output_format',output_format)
+
+        if self.param.getVal('confidential'):
+            self.confidentialAuditParam()
  
+    def confidentialAuditParam (self):
+        import yaml
+
+        original_method = self.param.getVal('model')
+        if self.param.getVal ('quantitative'):
+            if original_method != 'PLSR':
+                self.param.setVal('model', 'PLSR')
+                LOG.info (f'CONFIDENTIALITY AUDIT: the model was set to PLSR, '
+                f'the original method {original_method} was not suitable to build confidential models')
+        else:
+            if original_method != 'PLSDA':
+                self.param.setVal('model', 'PLSDA')
+                LOG.info (f'CONFIDENTIALITY AUDIT: the model was set to PLSDA, '
+                f'the original method {original_method} was not suitable to build confidential models')
+        
+        # TODO: conformal support
+        if self.param.getVal('conformal'):
+            self.param.setVal('conformal', False)
+            LOG.info ('CONFIDENTIALITY AUDIT: conformal was set to False. '
+            'Conformal models are not supported for now in confidential models')
+
+        parameters_file_path = utils.model_path(self.model, 0)
+        parameters_file_name = os.path.join (parameters_file_path,
+                                            'parameters.yaml')
+        with open(parameters_file_name, 'w') as pfile:
+            yaml.dump (self.param.p, pfile)
+
     def get_ensemble(self):
         ''' Returns a Boolean indicating if the model uses external input
             sources and a list with these sources '''
@@ -117,6 +147,11 @@ class Build:
             idata = Idata(self.param, self.conveyor, input_source)
         idata.run() 
         LOG.debug(f'idata child {type(idata).__name__} completed `run()`')
+
+        if not self.conveyor.getError():
+            success, results = idata.preprocess_create()
+            if not success:
+                self.conveyor.setError(results)
 
         if not self.conveyor.getError():
             # check there is a suitable X and Y

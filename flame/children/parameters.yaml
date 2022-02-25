@@ -71,11 +71,11 @@ ionize_method:
   value: null
   options:
     - null
-    - moka
+    - Moka (not implemented)
   description: Selection of a ionization method
   dependencies: 
     input_type: molecule
-  comments: 
+  comments: No method implemented so far
   group: data
 
 quantitative:
@@ -351,9 +351,7 @@ conformal:
     - true
     - false
   description: If true, use the conformal variant of the selected modeling method, when available
-  dependencies: 
-    model: RF
-  comments: So far it can not be applied to PLSDA
+  comments:
   group: modeling    
   
 conformal_settings:
@@ -471,7 +469,7 @@ tune_metric_quantitative:
   options: 
     - r2
     - neg_mean_squared_error
-  description: metric used for the GricCV optimization search
+  description: Metric used for the GricCV optimization search
   dependencies: null
   comments: 
   group: modeling
@@ -488,7 +486,7 @@ tune_metric_qualitative:
     - balanced_accuracy
     - f1
     - f1_weigthed
-  description: metric used for the GridCV optimization search
+  description: Metric used for the GridCV optimization search
   dependencies: null
   comments: 
   group: modeling
@@ -499,7 +497,7 @@ tune_cv_fold:
   writable: true
   value: 5
   options: null
-  description: number of fold in the KFold CV used in GridCV optimization search
+  description: Number of fold in the KFold CV used in GridCV optimization search
   dependencies: null
   comments: 
   group: modeling
@@ -532,7 +530,7 @@ imbalance:
     - rep_edited_KNN
     - all_KNN
     - iht
-  description: "Whether to perform or not sub/over sampling strategies. Imbalance strategies adapted from https://imbalanced-learn.readthedocs.io/en/stable/"
+  description: Whether to perform or not sub/over sampling strategies.
   dependencies: null
   comments: 
   group: modeling
@@ -545,7 +543,7 @@ feature_selection:
   options: 
     - null
     - Kbest
-  description: Whether to perform or not feature selection
+  description: Feature selection based on univariate statistics (F for quantitative, Chi square for qualitative)
   dependencies: null
   comments: 
   group: modeling
@@ -557,7 +555,7 @@ feature_number:
   value: auto
   options: 
     - auto
-  description: Number of features to keep
+  description: Number of features to keep or auto for selecting 10% of objects
   dependencies: 
     feature_selection: Kbest
   comments: 
@@ -607,7 +605,7 @@ RF_parameters:
       writable: true
       value: null
       options: null
-      description: The maximum depth of the tree. If None, then nodes are expanded until all leaves are pure or until all leaves contain less than min_samples_split samples
+      description: Maximum tree depth. If None, then nodes are expanded until all leaves are pure or until all leaves contain less than min_samples_split samples
     max_features:
       object_type: string
       writable: false
@@ -617,13 +615,13 @@ RF_parameters:
         - sqrt
         - log2
         - null
-      description: The maximum depth of the tree. If auto, then max_features=sqrt(n_features). If sqrt, idem as auto. If log2, then max_features=log2(n_features). If None, then max_features=n_features.
+      description: Maximum features. sqrt = sqrt(n_features). log2 = log2(n_features). None = n_features. Auto idem sqrt. 
     min_samples_split:
       object_type: int
       writable: true
       value: 2
       options: null
-      description: The minimum number of samples required to split an internal node (must be an int > 1)
+      description: The minimum number of samples required to split an internal node (must be > 1)
       min: 1
     n_estimators:
       object_type: int
@@ -652,7 +650,7 @@ RF_parameters:
         - 46
         - null
       description: Random seed
-  description: Random Forest Parameters See https://scikit-learn.org/ for further reference
+  description: 
   dependencies: 
     model: RF
   comments: 
@@ -796,7 +794,7 @@ SVM_parameters:
         - true
         - false
       description: Whether to use the shrinking heuristic.
-  description: SVM Parameters. See https://scikit-learn.org/ for further reference
+  description: 
   dependencies: 
     model: SVM
   comments: 
@@ -913,7 +911,7 @@ PLSR_parameters:
       value: 2
       options: null
       description: Number of latent variables to extract
-  description: PLSR Parameters. See https://scikit-learn.org/ for further reference
+  description: 
   dependencies: 
     model: PLSR
     quantitative: true
@@ -967,7 +965,7 @@ PLSDA_parameters:
       value: 0.5
       options: 
         - 0.5
-      description: 
+      description: Cutoff value from 0 to 1 which separates class 0 from class 1 
   description: PLSDA Parameters
   dependencies: 
     model: PLSDA
@@ -1026,15 +1024,25 @@ GNB_parameters:
   writable: false
   options: null
   value:
-    priors:
-      object_type: list
+    prior_negative:
+      object_type: float
       writable: true
       value: null
       options:
-        - null
-      description: 
-
-  description: GNB Parameters. See https://scikit-learn.org/ for further reference
+      description: prior probability for class 0
+    prior_positive:
+      object_type: float
+      writable: true
+      value: null
+      options:
+      description: prior probability for class 1
+    var_smoothing:
+      object_type: float
+      writable: true
+      value: null
+      options:
+      description: Lorenzian variance smoothing factor
+  description: GNB Parameters
   dependencies: 
     model: GNB
     quantitative: false
@@ -1270,10 +1278,9 @@ confidential:
   options:
     - True
     - False
-  description: "Confidentiality of the model. If True flame will remove all
-                structures from build and prediction process"
+  description: Confidentiality of the model. If True an estimator with no trace of the training series will be built 
   dependencies: null
-  comments: "WARNING: TO IMPLEMENT" 
+  comments: 
   group: preferences
 
 

@@ -152,7 +152,7 @@ class Space:
 
     def _searchFingerprint (self, cutoff, numsel, metric):
 
-        LOG.info ('searching for similar compounds using Tanimoto similarity')
+        LOG.info ('Searching for similar compounds using Tanimoto similarity')
 
         results = []
 
@@ -170,6 +170,8 @@ class Space:
 
             #TODO Check speed BulkTanimoto
             # for each compound in the space
+
+
             for j, jvector in enumerate(self.Xref):
 
                 d = DataStructs.FingerprintSimilarity(ifp,jvector, metric=DataStructs.TanimotoSimilarity)
@@ -379,7 +381,10 @@ class Space:
         '''
 
         # load pickle with reference space
-        self.load_space()
+        success = self.load_space()
+
+        if not success:
+            return False, 'space file not found'
 
         # set defaults
         if cutoff is None:
@@ -399,22 +404,20 @@ class Space:
             metric = 'smarts'
 
         self.metric = metric
-        
+
         if self.isFingerprint:
             if 'substructureFP' in self.MDs:
                 return self._searchSubStructure (numsel, metric)
             return self._searchFingerprint (cutoff, numsel, metric)
-        else:
-            return self._searchMD (cutoff, numsel, metric)
 
-        return False, 'unexpected condition'
+        return self._searchMD (cutoff, numsel, metric)
+
 
 
     def save_space(self):
         ''' This function saves the chemical space in a pickle file '''
 
-        space_pkl = os.path.join(self.param.getVal('model_path'),
-                                      'space.pkl')
+        space_pkl = os.path.join(self.param.getVal('model_path'),'space.pkl')
         with open(space_pkl, 'wb') as fo:
             pickle.dump(self.nobj, fo)
             pickle.dump(self.X, fo)  #the reference space matrix is self X 
@@ -426,12 +429,14 @@ class Space:
     def load_space(self):
         ''' This function loads the chemical space from a pickle file '''
     
-        space_pkl = os.path.join(self.param.getVal('model_path'),
-                                      'space.pkl')
+        space_pkl = os.path.join(self.param.getVal('model_path'),'space.pkl')
+        if not os.path.isfile(space_pkl):
+            return False
 
         with open(space_pkl, 'rb') as fo:
             self.nobj = pickle.load(fo)
             self.Xref = pickle.load(fo) 
             self.Dmax = pickle.load(fo)
             self.objinforef = pickle.load(fo)
-        return
+        
+        return True

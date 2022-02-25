@@ -21,6 +21,7 @@
 # along with Flame.  If not, see <http://www.gnu.org/licenses/>.
 
 import pickle
+import yaml
 import numpy as np
 import os
 import time
@@ -54,6 +55,7 @@ from flame.util import utils, get_logger
 LOG = get_logger(__name__)
 
 warnings.filterwarnings('ignore')
+
 
 class BaseEstimator:
 
@@ -133,6 +135,7 @@ class BaseEstimator:
         self.nobj, self.nvarx = np.shape(X)
         self.feature_importances = None
         self.feature_importances_method = ''
+        self.optimized_parameters = {}
 
         self.cross_jobs = -1
         if utils.isSingleThread():
@@ -333,6 +336,14 @@ class BaseEstimator:
                 except Exception as e:
                     LOG.error(f'Error in external validation with exception {e}')
                     return
+
+        # check to prevent the presence of nan, which are not serializable and generate GUI errors
+        for i,iq in enumerate(ext_val_results):
+            if np.isnan(iq[2]):
+                new_tuple = (iq[0],iq[1],0.00)
+                ext_val_results.pop(i)
+                ext_val_results.append(new_tuple)
+
 
         self.conveyor.addVal( ext_val_results,
                                 'external-validation',
@@ -686,6 +697,14 @@ class BaseEstimator:
             else:
                 success, results = self.CF_qualitative_validation()
 
+        if success:
+            # check to prevent the presence of nan, which are not serializable and generate GUI errors
+            for i,iq in enumerate(results['quality']):
+                if np.isnan(iq[2]):
+                    new_tuple = (iq[0],iq[1],0.00)
+                    results['quality'].pop(i)
+                    results['quality'].append(new_tuple)
+
         return success, results
 
     def featureImportancesEstimation (self, estimator):
@@ -775,12 +794,15 @@ class BaseEstimator:
 
             self.estimator = copy.copy(tclf.best_estimator_)
 
+
         except Exception as e:
             LOG.error(f'Error optimizing hyperparameters with'
             f'exception {e}')
             raise e
 
+        self.optimized_parameters = tclf.best_params_ 
         LOG.info(f'Best parameters: {tclf.best_params_}')
+        LOG.debug (f'Best estimator found in {(time.time()-start):.2f} seconds')
         # LOG.info(f'Best score: {tclf.best_score_}')
 
         # myscore = cross_val_score(self.estimator, X, Y, scoring=metric, cv=self.cv)
@@ -788,22 +810,25 @@ class BaseEstimator:
         # y_pred = cross_val_predict(self.estimator, X, Y, cv=self.cv)
         # LOG.info (f'validation: {r2_score(Y, y_pred)}')
         
-        LOG.debug (f'Best estimator found in {(time.time()-start):.2f} seconds')
+        # Remove garbage in memory. Useful????
+        del(tclf)
+        gc.collect()
+
+        if self.param.getVal('conformal'):
+            return 
 
         LOG.info ('Estimating feature importances')
         start = time.time ()
         self.feature_importances, self.feature_importances_method = self.featureImportancesEstimation(self.estimator)
         LOG.info (f'Feature importances computed in {time.time()-start :.3f} seconds using {self.feature_importances_method}')
 
-        # Remove garbage in memory
-        del(tclf)
-        gc.collect()
 
     def regularProject(self, Xb):
         ''' projects a collection of query objects in a regular model,
          for obtaining predictions '''
 
         Yp = self.estimator.predict(Xb)
+
         if Yp is None:
             return False, 'prediction error'
 
@@ -964,13 +989,14 @@ class BaseEstimator:
                 for p in self.estimator.predictors:
                     inner_estimator = p.nc_function.model.model
                     fi, method = self.featureImportancesEstimation(inner_estimator)
-                    if first:
-                        features = np.array(fi)
-                        first = False
-                        self.feature_importances_method = method
-                    else:
-                        features = np.vstack((features,fi))
-                
+                    if fi is not None:
+                        if first:
+                            features = np.array(fi)
+                            first = False
+                            self.feature_importances_method = method
+                        else:
+                            features = np.vstack((features,fi))
+                    
                 if features is not None:
                     self.feature_importances = np.mean (features, 0)
 
@@ -1161,34 +1187,58 @@ class BaseEstimator:
     def project(self, Xb):
         ''' Uses the X matrix provided as argument to predict Y'''
 
-        if self.estimator == None:
-            self.conveyor.setError('failed to load classifier')
-            return
-        
-        # Apply variable mask to prediction vector/matrix
-        # if self.param.getVal("feature_selection"):
-        #     Xb = Xb[:, self.variable_mask]
-        # Scale prediction vector/matrix
-        # if self.param.getVal('modelAutoscaling'):
-            # Xb = Xb-self.mux
-            # Xb = Xb*self.wgx
-            # Xb = self.scaler.transform(Xb)
-        # Select the type of projection
-
         if not self.param.getVal('conformal'):
             self.regularProject(Xb)
         else:
             self.conformalProject(Xb)
     
+
     def save_model(self):
         ''' This function saves estimator and scaler in a pickle file '''
-
-        # This dictionary contain all the objects which will be needed
-        # for prediction
 
         # Uncoment to inspect estimator contents 
         # print (self.estimator.__dict__)
         # print (self.estimator.estimators_[0].__dict__)
+
+        # for confidential models, save extra info required to secret models
+        if self.param.getVal ('confidential'):
+
+            nobj, nvar = np.shape(self.X)
+
+            cmodel = {}
+            cmodel['nobj'] = nobj
+            cmodel['nvarx'] = nvar
+            cmodel['secret'] = True
+            cmodel['confidential'] = True
+            cmodel['model'] = self.param.getVal('model')
+            cmodel['quantitative'] = self.param.getVal('quantitative')
+            cmodel['modelID'] = self.conveyor.getMeta('modelID')
+            cmodel['conformal'] = self.param.getVal('conformal')
+            cmodel['conformal_confidence'] = self.param.getVal('conformal_confidence')
+            cmodel['coef'] = self.estimator.coef_.tolist()
+            cmodel['ymean'] = np.mean(self.Y).tolist()
+
+            if 'threshold' in self.optimized_parameters:
+                cmodel['threshold'] = self.optimized_parameters['threshold']
+
+            model_file_path = utils.model_path(self.param.getVal('endpoint'), 0)
+            model_file_name = os.path.join (model_file_path, 'confidential_model.yaml')
+            
+            conf_validation = {}
+            for item in self.conveyor.getVal('model_valid_info'):
+                conf_validation[item[0]]=float(item[2])
+
+            yaml.add_representer(float, utils.float_representer)
+            with open(model_file_name, 'w') as f:
+                yaml.dump (conf_validation, f)
+                yaml.dump (cmodel, f)
+
+            LOG.debug(f'Model saved in confidential mode as:{model_file_name}')
+
+            return
+
+        # for regular models dave a dictionary with the estimator and other information
+        # required for prediction
 
         dict_estimator = {'estimator' : self.estimator,
              'version': 1,
@@ -1199,7 +1249,7 @@ class BaseEstimator:
         with open(model_pkl, 'wb') as handle:
             pickle.dump(dict_estimator, handle, protocol=pickle.HIGHEST_PROTOCOL)
         
-        LOG.debug('Model saved as:{}'.format(model_pkl))
+        LOG.debug(f'Model saved as:{model_pkl}')
 
         # Add estimator parameters to Conveyor
         params = dict()
@@ -1216,6 +1266,21 @@ class BaseEstimator:
     def load_model(self):
         ''' This function loads estimator and scaler in a pickle file '''
 
+        # for confidential models, load minimal model description from a yaml
+        if self.param.getVal('confidential'):
+
+            model_file_path = utils.model_path(self.param.getVal('endpoint'), 0)
+            model_file_name = os.path.join (model_file_path,'confidential_model.yaml')
+            with open(model_file_name, 'r') as f:
+                cmodel = yaml.safe_load (f)
+            
+            # note that the child basemodel should initialize an empty
+            # estimator, allowing to inject the information required to predict
+            self.estimator.inject(cmodel)
+            
+            return True, 'model loaded'
+
+        # for regular models, load estimator from a pickl file
         model_pkl = os.path.join(self.param.getVal('model_path'),'estimator.pkl')
         LOG.debug(f'Loading model from pickle file, path: {model_pkl}')
         try:

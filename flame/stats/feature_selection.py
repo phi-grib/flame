@@ -47,17 +47,18 @@ def selectkBest(X, Y, n, quantitative):
     mask = kbest.get_support()
     return mask
 
+        #    success, varmask = feature_selection.run_feature_selection(X_copy, Y_copy, 
+        #         feature_selection_method, num_features, quantitative)
 
-def run_feature_selection(X, Y, scaler, param):
+def run_feature_selection(X, Y, method, num_features, quantitative):
     """Compute the number of variables to be retained.
     """
 
     nobj, nvarx = np.shape(X)
-    variable_mask = ''
-
+    variable_mask = np.zeros(nvarx, int)
 
     # When auto, the 10% top informative variables are retained.
-    if param.getVal("feature_number") == "auto":
+    if num_features == "auto":
         # Use 10% of the total number of objects:
         # The number of variables is greater than the 10% of the objects
         # And the number of objects is greater than 100
@@ -72,7 +73,7 @@ def run_feature_selection(X, Y, scaler, param):
             n_features = nvarx
     # Manual selection of number of variables
     else:
-        n_features = int(param.getVal("feature_number"))
+        n_features = int(num_features)
         if n_features > nvarx:
             n_features = nvarx
 
@@ -80,26 +81,23 @@ def run_feature_selection(X, Y, scaler, param):
     try:
         # Apply the variable selection algorithm obtaining
         # the variable mask.
-        X_copy = X.copy()
-        variable_mask = selectkBest(X_copy, Y, n_features, 
-                                    param.getVal('quantitative'))
+        variable_mask = selectkBest(X, Y, n_features, quantitative)
         
         # The scaler has to be fitted to the reduced matrix
         # in order to be applied in prediction.
-        if param.getVal('modelAutoscaling') is not None\
-                                 and scaler is not None:
-            X = scaler.inverse_transform(X)
-            X = X[:, variable_mask]
-            scaler = scaler.fit(X)
-            X = scaler.transform(X)
-        else:
-            X = X[:, variable_mask]
+        # if method is not None and scaler is not None:
+        #     X = scaler.inverse_transform(X)
+        #     X = X[:, variable_mask]
+        #     scaler = scaler.fit(X)
+        #     X = scaler.transform(X)
+        # else:
+        #     X = X[:, variable_mask]
 
-        LOG.info(f'Variable selection applied, number of final variables:'
-                    f'{n_features}')
+        # LOG.info(f'Variable selection applied, number of final variables:'
+        #             f'{n_features}')
     except Exception as e:
-        LOG.error(f'Error performing feature selection'
-                    f' with exception: {e}')
-        raise e 
+        # LOG.error(f'Error performing feature selection'
+        #             f' with exception: {e}')
+        return False, e 
 
-    return variable_mask, scaler
+    return True, variable_mask

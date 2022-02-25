@@ -241,6 +241,7 @@ def action_import(model):
     '''
     Creates a new model tree from a tarbal file with the name "model.tgz"
     '''
+    import re
 
     if not model:
         return False, 'Empty model label'
@@ -248,10 +249,17 @@ def action_import(model):
     # convert model to endpoint string
     base_model = os.path.basename(model)
     endpoint = os.path.splitext(base_model)[0]
-    ext = os.path.splitext(base_model)[1]
 
+    # find version in case of single version exports
+    version = None
+    if re.match("_v[0-9]{6}", endpoint[-8:]):
+        version = int(endpoint[-6:])
+        endpoint = endpoint[:-8]
+    
+    ext = os.path.splitext(base_model)[1]
     base_path = utils.model_tree_path(endpoint)
 
+    # safety checks
     if os.path.isdir(base_path):
         return False, f'Endpoint {endpoint} already exists'
 
@@ -260,24 +268,144 @@ def action_import(model):
     else:
         importfile = model
 
+
     LOG.info(f'Importing {importfile} ...')
 
     if not os.path.isfile(importfile):
         LOG.info(f'Importing package {importfile} not found')
         return False, f'Importing package {importfile} not found'
 
+    confidential = False
+
+    # create directory
     try:
         os.mkdir(base_path)
     except Exception as e:
         return False, f'Error creating directory {base_path}: {e}'
 
+    # unpack tar.gz. This is done for any kind of export file
     with tarfile.open(importfile, 'r:gz') as tar:
         tar.extractall(base_path)
 
-    # get libraries
+    # when importing a single version we need to clone the last folder to 'dev'
+    inner_dirs = os.listdir(base_path)
+    if not 'dev' in inner_dirs and version is not None:
+        
+        # assign single version using file name
+        version_dir = f'ver{version:06d}'
 
+        # as a fallback assign the last internal folder
+        if not os.path.isdir(version_dir):
+            version_dir = inner_dirs[-1]
+
+        version_path = os.path.join(base_path, version_dir)
+        confidential_model = os.path.join(version_path,'confidential_model.yaml')
+        
+        # check if it is a confidential model
+        if (os.path.isfile(confidential_model)):
+
+            confidential = True
+
+            flame_source = os.path.dirname(os.path.abspath(__file__))
+            children_source = os.path.join(flame_source, 'children')
+            children_names = ['apply', 'idata', 'odata', 'learn', 'slearn', 'sapply']
+
+            for cname in children_names:
+                cpath = os.path.join(children_source, cname+'_child.py')
+                shutil.copy(cpath, version_path)
+                LOG.info (f'Adding local children: {cpath} ...')
+
+            # open confidential_model.yaml
+            with open(confidential_model, 'r') as fc:
+                cmodel = yaml.safe_load (fc)
+
+            # create model-results.pkl
+            model_building_info =  [('nobj','',cmodel['nobj'])] 
+            model_building_info += [('nvarx','',cmodel['nvarx'])] 
+            model_building_info += [('model','',cmodel['model'])]
+
+            model_type_info =  [('quantitative','',cmodel['quantitative'])] 
+            model_type_info += [('conformal','',cmodel['conformal'])] 
+            model_type_info += [('conformal_confidence','',cmodel['conformal_confidence'])]
+            model_type_info += [('ensemble','',False)]  
+            model_type_info += [('ensemble_names','',[])]  
+            model_type_info += [('ensemble_versions','',[])]  
+            model_type_info += [('confidential','',True)]  
+            model_type_info += [('secret','',True)]  
+
+            if cmodel['quantitative']:
+                model_validation_info = [('R2','',cmodel['R2'])] 
+                model_validation_info += [('Q2','',cmodel['Q2'])]
+                model_validation_info += [('SDEC','',cmodel['SDEC'])]
+                model_validation_info += [('SDEP','',cmodel['SDEP'])]
+                model_validation_info += [('scoringP','',cmodel['scoringP'])]
+                model_validation_info += [('scoringR','',cmodel['scoringR'])]
+            else:
+                model_validation_info = [('MCC_f','',cmodel['MCC_f'])] 
+                model_validation_info += [('MCC','',cmodel['MCC'])] 
+                model_validation_info += [('Sensitivity_f','',cmodel['Sensitivity_f'])]
+                model_validation_info += [('Sensitivity','',cmodel['Sensitivity'])]
+                model_validation_info += [('Specificity_f','',cmodel['Specificity_f'])]
+                model_validation_info += [('Specificity','',cmodel['Specificity'])]
+                model_validation_info += [('FP_f','',cmodel['FP_f'])]
+                model_validation_info += [('FP','',cmodel['FP'])]
+                model_validation_info += [('FN_f','',cmodel['FN_f'])]
+                model_validation_info += [('FN','',cmodel['FN'])]
+                model_validation_info += [('TP_f','',cmodel['TP_f'])]
+                model_validation_info += [('TP','',cmodel['TP'])]
+                model_validation_info += [('TN_f','',cmodel['TN_f'])]
+                model_validation_info += [('TN','',cmodel['TN'])]
+
+            conveyor = Conveyor()
+            conveyor.addMeta('modelID', cmodel['modelID'])
+            conveyor.addMeta('endpoint', endpoint)
+            conveyor.addMeta('version', version)
+            conveyor.addMeta('quantitative', True)
+            conveyor.addMeta('secret', True)
+
+            conveyor.addVal (model_building_info,
+                    'model_build_info',
+                    'model building information',
+                    'method',
+                    'single',
+                    'Information about the model building')
+            conveyor.addVal (model_validation_info,
+                    'model_valid_info',
+                    'model validation information',
+                    'method',
+                    'single',
+                    'Information about the model validation')
+            conveyor.addVal (model_type_info,
+                    'model_type_info',
+                    'model type information',
+                    'method',
+                    'single',
+                    'Information about the model type')
+
+            results_file_name = os.path.join(version_path,'model-results.pkl')
+            with open(results_file_name, 'wb') as handle:
+                conveyor.save (handle)
+
+            meta_file_name = os.path.join(version_path,'model-meta.pkl')
+            with open(meta_file_name, 'wb') as handle:
+                pickle.dump (cmodel['modelID'], handle)
+                pickle.dump (None, handle)
+                pickle.dump (None, handle)
+                pickle.dump (model_building_info, handle)
+                pickle.dump (model_validation_info, handle)
+                pickle.dump (model_type_info, handle)
+
+
+        # clone the version in dev
+        shutil.copytree(version_path, os.path.join(base_path, 'dev'))
+        LOG.info (f'Cloning version {version} to version 0 ...')
+
+    if confidential:
+        LOG.info(f'Import of CONFIDENTIAL model {model} version {version} was successfull')
+        return True, 'OK'
+    
+    # get libraries
     message = f'Endpoint {endpoint} imported OK'
-    compatible = True
     for x in os.listdir(base_path):
         model_path = os.path.join(base_path,x)
         model_pkl  = os.path.join(model_path,'estimator.pkl')
@@ -302,36 +430,57 @@ def action_import(model):
     return True, message
 
 
-def action_export(model):
+def action_export(model, version=0):
     '''
     Exports the whole model tree indicated in the argument as a single
     tarball file with the same name.
     '''
 
+    confidential_files = ['confidential_model.yaml', 'confidential_preprocess.yaml', 
+                          'parameters.yaml', 'documentation.yaml']
     if not model:
         return False, 'Empty model label'
 
     current_path = os.getcwd()
-    compressedfile = os.path.join(current_path,model+'.tgz')
 
     base_path = utils.model_tree_path(model)
-
     if not os.path.isdir(base_path):
         return False, 'Unable to export, endpoint directory not found'
 
     # change to model repository to tar the file from there
     os.chdir(base_path)
 
-    itemend = os.listdir()
-    itemend.sort()
+    confidential = False
 
-    # t1 = time.time()
+    # single version export
+    if version != 0:
+        compressedname = f'{model}_v{version:06d}.tgz'
+        compressedfile = os.path.join(current_path,compressedname)
+        iversion = f'ver{version:06d}'
 
-    with tarfile.open(compressedfile, 'w:gz') as tar:
-        for iversion in itemend:
-            if not os.path.isdir(iversion):
-                continue
-            tar.add(iversion)
+        if (os.path.isfile(os.path.join(iversion,'confidential_model.yaml'))):
+            confidential = True
+            with tarfile.open(compressedfile, 'w:gz') as tar:
+                for ifile in confidential_files:
+                    ipath = os.path.join (iversion, ifile)
+                    if os.path.isfile (ipath):
+                        tar.add(ipath)
+        else:
+            with tarfile.open(compressedfile, 'w:gz') as tar:
+                tar.add(iversion)
+    else:
+        compressedname = model+'.tgz'
+        compressedfile = os.path.join(current_path,compressedname)
+        itemend = os.listdir()
+        itemend.sort()
+
+        # t1 = time.time()
+
+        with tarfile.open(compressedfile, 'w:gz') as tar:
+            for iversion in itemend:
+                if not os.path.isdir(iversion):
+                    continue
+                tar.add(iversion)
 
     # print (time.time()-t1)
 
@@ -342,8 +491,17 @@ def action_export(model):
     # return to current directory
     os.chdir(current_path)
 
-    LOG.info(f'Model {model} exported as {model}.tgz')
-    return True, f'Model {model} exported as {model}.tgz'
+    message = ''
+    if confidential:
+        message = f'Model {model} version {version} was exported in CONFIDENTIAL mode as {compressedname}'
+    else:
+        if version !=0 :
+            message = f'Model {model} version {version} was exported as {compressedname}'
+        else:
+            message = f'All the versions for model {model} were exported as {compressedname}'
+
+    LOG.info(message)
+    return True, message
 
 
 def action_series(model, version):
@@ -375,24 +533,25 @@ def action_info(model, version, output='text'):
             return False, {'code':1, 'message': 'Empty model label'}
         return False, 'Empty model label'
 
-
-    meta_path = utils.model_path(model, version)
     # Check that both the meta and the results file are present
     # return error code 0 if not
+    meta_path = utils.model_path(model, version)
     meta_file = os.path.join(meta_path, 'model-meta.pkl')
     if not os.path.isfile(meta_file):
 
         # this file is created uppon task abortion
         error_file = os.path.join(tempfile.gettempdir(),'building_'+model)
         if os.path.isfile(error_file):
+
             with open(error_file, 'r') as f:
                 error_text = f.read()
-            f.close()
+
             os.remove(error_file)
             if output != 'text':
                 return False, {'code':1, 'message': error_text}
             return False, 'model building task aborted'  
-            
+        
+        # return error
         if output != 'text':
             return False, {'code':0, 'message': 'Info file not found'}
         return False, 'Info file not found'
@@ -462,13 +621,11 @@ def action_results(model, version=None, ouput_variables=False):
     if not os.path.isfile(results_file):
         return False, {'code':0, 'message': 'Results file not found'}
 
-    from flame.conveyor import Conveyor
+
     conveyor = Conveyor()
 
     with open(results_file, 'rb') as handle:
         conveyor.load(handle)
-
-    # print (conveyor.getJSON())
 
     return True, conveyor
 
@@ -512,6 +669,7 @@ def action_documentation(model, version=None, doc_file=None, oformat='YAML'):
     
     # get de model repo path
     rdir = utils.model_path(model, version)
+
     if not os.path.isfile(os.path.join(rdir, 'model-results.pkl')):
         return False, 'Info file not found' 
 
