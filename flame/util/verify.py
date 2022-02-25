@@ -22,8 +22,6 @@
 # along with Flame. If not, see <http://www.gnu.org/licenses/>.
 
 import pickle
-from flame.stats.base_model import BaseEstimator
-from flame.parameters import Parameters
 from flame.documentation import Documentation
 import flame.chem.sdfileutils as sdfutils
 from flame.util import utils,get_logger 
@@ -42,18 +40,19 @@ except:
     LOG.info('pip install python-decouple')
 
 
-
-
 def verify_model(endpoint, version=None):
     ''' '''
     api = connect_api()
-
+    invalid = []
+    not_found_list = []
     if not isinstance(api, requests.models.Response):
         return False,{'status':'Aborted','comments':'Failed connection to External Service'}
 
-    invalid = []
-    not_found_list = []
-    doc = Documentation(endpoint, version)
+    try:
+        doc = Documentation(endpoint, version)
+    except:
+        return False,{'status':'Aborted','comments':f'{endpoint} documentation.yaml not found.'}
+
     smiles_list = dict(zip(doc.get_names(),doc.get_smiles()))
     for drugname,smiles in smiles_list.items():
         ext_service_smiles = getSmilesByApi(api,drugname)
@@ -73,15 +72,13 @@ def verify_model(endpoint, version=None):
 
     if invalid or not_found_list:
         return True,{'status':'Failed',
-                     'comments':'The chemical structure of the following drugs is different from that obtained in ToxHub.',
+                     'comments':'The chemical structure of the following drugs is different from that obtained in External Service.',
                      'Information':invalid,
                      'Extra_Information':not_found_list}
 
     return True,{'status':'Passed'}
 
 
-
-            
 def getSmilesByApi(response,name):
     token = response.json()['access_token']
     # refresh_token = response.json()['refresh_token']
@@ -123,9 +120,6 @@ def connect_api():
 
     LOG.info('Succesfully connection')
     return response
-
-
-
 
 
 def verify_SDFile_activity(endpoint,version=None):
@@ -210,9 +204,6 @@ def verify_library(endpoint, version=None):
         return True,{'status':'Failed','comments':'Incompatible libraries have been found','Information':results}
     else:
          return True,{'status':'Passed'}
-        
-    
-
 
 
 def verify_documentation (endpoint, version=None):
@@ -226,11 +217,6 @@ def verify_documentation (endpoint, version=None):
     'Conformal_mean_interval','Conformal_accuracy','Q2','SDEP','Comments','Other_related_models','Date_of_QMRF','Date_of_QMRF_updates','QMRF_updates',
     'References','QMRF_same_models','Mechanistic_basis','Mechanistic_references','Supporting_information','Comment_on_the_endpoint','Endpoint_data_quality_and_variability',
     'Descriptor_selection','Internal_validation_2','External_validation']
-
-    # get de model repo path
-    rdir = utils.model_path(endpoint, version)
-    if not os.path.isfile(os.path.join(rdir, 'model-results.pkl')):
-        return False, 'Info file not found' 
 
     doc = Documentation(endpoint, version)
     fields =  [field for field in doc.empty_fields() if field not in blacklist]
