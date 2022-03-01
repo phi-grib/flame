@@ -26,9 +26,10 @@
 
 from sklearn.preprocessing import MinMaxScaler 
 from sklearn.feature_selection import  SelectKBest
-from sklearn.feature_selection import chi2
+# from sklearn.feature_selection import chi2
+from sklearn.feature_selection import f_classif
 from sklearn.feature_selection import f_regression
-from flame.util import utils, get_logger, supress_log
+from flame.util import get_logger, supress_log
 import numpy as np
 
 LOG = get_logger(__name__)
@@ -39,16 +40,14 @@ def selectkBest(X, Y, n, quantitative):
     if quantitative:
         function = f_regression
     else:
-        scaler = MinMaxScaler(copy=True, feature_range=(0,1))
-        X = scaler.fit_transform(X)
-        function = chi2
+        function = f_classif
+        # scaler = MinMaxScaler(copy=True, feature_range=(0,1))
+        # X = scaler.fit_transform(X)
+        # function = chi2
     kbest = SelectKBest(function, n)
     kbest.fit(X,Y)
     mask = kbest.get_support()
     return mask
-
-        #    success, varmask = feature_selection.run_feature_selection(X_copy, Y_copy, 
-        #         feature_selection_method, num_features, quantitative)
 
 def run_feature_selection(X, Y, method, num_features, quantitative):
     """Compute the number of variables to be retained.
@@ -83,21 +82,7 @@ def run_feature_selection(X, Y, method, num_features, quantitative):
         # the variable mask.
         variable_mask = selectkBest(X, Y, n_features, quantitative)
         
-        # The scaler has to be fitted to the reduced matrix
-        # in order to be applied in prediction.
-        # if method is not None and scaler is not None:
-        #     X = scaler.inverse_transform(X)
-        #     X = X[:, variable_mask]
-        #     scaler = scaler.fit(X)
-        #     X = scaler.transform(X)
-        # else:
-        #     X = X[:, variable_mask]
-
-        # LOG.info(f'Variable selection applied, number of final variables:'
-        #             f'{n_features}')
     except Exception as e:
-        # LOG.error(f'Error performing feature selection'
-        #             f' with exception: {e}')
         return False, e 
 
     return True, variable_mask

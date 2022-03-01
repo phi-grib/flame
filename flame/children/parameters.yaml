@@ -543,7 +543,7 @@ feature_selection:
   options: 
     - null
     - Kbest
-  description: Feature selection based on univariate statistics (F for quantitative, Chi square for qualitative)
+  description: Feature selection based on univariate statistics (F-test)
   dependencies: null
   comments: 
   group: modeling
