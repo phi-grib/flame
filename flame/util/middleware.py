@@ -154,7 +154,7 @@ class KeycloakMiddleware(MiddlewareMixin):
         :return:
         """
 
-        print (request)
+        print ('DEBUG:', request)
 
         # do not block the access to root!
         if request.path_info == '/':
@@ -165,10 +165,22 @@ class KeycloakMiddleware(MiddlewareMixin):
         # if request.path_info[-7:] == '/series':
         #     return None
 
-        if request.path_info[-14:] == '/documentation':
+        whitelist = [
+             '/flame.kh.svc/api/v1/api',
+             '/flame.kh.svc/api/v1/alive',
+             '/flame.kh.svc/api/v1/ready',
+        ]
+        for iwhite in whitelist:
+            if request.path_info.endswith(iwhite):
+                return None
+
+        if request.path_info.endswith('/oformat/WORD/documentation'):
+            return None
+        
+        if request.path_info.endswith('/oformat/EXCEL/documentation'):
             return None
 
-        if request.path_info[-16:] == '/export_download':
+        if request.path_info.endswith('/export_download'):
             return None
 
         if hasattr(settings, 'KEYCLOAK_BEARER_AUTHENTICATION_EXEMPT_PATHS'):
