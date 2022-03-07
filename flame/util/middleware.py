@@ -166,22 +166,17 @@ class KeycloakMiddleware(MiddlewareMixin):
         #     return None
 
         whitelist = [
-             '/flame.kh.svc/api/v1/api',
-             '/flame.kh.svc/api/v1/alive',
-             '/flame.kh.svc/api/v1/ready',
+             '/api/v1/api',
+             '/api/v1/alive',
+             '/api/v1/ready',
+             '/oformat/WORD/documentation',
+             '/oformat/EXCEL/documentation', 
+             '/export_download'
         ]
         for iwhite in whitelist:
             if request.path_info.endswith(iwhite):
+                print ('skipped:', request.path_info)
                 return None
-
-        if request.path_info.endswith('/oformat/WORD/documentation'):
-            return None
-        
-        if request.path_info.endswith('/oformat/EXCEL/documentation'):
-            return None
-
-        if request.path_info.endswith('/export_download'):
-            return None
 
         if hasattr(settings, 'KEYCLOAK_BEARER_AUTHENTICATION_EXEMPT_PATHS'):
             path = request.path_info.lstrip('/')
