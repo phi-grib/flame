@@ -16,26 +16,22 @@ config_in_settings = settings.APPLICATION_CONFIG
 def get_application_config_for_key(var_key):
     configmap = {'KEYCLOAK_SERVER_URL':'KC_URL',
                  'KEYCLOAK_CLIENT_SECRET_KEY':'KC_SECRET'}
+
+    if var_key in configmap:
+        print('config:', var_key, config_val)
+        return config(configmap[var_key])
+    
     config_val = os.environ.get(var_key)
     if config_val is not None:
-        # print(var_key, config_val)
+        print('os:', var_key, config_val)
         return config_val
-    elif var_key in configmap:
-        return config(configmap[var_key])
-    elif var_key in config_in_settings:
+    
+    if var_key in config_in_settings:
         config_val = config_in_settings[var_key]
-        # print(var_key, config_val)
+        print('settings:', var_key, config_val)
         return config_val
     else:
         return None
-
-    # if var_key in config_in_settings:
-    #     config_val = config_in_settings[var_key]
-    #     print(var_key, config_val)
-    #     return config_val
-    # else:
-    #     return None
-
 
 class KeycloakMiddleware(MiddlewareMixin):
 
