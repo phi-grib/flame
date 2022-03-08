@@ -2,7 +2,7 @@
 
 # Description    Flame feature selection methods
 ##
-# Authors:       Jose Carlos Gómez (josecarlos.gomez@upf.edu)
+# Authors:       Manuel Pastor (manuel.pastor@upf.edu)
 ##
 # Copyright 2018 Manuel Pastor
 ##
@@ -20,35 +20,30 @@
 # You should have received a copy of the GNU General Public License
 # along with Flame.  If not, see <http://www.gnu.org/licenses/>.
 
-
 """ This file contains implemented methods to perform
     feature selection"""
 
-from sklearn.preprocessing import MinMaxScaler 
+# from sklearn.preprocessing import MinMaxScaler 
+# from sklearn.feature_selection import chi2
 from sklearn.feature_selection import  SelectKBest
-from sklearn.feature_selection import chi2
+from sklearn.feature_selection import f_classif
 from sklearn.feature_selection import f_regression
-from flame.util import utils, get_logger, supress_log
+# from flame.util import get_logger
 import numpy as np
 
-LOG = get_logger(__name__)
+# LOG = get_logger(__name__)
 
-
-def selectkBest(X, Y, n, quantitative):
-    function = ""
-    if quantitative:
-        function = f_regression
-    else:
-        scaler = MinMaxScaler(copy=True, feature_range=(0,1))
-        X = scaler.fit_transform(X)
-        function = chi2
-    kbest = SelectKBest(function, n)
-    kbest.fit(X,Y)
-    mask = kbest.get_support()
-    return mask
-
-        #    success, varmask = feature_selection.run_feature_selection(X_copy, Y_copy, 
-        #         feature_selection_method, num_features, quantitative)
+# def selectkBest(X, Y, n, quantitative):
+#     function = f_classif
+#     if quantitative:
+#         function = f_regression
+#         # scaler = MinMaxScaler(copy=True, feature_range=(0,1))
+#         # X = scaler.fit_transform(X)
+#         # function = chi2
+#     kbest = SelectKBest(function, n)
+#     kbest.fit(X,Y)
+#     mask = kbest.get_support()
+#     return mask
 
 def run_feature_selection(X, Y, method, num_features, quantitative):
     """Compute the number of variables to be retained.
@@ -58,6 +53,9 @@ def run_feature_selection(X, Y, method, num_features, quantitative):
     variable_mask = np.zeros(nvarx, int)
 
     # When auto, the 10% top informative variables are retained.
+    if num_features is None or num_features == '':
+        num_features = 'auto'
+
     if num_features == "auto":
         # Use 10% of the total number of objects:
         # The number of variables is greater than the 10% of the objects
@@ -71,33 +69,26 @@ def run_feature_selection(X, Y, method, num_features, quantitative):
         # In any other circunstance set number of variables to 10 
         else:
             n_features = nvarx
+
     # Manual selection of number of variables
     else:
-        n_features = int(num_features)
-        if n_features > nvarx:
+        try:
+            n_features = int(num_features)
+        except: 
             n_features = nvarx
 
-    # Apply variable selection.
-    try:
-        # Apply the variable selection algorithm obtaining
-        # the variable mask.
-        variable_mask = selectkBest(X, Y, n_features, quantitative)
-        
-        # The scaler has to be fitted to the reduced matrix
-        # in order to be applied in prediction.
-        # if method is not None and scaler is not None:
-        #     X = scaler.inverse_transform(X)
-        #     X = X[:, variable_mask]
-        #     scaler = scaler.fit(X)
-        #     X = scaler.transform(X)
-        # else:
-        #     X = X[:, variable_mask]
+        if n_features > nvarx or n_features < 1:
+            n_features = nvarx
 
-        # LOG.info(f'Variable selection applied, number of final variables:'
-        #             f'{n_features}')
+    function = f_classif
+    if quantitative:
+        function = f_regression
+
+    try:
+        kbest = SelectKBest(function, n_features)
+        kbest.fit(X,Y)
+        variable_mask = kbest.get_support()
     except Exception as e:
-        # LOG.error(f'Error performing feature selection'
-        #             f' with exception: {e}')
         return False, e 
 
     return True, variable_mask
