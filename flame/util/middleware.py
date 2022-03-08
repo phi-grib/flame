@@ -17,14 +17,14 @@ def get_application_config_for_key(var_key):
     configmap = {'KEYCLOAK_SERVER_URL':'KC_URL',
                  'KEYCLOAK_CLIENT_SECRET_KEY':'KC_SECRET'}
 
-    if var_key in configmap:
-        try:
-            config_val = config(configmap[var_key])
-        except:
-            config_val = None
-        if config_val is not None:
-            print('config:', var_key, config_val)
-            return config_val
+    # if var_key in configmap:
+    #     try:
+    #         config_val = config(configmap[var_key])
+    #     except:
+    #         config_val = None
+    #     if config_val is not None:
+    #         print('config:', var_key, config_val)
+    #         return config_val
     
     config_val = os.environ.get(var_key)
     if config_val is not None:
