@@ -7,33 +7,21 @@ from django.utils.deprecation import MiddlewareMixin
 from keycloak import KeycloakOpenID
 from rest_framework.exceptions import PermissionDenied, AuthenticationFailed, NotAuthenticated
 from keycloak.exceptions import KeycloakError
-from decouple import config
 
 logger = logging.getLogger(__name__)
 
 config_in_settings = settings.APPLICATION_CONFIG
 
 def get_application_config_for_key(var_key):
-    configmap = {'KEYCLOAK_SERVER_URL':'KC_URL',
-                 'KEYCLOAK_CLIENT_SECRET_KEY':'KC_SECRET'}
-
-    if var_key in configmap:
-        try:
-            config_val = config(configmap[var_key])
-        except:
-            config_val = None
-        if config_val is not None:
-            print('config:', var_key, config_val)
-            return config_val
     
     config_val = os.environ.get(var_key)
     if config_val is not None:
-        print('os:', var_key, config_val)
+        # print('os:', var_key, config_val)
         return config_val
     
     if var_key in config_in_settings:
         config_val = config_in_settings[var_key]
-        print('settings:', var_key, config_val)
+        # print('settings:', var_key, config_val)
         return config_val
     else:
         return None
@@ -169,7 +157,7 @@ class KeycloakMiddleware(MiddlewareMixin):
         :return:
         """
 
-        print ('DEBUG:', request)
+        # print ('DEBUG:', request)
 
         # do not block the access to root!
         if request.path_info == '/':
@@ -221,14 +209,6 @@ class KeycloakMiddleware(MiddlewareMixin):
         for role in roles:
             if role not in userinfo['groups']:
                 has_role = False
-
-        # In case we need to verify token. But since we verify it by using userinfo call, it is not necessary atm.
-        # KEYCLOAK_PUBLIC_KEY = self.client_public_key
-        # options = {"verify_signature": True, "verify_aud": True, "verify_exp": True}
-        # token_info = self.keycloak.decode_token(token, key=KEYCLOAK_PUBLIC_KEY, options=options)
-
-        # if token_info['realm_access'] and token_info['realm_access']['roles']:
-        #     print(token_info['realm_access']['roles'])
 
         if has_role:
             return None
