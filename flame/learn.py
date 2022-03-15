@@ -271,7 +271,7 @@ class Learn:
 
         # check suitability of Y matrix
         if not self.param.getVal('quantitative') :
-            success, yresult  = utils.qualitative_Y(self.Y)
+            success, yresult  = utils.qualitative_Y(self.Y, test_zero=True)
             if not success:
                 self.conveyor.setError(yresult)
                 return

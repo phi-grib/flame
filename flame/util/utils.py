@@ -405,7 +405,7 @@ def is_string_empty(mylist):
             return False
     return True
 
-def qualitative_Y (Y):
+def qualitative_Y (Y, test_zero=False):
     ''' Checks if the Y nparray provided as an argument contains only 1 and 0 values and 
         is therefore suitable for being used in qualitative models
     '''
@@ -425,8 +425,9 @@ def qualitative_Y (Y):
 
     LOG.debug (f'Y analized. Found {neg} negative, {pos} positive, {nan} NaN and {ext} others objects')
 
-    if neg == 0 or pos == 0:
-        return False, f'Y values not suitable for building a qualitative model. Found {neg} negative and {pos} positive objects'
+    if test_zero:
+        if neg == 0 or pos == 0:
+            return False, f'Y values not suitable for building a qualitative model. Found {neg} negative and {pos} positive objects'
 
     if ext > 0:
         return False, f'Y values not suitable for building a qualitative model. Found {ext} objects not 1.000 or 0.000'
