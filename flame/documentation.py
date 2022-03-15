@@ -709,7 +709,14 @@ class Documentation:
             self.setInnerVal('Descriptors','selection_method', features)
 
         elif self.parameters.getVal('input_type')=='model_ensemble':
-            self.setInnerVal('Descriptors','descriptors', 'ensemble models')
+            self.setInnerVal('Algorithm','descriptors', 'model ensemble')
+            cv_method = f'{self.parameters.getVal("ModelValidationCV")} ({str(self.parameters.getVal("ModelValidationN"))})'
+            self.setInnerVal('Algorithm','cross-validation', cv_method)
+            emod = self.parameters.getVal('ensemble_names')
+            ever = self.parameters.getVal('ensemble_versions')
+            elab = [ f'{imod}v{iver}' for imod, iver in zip(emod, ever)]
+            self.setInnerVal('Descriptors','descriptors', elab)
+            self.setInnerVal('Descriptors','scaling', self.parameters.getVal('modelAutoscaling'))
 
         if self.parameters.getVal('conformal'):
             self.setInnerVal('AD_method', 'name', 'conformal prediction')
