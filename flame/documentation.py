@@ -695,6 +695,12 @@ class Documentation:
 
         # self.fields['Algorithm']['subfields']['algorithm']['value'] = \
         #     self.parameters.getVal('model')
+
+        if self.parameters.getVal('input_type') == 'data':
+            self.setVal('Dependent_variable', f"TSV column {self.parameters.getVal('TSV_activity')}")
+        else:
+            self.setVal('Dependent_variable', f"SDFile field <{self.parameters.getVal('SDFile_activity')}>")
+
         self.setInnerVal('Algorithm', 'algorithm', self.parameters.getVal('model'))
         
         if self.parameters.getVal('input_type')=='molecule':
