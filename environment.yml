@@ -18,12 +18,14 @@ dependencies:
   - chembl_structure_pipeline
   - python-docx
   - openpyxl
+  - appdirs
   - pip:
      - xgboost==1.4.2
      - django==2.2.8
      - djangorestframework
      - django-cors-headers
      - djangorestframework-yaml
+     - python-keycloak
      - "https://github.com/phi-grib/standardiser/archive/master.zip"
      - "https://github.com/phi-grib/nonconformist/archive/master.zip"
 
