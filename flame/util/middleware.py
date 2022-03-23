@@ -172,9 +172,9 @@ class KeycloakMiddleware(MiddlewareMixin):
              '/api/v1/api',
              '/api/v1/alive',
              '/api/v1/ready',
-             '/oformat/WORD/documentation',
-             '/oformat/EXCEL/documentation', 
-             '/export_download'
+            #  '/oformat/WORD/documentation',
+            #  '/oformat/EXCEL/documentation', 
+            #  '/export_download'
         ]
         for iwhite in whitelist:
             if request.path_info.endswith(iwhite):
