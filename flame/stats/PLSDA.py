@@ -267,8 +267,8 @@ class PLSDA(BaseEstimator):
             except Exception as e:
                 return False, f'Error at PLS_da with exception {e}'
 
-        # Fit estimator to the data
-        self.regularBuild (X, Y)
+            # Fit estimator to the data
+            self.regularBuild (X, Y)
 
         if not self.param.getVal('conformal'):
             return True, results

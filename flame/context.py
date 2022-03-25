@@ -25,9 +25,9 @@ import os
 import shutil
 # import pathlib
 # import sys
-# import codecs
-# import string
-# import re 
+import codecs
+import string
+import re 
 
 from flame.util import utils, verify, get_logger
 
@@ -284,6 +284,9 @@ def build_cmd(arguments, output_format=None):
                     LOG.info(f'Merging file {ifile} with existing training series')
                     new_training = os.path.join(endpoint_path, 'temp_training')
 
+                    characters_to_keep = string.printable #printable us-ascii only
+                    search_regex = re.compile("[^%s]" % (re.escape(characters_to_keep)))
+
                     with open(new_training, 'w') as outfile:
 
                         # handling the extra newline of SDFiles is problematic. We are delaying the
@@ -292,6 +295,7 @@ def build_cmd(arguments, output_format=None):
                         first = True
                         with codecs.open(lfile, 'r', encoding='utf-8', errors='ignore') as infile:
                             for line in infile:
+                                line = search_regex.sub('?', line)
                                 if first:
                                     outfile.write(f'{line.rstrip()}')
                                     first = False
@@ -301,6 +305,7 @@ def build_cmd(arguments, output_format=None):
                         # for the second block we add the preceding newline in all lines 
                         with codecs.open(ifile, 'r', encoding='utf-8', errors='ignore') as infile:
                             for line in infile:
+                                line = search_regex.sub('?', line)
                                 outfile.write(f'\n{line.rstrip()}')
 
                     shutil.move(new_training, lfile)

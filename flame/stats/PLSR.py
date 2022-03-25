@@ -151,8 +151,8 @@ class PLSR(BaseEstimator):
             except Exception as e:
                 return False, f'Error at PLS_r with exception {e}'
 
-        # Fit estimator to the data
-        self.regularBuild(X, Y)
+            # Fit estimator to the data
+            self.regularBuild(X, Y)
         
         if not self.param.getVal('conformal'):
             return True, results
