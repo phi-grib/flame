@@ -22,7 +22,6 @@
 
 import os
 import sys
-import pickle
 import importlib
 
 from flame.util import utils, get_logger
@@ -47,23 +46,29 @@ class Predict:
         self.conveyor.setOrigin('apply')
 
         # load modelID
-        success, result = utils.getModelID(model, version, 'model')
-        if not success:
-            LOG.critical(f'{result}. Aborting...')
-            sys.exit()
 
-        self.conveyor.addMeta('modelID', result)
-        LOG.debug (f'Loaded model with modelID: {result}')
+        #TODO: refine
+        if model != 'multi':
+            success, result = utils.getModelID(model, version, 'model')
+            if not success:
+                LOG.critical(f'{result}. Aborting...')
+                sys.exit()
+
+            self.conveyor.addMeta('modelID', result)
+            LOG.debug (f'Loaded model with modelID: {result}')
 
         # assign prediction label
         self.conveyor.addVal(label, 'prediction_label', 'prediction label',
                     'method', 'single',
                     'Label used to identify the prediction')
 
-        success, results = self.param.loadYaml(model, version)
-        if not success:
-            LOG.critical(f'Unable to load model parameters. {results}. Aborting...')
-            sys.exit()
+        #TODO: refine
+        if model != 'multi':
+
+            success, results = self.param.loadYaml(model, version)
+            if not success:
+                LOG.critical(f'Unable to load model parameters. {results}. Aborting...')
+                sys.exit()
 
         # add additional output formats included in the constructor 
         # this is requiered to add JSON format as output when the object is
@@ -177,3 +182,11 @@ class Predict:
             odata = Odata(self.param, self.conveyor)
 
         return odata.run()
+    
+    def aggregate(self, input_source):
+
+        for i in input_source:
+            print (i.getJSON())
+
+        return True, 'OK'
+    

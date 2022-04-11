@@ -127,10 +127,14 @@ def predict_cmd(arguments, output_format=None):
     '''
     from flame.predict import Predict
 
+    # true if we predict multiple endpoints
+    multi = arguments['endpoint'] == 'multi'
+
     # safety check if model exists
-    endpoint_dir = utils.model_path(arguments['endpoint'], 0)
-    if not os.path.isdir(endpoint_dir):
-        return False, 'Endpoint name not found in model repository.'
+    if not multi:
+        endpoint_dir = utils.model_path(arguments['endpoint'], 0)
+        if not os.path.isdir(endpoint_dir):
+            return False, 'Endpoint name not found in model repository.'
 
     # ** DEPRECATE **
     # this is a back-compatibility trick for older versions of APIs 
@@ -146,7 +150,11 @@ def predict_cmd(arguments, output_format=None):
     if utils.isSingleThread():
         predict.set_single_CPU()
 
-    ensemble = predict.get_ensemble()
+    # TODO: refine
+    if multi:
+        ensemble = [False]
+    else:
+        ensemble = predict.get_ensemble()
 
     # ensemble[0]     Boolean with True for ensemble models and False otherwyse
     # ensemble[1]     List of ensemble model model_names
@@ -178,6 +186,24 @@ def predict_cmd(arguments, output_format=None):
 
         # now run the model using the data from the external sources
         success, results = predict.run(model_res)
+
+    elif multi:
+        
+        if arguments['infile'] is None:
+            return False, 'multi models require allways an input file'
+
+        emodels = arguments['multi']['endpoints']
+        evers   = arguments['multi']['versions']
+
+        success, model_res = get_ensemble_input(predict, emodels, evers, arguments['infile'])
+
+        if not success:
+            predict.conveyor.setError (model_res)
+            LOG.error (model_res)
+            # return False, model_res        # TO-DO, comment this line and run prediction to allow odata to generate error info
+
+        # now run the model using the data from the external sources
+        success, results =  predict.aggregate(model_res)
 
     else:
 

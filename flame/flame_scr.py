@@ -21,7 +21,7 @@
 # along with Flame. If not, see <http://www.gnu.org/licenses/>.
 
 import argparse
-import pathlib
+import yaml
 import os
 from flame.util import utils, get_logger, config
 from flame import __version__
@@ -98,6 +98,10 @@ def main():
     parser.add_argument('--smarts',
                         help='SMARTS string used as input for similarity',
                         required=False )
+    
+    parser.add_argument('-m', '--multi',
+                        help='yaml file with endpoint names and versions for multiple predictions',
+                        required=False )
 
     args = parser.parse_args()
 
@@ -129,18 +133,29 @@ def main():
 
         version = utils.intver(args.version)
 
-        if args.label is None:
-            label = 'temp'
-        else:
+        label = 'temp'
+        if args.label is not None:
             label = args.label
+        
+        multi = None
+        if args.multi is not None:
+            with open (args.multi, 'r') as f:
+                multi = yaml.safe_load(f)
+        
+        if multi is None:
+            multi = {'endpoints':[], 'versions':[]}
 
         command_predict = {'endpoint': args.endpoint,
                  'version': version,
                  'label': label,
-                 'infile': args.infile}
+                 'infile': args.infile,
+                 'multi': multi}
 
         LOG.info(f'Starting prediction with model {args.endpoint}'
                  f' version {version} for file {args.infile}, labelled as {label}')
+        
+        if args.endpoint == 'multi':
+            LOG.info (f'endpoints {multi["endpoints"]} versions{multi["versions"]}' )
 
         success, results = context.predict_cmd(command_predict)
         if not success:
