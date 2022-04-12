@@ -185,8 +185,8 @@ class Predict:
     
     def aggregate(self, input_source):
 
-        for i in input_source:
-            print (i.getJSON())
+        odata = Odata(self.param, self.conveyor)
+        success, results = odata.aggregate(input_source)
 
-        return True, 'OK'
+        return success, results
     

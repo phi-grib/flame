@@ -378,6 +378,7 @@ class Odata():
         return True, self.conveyor
 
 
+
     def run_slearn(self):
         '''Process the results of slearn,
         usually a report on the space creation 
@@ -576,3 +577,39 @@ class Odata():
             return False, 'processing output from a run of unknown type'
 
         return success, results
+
+    def aggregate (self, input_source):
+        ''' input source is a list of conveyors obtained by different models'''
+
+        opath = utils.predictions_repository_path()
+        if os.path.isdir (opath):
+            opath = os.path.join(opath,self.label)
+            if not os.path.isdir (opath):
+                os.mkdir(opath)
+
+        # create output files 
+        results_pkl_path = os.path.join(opath,'prediction-results.pkl')
+        meta_pkl_path = os.path.join(opath,'prediction-meta.pkl')
+        LOG.info(f'saving model results to: {opath}')
+
+        for iconveyor in input_source:
+
+            # dump conveyor
+            with open(results_pkl_path, 'ab') as handle:
+                iconveyor.save(handle)
+
+            # dump metainfo
+            with open(meta_pkl_path, 'ab') as handle:
+                pickle.dump (iconveyor.getMeta('endpoint'),handle)
+                pickle.dump (iconveyor.getMeta('version'),handle)
+                pickle.dump (iconveyor.getMeta('input_file'),handle)
+                now = datetime.now()
+                pickle.dump (now.strftime("%d/%m/%Y %H:%M:%S"),handle)
+                pickle.dump (datetime.timestamp(now), handle)
+                pickle.dump (iconveyor.getMeta('modelID'),handle)
+                pickle.dump (iconveyor.getWarningMessage(), handle)
+                pickle.dump (iconveyor.getErrorMessage(), handle)
+
+            print (iconveyor.getJSON())
+
+        return True, 'OK'
