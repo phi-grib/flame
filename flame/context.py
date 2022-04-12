@@ -217,6 +217,44 @@ def predict_cmd(arguments, output_format=None):
 
     return success, results
 
+def profile_cmd (arguments, output_format=None):
+    '''
+    Instantiates a Predict object to run a prediction using the given input
+    file and model.
+
+    This method must be self-contained and suitable for being called in
+    cascade, by models which use the output of other models as input.
+    '''
+    from flame.predict import Predict
+
+    if 'label' not in arguments:
+        arguments['label'] = 'temp'
+
+    if 'output_format' in arguments:
+        output_format = arguments['output_format']
+
+    predict = Predict('multi', 0,  output_format=output_format, label=arguments['label'])
+
+    if utils.isSingleThread():
+        predict.set_single_CPU()
+
+    if arguments['infile'] is None:
+        return False, 'multi models require allways an input file'
+
+    emodels = arguments['multi']['endpoints']
+    evers   = arguments['multi']['versions']
+
+    success, model_res = get_ensemble_input(predict, emodels, evers, arguments['infile'])
+
+    if not success:
+        predict.conveyor.setError (model_res)
+        LOG.error (model_res)
+
+    success, results =  predict.aggregate(model_res)
+
+    LOG.info('Profiling completed...')
+
+    return success, results
 
 def build_cmd(arguments, output_format=None):
     '''

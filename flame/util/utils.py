@@ -316,6 +316,17 @@ def predictions_repository_path():
     if success:
         return config['predictions_repository_path']
 
+def profiles_repository_path():
+    '''
+    Returns the path to the root of the predictions repository,
+    containing all predictions
+    '''
+    success, config = read_config()
+    if success:
+        pred_dir = config['predictions_repository_path']
+        base_dir, head_dir = os.path.split(pred_dir)
+        return os.path.join (base_dir,'profiles') 
+
 def safe_copy (inputfile, outputfile):
     ''' this function makes sure that the input file contains only printable chars
         RDKit is very sensitive to the presence of non utf-8 chars and for this reason

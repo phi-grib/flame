@@ -72,8 +72,8 @@ def main():
 
     parser.add_argument('-c', '--command',
                         action='store',
-                        choices=['predict', 'search', 'build', 'sbuild', 'manage', 'config'],
-                        help='Action type: \'predict\' or \'search\' or \'build\' \'sbuild\' or \'manage\' or \'config\'',
+                        choices=['predict', 'profile', 'search', 'build', 'sbuild', 'manage', 'config'],
+                        help='Action type: \'predict\' or \'profile\' or \'search\' or \'build\' \'sbuild\' or \'manage\' or \'config\'',
                         required=True)
 
     # parser.add_argument('-log', '--loglevel',
@@ -137,27 +137,47 @@ def main():
         if args.label is not None:
             label = args.label
         
-        multi = None
-        if args.multi is not None:
-            with open (args.multi, 'r') as f:
-                multi = yaml.safe_load(f)
-        
-        if multi is None:
-            multi = {'endpoints':[], 'versions':[]}
-
         command_predict = {'endpoint': args.endpoint,
                  'version': version,
                  'label': label,
-                 'infile': args.infile,
-                 'multi': multi}
+                 'infile': args.infile}
 
         LOG.info(f'Starting prediction with model {args.endpoint}'
                  f' version {version} for file {args.infile}, labelled as {label}')
         
-        if args.endpoint == 'multi':
-            LOG.info (f'endpoints {multi["endpoints"]} versions{multi["versions"]}' )
-
         success, results = context.predict_cmd(command_predict)
+        if not success:
+            LOG.error(results)
+
+    elif args.command == 'profile':
+        
+        if args.infile is None or args.multi is None:
+            LOG.error('flame profile : input file and endpoint list arguments are compulsory')
+            return
+
+        label = 'temp'
+        if args.label is not None:
+            label = args.label
+        
+        multi = None
+        try:
+            with open (args.multi, 'r') as f:
+                multi = yaml.safe_load(f)
+        except:
+            LOG.error(f'flame profile : unable to open endpoint list file {args.multi}')
+            return
+        
+        if multi is None:
+            multi = {'endpoints':[], 'versions':[]}
+
+        command_profile = {'label': label,
+                 'infile': args.infile,
+                 'multi': multi}
+
+        LOG.info(f'Starting profiling with models {multi["endpoints"]} versions{multi["versions"]}'
+                 f' for file {args.infile}, labelled as {label}')
+        
+        success, results = context.profile_cmd(command_profile)
         if not success:
             LOG.error(results)
 
