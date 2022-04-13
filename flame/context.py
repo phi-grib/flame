@@ -244,13 +244,13 @@ def profile_cmd (arguments, output_format=None):
     emodels = arguments['multi']['endpoints']
     evers   = arguments['multi']['versions']
 
-    success, model_res = get_ensemble_input(predict, emodels, evers, arguments['infile'])
+    success, model_results = get_ensemble_input(predict, emodels, evers, arguments['infile'])
 
     if not success:
-        predict.conveyor.setError (model_res)
-        LOG.error (model_res)
+        predict.conveyor.setError (model_results)
+        LOG.error (model_results)
 
-    success, results =  predict.aggregate(model_res)
+    success, results =  predict.aggregate(model_results, arguments['infile'])
 
     LOG.info('Profiling completed...')
 

@@ -94,18 +94,13 @@ class Odata():
         argument (val) in a human-readable format 
         '''
         if len(val) < 3:
-            # print('       ',val)
             LOG.info(f'       {val}')
         else:
             v3 = val[2]
             try:
-                # v3 = float("{0:.4f}".format(v3))
                 v3 = float(f'{v3:.4f}')
-
             except:
                 pass
-
-            # print(f'       {val[0]} ( {val[1]} ) : {v3}')
             LOG.info (f'       {val[0]} ( {val[1]} ) : {v3}')
 
     def run_learn(self):
@@ -615,5 +610,57 @@ class Odata():
                 pickle.dump (iconveyor.getErrorMessage(), handle)
 
             # print (iconveyor.getJSON())
+
+        ####
+        # 2. console output
+        ####
+        
+        obj_num = input_source[0].getVal('obj_num')
+        self.print_result(('obj_num','number of objects',obj_num))
+        
+        names  = []
+        values = []
+        pval0  = []
+        pval1  = []
+        first = True
+
+        for iconveyor in input_source: 
+            if iconveyor.isKey('values'):
+                if first:
+                    names  = iconveyor.getVal('obj_nam')
+                    values = np.array(iconveyor.getVal('values'), dtype=np.float)
+                    if iconveyor.isKey('p0'):
+                        pval0 = np.array(iconveyor.getVal('p0'), dtype=np.float)
+                        pval1 = np.array(iconveyor.getVal('p1'), dtype=np.float)
+                    else:
+                        pval0 = np.zeros((obj_num), dtype=np.float )
+                        pval1 = np.zeros((obj_num), dtype=np.float )
+                    first  = False
+                else:
+                    values = np.c_[values, iconveyor.getVal('values')]
+                    if iconveyor.isKey('p0'):
+                        pval0 = np.c_[pval0, iconveyor.getVal('p0')]
+                        pval1 = np.c_[pval1, iconveyor.getVal('p1')]
+                    else:
+                        pval0 = np.c_[pval0, np.zeros((obj_num), dtype=np.float )]
+                        pval1 = np.c_[pval1, np.zeros((obj_num), dtype=np.float )]
+
+        #header
+        output = 'name       '
+        for j in range (nmodels):
+            output += f'\t{input_source[j].getMeta("endpoint")}v{input_source[j].getMeta("version")}'
+            if input_source[j].isKey('p0'):
+                output += '\tp0\tp1'
+        print (output)
+
+        #table
+        for i in range(obj_num):
+            output = f'{names[i]}'
+            for j in range (nmodels):
+                if input_source[j].isKey('p0'):
+                    output += f'\t{values[i][j]:.4f}\t{pval0[i][j]:.4f}\t{pval1[i][j]:.4f}'
+                else:
+                    output += f'\t{values[i][j]:.4f}'
+            print (output)
 
         return True, 'OK'

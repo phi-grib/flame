@@ -23,6 +23,9 @@
 import os
 import sys
 import importlib
+import numpy as np
+import copy
+# from syslog import LOG_INFO
 
 from flame.util import utils, get_logger
 from flame.parameters import Parameters
@@ -183,10 +186,74 @@ class Predict:
 
         return odata.run()
     
-    def aggregate(self, input_source):
+    def aggregate(self, model_results, input_file):
 
+        #TODO: move to defaults of param
+        self.param.setVal('input_type', 'molecule')
+        self.param.setVal('SDFile_name', ['name', 'GENERIC_NAME'])
+
+        idata = Idata(self.param, self.conveyor, input_file)
+        
+        #TODO: move to defaults of idata
+        idata.format = ['JSON']
+
+        # extract useful information from file
+        success_inform = idata.extractInformation(input_file)
+
+        # check if all conveyors have completed the extraction
+        obj_num = self.conveyor.getVal('obj_num') 
+        same_objects = True
+        for iconveyor in model_results:
+            if iconveyor.getVal('obj_num') != obj_num:
+                same_objects = False
+                break
+
+        # if there is a mismatch create a mask with false for any object not present in ALL conveyors
+        if not same_objects:
+
+            # we will use SMILES to check the identity inthe different results
+            smiles = self.conveyor.getVal('SMILES')
+
+            # we will define a mask for each model, with a 0 in the missing object
+            masks = []
+            for iconveyor in model_results:
+                ismiles = iconveyor.getVal('SMILES')
+                imask = np.ones(obj_num, dtype=int)
+                kprime=0
+                for k in range(len(smiles)):
+                    if kprime<len(ismiles):
+                        if smiles[k] == ismiles[kprime]:
+                            kprime+=1
+                        else:
+                            imask[k]=0
+                    else:
+                        imask[k]=0
+
+                masks.append(imask)
+
+            # the master mask combines all the missing objects
+            master_mask = np.ones(obj_num, dtype=int)
+            for k in range(len(smiles)):
+                for h in range(len(masks)):
+                    master_mask[k] *= masks[h][k]
+
+            # now we apply the master mask to each model, but before we must apply
+            # the local mask to the master mask 
+            for i,iconveyor in enumerate(model_results):
+                imaster = copy.copy(master_mask)
+                imaster = imaster[masks[i]==1]
+
+                iconveyor.mask_objects(imaster)
+                iconveyor.setVal('obj_num', np.count_nonzero(imaster==1) )
+
+            LOG.info(f'Prediction mismatches found. Profiled only the {np.count_nonzero(master_mask==1)} molecules with {len(model_results)} models.')
+
+        else:
+            LOG.info(f'Profiled {obj_num} molecules with {len(model_results)} models. Prediction size matches.')
+
+        # check that the 
         odata = Odata(self.param, self.conveyor)
-        success, results = odata.aggregate(input_source)
+        success, results = odata.aggregate(model_results)
 
         return success, results
     

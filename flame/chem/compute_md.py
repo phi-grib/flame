@@ -203,6 +203,9 @@ def _RDKit_rdkFPS(ifile, **kwargs):
     if num_obj == 0:
         return False, 'Unable to compute RDKit RDK Fingerprints for molecule '+ifile
 
+    # print ('BEWARE!!!: debug mode in compute_md.py line 207 **********************')
+    # success_list[4] = False
+
     results = {
         'matrix': xmatrix,
         'names' : [f'f{i}' for i in range(rdk_nbits)],
@@ -452,6 +455,8 @@ def _RDKit_descriptors(ifile, **kwargs):
     if num_obj == 0:
         return False, 'Unable to compute RDKit descriptors for molecule '+ifile
     
+
+
     results = {
         'matrix': xmatrix,
         'names': nms,
@@ -536,6 +541,9 @@ def _RDKit_properties(ifile, **kwargs):
     LOG.debug(f'computed RDKit properties matrix with shape {np.shape(xmatrix)}')
     if num_obj == 0:
         return False, 'Unable to compute RDKit properties for molecule '+ifile
+
+    # print ('BEWARE!!!: debug mode in compute_md.py line 545 **********************')
+    # success_list[9] = False
 
     results = {
         'matrix': xmatrix,
