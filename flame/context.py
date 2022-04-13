@@ -237,6 +237,11 @@ def profile_cmd (arguments, output_format=None):
 
     if utils.isSingleThread():
         predict.set_single_CPU()
+    
+    predict.param.setVal('input_type', 'molecule')
+    predict.param.setVal('SDFile_name', ['name', 'GENERIC_NAME'])
+    predict.param.setVal('output_format', ['JSON'])
+
 
     if arguments['infile'] is None:
         return False, 'multi models require allways an input file'

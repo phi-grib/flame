@@ -188,16 +188,10 @@ class Predict:
     
     def aggregate(self, model_results, input_file):
 
-        #TODO: move to defaults of param
-        self.param.setVal('input_type', 'molecule')
-        self.param.setVal('SDFile_name', ['name', 'GENERIC_NAME'])
-
+        # instantiate idata to read input file information
         idata = Idata(self.param, self.conveyor, input_file)
         
-        #TODO: move to defaults of idata
-        idata.format = ['JSON']
-
-        # extract useful information from file
+        # Extract useful information from input file
         success_inform = idata.extractInformation(input_file)
 
         # check if all conveyors have completed the extraction
@@ -251,7 +245,7 @@ class Predict:
         else:
             LOG.info(f'Profiled {obj_num} molecules with {len(model_results)} models. Prediction size matches.')
 
-        # check that the 
+        # send results to odata 
         odata = Odata(self.param, self.conveyor)
         success, results = odata.aggregate(model_results)
 
