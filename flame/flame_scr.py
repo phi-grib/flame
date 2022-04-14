@@ -178,8 +178,7 @@ def main():
 
         command_profile = {'label': label,
                  'infile': args.infile,
-                 'multi': multi,
-                 'item': model_item}
+                 'multi': multi}
 
         LOG.info(f'Starting profiling with models {multi["endpoints"]} versions{multi["versions"]}'
                  f' for file {args.infile}, labelled as {label}')

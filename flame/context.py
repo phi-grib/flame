@@ -461,7 +461,7 @@ def manage_cmd(args):
     '''
 
     version = utils.intver(args.version)
-    
+
     model_item = 0
     if args.item is not None:
         try:

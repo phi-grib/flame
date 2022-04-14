@@ -70,15 +70,15 @@ class Predict:
                 LOG.critical(f'Unable to load model parameters. {results}. Aborting...')
                 sys.exit()
 
-        # add additional output formats included in the constructor 
-        # this is requiered to add JSON format as output when the object is
-        # instantiated from a web service call, requiring this output   
-        if output_format != None:
-            if output_format not in self.param.getVal('output_format'):
-                self.param.appVal('output_format',output_format)
- 
-            if 'ghost' in output_format:
-                self.param.setVal('output_similar', False)
+            # add additional output formats included in the constructor 
+            # this is requiered to add JSON format as output when the object is
+            # instantiated from a web service call, requiring this output   
+            if output_format != None:
+                if output_format not in self.param.getVal('output_format'):
+                    self.param.appVal('output_format',output_format)
+    
+                if 'ghost' in output_format:
+                    self.param.setVal('output_similar', False)
 
         return
 
