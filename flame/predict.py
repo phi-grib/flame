@@ -38,7 +38,7 @@ LOG = get_logger(__name__)
 
 class Predict:
 
-    def __init__(self, model, version=0, output_format=None, label=None):
+    def __init__(self, model, version=0, output_format=None, label=None, profile=False):
         LOG.debug('Starting predict...')
         self.model = model
         self.version = version
@@ -49,9 +49,7 @@ class Predict:
         self.conveyor.setOrigin('apply')
 
         # load modelID
-
-        #TODO: refine
-        if model != 'multi':
+        if not profile:
             success, result = utils.getModelID(model, version, 'model')
             if not success:
                 LOG.critical(f'{result}. Aborting...')
@@ -65,9 +63,8 @@ class Predict:
                     'method', 'single',
                     'Label used to identify the prediction')
 
-        #TODO: refine
-        if model != 'multi':
-
+        # load parameters, but not for profiling 
+        if not profile:
             success, results = self.param.loadYaml(model, version)
             if not success:
                 LOG.critical(f'Unable to load model parameters. {results}. Aborting...')

@@ -103,6 +103,10 @@ def main():
                         help='yaml file with endpoint names and versions for multiple predictions',
                         required=False )
 
+    parser.add_argument('-i', '--item',
+                        help='item of a multiple predictions',
+                        required=False )
+
     args = parser.parse_args()
 
     # init logger Level and set general config
@@ -159,6 +163,8 @@ def main():
         if args.label is not None:
             label = args.label
         
+
+
         multi = None
         try:
             with open (args.multi, 'r') as f:
@@ -172,7 +178,8 @@ def main():
 
         command_profile = {'label': label,
                  'infile': args.infile,
-                 'multi': multi}
+                 'multi': multi,
+                 'item': model_item}
 
         LOG.info(f'Starting profiling with models {multi["endpoints"]} versions{multi["versions"]}'
                  f' for file {args.infile}, labelled as {label}')

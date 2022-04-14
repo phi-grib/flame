@@ -127,14 +127,10 @@ def predict_cmd(arguments, output_format=None):
     '''
     from flame.predict import Predict
 
-    # true if we predict multiple endpoints
-    multi = arguments['endpoint'] == 'multi'
-
     # safety check if model exists
-    if not multi:
-        endpoint_dir = utils.model_path(arguments['endpoint'], 0)
-        if not os.path.isdir(endpoint_dir):
-            return False, 'Endpoint name not found in model repository.'
+    endpoint_dir = utils.model_path(arguments['endpoint'], 0)
+    if not os.path.isdir(endpoint_dir):
+        return False, 'Endpoint name not found in model repository.'
 
     # ** DEPRECATE **
     # this is a back-compatibility trick for older versions of APIs 
@@ -150,11 +146,7 @@ def predict_cmd(arguments, output_format=None):
     if utils.isSingleThread():
         predict.set_single_CPU()
 
-    # TODO: refine
-    if multi:
-        ensemble = [False]
-    else:
-        ensemble = predict.get_ensemble()
+    ensemble = predict.get_ensemble()
 
     # ensemble[0]     Boolean with True for ensemble models and False otherwyse
     # ensemble[1]     List of ensemble model model_names
@@ -187,24 +179,6 @@ def predict_cmd(arguments, output_format=None):
         # now run the model using the data from the external sources
         success, results = predict.run(model_res)
 
-    elif multi:
-        
-        if arguments['infile'] is None:
-            return False, 'multi models require allways an input file'
-
-        emodels = arguments['multi']['endpoints']
-        evers   = arguments['multi']['versions']
-
-        success, model_res = get_ensemble_input(predict, emodels, evers, arguments['infile'])
-
-        if not success:
-            predict.conveyor.setError (model_res)
-            LOG.error (model_res)
-            # return False, model_res        # TO-DO, comment this line and run prediction to allow odata to generate error info
-
-        # now run the model using the data from the external sources
-        success, results =  predict.aggregate(model_res)
-
     else:
 
         # run the model with the input file
@@ -233,7 +207,7 @@ def profile_cmd (arguments, output_format=None):
     if 'output_format' in arguments:
         output_format = arguments['output_format']
 
-    predict = Predict('multi', 0,  output_format=output_format, label=arguments['label'])
+    predict = Predict('multi', 0,  output_format=output_format, label=arguments['label'],profile=True)
 
     if utils.isSingleThread():
         predict.set_single_CPU()
@@ -241,7 +215,6 @@ def profile_cmd (arguments, output_format=None):
     predict.param.setVal('input_type', 'molecule')
     predict.param.setVal('SDFile_name', ['name', 'GENERIC_NAME'])
     predict.param.setVal('output_format', ['JSON'])
-
 
     if arguments['infile'] is None:
         return False, 'multi models require allways an input file'
@@ -488,6 +461,13 @@ def manage_cmd(args):
     '''
 
     version = utils.intver(args.version)
+    
+    model_item = 0
+    if args.item is not None:
+        try:
+            model_item = int(args.item)
+        except:
+            pass
 
     if args.space is not None or 'searches' in args.action :
     
@@ -566,10 +546,18 @@ def manage_cmd(args):
             success, results = manage.action_list(args.endpoint)
         elif args.action == 'predictions':
             success, results = manage.action_predictions_list()
+        elif args.action == 'profiles':
+            success, results = manage.action_profiles_list()
         elif args.action == 'predictions_result':
             success, results = manage.action_predictions_result(args.label)
+        elif args.action == 'profiles_result':
+            success, results = manage.action_profiles_result(args.label, model_item)
+        elif args.action == 'profiles_summary':
+            success, results = manage.action_profiles_summary(args.label)
         elif args.action == 'predictions_remove':
             success, results = manage.action_predictions_remove(args.label)
+        elif args.action == 'profiles_remove':
+            success, results = manage.action_profiles_remove(args.label)
         elif args.action == 'label':
             success, results = manage.action_label(args.endpoint, version, args.label)
         elif args.action == 'verify':

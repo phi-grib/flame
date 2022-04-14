@@ -596,18 +596,18 @@ class Odata():
                 iconveyor.save(handle)
 
         # dump metainfo
-        with open(meta_pkl_path, 'ab') as handle:
+        with open(meta_pkl_path, 'wb') as handle:
             pickle.dump (nmodels, handle)
             for iconveyor in input_source: 
+                now = datetime.now()
                 pickle.dump (iconveyor.getMeta('endpoint'),handle)
                 pickle.dump (iconveyor.getMeta('version'),handle)
                 pickle.dump (iconveyor.getMeta('input_file'),handle)
-                now = datetime.now()
                 pickle.dump (now.strftime("%d/%m/%Y %H:%M:%S"),handle)
                 pickle.dump (datetime.timestamp(now), handle)
                 pickle.dump (iconveyor.getMeta('modelID'),handle)
-                pickle.dump (iconveyor.getWarningMessage(), handle)
-                pickle.dump (iconveyor.getErrorMessage(), handle)
+                # pickle.dump (iconveyor.getWarningMessage(), handle)
+                # pickle.dump (iconveyor.getErrorMessage(), handle)
 
             # print (iconveyor.getJSON())
 
