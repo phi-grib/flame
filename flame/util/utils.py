@@ -29,7 +29,6 @@ import random
 import pickle
 import string
 import hashlib
-import pathlib
 import numpy as np
 import codecs
 import string
@@ -74,8 +73,19 @@ def read_config():
     if conf is None:
         return False, 'unable to obtain configuration file'
 
+    # legacy configuration files contain individual items in the yaml
+    if not 'root_repository' in conf:
+        if 'model_repository_path' in conf:
+            base_dir, head_dir = os.path.split(conf['model_repository_path'])
+            conf['root_repository'] = base_dir
+        else:
+            return False, f'Configuration file incorrect. Run "flame -c config -d ROOT_DIR" with a suitable ROOT_DIR setting'
+
+    items = ['models', 'spaces', 'predictions','profiles']
+    for i in items:
+        conf[i] = os.path.join(conf['root_repository'],i)
+
     if conf['config_status']:
-        items = ['model_repository_path', 'space_repository_path', 'predictions_repository_path']
         for i in items:
             try:
                 conf[i] = os.path.abspath(conf[i])
@@ -94,7 +104,7 @@ def config_test() -> None:
     if success:
         if isinstance(config['config_status'], bool):
             if config['config_status']:
-                if os.path.isdir(config['model_repository_path']):
+                if os.path.isdir(config['models']):
                     return
 
     sys.exit()  # force exit
@@ -109,37 +119,6 @@ def write_config(config: dict) -> None:
     with open(os.path.join(source_dir,'config.yaml'), 'w') as f:
         yaml.dump(config, f, default_flow_style=False)
 
-def set_model_repository(path=None):
-    """
-    Set the model repository path.
-    This is the dir where flame is going to create and load models.
-
-    if path is None, model dir will be set to the default in the
-    flame root directory.
-
-    Returns:
-    --------
-    None
-    """
-    # source_dir = os.path.dirname(os.path.dirname(__file__)) 
-    # with open(os.path.join(source_dir,'config.yaml'),'r') as f:
-    #     configuration = yaml.safe_load(f)
-    
-    success, configuration = read_config()
-
-    if success:
-        if path is None:  # set to default path
-            model_root_path = os.path.join(
-                pathlib.Path(__file__).resolve().parents[1],
-                'models/')
-            configuration['model_repository_path'] = str(model_root_path)
-        else:
-            new_path = pathlib.Path(path)
-            configuration['model_repository_path'] = str(new_path.resolve())
-
-        write_config(configuration)
-
-# def set_repositories(model_path, space_path, predictions_path):
 def set_repositories(root_path, username=None , project=None):
     """
     Set the model repository path.
@@ -148,11 +127,6 @@ def set_repositories(root_path, username=None , project=None):
     --------
     None
     """
-
-    # source_dir = os.path.dirname(os.path.dirname(__file__)) 
-    # with open(os.path.join(source_dir,'config.yaml'), 'r') as f:
-    #     configuration = yaml.safe_load(f)
-
     success, configuration = read_config()
     
     if not success:
@@ -176,19 +150,21 @@ def set_repositories(root_path, username=None , project=None):
             print (f'Error {e}')
             return False
 
-    configuration['model_repository_path'] = os.path.join(root_path,'models')
-    configuration['space_repository_path'] = os.path.join(root_path,'spaces')
-    configuration['predictions_repository_path'] = os.path.join(root_path,'predictions')
+    configuration['root_repository'] = root_path
 
-    for i in ['model_repository_path', 'space_repository_path', 'predictions_repository_path']:
-        path = configuration[i]
+    items = ['models', 'predictions', 'spaces', 'profiles']
+    for i in items:
+        ipath = os.path.join(root_path, i)
         try:
-            if not os.path.isdir(path):
-                os.mkdir(path)
-            print (f'{i}: {configuration[i]}')
+            if not os.path.isdir(ipath):
+                os.mkdir(ipath)
+                print (f'...creating {ipath} directory')
+            print (f'{i}: {ipath}')
         except Exception as e:
             print (f'Error {e}')
             return False
+
+        configuration[i] = ipath
 
     write_config(configuration)
 
@@ -211,7 +187,7 @@ def model_repository_path():
     '''
     success, config = read_config()
     if success: 
-        return config['model_repository_path']
+        return config['models']
 
 def model_tree_path(model):
     '''
@@ -250,7 +226,7 @@ def space_repository_path():
     '''
     success, config = read_config()
     if success:
-        return config['space_repository_path']
+        return config['spaces']
 
 def space_tree_path(space):
     '''
@@ -314,7 +290,7 @@ def predictions_repository_path():
     '''
     success, config = read_config()
     if success:
-        return config['predictions_repository_path']
+        return config['predictions']
 
 def profiles_repository_path():
     '''
@@ -323,9 +299,7 @@ def profiles_repository_path():
     '''
     success, config = read_config()
     if success:
-        pred_dir = config['predictions_repository_path']
-        base_dir, head_dir = os.path.split(pred_dir)
-        return os.path.join (base_dir,'profiles') 
+        return config['profiles']
 
 def safe_copy (inputfile, outputfile):
     ''' this function makes sure that the input file contains only printable chars

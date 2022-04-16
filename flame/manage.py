@@ -35,17 +35,6 @@ from flame.conveyor import Conveyor
 
 LOG = get_logger(__name__)
 
-def set_model_repository(path=None):
-    """
-    Set the model repository path.
-    This is the dir where flame is going to create and load models
-    """
-    utils.set_model_repository(path)
-
-    LOG.info(f'Model repository updated to {path}')
-    return True, 'model repository updated'
-
-
 def action_new(model):
     '''
     Create a new model tree, using the given name.
