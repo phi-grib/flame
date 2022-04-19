@@ -21,7 +21,7 @@
 # along with Flame. If not, see <http://www.gnu.org/licenses/>.
 
 import os
-# import time
+import datetime
 import shutil
 import tarfile
 import pickle
@@ -1506,4 +1506,71 @@ def action_refresh_test (model=None):
     return {'status': 'ready', 'message': 'OK'}
 
 
+# baskets are collections of compounds stored locally, used to connect with
+# third party apps (e.g., the eTRANSAFE queryApp)
+# we store up to BASKET_NUM baskets in the root of the profiles repo
+BASKET_NUM = 5
 
+def action_basket_add (compound_list):
+    '''add a new basket wth the copounds list included as argument'''
+    path = utils.profiles_repository_path()
+    itarget = -1
+    mintime = 1e32
+    iold = 0
+    for i in range(BASKET_NUM):
+        ifile = os.path.join(path, f'basket{i}.pkl')
+        if not os.path.isfile (ifile):
+            itarget = i
+            break
+        else:
+            time = os.path.getmtime(ifile)
+            if time < mintime:
+                iold = i
+                mintime = time
+
+    if itarget == -1:
+        itarget = iold
+
+    if not os.path.isfile (os.path.join(path, f'basket{itarget}.pkl')):
+        return False, ' file not found'
+
+    with open (os.path.join(path, f'basket{itarget}.pkl'),'wb') as file:
+        pickle.dump(compound_list,file)
+
+    return True, 'OK'
+
+def action_basket_get (item=None):
+    ''' return the contect of the basket #item, or the newest basked if item=None'''
+    path = utils.profiles_repository_path()
+    if item is None:
+        maxtime = 0
+        for i in range(BASKET_NUM):
+            ifile = os.path.join(path, f'basket{i}.pkl')
+            if os.path.isfile (ifile):
+                time = os.path.getmtime(ifile)
+                if time > maxtime:
+                    inew = i
+                    maxtime = time
+        item = inew
+
+    if item is None:
+        return False, 'item not found'
+
+    if not os.path.isfile (os.path.join(path, f'basket{item}.pkl')):
+        return False, ' file not found'
+
+    with open (os.path.join(path, f'basket{item}.pkl'),'rb') as file:
+        compound_list = pickle.load(file)
+
+    return True, compound_list
+
+def action_basket_list ():
+    ''' list baskets as a list of tuplas [i, date] '''
+    path = utils.profiles_repository_path()
+    basket_list = []
+    for i in range(BASKET_NUM):
+        ifile = os.path.join(path, f'basket{i}.pkl')
+        if os.path.isfile (ifile):
+            time = os.path.getmtime(ifile)
+            basket_list.append((i, datetime.datetime.fromtimestamp(time).strftime('%Y-%m-%d %H:%M:%S') ))
+    return basket_list
