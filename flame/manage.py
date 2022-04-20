@@ -1531,9 +1531,6 @@ def action_basket_add (compound_list):
     if itarget == -1:
         itarget = iold
 
-    if not os.path.isfile (os.path.join(path, f'basket{itarget}.pkl')):
-        return False, ' file not found'
-
     with open (os.path.join(path, f'basket{itarget}.pkl'),'wb') as file:
         pickle.dump(compound_list,file)
 
