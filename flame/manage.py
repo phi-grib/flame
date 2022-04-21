@@ -1539,19 +1539,9 @@ def action_basket_add (compound_list):
 def action_basket_get (item=None):
     ''' return the contect of the basket #item, or the newest basked if item=None'''
     path = utils.profiles_repository_path()
-    if item is None:
-        maxtime = 0
-        for i in range(BASKET_NUM):
-            ifile = os.path.join(path, f'basket{i}.pkl')
-            if os.path.isfile (ifile):
-                time = os.path.getmtime(ifile)
-                if time > maxtime:
-                    inew = i
-                    maxtime = time
-        item = inew
 
     if item is None:
-        return False, 'item not found'
+        return False, 'item undefined'
 
     if not os.path.isfile (os.path.join(path, f'basket{item}.pkl')):
         return False, ' file not found'
@@ -1565,9 +1555,18 @@ def action_basket_list ():
     ''' list baskets as a list of tuplas [i, date] '''
     path = utils.profiles_repository_path()
     basket_list = []
+    newest = 0
+    maxtime = 0
     for i in range(BASKET_NUM):
         ifile = os.path.join(path, f'basket{i}.pkl')
+        
         if os.path.isfile (ifile):
             time = os.path.getmtime(ifile)
             basket_list.append((i, datetime.datetime.fromtimestamp(time).strftime('%Y-%m-%d %H:%M:%S') ))
-    return basket_list
+            if time > maxtime:
+                newest = i
+                maxtime = time
+
+    response = {'newest': newest, 'basket_list': basket_list}
+
+    return response
