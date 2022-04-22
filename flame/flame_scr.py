@@ -21,7 +21,7 @@
 # along with Flame. If not, see <http://www.gnu.org/licenses/>.
 
 import argparse
-import pathlib
+import yaml
 import os
 from flame.util import utils, get_logger, config
 from flame import __version__
@@ -72,8 +72,8 @@ def main():
 
     parser.add_argument('-c', '--command',
                         action='store',
-                        choices=['predict', 'search', 'build', 'sbuild', 'manage', 'config'],
-                        help='Action type: \'predict\' or \'search\' or \'build\' \'sbuild\' or \'manage\' or \'config\'',
+                        choices=['predict', 'profile', 'search', 'build', 'sbuild', 'manage', 'config'],
+                        help='Action type: \'predict\' or \'profile\' or \'search\' or \'build\' \'sbuild\' or \'manage\' or \'config\'',
                         required=True)
 
     # parser.add_argument('-log', '--loglevel',
@@ -97,6 +97,14 @@ def main():
 
     parser.add_argument('--smarts',
                         help='SMARTS string used as input for similarity',
+                        required=False )
+    
+    parser.add_argument('-m', '--multi',
+                        help='yaml file with endpoint names and versions for multiple predictions',
+                        required=False )
+
+    parser.add_argument('-i', '--item',
+                        help='item of a multiple predictions',
                         required=False )
 
     args = parser.parse_args()
@@ -129,11 +137,10 @@ def main():
 
         version = utils.intver(args.version)
 
-        if args.label is None:
-            label = 'temp'
-        else:
+        label = 'temp'
+        if args.label is not None:
             label = args.label
-
+        
         command_predict = {'endpoint': args.endpoint,
                  'version': version,
                  'label': label,
@@ -141,8 +148,42 @@ def main():
 
         LOG.info(f'Starting prediction with model {args.endpoint}'
                  f' version {version} for file {args.infile}, labelled as {label}')
-
+        
         success, results = context.predict_cmd(command_predict)
+        if not success:
+            LOG.error(results)
+
+    elif args.command == 'profile':
+        
+        if args.infile is None or args.multi is None:
+            LOG.error('flame profile : input file and endpoint list arguments are compulsory')
+            return
+
+        label = 'temp'
+        if args.label is not None:
+            label = args.label
+        
+
+
+        multi = None
+        try:
+            with open (args.multi, 'r') as f:
+                multi = yaml.safe_load(f)
+        except:
+            LOG.error(f'flame profile : unable to open endpoint list file {args.multi}')
+            return
+        
+        if multi is None:
+            multi = {'endpoints':[], 'versions':[]}
+
+        command_profile = {'label': label,
+                 'infile': args.infile,
+                 'multi': multi}
+
+        LOG.info(f'Starting profiling with models {multi["endpoints"]} versions{multi["versions"]}'
+                 f' for file {args.infile}, labelled as {label}')
+        
+        success, results = context.profile_cmd(command_profile)
         if not success:
             LOG.error(results)
 

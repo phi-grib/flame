@@ -1,16 +1,16 @@
 from setuptools import setup, find_packages
-from setuptools.command.install import install
-from setuptools.command.develop import develop
+# from setuptools.command.install import install
+# from setuptools.command.develop import develop
 
-import pathlib
-import sys
-import platform
-import os
-import shutil
+# import pathlib
+# import sys
+# import platform
+# import os
+# import shutil
 
 setup(
     name='flame',
-    version='1.0.0-rc2',
+    version='1.0.0-rc4',
     license='GNU GPLv3 or posterior',
     description='',
     url='https://github.com/phi-grib/flame',

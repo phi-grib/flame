@@ -25,9 +25,9 @@ import os
 import shutil
 # import pathlib
 # import sys
-# import codecs
-# import string
-# import re 
+import codecs
+import string
+import re 
 
 from flame.util import utils, verify, get_logger
 
@@ -191,6 +191,48 @@ def predict_cmd(arguments, output_format=None):
 
     return success, results
 
+def profile_cmd (arguments, output_format=None):
+    '''
+    Instantiates a Predict object to run a prediction using the given input
+    file and model.
+
+    This method must be self-contained and suitable for being called in
+    cascade, by models which use the output of other models as input.
+    '''
+    from flame.predict import Predict
+
+    if 'label' not in arguments:
+        arguments['label'] = 'temp'
+
+    if 'output_format' in arguments:
+        output_format = arguments['output_format']
+
+    predict = Predict('multi', 0,  output_format=output_format, label=arguments['label'],profile=True)
+
+    if utils.isSingleThread():
+        predict.set_single_CPU()
+    
+    predict.param.setVal('input_type', 'molecule')
+    predict.param.setVal('SDFile_name', ['name', 'GENERIC_NAME'])
+    predict.param.setVal('output_format', ['JSON'])
+
+    if arguments['infile'] is None:
+        return False, 'multi models require allways an input file'
+
+    emodels = arguments['multi']['endpoints']
+    evers   = arguments['multi']['versions']
+
+    success, model_results = get_ensemble_input(predict, emodels, evers, arguments['infile'])
+
+    if not success:
+        predict.conveyor.setError (model_results)
+        LOG.error (model_results)
+
+    success, results =  predict.aggregate(model_results, arguments['infile'])
+
+    LOG.info('Profiling completed...')
+
+    return success, results
 
 def build_cmd(arguments, output_format=None):
     '''
@@ -284,6 +326,9 @@ def build_cmd(arguments, output_format=None):
                     LOG.info(f'Merging file {ifile} with existing training series')
                     new_training = os.path.join(endpoint_path, 'temp_training')
 
+                    characters_to_keep = string.printable #printable us-ascii only
+                    search_regex = re.compile("[^%s]" % (re.escape(characters_to_keep)))
+
                     with open(new_training, 'w') as outfile:
 
                         # handling the extra newline of SDFiles is problematic. We are delaying the
@@ -292,6 +337,7 @@ def build_cmd(arguments, output_format=None):
                         first = True
                         with codecs.open(lfile, 'r', encoding='utf-8', errors='ignore') as infile:
                             for line in infile:
+                                line = search_regex.sub('?', line)
                                 if first:
                                     outfile.write(f'{line.rstrip()}')
                                     first = False
@@ -301,6 +347,7 @@ def build_cmd(arguments, output_format=None):
                         # for the second block we add the preceding newline in all lines 
                         with codecs.open(ifile, 'r', encoding='utf-8', errors='ignore') as infile:
                             for line in infile:
+                                line = search_regex.sub('?', line)
                                 outfile.write(f'\n{line.rstrip()}')
 
                     shutil.move(new_training, lfile)
@@ -415,6 +462,13 @@ def manage_cmd(args):
 
     version = utils.intver(args.version)
 
+    model_item = 0
+    if args.item is not None:
+        try:
+            model_item = int(args.item)
+        except:
+            pass
+
     if args.space is not None or 'searches' in args.action :
     
         import flame.smanage as smanage
@@ -492,10 +546,18 @@ def manage_cmd(args):
             success, results = manage.action_list(args.endpoint)
         elif args.action == 'predictions':
             success, results = manage.action_predictions_list()
+        elif args.action == 'profiles':
+            success, results = manage.action_profiles_list()
         elif args.action == 'predictions_result':
             success, results = manage.action_predictions_result(args.label)
+        elif args.action == 'profiles_result':
+            success, results = manage.action_profiles_result(args.label, model_item)
+        elif args.action == 'profiles_summary':
+            success, results = manage.action_profiles_summary(args.label)
         elif args.action == 'predictions_remove':
             success, results = manage.action_predictions_remove(args.label)
+        elif args.action == 'profiles_remove':
+            success, results = manage.action_profiles_remove(args.label)
         elif args.action == 'label':
             success, results = manage.action_label(args.endpoint, version, args.label)
         elif args.action == 'verify':

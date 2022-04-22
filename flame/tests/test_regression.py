@@ -1,7 +1,4 @@
 import pytest
-
-import io
-import os
 from pathlib import Path
 import json
 
@@ -10,6 +7,7 @@ import numpy as np
 from flame import manage
 from flame import build
 from flame import predict
+from flame.util import utils
 
 # paths configs
 from repo_config import MODEL_REPOSITORY
@@ -22,7 +20,7 @@ FIXED_RESULTS = current / "data" / "regression_res.json"
 
 @pytest.fixture
 def make_model():
-    manage.set_model_repository(MODEL_REPOSITORY)
+    utils.set_repositories(MODEL_REPOSITORY)
     return manage.action_new(MODEL_NAME)
 
 

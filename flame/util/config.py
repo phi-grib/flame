@@ -21,35 +21,9 @@
 # You should have received a copy of the GNU General Public License
 # along with Flame. If not, see <http://www.gnu.org/licenses/>.
 
-from pathlib import Path
 import appdirs
 import os
-import sys
-
 from flame.util import utils
-
-# def change_config_status() -> None:
-#     """Changes config status in config.yml to True"""
-#     config = utils._read_configuration()
-
-#     if config['config_status']:
-#         return
-#     else:
-#         config['config_status'] = True
-#     utils.write_config(config)
-
-
-# def ask_user ():
-#     ''' utility function to obtain binary confirmation (yes/no) from the user
-#     '''
-#     userinput = input()
-
-#     if userinput.lower() not in ['yes', 'no', 'y', 'n']:
-#         print('Please write "yes", "no", "y" or "n"')
-#         return False
-#     elif userinput.lower() in ['yes', 'y']:
-#         return True
-#     return False
 
 # def configure(path: None, silent: False, username='default', project='default'):
 def configure(path: None, silent: False, username=None, project=None):
@@ -89,7 +63,7 @@ def configure(path: None, silent: False, username=None, project=None):
 
         # If flame has been already configured, just show values in screen and return values
         if config['config_status'] == True:
-            for i in ['model_repository_path', 'space_repository_path', 'predictions_repository_path']:
+            for i in ['models', 'spaces', 'predictions', 'profiles']:
                 print (f'{i}: {config[i]}')
             return True, config
 
@@ -113,8 +87,6 @@ def configure(path: None, silent: False, username=None, project=None):
     ########################################################
     ###  Common
     ########################################################
-    # print(f'root repository will be set to {source_dir}')
-    # print('continue?(y/n)')
 
     # if ask_user():
     success = utils.set_repositories(source_dir, username, project)
@@ -123,6 +95,3 @@ def configure(path: None, silent: False, username=None, project=None):
     else:
         return False, 'error setting the repositories'
 
-    # else:
-    #     print('aborting...')
-    #     return False, 'configuration aborted'

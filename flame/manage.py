@@ -21,7 +21,7 @@
 # along with Flame. If not, see <http://www.gnu.org/licenses/>.
 
 import os
-# import time
+import datetime
 import shutil
 import tarfile
 import pickle
@@ -29,22 +29,11 @@ import yaml
 import json
 import pathlib
 import tempfile
-# import numpy as np
+import numpy as np
 from flame.util import utils, get_logger 
 from flame.conveyor import Conveyor
 
 LOG = get_logger(__name__)
-
-def set_model_repository(path=None):
-    """
-    Set the model repository path.
-    This is the dir where flame is going to create and load models
-    """
-    utils.set_model_repository(path)
-
-    LOG.info(f'Model repository updated to {path}')
-    return True, 'model repository updated'
-
 
 def action_new(model):
     '''
@@ -917,6 +906,63 @@ def action_predictions_list ():
 
     return True, iresult
 
+def action_profiles_list ():
+    '''
+    shows a table with the list of predictions 
+    '''
+    # get de model repo path
+    profiles_path = pathlib.Path(utils.profiles_repository_path())
+    if profiles_path.is_dir() is False:
+        return False, 'the profiles repository path does not exist. Please run "flame -c config".'
+
+    # get directories in model repo path
+    dirs = [x for x in profiles_path.iterdir() if x.is_dir()]
+
+    result = []
+    iresult = []
+    # iterate models
+    for d in dirs:
+
+        #label is retrieved from the directory name
+        label = d.parts[-1]
+
+        endpoint = []
+        version = []
+        modelID = []
+
+        endpoint_line = '|'
+        modelid_line =''
+
+        #metainfo is extracted from prediction-meta picke
+        with open(d.joinpath('profile-meta.pkl'), 'rb') as handle:
+            nmodels = pickle.load (handle)
+            for i in range (nmodels):
+                endpoint.append(pickle.load (handle))
+                version.append(pickle.load (handle))
+                ifile = os.path.basename(pickle.load (handle))
+                time = pickle.load (handle)
+                timestamp = pickle.load (handle)
+                modelID.append(pickle.load (handle))
+
+                endpoint_line += f'{endpoint[i]:10}v{version[i]}|'
+                modelid_line += f'{modelID[i]}-'
+
+        modelid_line=modelid_line[:-1]
+
+        # add as a tupla 
+        iresult.append( ( label, endpoint, version, time, ifile, modelID) )
+
+        # format as a text line for reverse date sorting and printing
+        line = f'{label:10} {endpoint_line} {time} {ifile} {modelid_line}'
+        result.append( (timestamp, line) )
+
+    result.sort (reverse=True, key = getdate)
+
+    [print (i[1]) for i in result]
+
+    return True, iresult
+
+
 def print_prediction_result (val):
     ''' Prints in the console the content of results given as an 
     argument (val) in a human-readable format 
@@ -997,6 +1043,174 @@ def action_predictions_result (label, output='text'):
     # return iconveyor
     return True, iconveyor
 
+def action_profiles_summary (label, output='text'):
+
+    '''
+    try to retrieve profiliong results with the label used as argument
+    returns 
+        - (False, Null) if it there is no directory or the predictions 
+          pickle files cannot be found 
+        
+        - (True, object) with the results otherwyse
+    '''
+
+    # this file is created uppon task abortion
+    error_file = os.path.join(tempfile.gettempdir(),'predicting_'+label)
+    if os.path.isfile(error_file):
+        with open(error_file, 'r') as f:
+            error_text = f.read()
+        f.close()
+        os.remove(error_file)
+
+        if output != 'text':
+            return False, {'code':1, 'message': error_text}
+        return False, 'model prediction task aborted' 
+
+    # get de model repo path
+    profiles_path = pathlib.Path(utils.profiles_repository_path())
+    label_path = profiles_path.joinpath(label)
+    if not os.path.isdir(label_path):
+
+        if output != 'text':
+            return False, {'code':0, 'message': f'directory {label_path} not found'}
+        print (f'directory {label_path} not found')
+        return False, None
+
+    result_path = label_path.joinpath('profile-results.pkl')
+    if not result_path.is_file():
+
+        if output != 'text':
+            return False, {'code':0, 'message': f'profiles not found for {label} directory'}
+        print (f'predictions not found for {label} directory')
+        return False, None
+
+    model_results = []
+    with open(result_path, 'rb') as handle:
+        nmodels = pickle.load (handle)
+        for i in range (nmodels):
+            model_results.append(Conveyor())
+            success, message = model_results[i].load(handle)
+    
+    if output == 'text':
+        obj_num = model_results[0].getVal('obj_num')
+
+        print (f'Profile for {obj_num} molecules with {len(model_results)} models')
+            
+        names  = []
+        values = []
+        pval0  = []
+        pval1  = []
+
+        first = True
+        for iconveyor in model_results: 
+            if iconveyor.isKey('values'):
+                if first:
+                    names  = iconveyor.getVal('obj_nam')
+                    values = np.array(iconveyor.getVal('values'), dtype=np.float)
+                    if iconveyor.isKey('p0'):
+                        pval0 = np.array(iconveyor.getVal('p0'), dtype=np.float)
+                        pval1 = np.array(iconveyor.getVal('p1'), dtype=np.float)
+                    else:
+                        pval0 = np.zeros((obj_num), dtype=np.float )
+                        pval1 = np.zeros((obj_num), dtype=np.float )
+                    first  = False
+                else:
+                    values = np.c_[values, iconveyor.getVal('values')]
+                    if iconveyor.isKey('p0'):
+                        pval0 = np.c_[pval0, iconveyor.getVal('p0')]
+                        pval1 = np.c_[pval1, iconveyor.getVal('p1')]
+                    else:
+                        pval0 = np.c_[pval0, np.zeros((obj_num), dtype=np.float )]
+                        pval1 = np.c_[pval1, np.zeros((obj_num), dtype=np.float )]
+
+        #header
+        output = 'name       '
+        for j in range (nmodels):
+            output += f'\t{model_results[j].getMeta("endpoint")}v{model_results[j].getMeta("version")}'
+            if model_results[j].isKey('p0'):
+                output += '\tp0\tp1'
+        print (output)
+
+        #table
+        for i in range(obj_num):
+            output = f'{names[i]}'
+            for j in range (nmodels):
+                if model_results[j].isKey('p0'):
+                    output += f'\t{values[i][j]:.4f}\t{pval0[i][j]:.4f}\t{pval1[i][j]:.4f}'
+                else:
+                    output += f'\t{values[i][j]:.4f}'
+            print (output)
+
+    return True, model_results
+
+def action_profiles_result (label, item=0, output='text'):
+    '''
+    try to retrieve a single prediction result with the label used as argument
+    returns 
+        - (False, Null) if it there is no directory or the predictions 
+          pickle files cannot be found 
+        
+        - (True, object) with the results otherwyse
+    '''
+
+    # this file is created uppon task abortion
+    error_file = os.path.join(tempfile.gettempdir(),'predicting_'+label)
+    if os.path.isfile(error_file):
+        with open(error_file, 'r') as f:
+            error_text = f.read()
+        f.close()
+        os.remove(error_file)
+
+        if output != 'text':
+            return False, {'code':1, 'message': error_text}
+        return False, 'model prediction task aborted' 
+
+    # get de model repo path
+    profiles_path = pathlib.Path(utils.profiles_repository_path())
+    label_path = profiles_path.joinpath(label)
+    if not os.path.isdir(label_path):
+
+        if output != 'text':
+            return False, {'code':0, 'message': f'directory {label_path} not found'}
+        print (f'directory {label_path} not found')
+        return False, None
+
+    result_path = label_path.joinpath('profile-results.pkl')
+    if not result_path.is_file():
+
+        if output != 'text':
+            return False, {'code':0, 'message': f'profiles not found for {label} directory'}
+        print (f'predictions not found for {label} directory')
+        return False, None
+
+    with open(result_path, 'rb') as handle:
+        nmodels = pickle.load (handle)
+        for i in range (nmodels):
+            iconveyor = Conveyor()
+            success, message = iconveyor.load(handle)
+
+            if i == item:
+                print ('exit!')
+                break
+
+            if not success:
+                if output != 'text':
+                    return False, {'code':1, 'message': f'error reading prediction results with message {message}'}
+                print (f'error reading prediction results with message {message}')
+                return False, None
+
+    # console output    
+    LOG.info (f'Selected profile {label}, item {i+1} out of {nmodels}')
+    print_prediction_result(('obj_num','number of objects',iconveyor.getVal('obj_num')))  
+
+    if iconveyor.isKey('values'):
+        for i in range (iconveyor.getVal('obj_num')):
+            print (iconveyor.getVal('obj_nam')[i], '\t', float("{0:.4f}".format(iconveyor.getVal('values')[i])))
+
+    # return iconveyor
+    return True, iconveyor
+
+
 def action_predictions_remove (label):
     '''
     try to remove the prediction result with the label used as argument
@@ -1019,6 +1233,27 @@ def action_predictions_remove (label):
 
     return (True, 'OK')
 
+def action_profiles_remove (label):
+    '''
+    try to remove the profiles result with the label used as argument
+    returns 
+        - (False, message) if it there is no directory or the removal failed 
+        - (True, OK) removal succeeded
+    '''
+    # get de model repo path
+    profiles_path = pathlib.Path(utils.profiles_repository_path())
+
+    label_path = profiles_path.joinpath(label)
+
+    if not os.path.isdir(label_path):
+        return (False, f'directory {label_path} not found')
+
+    try:
+        shutil.rmtree(label_path)
+    except Exception as e:
+        return (False, f'failed to remove {label_path} with error: {e}')
+
+    return (True, 'OK')
 
 def action_model_template(model, version=None, doc_file=None):
     '''
@@ -1271,4 +1506,67 @@ def action_refresh_test (model=None):
     return {'status': 'ready', 'message': 'OK'}
 
 
+# baskets are collections of compounds stored locally, used to connect with
+# third party apps (e.g., the eTRANSAFE queryApp)
+# we store up to BASKET_NUM baskets in the root of the profiles repo
+BASKET_NUM = 5
 
+def action_basket_add (compound_list):
+    '''add a new basket wth the copounds list included as argument'''
+    path = utils.profiles_repository_path()
+    itarget = -1
+    mintime = 1e32
+    iold = 0
+    for i in range(BASKET_NUM):
+        ifile = os.path.join(path, f'basket{i}.pkl')
+        if not os.path.isfile (ifile):
+            itarget = i
+            break
+        else:
+            time = os.path.getmtime(ifile)
+            if time < mintime:
+                iold = i
+                mintime = time
+
+    if itarget == -1:
+        itarget = iold
+
+    with open (os.path.join(path, f'basket{itarget}.pkl'),'wb') as file:
+        pickle.dump(compound_list,file)
+
+    return True, 'OK'
+
+def action_basket_get (item=None):
+    ''' return the contect of the basket #item, or the newest basked if item=None'''
+    path = utils.profiles_repository_path()
+
+    if item is None:
+        return False, 'item undefined'
+
+    if not os.path.isfile (os.path.join(path, f'basket{item}.pkl')):
+        return False, ' file not found'
+
+    with open (os.path.join(path, f'basket{item}.pkl'),'rb') as file:
+        compound_list = pickle.load(file)
+
+    return True, compound_list
+
+def action_basket_list ():
+    ''' list baskets as a list of tuplas [i, date] '''
+    path = utils.profiles_repository_path()
+    basket_list = []
+    newest = 0
+    maxtime = 0
+    for i in range(BASKET_NUM):
+        ifile = os.path.join(path, f'basket{i}.pkl')
+        
+        if os.path.isfile (ifile):
+            time = os.path.getmtime(ifile)
+            basket_list.append((i, datetime.datetime.fromtimestamp(time).strftime('%Y-%m-%d %H:%M:%S') ))
+            if time > maxtime:
+                newest = i
+                maxtime = time
+
+    response = {'newest': newest, 'basket_list': basket_list}
+
+    return response

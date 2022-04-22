@@ -218,7 +218,7 @@ class Combo (BaseEstimator):
 
         # For qualitative models, make sure the Y is qualitative as well
         if not self.param.getVal("quantitative"):
-            qy, message = utils.qualitative_Y(Ye)
+            qy, message = utils.qualitative_Y(Ye, test_zero=False)
             if not qy:
                 self.conveyor.setWarning(f'No qualitative activity suitable for external validation "{message}". Skipping.')
                 LOG.warning(f'No qualitative activity suitable for external validation "{message}". Skipping.')

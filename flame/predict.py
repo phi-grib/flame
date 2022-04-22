@@ -22,8 +22,10 @@
 
 import os
 import sys
-import pickle
 import importlib
+import numpy as np
+import copy
+# from syslog import LOG_INFO
 
 from flame.util import utils, get_logger
 from flame.parameters import Parameters
@@ -36,7 +38,7 @@ LOG = get_logger(__name__)
 
 class Predict:
 
-    def __init__(self, model, version=0, output_format=None, label=None):
+    def __init__(self, model, version=0, output_format=None, label=None, profile=False):
         LOG.debug('Starting predict...')
         self.model = model
         self.version = version
@@ -47,33 +49,36 @@ class Predict:
         self.conveyor.setOrigin('apply')
 
         # load modelID
-        success, result = utils.getModelID(model, version, 'model')
-        if not success:
-            LOG.critical(f'{result}. Aborting...')
-            sys.exit()
+        if not profile:
+            success, result = utils.getModelID(model, version, 'model')
+            if not success:
+                LOG.critical(f'{result}. Aborting...')
+                sys.exit()
 
-        self.conveyor.addMeta('modelID', result)
-        LOG.debug (f'Loaded model with modelID: {result}')
+            self.conveyor.addMeta('modelID', result)
+            LOG.debug (f'Loaded model with modelID: {result}')
 
         # assign prediction label
         self.conveyor.addVal(label, 'prediction_label', 'prediction label',
                     'method', 'single',
                     'Label used to identify the prediction')
 
-        success, results = self.param.loadYaml(model, version)
-        if not success:
-            LOG.critical(f'Unable to load model parameters. {results}. Aborting...')
-            sys.exit()
+        # load parameters, but not for profiling 
+        if not profile:
+            success, results = self.param.loadYaml(model, version)
+            if not success:
+                LOG.critical(f'Unable to load model parameters. {results}. Aborting...')
+                sys.exit()
 
-        # add additional output formats included in the constructor 
-        # this is requiered to add JSON format as output when the object is
-        # instantiated from a web service call, requiring this output   
-        if output_format != None:
-            if output_format not in self.param.getVal('output_format'):
-                self.param.appVal('output_format',output_format)
- 
-            if 'ghost' in output_format:
-                self.param.setVal('output_similar', False)
+            # add additional output formats included in the constructor 
+            # this is requiered to add JSON format as output when the object is
+            # instantiated from a web service call, requiring this output   
+            if output_format != None:
+                if output_format not in self.param.getVal('output_format'):
+                    self.param.appVal('output_format',output_format)
+    
+                if 'ghost' in output_format:
+                    self.param.setVal('output_similar', False)
 
         return
 
@@ -177,3 +182,69 @@ class Predict:
             odata = Odata(self.param, self.conveyor)
 
         return odata.run()
+    
+    def aggregate(self, model_results, input_file):
+
+        # instantiate idata to read input file information
+        idata = Idata(self.param, self.conveyor, input_file)
+        
+        # Extract useful information from input file
+        success_inform = idata.extractInformation(input_file)
+
+        # check if all conveyors have completed the extraction
+        obj_num = self.conveyor.getVal('obj_num') 
+        same_objects = True
+        for iconveyor in model_results:
+            if iconveyor.getVal('obj_num') != obj_num:
+                same_objects = False
+                break
+
+        # if there is a mismatch create a mask with false for any object not present in ALL conveyors
+        if not same_objects:
+
+            # we will use SMILES to check the identity inthe different results
+            smiles = self.conveyor.getVal('SMILES')
+
+            # we will define a mask for each model, with a 0 in the missing object
+            masks = []
+            for iconveyor in model_results:
+                ismiles = iconveyor.getVal('SMILES')
+                imask = np.ones(obj_num, dtype=int)
+                kprime=0
+                for k in range(len(smiles)):
+                    if kprime<len(ismiles):
+                        if smiles[k] == ismiles[kprime]:
+                            kprime+=1
+                        else:
+                            imask[k]=0
+                    else:
+                        imask[k]=0
+
+                masks.append(imask)
+
+            # the master mask combines all the missing objects
+            master_mask = np.ones(obj_num, dtype=int)
+            for k in range(len(smiles)):
+                for h in range(len(masks)):
+                    master_mask[k] *= masks[h][k]
+
+            # now we apply the master mask to each model, but before we must apply
+            # the local mask to the master mask 
+            for i,iconveyor in enumerate(model_results):
+                imaster = copy.copy(master_mask)
+                imaster = imaster[masks[i]==1]
+
+                iconveyor.mask_objects(imaster)
+                iconveyor.setVal('obj_num', np.count_nonzero(imaster==1) )
+
+            LOG.info(f'Prediction mismatches found. Profiled only the {np.count_nonzero(master_mask==1)} molecules with {len(model_results)} models.')
+
+        else:
+            LOG.info(f'Profiled {obj_num} molecules with {len(model_results)} models. Prediction size matches.')
+
+        # send results to odata 
+        odata = Odata(self.param, self.conveyor)
+        success, results = odata.aggregate(model_results)
+
+        return success, results
+    
