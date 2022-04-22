@@ -409,7 +409,6 @@ class Documentation:
 
         from openpyxl import Workbook
         from openpyxl.styles import Font,NamedStyle,Alignment
-        # from openpyxl.comments import Comment
 
         wb = Workbook()
         ws = wb.active
@@ -1054,19 +1053,19 @@ class Documentation:
                         intv = ivalue[intk]
                         if not isinstance(intv,dict):
                             iivalue = intv
-                            if iivalue is None or len(str(iivalue)) is 0:
+                            if iivalue is None or not str(iivalue):
                                 emptyfields.append(intk)
 
                         else:
                             intv = ivalue[intk]
                             iivalue = ''
-                            if intv["value"] is None or len(str(intv["value"])) is 0:
+                            if intv["value"] is None or not str(intv["value"]):
                                 emptyfields.append(intk)
-                  
+
                 else:
-                     if ivalue is None or len(str(ivalue)) is 0:
+                    if ivalue is None or not str(ivalue):
                         emptyfields.append(ik)
-                        
+
         return emptyfields
     
     def get_smiles(self):
@@ -1092,7 +1091,7 @@ class Documentation:
 
         if not self.fields['Date']['value']:
             self.fields['Date']['value'] = today
-        
+
         if not self.fields['Date_of_QMRF']['value']:
             self.fields['Date_of_QMRF']['value'] = today
 
@@ -1108,10 +1107,7 @@ class Documentation:
         fieldsapplysoftware = ['model','descriptors','applicability_domain']
 
         for field in fieldsapplysoftware:
-            if field == 'applicability_domain':
-                if self.parameters.getVal('conformal'):
-                    self.fields['Software']['value'][field]['value'] = software
-            else:
+            if field == 'applicability_domain' and self.parameters.getVal('conformal') or field != 'applicability_domain':
                 self.fields['Software']['value'][field]['value'] = software
 
 
