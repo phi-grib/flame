@@ -1562,7 +1562,16 @@ def action_basket_list ():
         
         if os.path.isfile (ifile):
             time = os.path.getmtime(ifile)
-            basket_list.append((i, datetime.datetime.fromtimestamp(time).strftime('%Y-%m-%d %H:%M:%S') ))
+            with open (ifile, 'rb') as f:
+                ibasket = pickle.load(f)
+
+            if 'user' in ibasket:
+                username = ibasket['user']
+            else:
+                username = 'anonymous'
+
+            # tuple of four elements    
+            basket_list.append((i, datetime.datetime.fromtimestamp(time).strftime('%Y-%m-%d %H:%M:%S'), len(ibasket['compounds']), username))
             if time > maxtime:
                 newest = i
                 maxtime = time
