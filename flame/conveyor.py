@@ -339,13 +339,28 @@ class Conveyor:
                 len_list = len(ilist)
                 red_len_list = len_list-1
 
-                # elements are removed in reverse order, so the removed
-                # elements do not change the indexes of the remaining 
-                # items to be deleted
-                for i in range(len_list):
-                    ireverse = red_len_list-i
-                    if mask[ireverse] == 0:
-                        del ilist[ireverse]
+                # this list contains TWO names per variable
+                if (ikey == 'ensemble_ci_names'):
+                    len_list = round(len_list/2)
+                    red_len_list = len_list-1
+
+                    # elements are removed in reverse order, so the removed
+                    # elements do not change the indexes of the remaining 
+                    # items to be deleted
+                    for i in range(len_list):
+                        ireverse = red_len_list-i
+                        if mask[ireverse] == 0:
+                            del ilist[ireverse*2]   # multiply x2
+                            del ilist[ireverse*2+1] # next one
+                else:
+
+                    # elements are removed in reverse order, so the removed
+                    # elements do not change the indexes of the remaining 
+                    # items to be deleted
+                    for i in range(len_list):
+                        ireverse = red_len_list-i
+                        if mask[ireverse] == 0:
+                            del ilist[ireverse]
 
             self.setVal(ikey, ilist)
 
