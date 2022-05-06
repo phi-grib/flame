@@ -1350,16 +1350,18 @@ def action_refresh (model=None, version=None, GUI=False):
         if not success:
             continue
 
-        if param.getVal('input_type') == 'model_ensemble':
-            ens_nams = param.getVal('ensemble_names')
-            ens_vers = param.getVal('ensemble_versions')
-            for i in range(len(ens_nams)):
-                iver = 0
-                inam = ens_nams[i]
-                if (i<len(ens_vers)):
-                    iver = ens_vers[i]
-                if ( (inam,iver) ) not in task_list:
-                    task_list.append( (inam, iver) ) 
+        # This option will be applied ONLY when we refresh a complete model repository
+        if (model is None and version is None):
+            if param.getVal('input_type') == 'model_ensemble':
+                ens_nams = param.getVal('ensemble_names')
+                ens_vers = param.getVal('ensemble_versions')
+                for i in range(len(ens_nams)):
+                    iver = 0
+                    inam = ens_nams[i]
+                    if (i<len(ens_vers)):
+                        iver = ens_vers[i]
+                    if ( (inam,iver) ) not in task_list:
+                        task_list.append( (inam, iver) ) 
     
     # create separate lists for regular and ensemble models
     # and add ensemble models at the end
