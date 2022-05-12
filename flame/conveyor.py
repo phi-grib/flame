@@ -323,6 +323,12 @@ class Conveyor:
 
         # arrays of objects in conveyor
         varkeys = self.varKeys()
+
+        # store these value to compare with variable lenghts
+        # some variables contain twice the number of values of
+        # regular ones (e.g., ensemble_ci_names)        
+        nvarx_single = len(mask)
+        nvarx_double = 2 * nvarx_single 
         
         for ikey in varkeys: 
             ilist = self.getVal(ikey)
@@ -339,9 +345,9 @@ class Conveyor:
                 len_list = len(ilist)
                 red_len_list = len_list-1
 
-                # this list contains TWO names per variable
-                if (ikey == 'ensemble_ci_names'):
-                    len_list = round(len_list/2)
+                # when list contains TWO values per x variable
+                if (len_list == nvarx_double):
+                    len_list = nvarx_single
                     red_len_list = len_list-1
 
                     # elements are removed in reverse order, so the removed
@@ -350,8 +356,8 @@ class Conveyor:
                     for i in range(len_list):
                         ireverse = red_len_list-i
                         if mask[ireverse] == 0:
-                            del ilist[ireverse*2]   # multiply x2
-                            del ilist[ireverse*2+1] # next one
+                            del ilist[ireverse*2] # multiply x2
+                            del ilist[ireverse*2] # deletes the next (the list is now shorter)
                 else:
 
                     # elements are removed in reverse order, so the removed
@@ -363,4 +369,3 @@ class Conveyor:
                             del ilist[ireverse]
 
             self.setVal(ikey, ilist)
-
