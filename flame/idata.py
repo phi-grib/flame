@@ -1005,7 +1005,7 @@ class Idata:
             return
 
         # if this is a low model or an ensemble, exit
-        if 'ghost' in self.format:
+        if 'ghost' in self.format or 'profiling' in self.format:
             return 
 
         md5_parameters = self.param.getVal('md5')
@@ -1036,7 +1036,7 @@ class Idata:
             return False
 
         # if this is a low model or an ensemble, exit
-        if 'ghost' in self.format:
+        if 'ghost' in self.format or 'profiling' in self.format:
             return 
 
         try:

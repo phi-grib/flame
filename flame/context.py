@@ -36,7 +36,7 @@ MAX_MODELS_SINGLE_CPU = 4
 
 LOG = get_logger(__name__)
 
-def get_ensemble_input(task, model_names, model_versions, infile):
+def get_ensemble_input(task, model_names, model_versions, infile, output_use='ghost'):
     '''
     Manage obtention of input data from a list of models
     '''
@@ -61,7 +61,7 @@ def get_ensemble_input(task, model_names, model_versions, infile):
         model_cmd.append({'endpoint': model_names[i],
                           'version': model_versions[i],
                           'infile': infile,
-                          'output_format': 'ghost',
+                          'output_format': output_use,
                           'label': f'ensemble{i}'})
 
     # run in multithreading
@@ -222,7 +222,7 @@ def profile_cmd (arguments, output_format=None):
     emodels = arguments['multi']['endpoints']
     evers   = arguments['multi']['versions']
 
-    success, model_results = get_ensemble_input(predict, emodels, evers, arguments['infile'])
+    success, model_results = get_ensemble_input(predict, emodels, evers, arguments['infile'], 'profiling')
 
     if not success:
         predict.conveyor.setError (model_results)

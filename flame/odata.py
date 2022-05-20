@@ -89,6 +89,11 @@ class Odata():
 
         LOG.info('Molecular descriptors dumped into output_md.tsv')
 
+    def is_ensemble (self):
+        if 'ghost' in self.format or 'profiling' in self.format:
+            return True
+        return False        
+
     def print_result (self, val):
         ''' Prints in the console the content of results given as an 
         argument (val) in a human-readable format 
@@ -227,7 +232,7 @@ class Odata():
         # if len(self.conveyor.getMain()) == 0:
         #     self.conveyor.setError('Unable to find main prediction')
         
-        if 'ghost' not in self.format:
+        if not self.is_ensemble():
             opath = utils.predictions_repository_path()
             if os.path.isdir (opath):
                 opath = os.path.join(opath,self.label)
@@ -240,8 +245,7 @@ class Odata():
 
         # Save conveyor from prediction only if confidential is False
         # if not self.param.getVal('confidential') and 'ghost' not in self.format:
-        if 'ghost' not in self.format:
-
+        if not self.is_ensemble():
             results_pkl_path = os.path.join(opath,'prediction-results.pkl')
             meta_pkl_path = os.path.join(opath,'prediction-meta.pkl')
             LOG.info(f'saving model results to: {opath}')
@@ -278,7 +282,8 @@ class Odata():
         #     output_predictions = open("predictions_pvalues.tsv", "w")
         #     output_predictions.write("name\tprediction\tpvalue0\tpvalue1\n")
 
-        if 'ghost' not in self.format:
+        if not self.is_ensemble():
+
             self.print_result(('obj_num','number of objects',self.conveyor.getVal('obj_num')))
 
             if self.conveyor.isKey('external-validation'):
@@ -316,7 +321,7 @@ class Odata():
         ###
         # 4. results file in TSV format [optional]
         ### 
-        if 'ghost' not in self.format and 'TSV' in self.format:
+        if not self.is_ensemble() and 'TSV' in self.format:
             LOG.info('writting results to TSV file "output.tsv"')
             # label and smiles
             key_list = ['obj_nam']
