@@ -18,3 +18,4 @@ class FlThread (threading.Thread):
       with open (tmp,'w') as f:
         f.write(traceback.format_exc())
       sys.excepthook(*sys.exc_info())
+    sys.exit()
