@@ -14,12 +14,8 @@ Flame can be used in comand mode or using a web based GUI. The code for the GUI 
 
 We provide Windows and Linux installers (both for the Flame backend and the GUI) that can be downloaded here
 
-1.0.0rc2:
-- [Windows](https://drive.google.com/file/d/1_q7YBdhxb59QAzWg7j3alyckiSC_9uv4/view?usp=sharing)
-- [Linux](https://drive.google.com/file/d/1bcpvBRIW0KmX-YWc4MXww1kUB1oikst5/view?usp=sharing)
-
-Head version (recommended):
-- [Windows](https://drive.google.com/file/d/1Hl8xBB9bqxyvy8Whqmt3rJxsz1vsceXR/view?usp=sharing)
+Latest versions:
+- [Windows](https://drive.google.com/file/d/1TQFShPhLGIUrkktW0bQN2rKb1JIlHNK0/view?usp=sharing)
 - [Linux](https://drive.google.com/file/d/1HldcEqnRoyfWFNDcwCOA1qZ4oLmLBDMC/view?usp=sharing)
 
 A docker container (https://www.docker.com/), fully configured can be downloaded from DockerHub and installed using:
