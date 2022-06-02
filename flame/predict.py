@@ -194,7 +194,11 @@ class Predict:
         # check if all conveyors have completed the extraction
         obj_num = self.conveyor.getVal('obj_num') 
         same_objects = True
+
         for iconveyor in model_results:
+            if isinstance(iconveyor, str):
+                return False, 'prediction failed'
+
             if iconveyor.getVal('obj_num') != obj_num:
                 same_objects = False
                 break
