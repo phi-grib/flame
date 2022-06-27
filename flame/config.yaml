@@ -2,7 +2,9 @@ admin_email: admin@domain.org
 admin_name: Admin Name
 config_status: true
 homepage: homepage@domain.org
-model_repository_path: x:\soft\flame\flame\models
-predictions_repository_path: x:\soft\flame\flame\predictions
+models: X:\models\BSC\models
+predictions: X:\models\BSC\predictions
+profiles: X:\models\BSC\profiles
 provider: My Organization
-space_repository_path: x:\soft\flame\flame\spaces
+root_repository: X:\models\BSC
+spaces: X:\models\BSC\spaces
