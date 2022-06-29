@@ -174,15 +174,15 @@ flame -c manage -a list
 
 Building a model only requires entering an input file formatted for training one of the supported machine-learning methods. In the case of QSAR models, the input file can be an SDFile, where the biological property is annotated in one of the fields. 
 
-The details of how Flame normalizes the structures, obtains molecular descriptors and applies the machine-learning algorithm are defined in a parameters file (*parameter.yaml*) which now contains default options. These can be changed as we will describe later, but for now let's use the defaults to obtain a Random Forest model on a series of 100 compounds annotated with a biological property in the field \<activity\>: 
+The details of how Flame normalizes the structures, obtains molecular descriptors and applies the machine-learning algorithm are defined in a parameters file (*parameter.yaml*) which now contains default options. These can be changed as we will describe later, but for now let's use the defaults to obtain a Random Forest model on a series of chemical compounds annotated with a biological property in the field \<activity\>. For this example we will use the file `PXR_train.sdf` that can be found in the `\data` folder: 
 	
 ```sh
-flame -c build -e MyModel -f series.sdf
+flame -c build -e MyModel -f PXR_train.sdf
 ```	
 After a few seconds, the model is built and a summary of the model quality is presented in the screen.
-This model is immediately accessible for predicting the properties of new compounds. This can be done locally using the command:
+This model is immediately accessible for predicting the properties of new compounds. This can be done (for the example compound `rofecoxib.sdf`) using the command:
 ```sh
-flame -c predict -e MyModel -v 0 -f query.sdf
+flame -c predict -e MyModel -v 0 -f rofecoxib.sdf
 ```	
 And this will show the properties predicted for the compounds in the query SDFile. 
 
