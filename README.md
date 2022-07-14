@@ -148,7 +148,6 @@ This option sets up the models, spaces and predictions repositories within the F
 - Support for any standard formatted input: from a tsv table to a collection of compounds in SMILES or SDFile format. 
 - Multiple interfaces adapted to the needs of different users: as a web service, for end-user prediction, as a full featured GUI for model development, as command line, integration in Jupyter notebooks, etc.
 - Support for parallel processing.
-- Integration of models developed using other tools (e.g. R, KNIME).
 - Support for multilevel models: the output of a model can be used as input for other models.
 - Integrated model version management.
 
@@ -283,12 +282,13 @@ The file `query.sdf` can contain the chemical structure of one or many compounds
 
 | Command | Description |
 | --- | --- |
-| -c/ --command | Action to be performed. Acceptable values are *build*, *predict*, *sbuild*, *search* and *manage* |
+| -c/ --command | Action to be performed. Acceptable values are *build*, *predict*, *profile*, *sbuild*, *search* and *manage* |
 | -e/ --endpoint | Name of the model which will be used by the command. This name is defined when the model is created for the fist time with the command *-c manage -a new* |
 | -s/ --space | Name of the chemical space which will be used by the command. This name is defined when the chemical space is created for the fist time with the command *-c manage -a new* |
 | -v/ --version | Version of the model, typically an integer. Version 0 refers to the model development "sandbox" which is created automatically upon model creation |
 | -a/ --action | Management action to be carried out. Acceptable values are *list*, *new*, *kill*, *publish*, *remove*, *export* and *import*. The meaning of these actions and examples of use are provided below   |
 | -f/ --infile | Name of the input file used by the command. This file can correspond to the training data (*build*) or the query compounds (*predict*) |
+| -m/ --multi | Name of a yaml file with endpoint names and versions for multiple predictions, used by *profile* command |
 | -p/ --parameters | Name of an input file used to pass a set of parameters used to train a model (*build*) or to performa a similarity search (*search*) |
 | -t/ --documentation_file | Name of an input file used to pass documentation information using the command (*manage -a documentation*) |
 | -inc/ --incremental | indicates that the input file must not replace any existing training series and, instead, the compound will be added |
@@ -312,6 +312,7 @@ Management commands deserve further description:
 | documentation | *flame -c manage -e MODEL -a documentation* | Shows a list with the main documentation information of model MODEL. When called with parameter -t, it can be used to add new documentation information  |
 | export | *flame -c manage -a export -e NEWMODEL* | Exports the model entry NEWMODE, creating a tar compressed file *NEWMODEL.tgz* which contains all the versions. This file can be imported by another flame instance (installed in a different host or company) with the *-c manage import* command |
 | import | *flame -c manage -a import -f NEWMODEL.tgz* | Imports file *NEWMODEL.tgz*, typically generated using command *-c manage -a export* creating model NEWMODEL in the local model repository |
+| refresh | *flame -c manage -a refresh -e MODEL* | Rebuilds all model versions within the *MODEL* tree. If called without -e argument it will rebuild all models present in the current repository |
 
 
 ## Flame GUI
@@ -357,6 +358,26 @@ This command will add all the compounds present in the file 'series.sdf' at the 
 
 In this process no checking for dupplicate molecules or any other test is carried out.
 
+
+### Refreshing models
+
+Models built with very old versions of Flame can be updated using the refresh command. This command will use existing training series and modeling parameters to rebuild completely the models. 
+It is possible to refresh a single model version
+```sh
+flame -c manage -a refresh -e MyModel -v 1
+```
+all versions of a single model
+```sh
+flame -c manage -a refresh -e MyModel
+```
+or all models present in the current model repository
+```sh
+flame -c manage -a refresh
+```
+Please note that rebuilding a large number of models can be a very long and computer intensive process
+
+
+
 ### Documenting models
 
 When a new model is created an empty documentation template is generated in the model folder. All the fields related with the modeling methodology and the model quality evaluation are automatically completed when the model is built, but other fields (e.g. author name, institution, mechanism, result interpretation) require manual user input. The mechanism for completing this template is similar to the method used to complete the parameters. The command 
@@ -380,13 +401,24 @@ flame -c manage -e MyModel -a documentation
 
 Internally, the documentation mimics the fields of the OECD-QMRF reports. 
 
-### Runnning models
+### Predicting using models
 
 Models built in Flame can be used for obtaining predictions using diverse methods. We can use the command mode interface with a simple call:
 ```sh
 flame -c predict -e MyModel -v 1 -f query.sdf
 ```
 This allows to integate the prediction in scripts, or workflow tools like KNIME and Pipeline Pilot.
+
+It is also possible to run multiple predictions on a single input file. For this, we must write a YAML file indicating which models and versions must be run. For example, the following file MULTI.YAML indicates that the profiling will use the models PXR, version 2 and BBB, versions 3 
+
+		endpoints   : ['PXR','BBB']
+		versions    : [2,3]
+
+and then run the profile with the following command:
+
+```sh
+flame -c profile -m MULTI.YAML -f query.sdf
+```
 
 Also, the models can run as prediction web-services. These services can be consumed by the stand-alone web GUI provided and described above or connected to a more complex platform, like the one currently in development in the eTRANSAFE project.
 
