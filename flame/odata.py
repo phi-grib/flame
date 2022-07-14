@@ -517,7 +517,7 @@ class Odata():
                 header = 'source_name'
                 if self.conveyor.isKey('SMILES'):
                     header +='\tsource SMILES'
-                header+='\tdistance\tname\tSMILES'
+                header+='\tsimilarity\tname\tSMILES'
                 fo.write(header+'\n')
 
                 for i in range (len(results)):                    
