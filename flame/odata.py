@@ -567,8 +567,9 @@ class Odata():
             success, results = self.run_learn()
         elif origin == 'apply':
             success, results = self.run_apply()
-            if self.param.getVal('output_similar'):
-                success, results = self.run_sapply()
+            # we removed this option, because it stores the search resuls in a temp file which has no use
+            # if self.param.getVal('output_similar'):
+            #     success, results = self.run_sapply()
         elif origin == 'slearn':
             success, results = self.run_slearn()
         elif origin == 'sapply':

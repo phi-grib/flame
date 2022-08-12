@@ -386,6 +386,9 @@ def action_searches_result (label, output='text'):
         print (f'error reading search results with message {message}')
         return False, None
 
+    # similarity results are "one-use" files that should be removed once they are read
+    os.remove(search_pkl_path)
+
     if not iconveyor.isKey('search_results'):
         if output == 'JSON':
             return False, {'code':1, 'message': 'search results not found'}
