@@ -474,6 +474,10 @@ class Parameters:
                                     if isinstance(toptio, list):
                                         if toptio != [None]:
                                             iioptio = f' {toptio}'
+                                    
+                                    if 'object_type' in intv:
+                                        if intv['object_type'] != 'list':
+                                            iioptio = iioptio.replace(',',' |')
 
                                 if isinstance (iivalue, float):
                                     if iivalue == 0.0 or iivalue>1e-5:
@@ -495,6 +499,10 @@ class Parameters:
 
                         if isinstance(toptio, list):
                             ioptio = f' {toptio}'
+                        
+                        if 'object_type' in v:
+                            if v['object_type'] != 'list':
+                                ioptio = ioptio.replace(',',' |')
 
                 ### compatibility: old stile parameters
                 else:
