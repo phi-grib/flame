@@ -1112,7 +1112,7 @@ class Documentation:
         #Algorithm, type: QSAR.
         self.fields['Algorithm']['value']['type']['value'] = 'QSAR'
         #Model, Main modelling program, version, description and license.
-        software = "Flame, 1.0rc3"
+        software = "Flame"
         fieldsapplysoftware = ['model','descriptors','applicability_domain']
 
         for field in fieldsapplysoftware:
