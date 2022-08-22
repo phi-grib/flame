@@ -782,7 +782,6 @@ class BaseEstimator:
         LOG.debug("Hyperparameter optimization ")
         start = time.time()
 
-        labels = []
         try:
             # print (tune_parameters)
             tclf = GridSearchCV(estimator, tune_parameters, 
@@ -791,9 +790,9 @@ class BaseEstimator:
 
             means = tclf.cv_results_["mean_test_score"]
             stds = tclf.cv_results_["std_test_score"]
+
             for mean, std, params in zip(means, stds, tclf.cv_results_["params"]):
                 LOG.info("       %0.3f (+/-%0.03f) for %r" % (mean, std * 2, params))
-                labels.append((str(params)[1:-1].replace("'","")))
 
             self.estimator = copy.copy(tclf.best_estimator_)
 
@@ -802,11 +801,31 @@ class BaseEstimator:
             f'exception {e}')
             raise e
 
+        # copy to tested simple only the parameters which change value during optimization
+        tested_param = tclf.cv_results_["params"]
+        tested_simple = [ {} for i in tested_param]
+        for k in tested_param[0].keys():
+            changed=False
+            v = tested_param[0][k]
+            for i in tested_param:
+                if i[k]!=v:
+                    changed= True
+                    break
+            if changed:
+                for j in range(len(tested_param)):
+                    tested_simple[j][k]=tested_param[j][k]
+
+        # create a text version of the dictionaries
+        labels = []
+        for i in tested_simple:
+            labels.append((str(i)[1:-1].replace("'","")))
+        
         # store the best result in a dictionary
         self.optimization_results['means'] = means.tolist()
         self.optimization_results['stds'] = stds.tolist()
         self.optimization_results['labels'] = labels
         self.optimization_results['best'] =  str(tclf.best_params_)[1:-1].replace("'","")
+        self.optimization_results['scorer']= f'Optimization results using {metric} and kfold with {cv_fold} folds (mean +/- sd)'
 
         self.optimized_parameters = tclf.best_params_ 
         LOG.info(f'Best parameters: {tclf.best_params_}')
