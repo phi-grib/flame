@@ -135,6 +135,7 @@ class BaseEstimator:
         self.nobj, self.nvarx = np.shape(X)
         self.feature_importances = None
         self.feature_importances_method = ''
+        self.optimization_results = {}
         self.optimized_parameters = {}
 
         self.cross_jobs = -1
@@ -781,6 +782,7 @@ class BaseEstimator:
         LOG.debug("Hyperparameter optimization ")
         start = time.time()
 
+        labels = []
         try:
             # print (tune_parameters)
             tclf = GridSearchCV(estimator, tune_parameters, 
@@ -791,14 +793,20 @@ class BaseEstimator:
             stds = tclf.cv_results_["std_test_score"]
             for mean, std, params in zip(means, stds, tclf.cv_results_["params"]):
                 LOG.info("       %0.3f (+/-%0.03f) for %r" % (mean, std * 2, params))
+                labels.append((str(params)[1:-1].replace("'","")))
 
             self.estimator = copy.copy(tclf.best_estimator_)
-
 
         except Exception as e:
             LOG.error(f'Error optimizing hyperparameters with'
             f'exception {e}')
             raise e
+
+        # store the best result in a dictionary
+        self.optimization_results['means'] = means.tolist()
+        self.optimization_results['stds'] = stds.tolist()
+        self.optimization_results['labels'] = labels
+        self.optimization_results['best'] =  str(tclf.best_params_)[1:-1].replace("'","")
 
         self.optimized_parameters = tclf.best_params_ 
         LOG.info(f'Best parameters: {tclf.best_params_}')

@@ -356,6 +356,15 @@ class Learn:
                 'single',
                 'Method used to compute the relative importance of the model variables')
 
+        if hasattr(model, 'optimization_results'):
+            self.conveyor.addVal(
+                model.optimization_results,
+                'optimization_results',
+                'optimization_results',
+                'method',
+                'single',
+                'Quality of models obtained in hyperparamters optimization')
+
         # validate model
         if self.param.getVal('input_type') == 'model_ensemble':
             validation_method = 'ensemble validation'
