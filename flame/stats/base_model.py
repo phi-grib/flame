@@ -801,9 +801,11 @@ class BaseEstimator:
             f'exception {e}')
             raise e
 
-        # copy to tested simple only the parameters which change value during optimization
+        # copy to tested simple / best simple only the parameters which change value during optimization
         tested_param = tclf.cv_results_["params"]
+        best_param = tclf.best_params_
         tested_simple = [ {} for i in tested_param]
+        best_simple = {}
         for k in tested_param[0].keys():
             changed=False
             v = tested_param[0][k]
@@ -814,17 +816,31 @@ class BaseEstimator:
             if changed:
                 for j in range(len(tested_param)):
                     tested_simple[j][k]=tested_param[j][k]
+                    best_simple[k]=best_param[k]
 
         # create a text version of the dictionaries
         labels = []
         for i in tested_simple:
-            labels.append((str(i)[1:-1].replace("'","")))
+            ilabel = (str(i)[1:-1].replace("'",""))
+            ilabel = ilabel.replace(", ", "<br>")
+            labels.append(ilabel)
+        
+        
+        # apply the same transfor to best setting, so it could be used
+        # to mark the parameters choosen
+        ibest = str(best_simple)[1:-1].replace("'","")
+        ibest = ibest.replace(", ", "<br>")
+
+        # protect against the presence of negative vaues
+        imeans = np.clip(means,0.0, None)
+        istds = stds
+        istds[imeans==0] = 0.0
         
         # store the best result in a dictionary
-        self.optimization_results['means'] = means.tolist()
-        self.optimization_results['stds'] = stds.tolist()
+        self.optimization_results['means'] = imeans.tolist()
+        self.optimization_results['stds'] = istds.tolist()
         self.optimization_results['labels'] = labels
-        self.optimization_results['best'] =  str(tclf.best_params_)[1:-1].replace("'","")
+        self.optimization_results['best'] =  ibest
         self.optimization_results['scorer']= f'Optimization results using {metric} and kfold with {cv_fold} folds (mean +/- sd)'
 
         self.optimized_parameters = tclf.best_params_ 
