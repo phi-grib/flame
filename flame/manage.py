@@ -1029,6 +1029,9 @@ def action_predictions_result (label, output='text'):
         print (f'error reading prediction results with message {message}')
         return False, None
 
+    if output == 'bin':
+        return True, iconveyor
+
     # console output    
     print_prediction_result(('obj_num','number of objects',iconveyor.getVal('obj_num')))
 
