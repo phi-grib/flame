@@ -73,9 +73,13 @@ class XGBOOST(BaseEstimator):
 
         if self.param.getVal('quantitative'):
             self.estimator_parameters['objective'] = 'reg:squarederror'
+            
             self.name = "XGB-Regressor"
         else:
             self.estimator_parameters['objective'] = 'binary:logistic'
+            self.estimator_parameters['eval_metric'] = 'logloss'
+            self.estimator_parameters['use_label_encoder'] = False
+
             self.name = "XGB-Classifier"
 
         # Missing value must be defined. Otherwyse it returns 'nan' which cannot be
