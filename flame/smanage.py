@@ -404,6 +404,9 @@ def action_searches_result (label, output='text'):
             return False, {'code':1, 'message': 'results length does not match names'}
         return False, 'results length does not match names'
 
+    if (output == 'JSON'):
+        return True, iconveyor
+
     for i in range (len(results)):
         if iconveyor.isKey('SMILES'):
             print (f'similars to {names[i]} [{smiles[i]}]')
@@ -432,7 +435,6 @@ def action_searches_result (label, output='text'):
                 act = iresult['ymatrix'][j]
             else:
                 act = '-'
-
 
             print (f'   {dist:.3f} : {name} {idv} {act} [{smil}]')
 

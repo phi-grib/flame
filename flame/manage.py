@@ -1202,6 +1202,9 @@ def action_profiles_result (label, item=0, output='text'):
                 print (f'error reading prediction results with message {message}')
                 return False, None
 
+    if (output=='bin'):
+        return True, iconveyor
+
     # console output    
     LOG.info (f'Selected profile {label}, item {i+1} out of {nmodels}')
     print_prediction_result(('obj_num','number of objects',iconveyor.getVal('obj_num')))  
