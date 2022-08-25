@@ -1115,11 +1115,10 @@ output_format:
   advanced: regular
   object_type: list
   writable: false
-  value: JSON
+  value: []
   options:
-    - JSON
     - TSV
-  description: Output data format
+  description: Output data format. TSV generates a TSV output file
   dependencies: null
   comments: 
   group: preferences

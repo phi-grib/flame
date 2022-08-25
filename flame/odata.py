@@ -282,7 +282,7 @@ class Odata():
         #     output_predictions = open("predictions_pvalues.tsv", "w")
         #     output_predictions.write("name\tprediction\tpvalue0\tpvalue1\n")
 
-        if not self.is_ensemble():
+        if not self.is_ensemble() and not 'JSON' in self.format:
 
             self.print_result(('obj_num','number of objects',self.conveyor.getVal('obj_num')))
 
@@ -474,38 +474,40 @@ class Odata():
         ####
         # 2. console output
         ####
-        for i in range (len(results)):
+        if not 'JSON' in self.format:
 
-            if smiles is None:
-                print (f'similars to {names[i]}')
-            elif ids is None:
-                print (f'similars to {names[i] } [{smiles[i]}]')
-            else:
-                print (f'similars to {names[i] } id:{ids[i]} [{smiles[i]}]')
+            for i in range (len(results)):
 
-            iresult = results[i]
-            for j in range (len(iresult['distances'])):
-                dist = iresult['distances'][j]
-                if 'obj_name' in iresult:
-                    name = iresult['obj_nam'][j]
+                if smiles is None:
+                    print (f'similars to {names[i]}')
+                elif ids is None:
+                    print (f'similars to {names[i] } [{smiles[i]}]')
                 else:
-                    name = '-'
-                if 'SMILES' in iresult:
-                    smil = iresult['SMILES'][j]
-                else:
-                    smil = '-'
-                
-                if 'obj_id' in iresult:
-                    idv = iresult['obj_id'][j]
-                else:
-                    idv ='-'
-                
-                if 'ymatrix' in iresult:
-                    act = iresult['ymatrix'][j]
-                else:
-                    act = '-'
+                    print (f'similars to {names[i] } id:{ids[i]} [{smiles[i]}]')
 
-                print (f'   {dist:.3f} : {name} id:{idv} act:{act} [{smil}]')
+                iresult = results[i]
+                for j in range (len(iresult['distances'])):
+                    dist = iresult['distances'][j]
+                    if 'obj_name' in iresult:
+                        name = iresult['obj_nam'][j]
+                    else:
+                        name = '-'
+                    if 'SMILES' in iresult:
+                        smil = iresult['SMILES'][j]
+                    else:
+                        smil = '-'
+                    
+                    if 'obj_id' in iresult:
+                        idv = iresult['obj_id'][j]
+                    else:
+                        idv ='-'
+                    
+                    if 'ymatrix' in iresult:
+                        act = iresult['ymatrix'][j]
+                    else:
+                        act = '-'
+
+                    print (f'   {dist:.3f} : {name} id:{idv} act:{act} [{smil}]')
         
         ###
         # 3. results file in TSV format [optional]
