@@ -368,13 +368,15 @@ class Idata:
     
                 if 'mean' in dict_prepro:
                     mean = np.array(dict_prepro['mean'])
+                    # self.conveyor.addVal(mean, 'xxmeans', 'X means', 'method', 'vars', 'Mean of every molecular descriptor')
                 
                 if 'wg' in dict_prepro:
                     wg = np.array(dict_prepro['wg'])
+                    # self.conveyor.addVal(1.0/wg, 'xxsds', 'X sd', 'method', 'vars', 'Standard deviation of every molecular descriptor')
 
             except FileNotFoundError:
                 return False, f'No valid preprocessing tools found at: {prepro_file}'
-
+            
         else:
             prepro_file = os.path.join(self.param.getVal('model_path'), 'preprocessing.pkl')
             LOG.debug(f'Loading model from pickle file, path: {prepro_file}')
