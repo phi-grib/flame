@@ -137,6 +137,13 @@ class Conveyor:
             return
         self.data[key]=value
 
+    def removeVal (self, _key):
+        if _key in self.data:
+            self.data.pop(_key)
+        for i,ival in enumerate(self.manifest):
+            if ival['key']=='_key':
+                self.manifest.pop(i)
+
     def addVal(self, var, _key, _label, _type, _dimension='objs',
                _description=None, _relevance=None):
         '''

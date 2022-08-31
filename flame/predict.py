@@ -70,6 +70,9 @@ class Predict:
                 LOG.critical(f'Unable to load model parameters. {results}. Aborting...')
                 sys.exit()
 
+            if self.param.getVal('confidential'):
+                self.conveyor.addMeta('confidential', True)
+
             # add additional output formats included in the constructor 
             # this is requiered to add JSON format as output when the object is
             # instantiated from a web service call, requiring this output   
@@ -133,10 +136,14 @@ class Predict:
                 LOG.debug(f'Failed to compute MDs')
                 self.conveyor.setError(f'Failed to compute MDs')
 
-        # for secret models avoid searching similar compounds
+
         space_pkl = os.path.join(endpoint,'space.pkl')
         if not os.path.isfile(space_pkl):
             self.param.setVal('output_similar', False)
+
+        # # for secret models avoid searching similar compounds
+        # if self.param.getVal('confidential'):
+        #     print ('return X to build space')
 
         if not self.conveyor.getError():
             if self.param.getVal('output_similar') is True:
