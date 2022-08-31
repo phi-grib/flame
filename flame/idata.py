@@ -369,11 +369,11 @@ class Idata:
     
                 if 'mean' in dict_prepro:
                     mean = np.array(dict_prepro['mean'])
-                    self.conveyor.addVal(mean, 'x_mean', 'X mean', 'method', 'single', 'array with X means')
+                    self.conveyor.addVal(mean.tolist(), 'x_mean', 'X mean', 'method', 'single', 'array with X means')
                 
                 if 'wg' in dict_prepro:
                     wg = np.array(dict_prepro['wg'])
-                    self.conveyor.addVal(1.0/wg, 'x_sd', 'X sd', 'method', 'single', 'array with X standard deviations')
+                    self.conveyor.addVal((wg).tolist(), 'x_wg', 'X wg', 'method', 'single', 'array with X weight')
 
             except FileNotFoundError:
                 return False, f'No valid preprocessing tools found at: {prepro_file}'
@@ -1663,11 +1663,11 @@ class Idata:
             # a reference space where we can project the mean and sd of the original training series
             if i_result.getMeta('confidential'):
                 xmean = i_result.getVal('x_mean')
-                xsd = i_result.getVal('x_sd')
+                xwg = i_result.getVal('x_wg')
                 xmatrix = i_result.getVal('xmatrix')
-                if xmean is not None and xsd is not None and xmatrix is not None:
-                    reference_set.append ({'x_mean':xmean.tolist(), 
-                                           'x_sd': xsd.tolist(), 
+                if xmean is not None and xwg is not None and xmatrix is not None:
+                    reference_set.append ({'x_mean':xmean, 
+                                           'x_wg': xwg, 
                                            'xmatrix': xmatrix.tolist() })
 
         self.conveyor.addVal( combined_md, 'xmatrix', 'X matrix',
