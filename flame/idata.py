@@ -369,11 +369,11 @@ class Idata:
     
                 if 'mean' in dict_prepro:
                     mean = np.array(dict_prepro['mean'])
-                    self.conveyor.addVal(mean.tolist(), 'x_mean', 'X mean', 'method', 'single', 'array with X means')
+                    # self.conveyor.addVal(mean.tolist(), 'x_mean', 'X mean', 'method', 'single', 'array with X means')
                 
                 if 'wg' in dict_prepro:
                     wg = np.array(dict_prepro['wg'])
-                    self.conveyor.addVal((wg).tolist(), 'x_wg', 'X wg', 'method', 'single', 'array with X weight')
+                    # self.conveyor.addVal((wg).tolist(), 'x_wg', 'X wg', 'method', 'single', 'array with X weight')
 
             except FileNotFoundError:
                 return False, f'No valid preprocessing tools found at: {prepro_file}'
@@ -1582,7 +1582,7 @@ class Idata:
         combined_md_names = []
         combined_ci_names = []
         combined_confidence = []
-        reference_set = []
+        # reference_set = []
 
         num_obj = self.conveyor.getVal ('obj_num')
         num_conformal = 0
@@ -1661,14 +1661,14 @@ class Idata:
             # i_result is the prediction of a confidential model
             # store the X matrix (of the ensemble training series, using the model descriptors) to build
             # a reference space where we can project the mean and sd of the original training series
-            if i_result.getMeta('confidential'):
-                xmean = i_result.getVal('x_mean')
-                xwg = i_result.getVal('x_wg')
-                xmatrix = i_result.getVal('xmatrix')
-                if xmean is not None and xwg is not None and xmatrix is not None:
-                    reference_set.append ({'x_mean':xmean, 
-                                           'x_wg': xwg, 
-                                           'xmatrix': xmatrix.tolist() })
+            # if i_result.getMeta('confidential'):
+            #     xmean = i_result.getVal('x_mean')
+            #     xwg = i_result.getVal('x_wg')
+            #     xmatrix = i_result.getVal('xmatrix')
+            #     if xmean is not None and xwg is not None and xmatrix is not None:
+            #         reference_set.append ({'x_mean':xmean, 
+            #                                'x_wg': xwg, 
+            #                                'xmatrix': xmatrix.tolist() })
 
         self.conveyor.addVal( combined_md, 'xmatrix', 'X matrix',
                          'results', 'vars', 'Combined output from external sources')
@@ -1689,9 +1689,9 @@ class Idata:
                 self.conveyor.addVal( combined_confidence, 'ensemble_confidence', 'Ensemble Confidence',
                                 'method', 'vars', 'Confidence from external sources')
         
-        if len(reference_set) > 0:
-            self.conveyor.addVal( reference_set, 'reference_set', 'Reference Set',
-                            'method', 'single', 'Toolkit to build reference PCAs for confidential models')
+        # if len(reference_set) > 0:
+        #     self.conveyor.addVal( reference_set, 'reference_set', 'Reference Set',
+        #                     'method', 'single', 'Toolkit to build reference PCAs for confidential models')
 
         return
 
