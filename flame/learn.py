@@ -38,7 +38,7 @@ from flame.stats.GNB import GNB
 from flame.stats.PLSR import PLSR
 from flame.stats.PLSDA import PLSDA
 from flame.stats.combo import median, mean, majority, logicalOR, matrix
-from flame.graph.graph import generateManifoldSpace, generatePCASpace
+from flame.graph.graph import generateManifoldSpace, generatePCASpace, generateInnerPCASpace
 
 from flame.util import utils, get_logger
 LOG = get_logger(__name__)
@@ -441,23 +441,43 @@ class Learn:
         # conformal quantitataive models produce a list of tuples, indicating
         # the minumum and maximum value
 
-        dimRed = self.param.getVal("dimensionality_reduction")
-        if dimRed is None:
-            nobj, nvarx = np.shape(self.X)
-            if nvarx > 300:
-                dimRed = 't-SNE'
-            else:
-                dimRed = 'PCA'
-
-        if dimRed == 'PCA':
-            generatePCASpace(self.X, self.param, self.conveyor)
-        elif dimRed == 't-SNE':
-            generateManifoldSpace(self.X, self.param, self.conveyor)
-
+        # ensemble models generate a reference set for each inner model
         reference_set = self.conveyor.getVal ("reference_set")
         if reference_set is not None:
-            print ('************ here we will compute the PCA for each internal model')
+
             self.conveyor.removeVal('reference_set')
+            
+            InnerPCASet = []
+            for inner_model in reference_set:
+                xproj, pproj, explvar = generateInnerPCASpace (inner_model['xmatrix'], 
+                                                            np.array(inner_model['x_mean']).reshape(1, -1))
+
+                # print (xproj[:,0], xproj[:,1], pproj, explvar)
+                InnerPCASet.append({'PCA1':xproj[:,0].tolist(), 
+                                    'PCA2':xproj[:,1].tolist(),
+                                    'centroid':pproj.tolist(),
+                                    'explvar':explvar.tolist()})
+
+            if len(InnerPCASet)>0 :
+                self.conveyor.addVal(InnerPCASet, 
+                                    'InnerPCASet', 'Inner PCA Set',
+                                    'method', 'single', 'Toolkit to show PCAs for the inner models',)
+
+        if self.param.getVal('input_type') != 'model_ensemble':
+            # get parameter for generating or not PCA/t-SNE
+            dimRed = self.param.getVal("dimensionality_reduction")
+        
+            if dimRed is None:
+                nobj, nvarx = np.shape(self.X)
+                if nvarx > 300:
+                    dimRed = 't-SNE'
+                else:
+                    dimRed = 'PCA'
+
+            if dimRed == 'PCA':
+                generatePCASpace(self.X, self.param, self.conveyor)
+            elif dimRed == 't-SNE':
+                generateManifoldSpace(self.X, self.param, self.conveyor)
 
         # TODO: compute AD (when applicable)
         LOG.info('Model finished successfully')
