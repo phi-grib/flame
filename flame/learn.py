@@ -43,6 +43,8 @@ from flame.graph.graph import generateManifoldSpace, generatePCASpace, generateI
 from flame.util import utils, get_logger
 LOG = get_logger(__name__)
 
+TS_MAX = 100
+
 class Learn:
 
     def __init__(self, parameters, conveyor):
@@ -474,10 +476,22 @@ class Learn:
                     xsd = np.array(xsd)
 
                     jpoints = points
-                    for i in range(100):
+
+                    # make sure the results will be reproducible
+                    np.random.seed(46)
+
+                    # generate pseudo compounds simulating the training series
+                    # use original size with a max of TS_MAX points 
+                    num_points = inner_model['size']
+
+                    if num_points > TS_MAX:
+                        num_points = TS_MAX
+
+                    for i in range(num_points):
                         prandom = np.random.normal(points, xsd)
                         jpoints = np.vstack((jpoints,prandom))
 
+                    # alternativelly, generate just a min and max limit using 2*SD
                     # pplus  = points+2.0*xsd
                     # pminus = points-2.0*xsd
                     # jpoints = np.vstack((points, pplus, pminus))

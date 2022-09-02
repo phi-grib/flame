@@ -1668,6 +1668,7 @@ class Idata:
                 xmatrix = i_result.getVal('xmatrix')
                 if xmean is not None and xwg is not None and xmatrix is not None:
                     reference_set.append ({'label': f'{i_name} ver.{i_ver}', 
+                                           'size': i_result.getVal('obj_num'),
                                            'x_mean':xmean, 
                                            'x_wg': xwg, 
                                            'xmatrix': xmatrix.tolist() })
