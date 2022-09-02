@@ -442,26 +442,6 @@ class Learn:
         # the minumum and maximum value
 
         # ensemble models generate a reference set for each inner model
-        reference_set = self.conveyor.getVal ("reference_set")
-        if reference_set is not None:
-
-            self.conveyor.removeVal('reference_set')
-            
-            InnerPCASet = []
-            for inner_model in reference_set:
-                xproj, pproj, explvar = generateInnerPCASpace (inner_model['xmatrix'], 
-                                                            np.array(inner_model['x_mean']).reshape(1, -1))
-
-                # print (xproj[:,0], xproj[:,1], pproj, explvar)
-                InnerPCASet.append({'PCA1':xproj[:,0].tolist(), 
-                                    'PCA2':xproj[:,1].tolist(),
-                                    'centroid':pproj.tolist(),
-                                    'explvar':explvar.tolist()})
-
-            if len(InnerPCASet)>0 :
-                self.conveyor.addVal(InnerPCASet, 
-                                    'InnerPCASet', 'Inner PCA Set',
-                                    'method', 'single', 'Toolkit to show PCAs for the inner models',)
 
         if self.param.getVal('input_type') != 'model_ensemble':
             # get parameter for generating or not PCA/t-SNE
@@ -478,6 +458,45 @@ class Learn:
                 generatePCASpace(self.X, self.param, self.conveyor)
             elif dimRed == 't-SNE':
                 generateManifoldSpace(self.X, self.param, self.conveyor)
+        else:
+            reference_set = self.conveyor.getVal ("reference_set")
+            if reference_set is not None:
+
+                self.conveyor.removeVal('reference_set')
+                
+                InnerPCASet = []
+                for inner_model in reference_set:
+
+                    xmatrix = inner_model['xmatrix']
+                    points = np.array(inner_model['x_mean']).reshape(1, -1)
+                    x_wg = inner_model['x_wg'] 
+                    xsd = [1.0/iw if iw > 1.0e-7 else 0.00 for iw in x_wg]
+                    xsd = np.array(xsd)
+
+                    jpoints = points
+                    for i in range(100):
+                        prandom = np.random.normal(points, xsd)
+                        jpoints = np.vstack((jpoints,prandom))
+
+                    # pplus  = points+2.0*xsd
+                    # pminus = points-2.0*xsd
+                    # jpoints = np.vstack((points, pplus, pminus))
+
+                    xproj, pproj, explvar = generateInnerPCASpace (xmatrix,jpoints)
+
+                    # print (xproj[:,0], xproj[:,1], pproj, explvar)
+                    InnerPCASet.append({'label':inner_model['label'],
+                                        'PCA1':xproj[:,0].tolist(), 
+                                        'PCA2':xproj[:,1].tolist(),
+                                        'pointsx':pproj[:,0].tolist(),
+                                        'pointsy':pproj[:,1].tolist(),
+                                        'explvar':explvar.tolist()})
+
+                if len(InnerPCASet)>0 :
+                    self.conveyor.addVal(InnerPCASet, 
+                                        'InnerPCASet', 'Inner PCA Set',
+                                        'method', 'single', 'Toolkit to show PCAs for the inner models',)
+
 
         # TODO: compute AD (when applicable)
         LOG.info('Model finished successfully')
