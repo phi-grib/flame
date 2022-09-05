@@ -615,12 +615,54 @@ class majority (Combo):
         # obtain dimensions of X matrix
         self.nobj, self.nvarx = np.shape(X)
 
+        if self.param.getVal('input_type') == 'model_ensemble':
+            reference_set = self.conveyor.getVal ("reference_set")
+            if reference_set is not None:
+                dist_max = []
+                for iref in reference_set:
+                    x_wg = iref['x_wg'] 
+                    xsd = [1.0/iw if iw > 1.0e-7 else 0.00 for iw in x_wg]
+                    xsd = np.array(xsd*2)
+
+                    # removed sqrt for performance
+                    dist_max.append(np.sum(xsd**2))
+                    # compute max distance for each space 
+                print ('>>>>>>', dist_max)
+
+                yp = np.ones(self.nobj, dtype=np.float64) # default is positive
+                for i in range(self.nobj):
+
+                    d=[]
+                    for j,iref in enumerate(reference_set):
+                        modelx = np.array(iref['xmatrix'][i])
+                        centrx = np.array(iref['x_mean'])
+                        # removed sqrt for performance
+                        d.append(np.sum ( (modelx-centrx)**2 )/dist_max[j])
+                    
+                    print (d )
+
+                    xline = X[i]
+
+                    # use distances to mask / weigth xline
+                    # TODO ****************
+
+                    if xline[xline!=0].size == 0:  # all uncertains
+                        yp[i] = -1 # uncertain
+                    else:
+                        temp = np.mean(xline[xline!=0])
+                        if temp == 0.0: # equal number of positive and negatives
+                            yp[i] = -1  # uncertain
+                        elif temp < 0.0:
+                            yp[i] = 0   # negative
+            return yp                
+
         # check if the underlying models are conformal
         CI_vals = self.conveyor.getVal('ensemble_ci')
 
         # print ('confidence: ', confidence)
 
         # when not all models are conformal use a simple approach
+    
         if CI_vals is None or len(CI_vals[0]) != (2 * self.nvarx):
 
             ############################################
