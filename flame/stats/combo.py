@@ -619,29 +619,38 @@ class majority (Combo):
             reference_set = self.conveyor.getVal ("reference_set")
             if reference_set is not None:
                 dist_max = []
+                
+                dist = np.zeros((self.nobj, len(reference_set)), dtype=np.float64)
+
                 for iref in reference_set:
                     x_wg = iref['x_wg'] 
                     xsd = [1.0/iw if iw > 1.0e-7 else 0.00 for iw in x_wg]
                     xsd = np.array(xsd*2)
 
                     # removed sqrt for performance
-                    dist_max.append(np.sum(xsd**2))
+                    dist_max.append(np.sqrt(np.sum(xsd**2)))
                     # compute max distance for each space 
-                print ('>>>>>>', dist_max)
+
+                # print ('>>>>>>', dist_max)
 
                 yp = np.ones(self.nobj, dtype=np.float64) # default is positive
                 for i in range(self.nobj):
 
-                    d=[]
+                    # d=[]
                     for j,iref in enumerate(reference_set):
                         modelx = np.array(iref['xmatrix'][i])
                         centrx = np.array(iref['x_mean'])
                         # removed sqrt for performance
-                        d.append(np.sum ( (modelx-centrx)**2 )/dist_max[j])
+                        # d.append(np.sum ( (modelx-centrx)**2 )/dist_max[j])
+                        dist[i,j]=(np.sqrt(np.sum ( (modelx-centrx)**2 ))) /dist_max[j]
                     
-                    print (d )
-
                     xline = X[i]
+                    for xi_index in range(len(xline)):
+                        if dist[i, xi_index] > 0.8:
+                            print (xline, 'before*************', dist[i])
+                            xline[xi_index] = 0
+                            print (xline, 'after*************', dist[i])
+
 
                     # use distances to mask / weigth xline
                     # TODO ****************
@@ -654,7 +663,21 @@ class majority (Combo):
                             yp[i] = -1  # uncertain
                         elif temp < 0.0:
                             yp[i] = 0   # negative
-            return yp                
+
+                print (dist)
+
+                # remove reference set from conveyor, because it is masive
+                # self.conveyor.removeVal('reference_set')
+
+                # add distances to conveyor
+                self.conveyor.addVal(dist.tolist(), 
+                    'distToCentroid', 
+                    'distance to training series centroid', 
+                    'method',
+                    'objs',
+                    'Distance from query compound to the centroid of each training series')
+
+                return yp                
 
         # check if the underlying models are conformal
         CI_vals = self.conveyor.getVal('ensemble_ci')
