@@ -619,7 +619,7 @@ class majority (Combo):
         # distances to asses the relevance of each inner model, removing the contribution
         # of models located out of the training series space
         # as defined as 0.9 as the centroid plus-minus the sd 
-        
+
         if self.param.getVal('input_type') == 'model_ensemble':
             reference_set = self.conveyor.getVal ("reference_set")
             if reference_set is not None:
@@ -648,7 +648,7 @@ class majority (Combo):
                     # mask values obtained from models with a centroid very far away, so their predictions
                     # are not used for computing the majority voting
                     for xi_index in range(len(xline)):
-                        if dist[i, xi_index] > 0.9:
+                        if dist[i, xi_index] > 2.0:
                             print (xline, 'before*************', dist[i])
                             xline[xi_index]=0
 
@@ -662,7 +662,7 @@ class majority (Combo):
                             yp[i] = 0   # negative
 
                 # remove reference set from conveyor, because it is masive
-                # self.conveyor.removeVal('reference_set')
+                self.conveyor.removeVal('reference_set')
 
                 # add distances to conveyor
                 self.conveyor.addVal(dist.tolist(), 
