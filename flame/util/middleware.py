@@ -1,6 +1,7 @@
 import re
 import os
 import logging
+import json
 from django.conf import settings
 from django.http.response import JsonResponse
 from django.utils.deprecation import MiddlewareMixin
@@ -14,11 +15,42 @@ config_in_settings = settings.APPLICATION_CONFIG
 
 def get_application_config_for_key(var_key):
     
+    # 1. environment variables
     config_val = os.environ.get(var_key)
     if config_val is not None:
         # print('os:', var_key, config_val)
         return config_val
     
+
+    # 2. config file in /secrets
+
+    #   "realm": "KH",
+    #   "auth-server-url": "http://localhost:8090/auth",
+    #   "ssl-required": "external",
+    #   "resource": "knowledge-hub",
+    #   "credentials": {
+    #     "secret": "**********"
+    #   }
+
+    if os.path.isfile('/secrets/keycloak.json'):
+        with open('/secrets/keycloak.json') as f:
+            keycloak_file = json.load(f)
+        
+        translate= {'KEYCLOAK_SERVER_URL':'auth-server-url',
+                    'KEYCLOAK_REALM':'realm',
+                    'KEYCLOAK_CLIENT_ID':'resource',
+                    'KEYCLOAK_CLIENT_SECRET_KEY':'secret'}
+
+        if (var_key) in translate:
+            var_key_trans = translate[var_key]
+            if (var_key_trans) in keycloak_file:
+                return keycloak_file[var_key]
+            elif (var_key_trans == 'secret'):
+                if 'credentials' in keycloak_file:
+                    return keycloak_file['credentials']['secret']
+
+    # 3. hardcoded in APLICATION_CONFIG (django)
+
     if var_key in config_in_settings:
         config_val = config_in_settings[var_key]
         # print('settings:', var_key, config_val)
