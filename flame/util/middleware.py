@@ -22,7 +22,11 @@ def get_application_config_for_key(var_key):
         return config_val
     
     # 2. config file in /secrets
+    # set only to support basic parameters in dockerized 
+    # versions of Flame, where the secret is in an external
+    # volume accesible in /secrets
 
+    
     #   "realm": "KH",
     #   "auth-server-url": "http://localhost:8090/auth",
     #   "ssl-required": "external",
@@ -43,7 +47,7 @@ def get_application_config_for_key(var_key):
         if (var_key) in translate:
             var_key_trans = translate[var_key]
             if (var_key_trans) in keycloak_file:
-                return keycloak_file[var_key]
+                return keycloak_file[var_key_trans]
             elif (var_key_trans == 'secret'):
                 if 'credentials' in keycloak_file:
                     return keycloak_file['credentials']['secret']
