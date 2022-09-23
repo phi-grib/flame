@@ -26,7 +26,7 @@ def get_application_config_for_key(var_key):
     # versions of Flame, where the secret is in an external
     # volume accesible in /secrets
 
-    
+
     #   "realm": "KH",
     #   "auth-server-url": "http://localhost:8090/auth",
     #   "ssl-required": "external",
@@ -58,8 +58,9 @@ def get_application_config_for_key(var_key):
         config_val = config_in_settings[var_key]
         # print('settings:', var_key, config_val)
         return config_val
-    else:
-        return None
+
+    # if everything failed returns None    
+    return None
 
 class KeycloakMiddleware(MiddlewareMixin):
 
