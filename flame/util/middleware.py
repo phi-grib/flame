@@ -31,22 +31,22 @@ def get_application_config_for_key(var_key):
     #     "secret": "**********"
     #   }
 
-    # if os.path.isfile('/secrets/keycloak.json'):
-    #     with open('/secrets/keycloak.json') as f:
-    #         keycloak_file = json.load(f)
+    if os.path.isfile('/secrets/keycloak.json'):
+        with open('/secrets/keycloak.json') as f:
+            keycloak_file = json.load(f)
         
-    #     translate= {'KEYCLOAK_SERVER_URL':'auth-server-url',
-    #                 'KEYCLOAK_REALM':'realm',
-    #                 'KEYCLOAK_CLIENT_ID':'resource',
-    #                 'KEYCLOAK_CLIENT_SECRET_KEY':'secret'}
+        translate= {'KEYCLOAK_SERVER_URL':'auth-server-url',
+                    'KEYCLOAK_REALM':'realm',
+                    'KEYCLOAK_CLIENT_ID':'resource',
+                    'KEYCLOAK_CLIENT_SECRET_KEY':'secret'}
 
-    #     if (var_key) in translate:
-    #         var_key_trans = translate[var_key]
-    #         if (var_key_trans) in keycloak_file:
-    #             return keycloak_file[var_key]
-    #         elif (var_key_trans == 'secret'):
-    #             if 'credentials' in keycloak_file:
-    #                 return keycloak_file['credentials']['secret']
+        if (var_key) in translate:
+            var_key_trans = translate[var_key]
+            if (var_key_trans) in keycloak_file:
+                return keycloak_file[var_key]
+            elif (var_key_trans == 'secret'):
+                if 'credentials' in keycloak_file:
+                    return keycloak_file['credentials']['secret']
 
     # 3. hardcoded in APLICATION_CONFIG (django)
 
