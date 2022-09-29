@@ -648,7 +648,7 @@ class majority (Combo):
                     # mask values obtained from models with a centroid very far away, so their predictions
                     # are not used for computing the majority voting
                     for xi_index in range(len(xline)):
-                        if dist[i, xi_index] > 2.0:
+                        if dist[i, xi_index] > 0.8:
                             print (xline, 'before*************', dist[i])
                             xline[xi_index]=0
 
