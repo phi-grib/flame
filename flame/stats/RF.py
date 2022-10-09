@@ -107,6 +107,12 @@ class RF(BaseEstimator):
 
             LOG.info("Optimizing RF estimator")
             
+            # convert 'None' strings to None
+            for k in self.tune_parameters:
+                k_list = self.tune_parameters[k]
+                k_list_new = [ None if i == 'None' else i for i in k_list ]
+                self.tune_parameters[k] = k_list_new
+
             try:
                 # Check type of model
                 if self.param.getVal('quantitative'):
