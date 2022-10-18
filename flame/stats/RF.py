@@ -106,7 +106,7 @@ class RF(BaseEstimator):
         if self.param.getVal('tune'):
 
             LOG.info("Optimizing RF estimator")
-            
+
             # convert 'None' strings to None
             for k in self.tune_parameters:
                 k_list = self.tune_parameters[k]
