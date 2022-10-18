@@ -615,12 +615,72 @@ class majority (Combo):
         # obtain dimensions of X matrix
         self.nobj, self.nvarx = np.shape(X)
 
+        # only for ensemble models for which there is a reference_set, compute
+        # distances to asses the relevance of each inner model, removing the contribution
+        # of models located out of the training series space
+        # as defined as 0.9 as the centroid plus-minus the sd 
+
+        if self.param.getVal('input_type') == 'model_ensemble':
+            reference_set = self.conveyor.getVal ("reference_set")
+            if reference_set is not None:
+                dist_max = []
+                
+                dist = np.zeros((self.nobj, len(reference_set)), dtype=np.float64)
+
+                # compute max distance for each space 
+                for iref in reference_set:
+                    x_wg = iref['x_wg'] 
+                    xsd = [1.0/iw if iw > 1.0e-7 else 0.00 for iw in x_wg]
+                    xsd2 = np.array(xsd*2)
+
+                    dist_max.append(np.sqrt(np.sum(xsd2**2)))
+
+                yp = np.ones(self.nobj, dtype=np.float64) # default is positive
+                for i in range(self.nobj):
+
+                    for j,iref in enumerate(reference_set):
+                        modelx = np.array(iref['xmatrix'][i])
+                        centrx = np.array(iref['x_mean'])
+                        dist[i,j]=(np.sqrt(np.sum ( (modelx-centrx)**2 ))) /dist_max[j]
+                    
+                    xline = X[i]
+                
+                    # mask values obtained from models with a centroid very far away, so their predictions
+                    # are not used for computing the majority voting
+                    for xi_index in range(len(xline)):
+                        if dist[i, xi_index] > 0.8:
+                            print (xline, 'before*************', dist[i])
+                            xline[xi_index]=0
+
+                    if xline[xline!=0].size == 0:  # all uncertains
+                        yp[i] = -1 # uncertain
+                    else:
+                        temp = np.mean(xline[xline!=0])
+                        if temp == 0.0: # equal number of positive and negatives
+                            yp[i] = -1  # uncertain
+                        elif temp < 0.0:
+                            yp[i] = 0   # negative
+
+                # remove reference set from conveyor, because it is masive
+                self.conveyor.removeVal('reference_set')
+
+                # add distances to conveyor
+                self.conveyor.addVal(dist.tolist(), 
+                    'distToCentroid', 
+                    'distance to training series centroid', 
+                    'method',
+                    'objs',
+                    'Distance from query compound to the centroid of each training series')
+
+                return yp                
+
         # check if the underlying models are conformal
         CI_vals = self.conveyor.getVal('ensemble_ci')
 
         # print ('confidence: ', confidence)
 
         # when not all models are conformal use a simple approach
+    
         if CI_vals is None or len(CI_vals[0]) != (2 * self.nvarx):
 
             ############################################

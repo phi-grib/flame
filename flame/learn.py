@@ -38,10 +38,12 @@ from flame.stats.GNB import GNB
 from flame.stats.PLSR import PLSR
 from flame.stats.PLSDA import PLSDA
 from flame.stats.combo import median, mean, majority, logicalOR, matrix
-from flame.graph.graph import generateManifoldSpace, generatePCASpace
+from flame.graph.graph import generateManifoldSpace, generatePCASpace, generateInnerPCASpace
 
 from flame.util import utils, get_logger
 LOG = get_logger(__name__)
+
+TS_MAX = 100
 
 class Learn:
 
@@ -441,23 +443,74 @@ class Learn:
         # conformal quantitataive models produce a list of tuples, indicating
         # the minumum and maximum value
 
-        dimRed = self.param.getVal("dimensionality_reduction")
-        if dimRed is None:
-            nobj, nvarx = np.shape(self.X)
-            if nvarx > 300:
-                dimRed = 't-SNE'
-            else:
-                dimRed = 'PCA'
+        # ensemble models generate a reference set for each inner model
 
-        if dimRed == 'PCA':
-            generatePCASpace(self.X, self.param, self.conveyor)
-        elif dimRed == 't-SNE':
-            generateManifoldSpace(self.X, self.param, self.conveyor)
+        if self.param.getVal('input_type') != 'model_ensemble':
+            # get parameter for generating or not PCA/t-SNE
+            dimRed = self.param.getVal("dimensionality_reduction")
+        
+            if dimRed is None:
+                nobj, nvarx = np.shape(self.X)
+                if nvarx > 300:
+                    dimRed = 't-SNE'
+                else:
+                    dimRed = 'PCA'
 
-        # reference_set = self.conveyor.getVal ("reference_set")
-        # if reference_set is not None:
-        #     print ('************ here we will compute the PCA for each internal model')
-        #     self.conveyor.removeVal('reference_set')
+            if dimRed == 'PCA':
+                generatePCASpace(self.X, self.param, self.conveyor)
+            elif dimRed == 't-SNE':
+                generateManifoldSpace(self.X, self.param, self.conveyor)
+        else:
+            reference_set = self.conveyor.getVal ("reference_set")
+            if reference_set is not None:
+
+                self.conveyor.removeVal('reference_set')
+                
+                InnerPCASet = []
+                for inner_model in reference_set:
+
+                    xmatrix = inner_model['xmatrix']
+                    points = np.array(inner_model['x_mean']).reshape(1, -1)
+                    x_wg = inner_model['x_wg'] 
+                    xsd = [1.0/iw if iw > 1.0e-7 else 0.00 for iw in x_wg]
+                    xsd = np.array(xsd)
+
+                    jpoints = points
+
+                    # make sure the results will be reproducible
+                    np.random.seed(46)
+
+                    # generate pseudo compounds simulating the training series
+                    # use original size with a max of TS_MAX points 
+                    num_points = inner_model['size']
+
+                    if num_points > TS_MAX:
+                        num_points = TS_MAX
+
+                    for i in range(num_points):
+                        prandom = np.random.normal(points, xsd)
+                        jpoints = np.vstack((jpoints,prandom))
+
+                    # alternativelly, generate just a min and max limit using 2*SD
+                    # pplus  = points+2.0*xsd
+                    # pminus = points-2.0*xsd
+                    # jpoints = np.vstack((points, pplus, pminus))
+
+                    xproj, pproj, explvar = generateInnerPCASpace (xmatrix,jpoints)
+
+                    # print (xproj[:,0], xproj[:,1], pproj, explvar)
+                    InnerPCASet.append({'label':inner_model['label'],
+                                        'PCA1':xproj[:,0].tolist(), 
+                                        'PCA2':xproj[:,1].tolist(),
+                                        'pointsx':pproj[:,0].tolist(),
+                                        'pointsy':pproj[:,1].tolist(),
+                                        'explvar':explvar.tolist()})
+
+                if len(InnerPCASet)>0 :
+                    self.conveyor.addVal(InnerPCASet, 
+                                        'InnerPCASet', 'Inner PCA Set',
+                                        'method', 'single', 'Toolkit to show PCAs for the inner models',)
+
 
         # TODO: compute AD (when applicable)
         LOG.info('Model finished successfully')

@@ -370,9 +370,22 @@ class Odata():
                         else:
                             if isinstance(val, float):
                                 line += "%.4f" % val
+                            
+                            elif isinstance(val, list): 
+                                for ival in val:
+                                    if isinstance(ival, float):
+                                        line += "%.4f" % ival
+                                    else:
+                                        line += str(ival)
+                                        
+                                    if ival!= val[-1]:
+                                        line += '\t'
                             else:
                                 line += str(val)
                         line += '\t'
+
+
+
                     fo.write(line+'\n')
 
         return True, self.conveyor

@@ -113,6 +113,14 @@ def generatePCASpace(X, param, conveyor):
 
     return
 
+def generateInnerPCASpace(X, points):
+    ''' ****
+    '''
+    emb=PCA(n_components=2,random_state=46).fit(X)
+    X_proj = emb.transform(X)
+    points_proj = emb.transform(points)
+    return (X_proj, points_proj, emb.explained_variance_ratio_)
+
 def projectReduced(X, param, conveyor):
     '''
         This method projects X vectors into the existing PCA space generated for the

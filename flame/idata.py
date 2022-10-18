@@ -369,11 +369,11 @@ class Idata:
     
                 if 'mean' in dict_prepro:
                     mean = np.array(dict_prepro['mean'])
-                    # self.conveyor.addVal(mean.tolist(), 'x_mean', 'X mean', 'method', 'single', 'array with X means')
+                    self.conveyor.addVal(mean.tolist(), 'x_mean', 'X mean', 'method', 'single', 'array with X means')
                 
                 if 'wg' in dict_prepro:
                     wg = np.array(dict_prepro['wg'])
-                    # self.conveyor.addVal((wg).tolist(), 'x_wg', 'X wg', 'method', 'single', 'array with X weight')
+                    self.conveyor.addVal((wg).tolist(), 'x_wg', 'X wg', 'method', 'single', 'array with X weight')
 
             except FileNotFoundError:
                 return False, f'No valid preprocessing tools found at: {prepro_file}'
@@ -1582,7 +1582,7 @@ class Idata:
         combined_md_names = []
         combined_ci_names = []
         combined_confidence = []
-        # reference_set = []
+        reference_set = []
 
         num_obj = self.conveyor.getVal ('obj_num')
         num_conformal = 0
@@ -1591,6 +1591,10 @@ class Idata:
 
             # predictions
             i_md = i_result.getVal('values')
+
+            # names and versions, used as labels
+            i_name = i_result.getMeta('endpoint')
+            i_ver = str(i_result.getMeta('version'))
 
             i_md_size = len(i_md)
             if i_md_size != num_obj:
@@ -1613,7 +1617,7 @@ class Idata:
             else:
                 combined_md = np.c_[combined_md, np.array(i_md, dtype=np.float64)]
 
-            combined_md_names.append('values'+':'+i_result.getMeta('endpoint')+':'+str(i_result.getMeta('version')))
+            combined_md_names.append(f'values:{i_name}:{i_ver}')
             combined_confidence.append(i_result.getVal('confidence'))
 
             # confidence values and names
@@ -1634,14 +1638,13 @@ class Idata:
                     combined_ci = np.column_stack((combined_ci, i_low))
                     combined_ci = np.column_stack((combined_ci, i_up))
 
-                combined_ci_names.append(
-                    'lower_limit'+':'+i_result.getMeta('endpoint')+':'+str(i_result.getMeta('version')))
-                combined_ci_names.append(
-                    'upper_limit'+':'+i_result.getMeta('endpoint')+':'+str(i_result.getMeta('version')))
+                combined_ci_names.append(f'lower_limit:{i_name}:{i_ver}')
+                combined_ci_names.append(f'upper_limit:{i_name}:{i_ver}')
                 # confidence values and names
 
             i_c0 = i_result.getVal('c0')
             i_c1 = i_result.getVal('c1')
+
             if i_c0 is not None and i_c1 is not None:
 
                 num_conformal += 1
@@ -1653,22 +1656,22 @@ class Idata:
                     combined_ci = np.column_stack((combined_ci, i_c0))
                     combined_ci = np.column_stack((combined_ci, i_c1))
 
-                combined_ci_names.append(
-                    'c0'+':'+i_result.getMeta('endpoint')+':'+str(i_result.getMeta('version')))
-                combined_ci_names.append(
-                    'c1'+':'+i_result.getMeta('endpoint')+':'+str(i_result.getMeta('version')))
+                combined_ci_names.append(f'c0:{i_name}:{i_ver}')
+                combined_ci_names.append(f'c1:{i_name}:{i_ver}')
 
             # i_result is the prediction of a confidential model
             # store the X matrix (of the ensemble training series, using the model descriptors) to build
             # a reference space where we can project the mean and sd of the original training series
-            # if i_result.getMeta('confidential'):
-            #     xmean = i_result.getVal('x_mean')
-            #     xwg = i_result.getVal('x_wg')
-            #     xmatrix = i_result.getVal('xmatrix')
-            #     if xmean is not None and xwg is not None and xmatrix is not None:
-            #         reference_set.append ({'x_mean':xmean, 
-            #                                'x_wg': xwg, 
-            #                                'xmatrix': xmatrix.tolist() })
+            if i_result.getMeta('confidential'):
+                xmean = i_result.getVal('x_mean')
+                xwg = i_result.getVal('x_wg')
+                xmatrix = i_result.getVal('xmatrix')
+                if xmean is not None and xwg is not None and xmatrix is not None:
+                    reference_set.append ({'label': f'{i_name} ver.{i_ver}', 
+                                           'size': i_result.getVal('obj_num'),
+                                           'x_mean':xmean, 
+                                           'x_wg': xwg, 
+                                           'xmatrix': xmatrix.tolist() })
 
         self.conveyor.addVal( combined_md, 'xmatrix', 'X matrix',
                          'results', 'vars', 'Combined output from external sources')
@@ -1689,9 +1692,9 @@ class Idata:
                 self.conveyor.addVal( combined_confidence, 'ensemble_confidence', 'Ensemble Confidence',
                                 'method', 'vars', 'Confidence from external sources')
         
-        # if len(reference_set) > 0:
-        #     self.conveyor.addVal( reference_set, 'reference_set', 'Reference Set',
-        #                     'method', 'single', 'Toolkit to build reference PCAs for confidential models')
+        if len(reference_set) > 0:
+            self.conveyor.addVal( reference_set, 'reference_set', 'Reference Set',
+                            'method', 'single', 'Toolkit to build reference PCAs for confidential models')
 
         return
 
