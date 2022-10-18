@@ -1,6 +1,7 @@
 import re
 import os
 import logging
+import json
 from django.conf import settings
 from django.http.response import JsonResponse
 from django.utils.deprecation import MiddlewareMixin
@@ -14,17 +15,57 @@ config_in_settings = settings.APPLICATION_CONFIG
 
 def get_application_config_for_key(var_key):
     
+    # 1. environment variables
     config_val = os.environ.get(var_key)
     if config_val is not None:
-        # print('os:', var_key, config_val)
+        # print('var_key(1):', var_key, config_val)
         return config_val
     
+    # 2. config file in /secrets
+    # set only to support basic parameters in dockerized 
+    # versions of Flame, where the secret is in an external
+    # volume accesible in /secrets
+
+
+    #   "realm": "KH",
+    #   "auth-server-url": "http://localhost:8090/auth",
+    #   "ssl-required": "external",
+    #   "resource": "knowledge-hub",
+    #   "credentials": {
+    #     "secret": "**********"
+    #   }
+
+    if os.path.isfile('/secrets/keycloak.json'):
+        with open('/secrets/keycloak.json') as f:
+            keycloak_file = json.load(f)
+
+        # print (keycloak_file)
+        
+        translate= {'KEYCLOAK_SERVER_URL':'auth-server-url',
+                    'KEYCLOAK_REALM':'realm',
+                    'KEYCLOAK_CLIENT_ID':'resource',
+                    'KEYCLOAK_CLIENT_SECRET_KEY':'secret'}
+
+        if (var_key) in translate:
+            var_key_trans = translate[var_key]
+            if (var_key_trans) in keycloak_file:
+                # print ('var_key(2):', keycloak_file[var_key_trans])
+                return keycloak_file[var_key_trans]
+            elif (var_key_trans == 'secret'):
+                if 'credentials' in keycloak_file:
+                    # print ('var_key(2 secret):', keycloak_file['credentials']['secret'])
+                    return keycloak_file['credentials']['secret']
+
+    # 3. hardcoded in APLICATION_CONFIG (django)
+
     if var_key in config_in_settings:
         config_val = config_in_settings[var_key]
-        # print('settings:', var_key, config_val)
+        # print('var_key(3):', var_key, config_val)
         return config_val
-    else:
-        return None
+
+    # if everything failed returns None    
+    # print ('var_key(none):', var_key, ' NOT FOUND!!!!')
+    return None
 
 class KeycloakMiddleware(MiddlewareMixin):
 
@@ -63,9 +104,9 @@ class KeycloakMiddleware(MiddlewareMixin):
         # Django
         self.get_response = get_response
 
-        print("KEYCLOAK_SERVER URL", get_application_config_for_key('KEYCLOAK_SERVER_URL'))
-        print("KEYCLOAK_CLIENT_ID URL", get_application_config_for_key('KEYCLOAK_CLIENT_ID'))
-        print("KEYCLOAK_REALM URL", get_application_config_for_key('KEYCLOAK_REALM'))
+        # print("KEYCLOAK_SERVER URL", get_application_config_for_key('KEYCLOAK_SERVER_URL'))
+        # print("KEYCLOAK_CLIENT_ID URL", get_application_config_for_key('KEYCLOAK_CLIENT_ID'))
+        # print("KEYCLOAK_REALM URL", get_application_config_for_key('KEYCLOAK_REALM'))
 
 
     @property

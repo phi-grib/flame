@@ -356,10 +356,22 @@ def action_searches_result (label, output='text'):
         - (True, JSON) with the results otherwyse
     '''
 
+    # this file is created uppon task abortion
+    error_file = os.path.join(tempfile.gettempdir(),'searching_'+label)
+    if os.path.isfile(error_file):
+        with open(error_file, 'r') as f:
+            error_text = f.read()
+        f.close()
+        os.remove(error_file)
+
+        if output != 'text':
+            return False, {'code':1, 'message': error_text}
+        return False, 'searching task aborted' 
+
     opath = tempfile.gettempdir()
     if not os.path.isdir(opath):
         if output == 'JSON':
-            return False, {'code':1, 'message': f'directory {opath} not found'}
+            return False, {'code':0, 'message': f'directory {opath} not found'}
         print (f'directory {opath} not found')
         return False, None
 

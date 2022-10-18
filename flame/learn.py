@@ -454,6 +454,11 @@ class Learn:
         elif dimRed == 't-SNE':
             generateManifoldSpace(self.X, self.param, self.conveyor)
 
+        # reference_set = self.conveyor.getVal ("reference_set")
+        # if reference_set is not None:
+        #     print ('************ here we will compute the PCA for each internal model')
+        #     self.conveyor.removeVal('reference_set')
+
         # TODO: compute AD (when applicable)
         LOG.info('Model finished successfully')
 
