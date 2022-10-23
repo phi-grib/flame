@@ -259,6 +259,11 @@ def build_cmd(arguments, output_format=None):
     if os.path.isfile(meta_file):
         os.remove(meta_file)
 
+    if 'build_token' in arguments:
+        token_file_name = os.path.join(endpoint_dir, arguments['build_token'])
+        with open (token_file_name,'w') as token_file:
+            token_file.write('')
+
     # input file provided in the command
     ifile = arguments['infile']
     if ifile is not None and not os.path.isfile (ifile):

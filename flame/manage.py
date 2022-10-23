@@ -511,7 +511,7 @@ def action_series(model, version):
     return True, 'OK'
 
 
-def action_info(model, version, output='text'):
+def action_info(model, version, output='text', build_id=None):
     '''
     Returns a text or an object with results info for a given model and version
     TODO: add Q/C + conf/no-conf + ensem/no-ensem + list of ensemble (when applicable)
@@ -522,10 +522,18 @@ def action_info(model, version, output='text'):
             return False, {'code':1, 'message': 'Empty model label'}
         return False, 'Empty model label'
 
+    model_path = utils.model_path(model, version)
+
+    # Check that the build token file exists. If false, the meta and results file
+    # can belong to a previous run
+    if build_id is not None:
+        token_file = os.path.join(model_path, build_id)
+        if not os.path.isfile(token_file):
+            return False, {'code':0, 'message': 'Info file not found'}
+
     # Check that both the meta and the results file are present
     # return error code 0 if not
-    meta_path = utils.model_path(model, version)
-    meta_file = os.path.join(meta_path, 'model-meta.pkl')
+    meta_file = os.path.join(model_path, 'model-meta.pkl')
     if not os.path.isfile(meta_file):
 
         # this file is created uppon task abortion
@@ -545,11 +553,15 @@ def action_info(model, version, output='text'):
             return False, {'code':0, 'message': 'Info file not found'}
         return False, 'Info file not found'
 
-    results_file = os.path.join(meta_path, 'model-results.pkl')
+    results_file = os.path.join(model_path, 'model-results.pkl')
     if not os.path.isfile(results_file):
         if output != 'text':
             return False, {'code':0, 'message': 'Results file not found'}
         return False, 'Results file not found'    
+
+    # Clean the building token file 
+    if build_id is not None:
+        os.remove (token_file)
 
     with open(meta_file,'rb') as handle:
         modelID = pickle.load(handle)
