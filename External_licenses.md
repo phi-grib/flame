@@ -7,11 +7,18 @@ We are grateful to all developers and will do our best to give them proper credi
 | software | author | license |
 |---|---|---|
 | RDKit | Rational Discovery LLC, Greg Landrum, and Julie Penzotti | 3-clause BSD license | 
-| numpy-scipy | NumPy Developers | NumPy license | 
+| numpy-scipy | NumPy Developers | NumPy license |
+| scikit-learn | David Cournapeau | 3-clause BSD license |
+| scipy | Community library project | 3-clause BSD license |   
 | smilesDrawer | GDB / Reymond Research Group | MIT | 
 | non-conformist | Henrik Linusson | MIT | 
-| standardizer | EMBL-EBI / Francis Atkinson | Apache 2.0 | 
-
+| standardiser | EMBL-EBI / Francis Atkinson | Apache 2.0 |
+| xgboost | Tianqi Chen | Apache License 2.0 |  
+| openpyxl | Eric Gazoni, Charlie Clark | MIT |
+| pandas | Wes McKinney | New BSD License |
+| pytest | Krekel et al | MIT License |
+| python-docx | Mike MacCana | MIT License |
+| 
 
 ## The MIT License (MIT)
 
