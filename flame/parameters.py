@@ -393,17 +393,18 @@ class Parameters:
         ensemble_names = None
         ensemble_versions = None
 
-        ensemble_names = self.getVal('ensemble_names')
-        ensemble_versions = self.getVal('ensemble_versions')
+        input_type = self.getVal('input_type')
+        if input_type == "model_ensemble":
+            ensemble_names = self.getVal('ensemble_names')
+            ensemble_versions = self.getVal('ensemble_versions')
 
-
-        if ensemble_names is not None: 
-            nnames = len (ensemble_names)
-            if nnames > 0:
-                ext_input = True
-        
-                if ensemble_versions == None or len(ensemble_versions)!= nnames:
-                    ensemble_versions = [0 for i in range (nnames)]
+            if ensemble_names is not None: 
+                nnames = len (ensemble_names)
+                if nnames > 0:
+                    ext_input = True
+            
+                    if ensemble_versions == None or len(ensemble_versions)!= nnames:
+                        ensemble_versions = [0 for i in range (nnames)]
 
         return (ext_input, ensemble_names, ensemble_versions)
 

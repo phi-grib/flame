@@ -38,7 +38,7 @@ from flame.stats.GNB import GNB
 from flame.stats.PLSR import PLSR
 from flame.stats.PLSDA import PLSDA
 from flame.stats.combo import median, mean, majority, logicalOR, matrix
-from flame.graph.graph import generateManifoldSpace, generatePCASpace, generateInnerPCASpace
+from flame.graph.graph import generateManifoldSpace, generatePCASpace, generateInnerPCASpace, cleanPCASpace
 
 from flame.util import utils, get_logger
 LOG = get_logger(__name__)
@@ -461,6 +461,7 @@ class Learn:
             elif dimRed == 't-SNE':
                 generateManifoldSpace(self.X, self.param, self.conveyor)
         else:
+            cleanPCASpace(self.param)
             reference_set = self.conveyor.getVal ("reference_set")
             if reference_set is not None:
 

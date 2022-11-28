@@ -79,6 +79,12 @@ def generateManifoldSpace(X,param,conveyor):
                         't-SNE Y', 'method', 'objs',
                         'X value for a t-SNE representation')
 
+def cleanPCASpace(param):
+    models_path = os.path.join(param.getVal('model_path'),'projection.pkl')
+    if os.path.isfile(models_path):
+        LOG.info('Cleaning previously projected X space using PCA...')
+        os.remove(models_path)
+
 def generatePCASpace(X, param, conveyor):
     ''' This function uses the scaled X matrix of the model to build a 2 PCs PCA model
         
