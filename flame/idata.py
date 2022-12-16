@@ -50,7 +50,7 @@ from flame.util import utils, get_logger, supress_log
 
 LOG = get_logger(__name__)
 
-non_scale_list = ['majority','logicalOR','matrix']
+non_scale_list = ['majority','logicalOR','logicalAND','matrix']
 
 class Idata:
 

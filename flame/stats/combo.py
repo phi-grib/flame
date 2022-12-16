@@ -751,7 +751,7 @@ class logicalOR (Combo):
         Combo.__init__(self, X, Y, parameters, conveyor)
         self.method_name = 'logical OR'
 
-        # majority is not compatible with conformal because the prediction results
+        # logicalOR is not compatible with conformal because the prediction results
         # are not stored as c0, c1 but as value, ensemble_c0, ensemble_c1
         if self.param.getVal('conformal'):
             self.param.setVal('conformal', False)
@@ -780,11 +780,54 @@ class logicalOR (Combo):
             if xline[xline!=0].size == 0:  # all uncertains
                 yp[i] = -1 # uncertain
             else:
-                if xline[xline==1].size == 0:  # no compound is 1
+                if xline[xline==1].size == 0:  # no inner model is 1
                     yp[i] = 0 # negative
                     
         return yp
 
+class logicalAND (Combo):
+    """
+       Simple logical AND used to combine the results of multiple models
+
+       IMPORTANT!! note that, from version 15/6/2020, the qualitative input has been scaled as negative (-1) | uncertain (0) | positive (+1)
+    """
+    def __init__(self, X, Y, parameters, conveyor):
+        Combo.__init__(self, X, Y, parameters, conveyor)
+        self.method_name = 'logical AND'
+
+        # logicalAND is not compatible with conformal because the prediction results
+        # are not stored as c0, c1 but as value, ensemble_c0, ensemble_c1
+        if self.param.getVal('conformal'):
+            self.param.setVal('conformal', False)
+
+    def predict(self, X):
+
+        # obtain dimensions of X matrix
+        self.nobj, self.nvarx = np.shape(X)
+
+        # check if the underlying models are conformal
+        CI_vals = self.conveyor.getVal('ensemble_ci')
+
+        # print ('confidence: ', confidence)
+
+        # when not all models are conformal use a simple approach
+
+
+        ############################################
+        ##
+        ##  Compute single value
+        ##
+        ############################################
+        yp = np.zeros(self.nobj, dtype=np.float64) # default is positive
+        for i in range(self.nobj):
+            xline = X[i]
+            if xline[xline!=0].size == 0:  # all uncertains
+                yp[i] = -1 # uncertain
+            else:
+                if xline[xline==1].size == self.nvarx:  # all inner models are 1
+                    yp[i] = 1 # positive
+                    
+        return yp
 
 class matrix (Combo):
     """

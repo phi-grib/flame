@@ -328,6 +328,7 @@ model:
     - median
     - majority
     - logicalOR
+    - logicalAND
     - matrix
   description: List of available ML algorithms
   dependencies: 

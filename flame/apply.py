@@ -31,7 +31,7 @@ from flame.stats.SVM import SVM
 from flame.stats.GNB import GNB
 from flame.stats.PLSR import PLSR
 from flame.stats.PLSDA import PLSDA
-from flame.stats.combo import median, mean, majority, logicalOR, matrix, external_model
+from flame.stats.combo import median, mean, majority, logicalOR, logicalAND, matrix, external_model
 
 from sklearn.metrics import mean_squared_error, matthews_corrcoef as mcc
 from sklearn.metrics import f1_score
@@ -61,6 +61,7 @@ class Apply:
                         ('mean', mean),
                         ('majority', majority),
                         ('logicalOR', logicalOR),
+                        ('logicalAND', logicalAND),
                         ('matrix', matrix),
                         ('external_model', external_model)]
 

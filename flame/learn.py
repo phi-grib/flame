@@ -37,7 +37,7 @@ from flame.stats.SVM import SVM
 from flame.stats.GNB import GNB
 from flame.stats.PLSR import PLSR
 from flame.stats.PLSDA import PLSDA
-from flame.stats.combo import median, mean, majority, logicalOR, matrix
+from flame.stats.combo import median, mean, majority, logicalOR, logicalAND, matrix
 from flame.graph.graph import generateManifoldSpace, generatePCASpace, generateInnerPCASpace, cleanPCASpace
 
 from flame.util import utils, get_logger
@@ -61,6 +61,7 @@ class Learn:
                               ('mean', mean),
                               ('majority', majority),
                               ('logicalOR', logicalOR),
+                              ('logicalAND', logicalAND),
                               ('matrix', matrix)]
 
         self.X = self.conveyor.getVal('xmatrix')
