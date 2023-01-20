@@ -329,6 +329,7 @@ model:
     - majority
     - logicalOR
     - logicalAND
+    - logicalTWO
     - matrix
   description: List of available ML algorithms
   dependencies: 

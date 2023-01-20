@@ -785,6 +785,49 @@ class logicalOR (Combo):
                     
         return yp
 
+class logicalTWO (Combo):
+    """
+       Simple logical >=2 used to combine the results of multiple models
+
+       IMPORTANT!! note that, from version 15/6/2020, the qualitative input has been scaled as negative (-1) | uncertain (0) | positive (+1)
+    """
+    def __init__(self, X, Y, parameters, conveyor):
+        Combo.__init__(self, X, Y, parameters, conveyor)
+        self.method_name = 'logical TWO'
+
+        # logicalOR is not compatible with conformal because the prediction results
+        # are not stored as c0, c1 but as value, ensemble_c0, ensemble_c1
+        if self.param.getVal('conformal'):
+            self.param.setVal('conformal', False)
+
+    def predict(self, X):
+
+        # obtain dimensions of X matrix
+        self.nobj, self.nvarx = np.shape(X)
+
+        # check if the underlying models are conformal
+        CI_vals = self.conveyor.getVal('ensemble_ci')
+
+        # print ('confidence: ', confidence)
+
+        # when not all models are conformal use a simple approach
+
+
+        ############################################
+        ##
+        ##  Compute single value
+        ##
+        ############################################
+        yp = np.ones(self.nobj, dtype=np.float64) # default is positive
+        for i in range(self.nobj):
+            xline = X[i]
+            if xline[xline!=0].size == 0:  # all uncertains
+                yp[i] = -1 # uncertain
+            else:
+                if xline[xline==1].size < 2:  # 0 or 1 positives
+                    yp[i] = 0 # negative
+                    
+        return yp
 class logicalAND (Combo):
     """
        Simple logical AND used to combine the results of multiple models
