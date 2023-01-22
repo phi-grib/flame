@@ -421,7 +421,7 @@ class Parameters:
         'feature_importances_method', 'output_format', 'output_md', 'output_similar',
         'TSV_activity', 'TSV_objnames', 'imbalance', 
         'feature_selection', 'feature_number', 'mol_batch',  
-        'ensemble_names','ensemble_versions', 
+        'ensemble_names','ensemble_versions', 'ensemble_reference', 'ensemble_reference_distance', 
         'similarity_metric', 'similarity_cutoff_num', 'similarity_cutoff_distance',
         'tune_metric_quantitative', 'tune_metric_qualitative', 'tune_cv_fold',
         'numCPUs', 'verbose_error', 'modelingToolkit', 
@@ -435,7 +435,6 @@ class Parameters:
         'PLSR_parameters','PLSR_optimize',
         'PLSDA_parameters','PLSDA_optimize',
         'GNB_parameters' ]
-
 
         for ik in order:
             if ik in self.p:
