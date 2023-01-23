@@ -25,7 +25,6 @@ import copy
 import yaml
 import os
 import pickle
-import random
 from sklearn.metrics import mean_squared_error
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import matthews_corrcoef
@@ -618,6 +617,8 @@ def ensemble_distance_filter (X, reference_set, distance_thresold=0.9):
     nobj, nvarx = np.shape(X)
     if reference_set is not None:
 
+        # TODO: check if the models were built using MD or fingerprints. The followin code
+        # is valid ONLY FOR FINGERPRINTS
         xmean = []
         xpred = []
         xsd = []
@@ -627,7 +628,9 @@ def ensemble_distance_filter (X, reference_set, distance_thresold=0.9):
             x_wg = reference_set[j]['x_wg']
             xsd.append(np.array([1.0/iw if iw > 1.0e-7 else 0.00 for iw in x_wg]))
 
-        random.seed(46)
+        # compute max distance as the "distance_thresold-quantil" of the distances
+        # obtained for 100 sythetic compounds built to reproduce the mean and sd recorded
+        np.random.seed(46)
         dist_max = []
         for j in range(nvarx): # for each submodel
             dj = []
@@ -635,6 +638,11 @@ def ensemble_distance_filter (X, reference_set, distance_thresold=0.9):
                 # qfi = [np.random.normal(imean,isd*2) for imean, isd in zip(xmean[j],xsd[j])]
                 qfi = [np.random.normal(0,isd*2) for isd in xsd[j]]
                 fi = np.where(np.array(qfi)>=0.5, 1.0, 0.0)
+                
+                # DEBUG
+                if j==0 and i==0:
+                    print (qfi, fi)
+
                 # d = euclidean_fp(fi,xmean[j],xsd[j])
                 d = euclidean_fp(fi,0.0,xsd[j])
                 dj.append(d)
@@ -642,7 +650,6 @@ def ensemble_distance_filter (X, reference_set, distance_thresold=0.9):
         
         print (dist_max)
         dist = np.zeros((nobj, nvarx), dtype=np.float64)
-        # compute dist_max
 
         for j in range(nvarx): # for each submodel
             for i in range(nobj):
