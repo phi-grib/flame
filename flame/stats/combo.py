@@ -610,7 +610,7 @@ def euclidean_fp(fp,mean,sd):
             d+=(xi/sdi)**2
     return np.sqrt(d)
 
-def ensemble_distance_filter (X, reference_set):
+def ensemble_distance_filter (X, reference_set, distance_thresold=0.9):
     ''' this function is used only in ensemble of models for which there is a reference set (secret models)
         it assigns 'uncertain' to the contribution of model for a given object when the object is too far
         away from the model centroid 
@@ -627,18 +627,18 @@ def ensemble_distance_filter (X, reference_set):
             x_wg = reference_set[j]['x_wg']
             xsd.append(np.array([1.0/iw if iw > 1.0e-7 else 0.00 for iw in x_wg]))
 
-            print ('>>', reference_set[j]['size'])
-
         random.seed(46)
         dist_max = []
         for j in range(nvarx): # for each submodel
             dj = []
-            for i in range(100):
-                qfi = [np.random.normal(imean,isd*2) for imean, isd in zip(xmean[j],xsd[j])]
+            for i in range(100): # compute for 100 synthetic fingerprints
+                # qfi = [np.random.normal(imean,isd*2) for imean, isd in zip(xmean[j],xsd[j])]
+                qfi = [np.random.normal(0,isd*2) for isd in xsd[j]]
                 fi = np.where(np.array(qfi)>=0.5, 1.0, 0.0)
-                d = euclidean_fp(fi,xmean[j],xsd[j])
+                # d = euclidean_fp(fi,xmean[j],xsd[j])
+                d = euclidean_fp(fi,0.0,xsd[j])
                 dj.append(d)
-            dist_max.append(np.quantile(dj, 0.9))
+            dist_max.append(np.quantile(dj, distance_thresold))
         
         print (dist_max)
         dist = np.zeros((nobj, nvarx), dtype=np.float64)
@@ -679,7 +679,7 @@ class majority (Combo):
             reference_set = self.conveyor.getVal ("reference_set")
             if reference_set is not None:
                 LOG.info ('removing contribution of models far from objects [majority voting]')
-                X, dist = ensemble_distance_filter (X, reference_set)
+                X, dist = ensemble_distance_filter (X, reference_set, self.param.getVal('ensemble_reference_distance'))
 
                 # remove reference set from conveyor, because it is masive
                 self.conveyor.removeVal('reference_set')
