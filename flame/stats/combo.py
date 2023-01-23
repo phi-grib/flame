@@ -632,31 +632,44 @@ def ensemble_distance_filter (X, reference_set, distance_thresold=0.9):
         # obtained for 100 sythetic compounds built to reproduce the mean and sd recorded
         np.random.seed(46)
         dist_max = []
+
+        # for j in range(nvarx): # for each submodel
+        #     dj = []
+        #     for i in range(100): # compute for 100 synthetic fingerprints
+        #         # qfi = [np.random.normal(imean,isd*2) for imean, isd in zip(xmean[j],xsd[j])]
+        #         qfi = [np.random.normal(0,isd*2) for isd in xsd[j]]
+        #         fi = np.where(np.array(qfi)>=0.5, 1.0, 0.0)
+                
+        #         # DEBUG
+        #         # if j==0 and i==0:
+        #         #     print (qfi, fi)
+
+        #         # d = euclidean_fp(fi,xmean[j],xsd[j])
+        #         d = euclidean_fp(fi,0.0,xsd[j])
+        #         dj.append(d)
+        #     dist_max.append(np.quantile(dj, distance_thresold))
+        # print (dist_max)
+
+        factor = 1.6
+
         for j in range(nvarx): # for each submodel
             dj = []
             for i in range(100): # compute for 100 synthetic fingerprints
-                # qfi = [np.random.normal(imean,isd*2) for imean, isd in zip(xmean[j],xsd[j])]
-                qfi = [np.random.normal(0,isd*2) for isd in xsd[j]]
-                fi = np.where(np.array(qfi)>=0.5, 1.0, 0.0)
-                
-                # DEBUG
-                if j==0 and i==0:
-                    print (qfi, fi)
-
-                # d = euclidean_fp(fi,xmean[j],xsd[j])
-                d = euclidean_fp(fi,0.0,xsd[j])
+                fi = [np.random.normal(0,factor*isd) for isd in xsd[j]]
+                d = euclidean_fp(np.array(fi),0.0,xsd[j])
                 dj.append(d)
             dist_max.append(np.quantile(dj, distance_thresold))
-        
-        print (dist_max)
-        dist = np.zeros((nobj, nvarx), dtype=np.float64)
+        print (distance_thresold, dist_max)
 
+        # compute distances from each point to the submodel centroids and set as uncertain
+        # predictions of models too far away from the training series 
+        dist = np.zeros((nobj, nvarx), dtype=np.float64)
         for j in range(nvarx): # for each submodel
             for i in range(nobj):
                 d = euclidean_fp(xpred[j][i],xmean[j],xsd[j])
                 if d > dist_max[j]: 
                     print (i, j, X[i,j], 'before >>>> ', d)
-                    X[i,j]=0
+                    X[i,j]=0  # set uncertain
                 dist[i,j]=d
 
     return X, dist
@@ -682,7 +695,7 @@ class majority (Combo):
         self.nobj, self.nvarx = np.shape(X)
 
         # for ensemble models with a reference set 
-        if self.param.getVal('input_type') == 'model_ensemble' and self.param.getVal('ensemble_reference') != False:
+        if self.param.getVal('input_type') == 'model_ensemble'  and self.param.getVal('ensemble_reference') != False:
             reference_set = self.conveyor.getVal ("reference_set")
             if reference_set is not None:
                 LOG.info ('removing contribution of models far from objects [majority voting]')
