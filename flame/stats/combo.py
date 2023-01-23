@@ -25,6 +25,7 @@ import copy
 import yaml
 import os
 import pickle
+import random
 from sklearn.metrics import mean_squared_error
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import matthews_corrcoef
@@ -595,6 +596,20 @@ class mean (Combo):
             ############################################
             return np.mean (X,1)
 
+def euclidean_fp(fp,mean,sd):
+    ''' euclidean distances for fingerprints'''
+    fp=fp-mean
+    d=0.0
+    for xi,sdi in zip(fp,sd):
+        # if variable is nearly constant
+        if sdi<10e-6:
+            # if this value is not zero add an arbitary value (not infinite!)
+            if abs(xi)>10e-2:
+                d+=10
+        else:
+            d+=(xi/sdi)**2
+    return np.sqrt(d)
+
 def ensemble_distance_filter (X, reference_set):
     ''' this function is used only in ensemble of models for which there is a reference set (secret models)
         it assigns 'uncertain' to the contribution of model for a given object when the object is too far
@@ -602,31 +617,41 @@ def ensemble_distance_filter (X, reference_set):
     '''
     nobj, nvarx = np.shape(X)
     if reference_set is not None:
+
+        xmean = []
+        xpred = []
+        xsd = []
+        for j in range(nvarx): # for each submodel
+            xmean.append(np.array(reference_set[j]['x_mean']))
+            xpred.append(np.array(reference_set[j]['xmatrix']))
+            x_wg = reference_set[j]['x_wg']
+            xsd.append(np.array([1.0/iw if iw > 1.0e-7 else 0.00 for iw in x_wg]))
+
+            print ('>>', reference_set[j]['size'])
+
+        random.seed(46)
         dist_max = []
+        for j in range(nvarx): # for each submodel
+            dj = []
+            for i in range(100):
+                qfi = [np.random.normal(imean,isd*2) for imean, isd in zip(xmean[j],xsd[j])]
+                fi = np.where(np.array(qfi)>=0.5, 1.0, 0.0)
+                d = euclidean_fp(fi,xmean[j],xsd[j])
+                dj.append(d)
+            dist_max.append(np.quantile(dj, 0.9))
         
-        dist = np.zeros((nobj, len(reference_set)), dtype=np.float64)
-
+        print (dist_max)
+        dist = np.zeros((nobj, nvarx), dtype=np.float64)
         # compute dist_max
-        for iref in reference_set:
-            x_wg = iref['x_wg'] 
-            xsd = [1.0/iw if iw > 1.0e-7 else 0.00 for iw in x_wg]
-            xsd2 = np.array(xsd*2)
 
-            dist_max.append(np.sqrt(np.sum(xsd2**2)))
-
-        for i in range(nobj):
-            # compute distances to centroids and scale using dist_max
-            for j,iref in enumerate(reference_set):
-                modelx = np.array(iref['xmatrix'][i])
-                centrx = np.array(iref['x_mean'])
-                dist[i,j]=(np.sqrt(np.sum ( (modelx-centrx)**2 ))) /dist_max[j]
-        
-            # mask values obtained from models with a centroid very far away, so their predictions
-            # are not used for computing the majority voting
-            for j in range(nvarx):
-                if dist[i, j] > 0.8:
-                    print (i, j, X[i,j], 'before >>>> ', dist[i,j])
+        for j in range(nvarx): # for each submodel
+            for i in range(nobj):
+                d = euclidean_fp(xpred[j][i],xmean[j],xsd[j])
+                if d > dist_max[j]: 
+                    print (i, j, X[i,j], 'before >>>> ', d)
                     X[i,j]=0
+                dist[i,j]=d
+
     return X, dist
 
 class majority (Combo):
