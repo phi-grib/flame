@@ -781,7 +781,7 @@ class logicalOR (Combo):
             reference_set = self.conveyor.getVal ("reference_set")
             if reference_set is not None:
                 LOG.info ('removing contribution of models far from objects [OR]')
-                X, dist = ensemble_distance_filter (X, reference_set)
+                X, dist = ensemble_distance_filter (X, reference_set, self.param.getVal('ensemble_reference_distance'))
 
                 # remove reference set from conveyor, because it is masive
                 self.conveyor.removeVal('reference_set')
@@ -835,7 +835,7 @@ class logicalTWO (Combo):
             reference_set = self.conveyor.getVal ("reference_set")
             if reference_set is not None:
                 LOG.info ('removing contribution of models far from objects [TWO]')
-                X, dist = ensemble_distance_filter (X, reference_set)
+                X, dist = ensemble_distance_filter (X, reference_set, self.param.getVal('ensemble_reference_distance'))
 
                 # remove reference set from conveyor, because it is masive
                 self.conveyor.removeVal('reference_set')
@@ -888,7 +888,7 @@ class logicalAND (Combo):
             reference_set = self.conveyor.getVal ("reference_set")
             if reference_set is not None:
                 LOG.info ('removing contribution of models far from objects [AND]')
-                X, dist = ensemble_distance_filter (X, reference_set)
+                X, dist = ensemble_distance_filter (X, reference_set, self.param.getVal('ensemble_reference_distance'))
 
                 # remove reference set from conveyor, because it is masive
                 self.conveyor.removeVal('reference_set')
