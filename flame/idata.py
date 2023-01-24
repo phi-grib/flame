@@ -1659,9 +1659,13 @@ class Idata:
                 combined_ci_names.append(f'c0:{i_name}:{i_ver}')
                 combined_ci_names.append(f'c1:{i_name}:{i_ver}')
 
-            # i_result is the prediction of a confidential model
+            # when i_result is the prediction of a confidential model
             # store the X matrix (of the ensemble training series, using the model descriptors) to build
             # a reference space where we can project the mean and sd of the original training series
+            # 
+            # IMPORTANT: note that x_mean and x_wg are properties of each low-level-model training series, 
+            # while xmatrix contains the series to build the ensemble model processed by this model
+
             if i_result.getMeta('confidential'):
                 xmean = i_result.getVal('x_mean')
                 xwg = i_result.getVal('x_wg')
@@ -1672,6 +1676,8 @@ class Idata:
                                            'x_mean':xmean, 
                                            'x_wg': xwg, 
                                            'xmatrix': xmatrix.tolist() })
+            # for no-confidential, x_mean and x_wg can be extracted from scalers or stored ad-hoc in the 
+            # preprocesors
 
         self.conveyor.addVal( combined_md, 'xmatrix', 'X matrix',
                          'results', 'vars', 'Combined output from external sources')
