@@ -463,10 +463,10 @@ class Learn:
             elif dimRed == 't-SNE':
                 generateManifoldSpace(self.X, self.param, self.conveyor)
         else:
-            cleanPCASpace(self.param)
             reference_set = self.conveyor.getVal ("reference_set")
-            if reference_set is not None:
-
+            if reference_set is None:
+                cleanPCASpace(self.param)
+            else:
                 self.conveyor.removeVal('reference_set')
                 
                 InnerPCASet = []
