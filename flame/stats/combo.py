@@ -650,6 +650,7 @@ def ensemble_distance_filter (X, reference_set, distance_thresold=0.9):
         #     dist_max.append(np.quantile(dj, distance_thresold))
         # print (dist_max)
 
+        # grid search?  1, 1.2, 1.4, 1.6. 1.8, 2
         factor = 1.6
 
         for j in range(nvarx): # for each submodel
