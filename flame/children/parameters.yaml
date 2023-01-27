@@ -258,6 +258,32 @@ ensemble_versions:
   comments: Must correspond to available models. None defaults to version 0
   group: data    
 
+ensemble_reference:
+  advanced: advanced
+  object_type: boolean
+  writable: false
+  value: true
+  options: 
+    - true
+    - false
+  description: filter the model contributions depending on their distance to the centroid of training series
+  dependencies: 
+    input_type: model_ensemble
+  comments: 
+  group: data  
+
+ensemble_reference_distance:
+  advanced: advanced
+  object_type: float
+  writable: true
+  value: 0.9
+  options: null
+  description: thresold of distance of centroid to filter the model contributions
+  dependencies: 
+    input_type: model_ensemble
+  comments: 
+  group: data  
+
 SDFile_experimental:
   advanced: advanced
   object_type: string
