@@ -38,7 +38,14 @@ Then, as in the previous example, you can acces the Flame GUI from a web broser 
 
 ## Documentation
 
-A Flame walkthrough, showing some of its main features is accesible [here](https://drive.google.com/file/d/1aX1aogDVlIDoYpBR1vu4dIxB10si_8Ex/view?usp=sharing)
+A Flame walkthrough, showing the main features is accesible [here](https://drive.google.com/file/d/1C2xPu8sQn06lveGamiRv-BusFICKBFLv/view?usp=share_link)
+
+A collection of short videos illustrate how Flame can be used for:
+- predict a sigle molecule [here](https://drive.google.com/file/d/1BslauNrMNzDy0lkTmy_PmUtRrIUvS6MO/view?usp=share_link)
+- predict sketching the input structure [here](https://drive.google.com/file/d/1BmYVSXgdWJBrWXWlbxBrIL41Xm1pEMJu/view?usp=share_link)
+- profile a collection of molecules [here](https://drive.google.com/file/d/1Btvb02MM-4IOkbumKy4TL-Q_LXZOTyEX/view?usp=share_link)
+- build a simple model [here](https://drive.google.com/file/d/1C-bOrqYDfdCYONef9UA5Sy9rP23HutMv/view?usp=share_link)
+- document a model [here](https://drive.google.com/file/d/1BvSotx0Q9HkMTG667UtzWrZo9KumnpeE/view?usp=share_link)
 
 Flame is described in the following open-access article:
 
