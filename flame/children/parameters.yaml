@@ -266,7 +266,7 @@ ensemble_reference:
   options: 
     - true
     - false
-  description: filter the model contributions depending on their distance to the centroid of training series
+  description: filter the model contributions depending on their distance to the centroid of training series (EXPERIMENTAL FEATURE)
   dependencies: 
     input_type: model_ensemble
   comments: 
@@ -278,7 +278,7 @@ ensemble_reference_distance:
   writable: true
   value: 0.9
   options: null
-  description: thresold of distance of centroid to filter the model contributions
+  description: thresold of distance of centroid to filter the model contributions (EXPERIMENTAL FEATURE)
   dependencies: 
     input_type: model_ensemble
   comments: 
