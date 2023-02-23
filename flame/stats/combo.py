@@ -679,7 +679,7 @@ class majority (Combo):
         self.nobj, self.nvarx = np.shape(X)
 
         # for ensemble models with a reference set 
-        if self.param.getVal('input_type') == 'model_ensemble'  and self.param.getVal('ensemble_reference') != False:
+        if self.param.getVal('input_type') == 'model_ensemble' and self.param.getVal('ensemble_reference') == True:
             reference_set = self.conveyor.getVal ("reference_set")
             if reference_set is not None:
                 LOG.info ('removing contribution of models far from objects [majority voting]')
@@ -781,7 +781,7 @@ class logicalOR (Combo):
         self.nobj, self.nvarx = np.shape(X)
 
         # for ensemble models with a reference set 
-        if self.param.getVal('input_type') == 'model_ensemble' and self.param.getVal('ensemble_reference') != False:
+        if self.param.getVal('input_type') == 'model_ensemble' and self.param.getVal('ensemble_reference') == True:
             reference_set = self.conveyor.getVal ("reference_set")
             if reference_set is not None:
                 LOG.info ('removing contribution of models far from objects [OR]')
@@ -835,7 +835,7 @@ class logicalTWO (Combo):
         self.nobj, self.nvarx = np.shape(X)
 
         # for ensemble models with a reference set 
-        if self.param.getVal('input_type') == 'model_ensemble' and self.param.getVal('ensemble_reference') != False:
+        if self.param.getVal('input_type') == 'model_ensemble' and self.param.getVal('ensemble_reference') == True:
             reference_set = self.conveyor.getVal ("reference_set")
             if reference_set is not None:
                 LOG.info ('removing contribution of models far from objects [TWO]')
@@ -888,7 +888,7 @@ class logicalAND (Combo):
         self.nobj, self.nvarx = np.shape(X)
 
         # for ensemble models with a reference set 
-        if self.param.getVal('input_type') == 'model_ensemble' and self.param.getVal('ensemble_reference') != False:
+        if self.param.getVal('input_type') == 'model_ensemble' and self.param.getVal('ensemble_reference') == True:
             reference_set = self.conveyor.getVal ("reference_set")
             if reference_set is not None:
                 LOG.info ('removing contribution of models far from objects [AND]')
