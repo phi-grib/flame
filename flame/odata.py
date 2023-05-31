@@ -649,13 +649,13 @@ class Odata():
             if iconveyor.isKey('values'):
                 if first:
                     names  = iconveyor.getVal('obj_nam')
-                    values = np.array(iconveyor.getVal('values'), dtype=np.float)
+                    values = np.array(iconveyor.getVal('values'), dtype=np.float64)
                     if iconveyor.isKey('p0'):
-                        pval0 = np.array(iconveyor.getVal('p0'), dtype=np.float)
-                        pval1 = np.array(iconveyor.getVal('p1'), dtype=np.float)
+                        pval0 = np.array(iconveyor.getVal('p0'), dtype=np.float64)
+                        pval1 = np.array(iconveyor.getVal('p1'), dtype=np.float64)
                     else:
-                        pval0 = np.zeros((obj_num), dtype=np.float )
-                        pval1 = np.zeros((obj_num), dtype=np.float )
+                        pval0 = np.zeros((obj_num), dtype=np.float64)
+                        pval1 = np.zeros((obj_num), dtype=np.float64)
                     first  = False
                 else:
                     values = np.c_[values, iconveyor.getVal('values')]
@@ -663,8 +663,8 @@ class Odata():
                         pval0 = np.c_[pval0, iconveyor.getVal('p0')]
                         pval1 = np.c_[pval1, iconveyor.getVal('p1')]
                     else:
-                        pval0 = np.c_[pval0, np.zeros((obj_num), dtype=np.float )]
-                        pval1 = np.c_[pval1, np.zeros((obj_num), dtype=np.float )]
+                        pval0 = np.c_[pval0, np.zeros((obj_num), dtype=np.float64)]
+                        pval1 = np.c_[pval1, np.zeros((obj_num), dtype=np.float64)]
 
         #header
         output = 'name       '
@@ -684,4 +684,5 @@ class Odata():
                     output += f'\t{values[i][j]:.4f}'
             print (output)
 
-        return True, 'OK'
+        # return True, 'OK'
+        return True, output
