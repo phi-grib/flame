@@ -15,7 +15,7 @@ Flame can be used in comand mode or using a web based GUI. The code for the GUI 
 We provide Windows and Linux installers for performing local installations which include the graphic interface. 
 
 The latest versons can be downloaded here:
-- [Windows](https://drive.google.com/file/d/1TQFShPhLGIUrkktW0bQN2rKb1JIlHNK0/view?usp=sharing)
+- [Windows](https://drive.google.com/file/d/17EQRvHprhhzjczIi0pQyAmFekFWHbyYq/view?usp=sharing)
 - [Linux](https://drive.google.com/file/d/1HldcEqnRoyfWFNDcwCOA1qZ4oLmLBDMC/view?usp=sharing)
 
 These versions can be run using an script which starts a locally installed web server, accessible from a web browser at address http://localhost:8000
