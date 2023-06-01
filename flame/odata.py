@@ -684,5 +684,4 @@ class Odata():
                     output += f'\t{values[i][j]:.4f}'
             print (output)
 
-        # return True, 'OK'
-        return True, output
+        return True, 'OK'

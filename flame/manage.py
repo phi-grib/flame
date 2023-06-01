@@ -1106,7 +1106,7 @@ def action_profiles_summary (label, output='text'):
             model_results.append(Conveyor())
             success, message = model_results[i].load(handle)
     
-    if output == 'text':
+    if output == 'text' or output == 'summary':
         obj_num = model_results[0].getVal('obj_num')
 
         print (f'Profile for {obj_num} molecules with {len(model_results)} models')
@@ -1121,13 +1121,13 @@ def action_profiles_summary (label, output='text'):
             if iconveyor.isKey('values'):
                 if first:
                     names  = iconveyor.getVal('obj_nam')
-                    values = np.array(iconveyor.getVal('values'), dtype=np.float)
+                    values = np.array(iconveyor.getVal('values'), dtype=np.float64)
                     if iconveyor.isKey('p0'):
-                        pval0 = np.array(iconveyor.getVal('p0'), dtype=np.float)
-                        pval1 = np.array(iconveyor.getVal('p1'), dtype=np.float)
+                        pval0 = np.array(iconveyor.getVal('p0'), dtype=np.float64)
+                        pval1 = np.array(iconveyor.getVal('p1'), dtype=np.float64)
                     else:
-                        pval0 = np.zeros((obj_num), dtype=np.float )
-                        pval1 = np.zeros((obj_num), dtype=np.float )
+                        pval0 = np.zeros((obj_num), dtype=np.float64 )
+                        pval1 = np.zeros((obj_num), dtype=np.float64 )
                     first  = False
                 else:
                     values = np.c_[values, iconveyor.getVal('values')]
@@ -1135,27 +1135,34 @@ def action_profiles_summary (label, output='text'):
                         pval0 = np.c_[pval0, iconveyor.getVal('p0')]
                         pval1 = np.c_[pval1, iconveyor.getVal('p1')]
                     else:
-                        pval0 = np.c_[pval0, np.zeros((obj_num), dtype=np.float )]
-                        pval1 = np.c_[pval1, np.zeros((obj_num), dtype=np.float )]
+                        pval0 = np.c_[pval0, np.zeros((obj_num), dtype=np.float64 )]
+                        pval1 = np.c_[pval1, np.zeros((obj_num), dtype=np.float64 )]
 
+        summary = []
         #header
-        output = 'name       '
+        output_line = 'name       '
         for j in range (nmodels):
-            output += f'\t{model_results[j].getMeta("endpoint")}v{model_results[j].getMeta("version")}'
+            output_line += f'\t{model_results[j].getMeta("endpoint")}v{model_results[j].getMeta("version")}'
             if model_results[j].isKey('p0'):
-                output += '\tp0\tp1'
-        print (output)
+                output_line += '\tp0\tp1'
+        print (output_line)
+        
+        summary.append(output_line)
 
         #table
         for i in range(obj_num):
-            output = f'{names[i]}'
+            output_line = f'{names[i]}'
             for j in range (nmodels):
                 if model_results[j].isKey('p0'):
-                    output += f'\t{values[i][j]:.4f}\t{pval0[i][j]:.4f}\t{pval1[i][j]:.4f}'
+                    output_line += f'\t{values[i][j]:.4f}\t{pval0[i][j]:.4f}\t{pval1[i][j]:.4f}'
                 else:
-                    output += f'\t{values[i][j]:.4f}'
-            print (output)
+                    output_line += f'\t{values[i][j]:.4f}'
+            print (output_line)
+            summary.append(output_line)
 
+        if output == 'summary':
+            return True, summary
+        
     return True, model_results
 
 def action_profiles_result (label, item=0, output='text'):
