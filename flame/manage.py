@@ -1138,16 +1138,17 @@ def action_profiles_summary (label, output='text'):
                         pval0 = np.c_[pval0, np.zeros((obj_num), dtype=np.float64 )]
                         pval1 = np.c_[pval1, np.zeros((obj_num), dtype=np.float64 )]
 
-        summary = []
+        summary = {'models':[], 'results':[]}
         #header
         output_line = 'name       '
         for j in range (nmodels):
             output_line += f'\t{model_results[j].getMeta("endpoint")}v{model_results[j].getMeta("version")}'
             if model_results[j].isKey('p0'):
                 output_line += '\tp0\tp1'
+            summary['models'].append((model_results[j].getMeta("endpoint"), model_results[j].getMeta("version")))
         print (output_line)
         
-        summary.append(output_line)
+        # summary.append(output_line)
 
         #table
         for i in range(obj_num):
@@ -1157,8 +1158,9 @@ def action_profiles_summary (label, output='text'):
                     output_line += f'\t{values[i][j]:.4f}\t{pval0[i][j]:.4f}\t{pval1[i][j]:.4f}'
                 else:
                     output_line += f'\t{values[i][j]:.4f}'
+                summary['results'].append(values[i][j])
             print (output_line)
-            summary.append(output_line)
+            # summary.append(output_line)
 
         if output == 'summary':
             return True, summary
