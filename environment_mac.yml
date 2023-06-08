@@ -1,9 +1,7 @@
 name: flame
 channels:
   - default
-  - rdkit
   - conda-forge 
-  - chembl
 dependencies:
   - pip
   - python=3.6
