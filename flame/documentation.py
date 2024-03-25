@@ -780,30 +780,32 @@ class Documentation:
         else:
             sub_label = 'value'
 
-        self.fields['Data_info'][sub_label]['training_set_size']['value'] = \
-            model_info[0][2]
+        if model_info is not None:
+            self.fields['Data_info'][sub_label]['training_set_size']['value'] = \
+                model_info[0][2]
 
-        self.fields['Descriptors'][sub_label]['final_number']['value'] = \
-            model_info[1][2]
+            self.fields['Descriptors'][sub_label]['final_number']['value'] = \
+                model_info[1][2]
 
-        self.fields['Descriptors'][sub_label]['ratio']['value'] = \
-            '{:0.2f}'.format(model_info[1][2]/model_info[0][2])
+            self.fields['Descriptors'][sub_label]['ratio']['value'] = \
+                '{:0.2f}'.format(model_info[1][2]/model_info[0][2])
         
-        internal_val = dict()
-        for stat in validation:
-            if stat[0] in allowed:
-                internal_val[stat[0]] = float("{0:.2f}".format(stat[2]))
-        if internal_val:
-            self.fields['Internal_validation_1']\
-                ['value'] = internal_val
+        if validation is not None:
+            internal_val = dict()
+            for stat in validation:
+                if stat[0] in allowed:
+                    internal_val[stat[0]] = float("{0:.2f}".format(stat[2]))
+            if internal_val:
+                self.fields['Internal_validation_1']\
+                    ['value'] = internal_val
 
-        gof = dict()
-        for stat in validation:
-            if stat[0] in gof_allowed:
-                gof[stat[0]] = float("{0:.2f}".format(stat[2]))
-        if gof:
-            self.fields['Goodness_of_fit_statistics']\
-                ['value'] = gof
+            gof = dict()
+            for stat in validation:
+                if stat[0] in gof_allowed:
+                    gof[stat[0]] = float("{0:.2f}".format(stat[2]))
+            if gof:
+                self.fields['Goodness_of_fit_statistics']\
+                    ['value'] = gof
 
 
     def get_string(self, dictionary):
