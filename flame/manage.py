@@ -1478,6 +1478,11 @@ def action_refresh (model=None, version=None, GUI=False):
         else:
             LOG.info ('   ERROR: unable to merge documentation for model: {itask[0]}   version: {itask[1]}')
 
+        # remove existing data.pkl file to force recomputing the descriptors
+        data_pkl = os.path.join (destinat_path, 'data.pkl')
+        if os.path.isfile(data_pkl):
+            shutil.rmtree(data_pkl, ignore_errors=True)
+
         # rebuild the model
         command_build = {'endpoint': itask[0], 
                          'infile': None, 
