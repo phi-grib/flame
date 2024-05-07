@@ -22,7 +22,7 @@
 
 __modules__ = None
 
-import os
+import os 
 import sys
 import yaml
 import random
@@ -33,8 +33,10 @@ import numpy as np
 import codecs
 import string
 import re 
-
 from flame.util import get_logger
+#from knowledgehub.api import KnowledgeHubAPI
+
+
 
 LOG = get_logger(__name__)
 
@@ -463,4 +465,4 @@ def isFingerprint (md):
         if md in fplist:
             return True
     
-    return False 
+    return False
