@@ -599,7 +599,7 @@ ModelValidationN:
   advanced: regular
   object_type: int
   writable: true
-  value: 2
+  value: 5
   options: null
   description: Number of folds
   dependencies: 
