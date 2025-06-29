@@ -728,6 +728,8 @@ RF_optimize:
       value: 
         - 50
         - 100
+        - 200
+        - 300
       options: null
       max: 500
       min: 0
