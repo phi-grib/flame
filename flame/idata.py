@@ -1488,7 +1488,7 @@ class Idata:
                             smiles.append(value_list[iSMILES])
 
                         if iActivity != -1:
-                            ymatrix.append(np.float(value_list[iActivity]))
+                            ymatrix.append(float(value_list[iActivity]))
 
                         # extract only the variables assumed to be md
                         masked = [ x for x, z in zip(value_list, mask) if z==1 ]

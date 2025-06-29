@@ -93,7 +93,7 @@ def _mordred_descriptors(ifile, **kwargs):
                 num_obj += 1
                 continue
 
-            mdi = np.asarray(list(calc(mol)), dtype=np.float)
+            mdi = np.asarray(list(calc(mol)), dtype=np.float64)
             xmatrix[num_obj] = mdi
             success_list.append(True)
             num_obj += 1
